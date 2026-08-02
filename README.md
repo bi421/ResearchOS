@@ -1,0 +1,140 @@
+# ResearchOS
+
+**Institutional-Grade Market Research Platform**
+
+ResearchOS is a deterministic, explainable, scientific market research platform that produces institutional-quality research for human traders. It is **NOT** an automated trading system — it never executes trades, sends orders, or makes final trading decisions.
+
+## Key Principles
+
+- **Determinism**: Every computation is deterministic and reproducible
+- **Explainability**: Every conclusion has a complete reasoning trace
+- **Scientific Rigor**: Every hypothesis is falsifiable
+- **No Trading**: ResearchOS never executes trades or sends orders
+
+## Documentation
+
+The ResearchOS constitutional framework consists of 17 articles:
+
+| Article | Title | Description |
+|---|---|---|
+| I | Vision | Mission, philosophy, core beliefs |
+| II | Scope | 3 functions, boundaries, responsibility matrix |
+| III | Principles | Scientific method, falsifiability, reproducibility |
+| IV | Glossary | Core terms, research concepts, cognitive concepts |
+| V | Architecture | Three-engine architecture, data flow, audit trail |
+| VI | Roadmap | Development phases, success metrics, non-goals |
+| VII | Research Methodology | 9-stage deterministic pipeline |
+| VIII | Data Sources | 116 sources, 15 categories |
+| IX | Market Ontology | 150+ concepts, 6 layers |
+| X | Reasoning Engine | 7-stage pipeline, R1-R8 guarantees |
+| XI | Scenario Engine | A/B/C construction, S1-S8 guarantees |
+| XII | Validation Engine | 5-stage pipeline, V1-V8 guarantees |
+| XIII | Knowledge Engine | 5 repositories, K1-K8 guarantees |
+| XIV | Cognitive Growth Engine | 6 dimensions, C1-C8 guarantees |
+| XV | System Architecture | 3 engines, 25 modules |
+| XVI | Scientific Reasoning Framework | 10 sections |
+| XVII | Object Model | 20 object types, 12 layers |
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Quick Start
+
+```python
+from researchos import Research, Observation, Evidence, Hypothesis, Scenario
+
+# Create a research project
+research = Research(
+    question="What is the inflation outlook?",
+    time_horizon="Monthly",
+    asset="US",
+)
+
+# Create an observation
+from datetime import datetime, timezone
+obs = Observation(
+    source="MACRO:CPI_YOY",
+    timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    value=3.2,
+    unit="percent",
+)
+obs.validate()
+
+# Create evidence
+ev = Evidence(
+    observation_id=obs.id,
+    hypothesis_id="hyp1",
+    interpretation="Inflation is moderating",
+    direction="Supporting",
+)
+
+# Create a hypothesis
+hyp = Hypothesis(
+    research_id=research.id,
+    type="Primary",
+    statement="Inflation will continue to moderate",
+    evidence_strength=0.8,
+    coherence=0.7,
+    plausibility=0.9,
+    falsifiability=0.6,
+)
+
+# Create scenarios
+from researchos import Scenario, ScenarioSet
+ss = ScenarioSet(research_id=research.id)
+ss.add_scenario(Scenario(hypothesis_id=hyp.id, type="Base", probability=0.5))
+ss.add_scenario(Scenario(hypothesis_id=hyp.id, type="Bull", probability=0.3))
+ss.add_scenario(Scenario(hypothesis_id=hyp.id, type="Bear", probability=0.2))
+ss.normalize_probabilities()
+
+# Complete the research
+research.complete()
+```
+
+## Project Structure
+
+```
+ResearchOS/
+├── docs/                    # Constitutional documentation (Articles I-XVII)
+├── researchos/              # Python package
+│   ├── core/                # Core infrastructure
+│   │   ├── base_object.py   # Base class for all objects
+│   │   ├── identity.py      # Deterministic ID generation
+│   │   ├── lifecycle.py     # Object lifecycle management
+│   │   ├── timestamp.py     # Timestamp utilities
+│   │   └── versioning.py    # Version control
+│   ├── objects/             # Object classes (20 types)
+│   │   ├── observation.py   # Observation, MarketState, MacroState
+│   │   ├── evidence.py      # Evidence, EvidenceRegistry
+│   │   ├── interpretation.py # Interpretation, Narrative
+│   │   ├── hypothesis.py    # Hypothesis, HypothesisSet
+│   │   ├── scenario.py      # Scenario, ScenarioSet
+│   │   ├── confidence.py    # Confidence, ConfidenceReport
+│   │   ├── contradiction.py # Contradiction, ContradictionReport
+│   │   ├── knowledge.py     # Knowledge, Pattern, Lesson
+│   │   └── research.py      # Research, ResearchReport, ResearchQuestion
+│   ├── validation/          # Validation engine
+│   │   ├── validators.py    # Validator classes
+│   │   └── rules.py         # Validation rules
+│   ├── repository/          # Repository layer
+│   │   ├── interface.py     # Repository interface
+│   │   └── memory.py        # In-memory implementation
+│   └── tests/               # Test suite
+├── examples/                # Usage examples
+├── scripts/                 # Utility scripts
+├── README.md
+└── pyproject.toml
+```
+
+## Running Tests
+
+```bash
+pytest researchos/tests/ -v
+```
+
+## License
+
+ResearchOS is a scientific research platform. All outputs are for research purposes only.
