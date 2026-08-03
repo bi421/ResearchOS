@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Set, TypeVar
 
 from researchos.market_memory.models import (
@@ -93,7 +93,7 @@ class MarketMemoryRepository:
         self._sqlite_conn.execute(
             "INSERT OR REPLACE INTO market_memory_objects (id, object_type, data, dataset_source, saved_at) "
             "VALUES (?, ?, ?, ?, ?)",
-            (obj.id, object_type, data, dataset_source, datetime.utcnow().isoformat()),
+            (obj.id, object_type, data, dataset_source, datetime.now(timezone.utc).isoformat()),
         )
         self._sqlite_conn.commit()
 

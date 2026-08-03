@@ -198,3 +198,4 @@ class MetricDefinition:
             target=data.get("target"),
             tolerance=data.get("tolerance"),
         )
+

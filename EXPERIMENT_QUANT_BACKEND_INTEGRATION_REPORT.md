@@ -104,6 +104,7 @@ reproduce identical trades/signals/positions/execution_stats.
 | `researchos/experiments/runner.py` | Replaced RNG/fake-metrics `_execute_simulation()` with a `PythonQuantBackend` computation call. Removed `self._rng`, `_extract_prices()` OHLCV parsing, and fake metric generation. The runner now forwards the dataset contract verbatim to the backend and packages Mode B backtest artifacts. |
 | `researchos/quant_engine/backend.py` | (Only if required) — `PythonQuantBackend.run_simulation(request, dataset, ...)` already normalizes the dataset contract deterministically and produces Mode B execution artifacts. Confirmed no RNG state remains in the backend. |
 | `researchos/tests/test_experiment_backend_integration.py` | **New** integration tests (16 tests) verifying determinism, dataset sensitivity, RNG-free execution, provenance, the dataset-contract boundary, and Mode B backtest-artifact propagation. |
+| `researchos/tests/test_architecture_boundary_experiment_quant.py` | **New** boundary-freeze guard tests (17 tests including AST/source guards) asserting the runner never imports the data engine, never accesses OHLCV fields, never extracts prices, never imports `random`, holds no RNG state, exercises an RNG-free experiment run, and verifies backend determinism + dataset sensitivity + provenance + backtest artifacts. |
 | `researchos/quant_engine/interface.py` | Signature clarification: `run_simulation(self, request, dataset, calculation_version)` — the parameter is the **dataset contract**, not a pre-parsed price list. |
 
 **Not modified** (as required): `decision_engine/`, `evidence/`, `probability/`,
@@ -167,17 +168,24 @@ result.result_hash`.
 
 ## 4. Test Suite Results
 
+Latest verified run (`pytest researchos/tests/test_experiments.py
+researchos/tests/test_quant_engine.py
+researchos/tests/test_experiment_backend_integration.py
+researchos/tests/test_architecture_boundary_experiment_quant.py`):
+
 ```
-researchos/tests/test_experiment_backend_integration.py ................ [  7%]
-researchos/tests/test_experiments.py ................................... [ 46%]
-researchos/tests/test_quant_engine.py .................................. [100%]
-201 passed in 1.50s
+researchos/tests/test_experiments.py ........................ 78 passed
+researchos/tests/test_quant_engine.py ...................... 107 passed
+researchos/tests/test_experiment_backend_integration.py ..... 16 passed
+researchos/tests/test_architecture_boundary_experiment_quant.py 17 passed
+Total: 218 passed in 1.28s
 ```
 
 - **78 existing experiment tests** remain passing.
 - **107 existing quant engine tests** remain passing.
 - **16 new integration tests** added and passing.
-- **Total: 201 passed.**
+- **17 new boundary-freeze guard tests** added and passing.
+- **Total: 218 passed.**
 
 ---
 

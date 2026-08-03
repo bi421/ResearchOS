@@ -1,0 +1,80 @@
+"""
+Model Registry — deterministic model lifecycle registry.
+
+The registry stores model identity, metadata, configuration, and validation
+history only.  It never trains models and never executes trading.
+
+Architecture:
+
+    ResearchDataset
+            ↓
+    ValidationResult
+            ↓
+    ModelContract
+            ↓
+    ModelRegistry
+            ↓
+    Experiment Engine
+"""
+
+from .contracts import (
+    MODEL_CONTRACT_VERSION,
+    ModelContract,
+    ModelContractError,
+)
+from .metadata import (
+    MODEL_METADATA_VERSION,
+    ModelMetadata,
+)
+from .registry import (
+    MODEL_REGISTRY_VERSION,
+    ModelAlreadyExistsError,
+    ModelNotFoundError,
+    ModelRegistry,
+    ModelRegistryError,
+)
+# Backward-compatible re-export of the legacy quant-engine model contracts
+# that previously lived in ``researchos/quant_engine/models.py``.  Every name
+# is preserved verbatim so existing importers keep working unchanged.
+from .legacy_models import (  # noqa: F401
+    CalculationVersion,
+    Order,
+    OrderFill,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+    Position,
+    Signal,
+    SimulationRequest,
+    SimulationResult,
+    Trade,
+    periods_per_year_from_timeframe,
+)
+
+__all__ = [
+    # Registry infrastructure
+    "MODEL_CONTRACT_VERSION",
+    "MODEL_METADATA_VERSION",
+    "MODEL_REGISTRY_VERSION",
+    "ModelContract",
+    "ModelContractError",
+    "ModelMetadata",
+    "ModelRegistry",
+    "ModelAlreadyExistsError",
+    "ModelNotFoundError",
+    "ModelRegistryError",
+    # Legacy quant-engine models (backward-compatible re-exports)
+    "CalculationVersion",
+    "Order",
+    "OrderFill",
+    "OrderSide",
+    "OrderStatus",
+    "OrderType",
+    "Position",
+    "Signal",
+    "SimulationRequest",
+    "SimulationResult",
+    "Trade",
+    "periods_per_year_from_timeframe",
+]
+
