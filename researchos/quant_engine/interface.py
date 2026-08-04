@@ -15,19 +15,33 @@ Design:
     - Deterministic: Same inputs → same outputs (seeded RNG, versioned formulas)
     - Serializable: Input/output types are JSON-serializable
 
+Certification contract (Phase 4.1):
+    Every conforming backend MUST guarantee:
+        - deterministic execution: identical inputs → identical outputs
+        - no hidden mutable state affecting computation
+        - no timestamps in computation results
+        - no randomness consumed during computation
+        - explicit typing: declared signatures, no implicit value coercion
+    These guarantees are machine-checkable via ``capabilities()``, and the
+    ``BackendRouter`` refuses to route work to a backend that does not
+    advertise them.
+
 Based on Article XVII: Object Model — Quant Engine Layer.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
     SimulationResult,
 )
+
+if TYPE_CHECKING:  # pragma: no cover - annotation-only import
+    from researchos.quant_engine.capabilities import BackendCapabilities
 
 
 class QuantComputationInterface(ABC):
@@ -40,6 +54,28 @@ class QuantComputationInterface(ABC):
     This is NOT a trading engine. This is NOT execution logic.
     This is a NUMERICAL COMPUTATION LAYER for research analytics.
     """
+
+    # ── identity / certification ─────────────────────────────────────────
+
+    def get_version(self) -> str:
+        """Return a stable backend version string.
+
+        The default returns the backend class name.  Concrete backends
+        override this with a meaningful version (e.g. ``"1.0.0"``).
+        """
+        return type(self).__name__
+
+    def capabilities(self) -> "BackendCapabilities":
+        """Return the backend's advertised certification capabilities.
+
+        The default declaration advertises the full interface operation set
+        with the ResearchOS trust-boundary guarantees.  Concrete backends
+        override this to declare a precise name, version, and operation set.
+        """
+        from researchos.quant_engine.capabilities import default_capabilities
+
+        return default_capabilities(self)
+
 
     @abstractmethod
     def calculate_returns(

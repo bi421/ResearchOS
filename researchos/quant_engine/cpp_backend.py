@@ -38,6 +38,10 @@ import warnings
 from typing import Any, Dict, List, Optional
 
 from researchos.core.timestamp import utc_now
+from researchos.quant_engine.capabilities import (
+    QUANT_OPERATIONS,
+    BackendCapabilities,
+)
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import (
     CalculationVersion,
@@ -125,6 +129,26 @@ class CppQuantAdapter(QuantComputationInterface):
         if self._cpp_backend is not None:
             return str(self._backend.get_version())
         return "python_fallback"
+
+    def capabilities(self) -> BackendCapabilities:
+        """Advertise the C++ adapter's certified capability declaration.
+
+        The adapter delegates to the compiled C++ engine (or its internal
+        Python fallback).  It holds no mutable computation state — the
+        ``_cpp_backend`` / ``_fallback`` references are set once at
+        construction — so it advertises the full ResearchOS trust-boundary
+        guarantee set.
+        """
+        return BackendCapabilities(
+            backend_name="CppQuantAdapter",
+            version=self.get_version(),
+            supported_operations=QUANT_OPERATIONS,
+            deterministic=True,
+            stateless=True,
+            no_timestamps=True,
+            no_randomness=True,
+            explicit_typing=True,
+        )
 
     # ── Internal helpers ─────────────────────────────────────────────────────
 

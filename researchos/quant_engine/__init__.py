@@ -40,6 +40,42 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.backend import PythonQuantBackend
+from researchos.quant_engine.capabilities import (
+    QUANT_OPERATIONS,
+    REFERENCE_BACKEND_NAME,
+    REFERENCE_BACKEND_VERSION,
+    BackendCapabilities,
+    BackendCapabilitiesError,
+    default_capabilities,
+)
+from researchos.quant_engine.backend_hash import (
+    HASH_ALGORITHM,
+    HASH_VERSION,
+    canonicalize,
+    compute_backend_result_hash,
+    compute_input_hash,
+    stable_float,
+)
+from researchos.quant_engine.numerical_validation import (
+    NumericalComparator,
+    NumericalComparisonError,
+    NumericalValidationResult,
+    ValidationStatus,
+)
+from researchos.quant_engine.router import (
+    ERROR_EXECUTION_FAILED,
+    ERROR_NO_CANDIDATE,
+    ERROR_OK,
+    ERROR_TRUST_BOUNDARY,
+    ERROR_VALIDATION_FAILED,
+    BackendCapabilityError,
+    BackendExecutionError,
+    BackendExecutionMetadata,
+    BackendExecutionResult,
+    BackendRouter,
+    BackendRouterError,
+    BackendValidationError,
+)
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
@@ -85,6 +121,35 @@ __all__ = [
     # Interface
     "QuantComputationInterface",
     "PythonQuantBackend",
+    # Certification (Phase 4.1)
+    "QUANT_OPERATIONS",
+    "REFERENCE_BACKEND_NAME",
+    "REFERENCE_BACKEND_VERSION",
+    "BackendCapabilities",
+    "BackendCapabilitiesError",
+    "default_capabilities",
+    "HASH_ALGORITHM",
+    "HASH_VERSION",
+    "canonicalize",
+    "compute_backend_result_hash",
+    "compute_input_hash",
+    "stable_float",
+    "NumericalComparator",
+    "NumericalComparisonError",
+    "NumericalValidationResult",
+    "ValidationStatus",
+    "ERROR_OK",
+    "ERROR_NO_CANDIDATE",
+    "ERROR_EXECUTION_FAILED",
+    "ERROR_VALIDATION_FAILED",
+    "ERROR_TRUST_BOUNDARY",
+    "BackendCapabilityError",
+    "BackendExecutionError",
+    "BackendExecutionMetadata",
+    "BackendExecutionResult",
+    "BackendRouter",
+    "BackendRouterError",
+    "BackendValidationError",
     # Models
     "CalculationVersion",
     "SimulationRequest",

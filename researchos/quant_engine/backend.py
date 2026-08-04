@@ -18,6 +18,12 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from researchos.quant_engine.interface import QuantComputationInterface
+from researchos.quant_engine.capabilities import (
+    QUANT_OPERATIONS,
+    REFERENCE_BACKEND_NAME,
+    REFERENCE_BACKEND_VERSION,
+    BackendCapabilities,
+)
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
@@ -58,6 +64,29 @@ class PythonQuantBackend(QuantComputationInterface):
         # All computation depends only on the explicit inputs passed to
         # each method, so identical inputs always produce identical outputs.
         pass
+
+    # ── Certification identity (Phase 4.1) ───────────────────────────────
+
+    BACKEND_NAME = REFERENCE_BACKEND_NAME
+    BACKEND_VERSION = REFERENCE_BACKEND_VERSION
+
+    def capabilities(self) -> BackendCapabilities:
+        """Advertise the certified capability declaration.
+
+        The Python reference backend is the scientific source of truth and
+        therefore advertises the full operation set with every ResearchOS
+        trust-boundary guarantee enabled.
+        """
+        return BackendCapabilities(
+            backend_name=self.BACKEND_NAME,
+            version=self.BACKEND_VERSION,
+            supported_operations=QUANT_OPERATIONS,
+            deterministic=True,
+            stateless=True,
+            no_timestamps=True,
+            no_randomness=True,
+            explicit_typing=True,
+        )
 
     # ──────────────────────────────────────────────
     # Dataset Contract Normalization
