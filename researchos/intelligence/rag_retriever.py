@@ -537,7 +537,7 @@ class SessionRetriever:
         self._relevance_threshold = relevance_threshold
         self._queries: List[str] = []
         self._all_hits: List[RetrievalHit] = []
-        self._session_start = datetime.utcnow()
+        self._session_start = datetime.now(timezone.utc)
 
     def query(self, query: RetrievalQuery) -> RetrievalResult:
         """Execute a query and accumulate results into session context.
@@ -593,7 +593,7 @@ class SessionRetriever:
         """Clear all session state."""
         self._queries.clear()
         self._all_hits.clear()
-        self._session_start = datetime.utcnow()
+        self._session_start = datetime.now(timezone.utc)
 
 
 __all__ = [
