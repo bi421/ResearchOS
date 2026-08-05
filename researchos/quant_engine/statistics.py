@@ -306,6 +306,208 @@ def calculate_returns_from_prices(
     return returns
 
 
+def regression_slope(y: List[float]) -> float:
+    """Least-squares slope of ``y`` vs the implicit index x = 0..n-1.
+
+    Mirrors ``quant::statistics::Regression::slope`` (C++ OLS, O(n)) so the
+    Python reference is numerically equivalent to the accelerated C++ path.
+
+    Raises:
+        ValueError: If ``y`` has fewer than 2 finite observations.
+    """
+    if len(y) < 2:
+        raise ValueError("need at least 2 observations for regression slope")
+    if any(not math.isfinite(v) for v in y):
+        raise ValueError("series contains NaN or Inf")
+    n = len(y)
+    xbar = (n - 1.0) / 2.0
+    ybar = sum(y) / n
+    sxy = 0.0
+    sxx = 0.0
+    for i, yi in enumerate(y):
+        dx = float(i) - xbar
+        dy = yi - ybar
+        sxy += dx * dy
+        sxx += dx * dx
+    if sxx == 0.0:
+        raise ValueError("zero x variance (degenerate index)")
+    return sxy / sxx
+
+
+def regression_intercept(y: List[float]) -> float:
+    """Least-squares intercept of ``y`` vs the implicit index x = 0..n-1.
+
+    Mirrors ``quant::statistics::Regression::intercept`` (C++ OLS, O(n)).
+    """
+    if len(y) < 2:
+        raise ValueError("need at least 2 observations for regression intercept")
+    if any(not math.isfinite(v) for v in y):
+        raise ValueError("series contains NaN or Inf")
+    n = len(y)
+    xbar = (n - 1.0) / 2.0
+    ybar = sum(y) / n
+    sxy = 0.0
+    sxx = 0.0
+    for i, yi in enumerate(y):
+        dx = float(i) - xbar
+        dy = yi - ybar
+        sxy += dx * dy
+        sxx += dx * dx
+    if sxx == 0.0:
+        raise ValueError("zero x variance (degenerate index)")
+    beta = sxy / sxx
+    return ybar - beta * xbar
+
+
+def _regression_accumulate(
+    x: List[float], y: List[float]
+) -> Any:
+    """One-pass OLS sufficient statistics (mirrors C++ ``accumulate``)."""
+    n = len(x)
+    sum_x = sum(x)
+    sum_y = sum(y)
+    xbar = sum_x / n
+    ybar = sum_y / n
+    sxx = 0.0
+    syy = 0.0
+    sxy = 0.0
+    for xi, yi in zip(x, y):
+        dx = xi - xbar
+        dy = yi - ybar
+        sxx += dx * dx
+        syy += dy * dy
+        sxy += dx * dy
+    return {"xbar": xbar, "ybar": ybar, "sxx": sxx, "syy": syy, "sxy": sxy}
+
+
+def _validate_pair(x: List[float], y: List[float]) -> None:
+    if len(x) != len(y):
+        raise ValueError("x and y size mismatch")
+    if len(x) < 2:
+        raise ValueError("need at least 2 observations for regression")
+    if any(not math.isfinite(v) for v in x) or any(not math.isfinite(v) for v in y):
+        raise ValueError("series contains NaN or Inf")
+
+
+def regression_correlation(x: List[float], y: List[float]) -> float:
+    """Pearson correlation coefficient between ``x`` and ``y``.
+
+    Mirrors ``quant::statistics::Regression::correlation`` (C++ OLS, O(n)).
+    """
+    _validate_pair(x, y)
+    s = _regression_accumulate(x, y)
+    if s["sxx"] == 0.0 or s["syy"] == 0.0:
+        raise ValueError("zero variance in x or y")
+    r = s["sxy"] / math.sqrt(s["sxx"] * s["syy"])
+    return max(-1.0, min(1.0, r))
+
+
+def regression_r_squared(x: List[float], y: List[float]) -> float:
+    """Coefficient of determination R^2 = r^2 for the (x, y) fit.
+
+    Mirrors ``quant::statistics::Regression::r_squared`` (C++ OLS, O(n)).
+    """
+    _validate_pair(x, y)
+    s = _regression_accumulate(x, y)
+    if s["sxx"] == 0.0 or s["syy"] == 0.0:
+        raise ValueError("zero variance in x or y")
+    r = s["sxy"] / math.sqrt(s["sxx"] * s["syy"])
+    clamped = max(-1.0, min(1.0, r))
+    return clamped * clamped
+
+
+def regression_standard_error(x: List[float], y: List[float]) -> float:
+    """Residual standard error of the (x, y) least-squares fit.
+
+    Mirrors ``quant::statistics::Regression::standard_error`` (C++ OLS, O(n)).
+    """
+    _validate_pair(x, y)
+    s = _regression_accumulate(x, y)
+    if s["sxx"] == 0.0:
+        raise ValueError("zero x variance")
+    beta = s["sxy"] / s["sxx"]
+    intercept_val = s["ybar"] - beta * s["xbar"]
+    n = len(x)
+    sse = 0.0
+    for xi, yi in zip(x, y):
+        e = yi - (intercept_val + beta * xi)
+        sse += e * e
+    return math.sqrt(sse / (n - 2.0))
+
+
+def rolling_mean(data: List[float], window: int) -> List[float]:
+    """Rolling arithmetic mean over a sliding window.
+
+    Mirrors ``quant::RollingWindow::mean`` (C++ O(n) incremental).  Output
+    length is ``len(data) - window + 1``.
+
+    Raises:
+        ValueError: If window <= 0 or window > len(data).
+    """
+    if window <= 0:
+        raise ValueError("window must be > 0")
+    if len(data) < window:
+        raise ValueError("window size exceeds data length")
+    n = len(data)
+    out: List[float] = []
+    s = sum(data[:window])
+    out.append(s / window)
+    for i in range(window, n):
+        s += data[i]
+        s -= data[i - window]
+        out.append(s / window)
+    return out
+
+
+def rolling_volatility_incremental(data: List[float], window: int, ddof: int = 1) -> List[float]:
+    """Rolling volatility (standard deviation) over a sliding window.
+
+    Mirrors ``quant::RollingWindow::volatility`` (C++ O(n) incremental one-pass
+    running-sum / running-sum-of-squares formulation).  Output length is
+    ``len(data) - window + 1``.
+
+    This mirrors the C++ accelerator exactly, including its scale-relative
+    epsilon clamp, so the Python reference is numerically equivalent to the
+    accelerated path (unlike the two-pass ``rolling_volatility`` helper above,
+    which uses a different formula).
+
+    Raises:
+        ValueError: If window <= 0, window > len(data), or ddof not in [0, window).
+    """
+    if window <= 0:
+        raise ValueError("window must be > 0")
+    if len(data) < window:
+        raise ValueError("window size exceeds data length")
+    if ddof < 0 or ddof >= window:
+        raise ValueError("ddof must be in [0, window)")
+    n = len(data)
+    denom = float(window - ddof)
+    out: List[float] = []
+    s = 0.0
+    s2 = 0.0
+    for i in range(window):
+        s += data[i]
+        s2 += data[i] * data[i]
+    eps = 2.220446049250313e-16  # std::numeric_limits<double>::epsilon()
+
+    def vol_of(cur_s: float, cur_s2: float) -> float:
+        numerator = cur_s2 - cur_s * cur_s / window
+        scale = cur_s2 + (cur_s * cur_s / window)
+        if scale > 0.0 and numerator <= eps * 8.0 * scale:
+            return 0.0
+        var = numerator / denom
+        return math.sqrt(var) if var > 0.0 else 0.0
+
+    out.append(vol_of(s, s2))
+    for i in range(window, n):
+        s += data[i]
+        s2 += data[i] * data[i]
+        s -= data[i - window]
+        s2 -= data[i - window] * data[i - window]
+        out.append(vol_of(s, s2))
+    return out
+
+
 def compute_statistics(
     returns: List[float],
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,

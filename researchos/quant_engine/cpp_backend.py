@@ -308,6 +308,110 @@ class CppQuantAdapter(QuantComputationInterface):
     ) -> Dict[str, Any]:
         return compute_performance_analytics(returns, calculation_version)
 
+    # ── Regression (Phase 4.5 — C++ performance integration) ────────────────
+    #
+    # These delegate to the compiled C++ ``Regression`` module via the shim.
+    # They are pure numerical research analytics (OLS trend / pairwise fits) —
+    # NOT trading logic, signals, or prediction.  They are exposed as extra
+    # adapter surface beyond ``QuantComputationInterface`` (the frozen core
+    # interface is unchanged) so upper layers can opt into the accelerated
+    # path without any interface/architecture modification.
+
+    def regression_slope(
+        self,
+        y: List[float],
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> float:
+        _require_v1(calculation_version)
+        if len(y) < 2:
+            raise ValueError("need at least 2 observations for regression slope")
+        return float(self._call(self._backend.regression_slope, y))
+
+    def regression_intercept(
+        self,
+        y: List[float],
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> float:
+        _require_v1(calculation_version)
+        if len(y) < 2:
+            raise ValueError("need at least 2 observations for regression intercept")
+        return float(self._call(self._backend.regression_intercept, y))
+
+    def regression_correlation(
+        self,
+        x: List[float],
+        y: List[float],
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> float:
+        _require_v1(calculation_version)
+        if len(x) != len(y):
+            raise ValueError("x and y size mismatch")
+        if len(x) < 2:
+            raise ValueError("need at least 2 observations for regression")
+        return float(self._call(self._backend.regression_correlation, x, y))
+
+    def regression_r_squared(
+        self,
+        x: List[float],
+        y: List[float],
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> float:
+        _require_v1(calculation_version)
+        if len(x) != len(y):
+            raise ValueError("x and y size mismatch")
+        if len(x) < 2:
+            raise ValueError("need at least 2 observations for regression")
+        return float(self._call(self._backend.regression_r_squared, x, y))
+
+    def regression_standard_error(
+        self,
+        x: List[float],
+        y: List[float],
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> float:
+        _require_v1(calculation_version)
+        if len(x) != len(y):
+            raise ValueError("x and y size mismatch")
+        if len(x) < 2:
+            raise ValueError("need at least 2 observations for regression")
+        return float(self._call(self._backend.regression_standard_error, x, y))
+
+    # ── Rolling statistics (Phase 4.5 — C++ performance integration) ────────
+    #
+    # Delegate to the compiled C++ ``RollingWindow`` module via the shim.
+    # Pure numerical research analytics (rolling mean / rolling volatility).
+
+    def rolling_mean(
+        self,
+        data: List[float],
+        window: int,
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> List[float]:
+        _require_v1(calculation_version)
+        if window <= 0:
+            raise ValueError("window must be > 0")
+        if len(data) < window:
+            raise ValueError("window size exceeds data length")
+        return list(self._call(self._backend.rolling_mean, data, window))
+
+    def rolling_volatility_series(
+        self,
+        data: List[float],
+        window: int,
+        ddof: int = 1,
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> List[float]:
+        _require_v1(calculation_version)
+        if window <= 0:
+            raise ValueError("window must be > 0")
+        if len(data) < window:
+            raise ValueError("window size exceeds data length")
+        if ddof < 0 or ddof >= window:
+            raise ValueError("ddof must be in [0, window)")
+        return list(
+            self._call(self._backend.rolling_volatility_series_ext, data, window, ddof)
+        )
+
     # ── Simulation ───────────────────────────────────────────────────────────
 
     def run_simulation(

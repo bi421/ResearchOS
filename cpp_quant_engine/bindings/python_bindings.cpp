@@ -22,6 +22,8 @@
 #include "bridge_validation.h"
 #include "quant/backtest/serialization.h"
 #include "quant/core/engine.h"
+#include "quant/statistics/regression.h"
+#include "quant/statistics/rolling.h"
 
 #include "quant_engine.hpp"
 
@@ -493,6 +495,62 @@ public:
   double z_score(double value, double mean, double std) {
     return qe::statistics::z_score(value, mean, std);
   }
+
+  // ── Regression (trend form: OLS vs implicit index x = 0..n-1) ────────────
+  double regression_slope(const std::vector<double>& y) {
+    auto r = quant::statistics::Regression::slope(y);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  double regression_intercept(const std::vector<double>& y) {
+    auto r = quant::statistics::Regression::intercept(y);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  // ── Regression (pairwise form on explicit (x, y) sample) ─────────────────
+  double regression_correlation(const std::vector<double>& x,
+                                const std::vector<double>& y) {
+    auto r = quant::statistics::Regression::correlation(x, y);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  double regression_r_squared(const std::vector<double>& x,
+                              const std::vector<double>& y) {
+    auto r = quant::statistics::Regression::r_squared(x, y);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  double regression_standard_error(const std::vector<double>& x,
+                                   const std::vector<double>& y) {
+    auto r = quant::statistics::Regression::standard_error(x, y);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  // ── Rolling statistics ────────────────────────────────────────────────────
+  std::vector<double> rolling_mean(const std::vector<double>& data, size_t window) {
+    auto r = quant::RollingWindow::mean(data, window);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  std::vector<double> rolling_volatility_series_ext(const std::vector<double>& data,
+                                                     size_t window, int ddof) {
+    auto r = quant::RollingWindow::volatility(data, window, ddof);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
 };
 
 // ── Module Definition ───────────────────────────────────────────────────────
@@ -534,7 +592,7 @@ PYBIND11_MODULE(cpp_quant_backend, m) {
       .def(py::init<>())
       .def("calculate_returns", &CppQuantBackend::calculate_returns,
            py::arg("prices"), py::arg("return_type") = "percentage")
-      .def("calculate_volatility", &CppQuantBackend::calculate_volatility,
+.def("calculate_volatility", &CppQuantBackend::calculate_volatility,
            py::arg("returns"), py::arg("method") = "standard_deviation")
       .def("calculate_drawdown", &CppQuantBackend::calculate_drawdown,
            py::arg("equity_curve"))
@@ -552,7 +610,19 @@ PYBIND11_MODULE(cpp_quant_backend, m) {
       .def("std_dev", &CppQuantBackend::std_dev, py::arg("data"))
       .def("variance", &CppQuantBackend::variance, py::arg("data"))
       .def("z_score", &CppQuantBackend::z_score,
-           py::arg("value"), py::arg("mean"), py::arg("std"));
+           py::arg("value"), py::arg("mean"), py::arg("std"))
+      .def("regression_slope", &CppQuantBackend::regression_slope, py::arg("y"))
+      .def("regression_intercept", &CppQuantBackend::regression_intercept, py::arg("y"))
+      .def("regression_correlation", &CppQuantBackend::regression_correlation,
+           py::arg("x"), py::arg("y"))
+      .def("regression_r_squared", &CppQuantBackend::regression_r_squared,
+           py::arg("x"), py::arg("y"))
+      .def("regression_standard_error", &CppQuantBackend::regression_standard_error,
+           py::arg("x"), py::arg("y"))
+      .def("rolling_mean", &CppQuantBackend::rolling_mean,
+           py::arg("data"), py::arg("window"))
+      .def("rolling_volatility_series_ext", &CppQuantBackend::rolling_volatility_series_ext,
+           py::arg("data"), py::arg("window"), py::arg("ddof") = 1);
 
   m.def("version", []() { return quant::Version::current().to_string(); },
         "Get the C++ Quant Engine version (major.minor.patch)");
