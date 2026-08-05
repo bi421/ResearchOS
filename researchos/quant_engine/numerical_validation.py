@@ -15,7 +15,9 @@ the ResearchOS certification tolerance policy:
 
 Every comparison produces a frozen ``NumericalValidationResult`` whose
 ``comparison_hash`` is a deterministic SHA-256 digest of the comparison
-(repeatable across runs for identical inputs).
+(repeatable across runs for identical inputs).  ``compare_structural`` extends
+validation to structured (non-numeric) outputs such as ``SimulationResult`` by
+comparing their deterministic digests.
 
 This is a validation/certification layer only — it makes no trading,
 signalling, or prediction decisions.
@@ -75,6 +77,7 @@ class NumericalValidationResult:
     atol: float
     rtol: float
     comparison_hash: str
+    mode: str = "numeric"
 
     @property
     def passed(self) -> bool:
@@ -93,6 +96,7 @@ class NumericalValidationResult:
             "atol": self.atol,
             "rtol": self.rtol,
             "comparison_hash": self.comparison_hash,
+            "mode": self.mode,
         }
 
     @classmethod
@@ -108,6 +112,7 @@ class NumericalValidationResult:
             atol=float(data["atol"]),
             rtol=float(data["rtol"]),
             comparison_hash=str(data["comparison_hash"]),
+            mode=str(data.get("mode", "numeric")),
         )
 
 
@@ -139,6 +144,66 @@ def _as_float_rows(value: Any) -> Tuple[Tuple[float, ...], ...]:
     raise NumericalComparisonError(
         "expected a scalar, vector, or matrix of numbers"
     )
+
+
+def _structural_content(value: Any) -> Any:
+    """Reduce a structured output to its comparable, non-observational content.
+
+    For objects exposing a ``to_dict()`` mapping (e.g. ``SimulationResult``),
+    the mapping is used with the observational/derived fields
+    (``execution_timestamp``, ``result_hash``) removed, mirroring the hashing
+    semantics.  All other values are returned as-is.
+    """
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        try:
+            data = to_dict()
+        except Exception:
+            return value
+        if isinstance(data, dict):
+            data = dict(data)
+            data.pop("execution_timestamp", None)
+            data.pop("result_hash", None)
+            return data
+    return value
+
+
+def _values_equivalent(expected: Any, actual: Any, atol: float, rtol: float) -> bool:
+    """Recursively compare two structured values.
+
+    - numeric leaves must match within ``atol``/``rtol``
+    - non-numeric leaves must match exactly
+    - container shapes and key sets must be identical
+    """
+    if _is_number(expected) or _is_number(actual):
+        if not (_is_number(expected) and _is_number(actual)):
+            return False
+        exp, act = float(expected), float(actual)
+        # NaN is never accepted, even when present on both sides.
+        if math.isnan(exp) or math.isnan(act):
+            return False
+        # Identical non-finite values (e.g. both +inf) are equivalent.
+        if math.isinf(exp) or math.isinf(act):
+            return exp == act
+        return abs(exp - act) <= atol + rtol * abs(act)
+
+    if isinstance(expected, Mapping) and isinstance(actual, Mapping):
+        if set(expected.keys()) != set(actual.keys()):
+            return False
+        return all(
+            _values_equivalent(expected[k], actual[k], atol, rtol)
+            for k in expected
+        )
+
+    if isinstance(expected, (list, tuple)) and isinstance(actual, (list, tuple)):
+        if len(expected) != len(actual):
+            return False
+        return all(
+            _values_equivalent(a, b, atol, rtol)
+            for a, b in zip(expected, actual)
+        )
+
+    return expected == actual
 
 
 class NumericalComparator:
@@ -204,7 +269,64 @@ class NumericalComparator:
             _as_float_rows(expected), _as_float_rows(actual), atol, rtol
         )
 
-    # ── internal ────────────────────────────────────────────────────────
+    def compare_structural(
+        self,
+        expected: Any,
+        actual: Any,
+        atol: float = DEFAULT_ATOL,
+        rtol: float = DEFAULT_RTOL,
+    ) -> NumericalValidationResult:
+        """Compare two structured outputs deterministically.
+
+        Used for operations that return structured objects (e.g.
+        ``SimulationResult``) or mappings (statistics/metrics dicts) rather
+        than scalar/vector/matrix numbers.  The outputs are reduced to their
+        comparable content (excluding observational fields such as execution
+        timestamps) and compared field-by-field:
+
+            - numeric leaves must match within ``atol``/``rtol``
+            - non-numeric leaves must match exactly
+            - container shapes and key sets must be identical
+
+        This mirrors the certification parity policy: a certified accelerated
+        backend may differ from the reference in the last ULP of accumulated
+        statistics, but must be equivalent within the declared tolerance —
+        anything else is rejected.
+
+        Returns a ``NumericalValidationResult`` with deterministic
+        ``comparison_hash``.
+        """
+        _validate_tolerance(atol, rtol)
+        exp_content = _structural_content(expected)
+        act_content = _structural_content(actual)
+        passed = _values_equivalent(exp_content, act_content, atol, rtol)
+        comparison_hash = self._structural_hash(exp_content, act_content, atol, rtol)
+        return NumericalValidationResult(
+            status=(
+                ValidationStatus.PASSED if passed else ValidationStatus.FAILED
+            ),
+            shape_match=passed,
+            has_nan=False,
+            has_inf=False,
+            max_abs_error=0.0,
+            max_rel_error=0.0,
+            atol=float(atol),
+            rtol=float(rtol),
+            comparison_hash=comparison_hash,
+            mode="structural",
+        )
+
+    @staticmethod
+    def _structural_hash(exp_digest: Any, act_digest: Any, atol: float, rtol: float) -> str:
+        payload = {
+            "expected": exp_digest,
+            "actual": act_digest,
+            "atol": atol,
+            "rtol": rtol,
+        }
+        return hashlib.sha256(
+            json.dumps(canonicalize(payload), sort_keys=True).encode("utf-8")
+        ).hexdigest()
 
     def _compare_rows(
         self,

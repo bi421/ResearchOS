@@ -249,6 +249,10 @@ class ExperimentResult(BaseObject):
         self.metadata: Dict[str, Any] = metadata or {}
         self.result_hash: str = ""
         self.trace = trace
+        # Observational backend execution telemetry (Phase 4.4). These are
+        # intentionally NOT part of the deterministic ``result_hash``.
+        self.backend_execution_time_ms: float = 0.0
+        self.backend_execution_timestamp: Optional[str] = None
 
         self._update_hash()
 
@@ -296,6 +300,8 @@ class ExperimentResult(BaseObject):
             "metadata": self.metadata,
             "result_hash": self.result_hash,
             "trace": self.trace,
+            "backend_execution_time_ms": self.backend_execution_time_ms,
+            "backend_execution_timestamp": self.backend_execution_timestamp,
         })
         return base
 
@@ -312,4 +318,6 @@ class ExperimentResult(BaseObject):
         obj.metadata = dict(data.get("metadata", {}))
         obj.result_hash = data.get("result_hash", "")
         obj.trace = data.get("trace", "")
+        obj.backend_execution_time_ms = float(data.get("backend_execution_time_ms", 0.0))
+        obj.backend_execution_timestamp = data.get("backend_execution_timestamp")
         return obj

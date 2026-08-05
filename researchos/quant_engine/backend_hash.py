@@ -54,6 +54,7 @@ def canonicalize(value: Any) -> Any:
     - lists/tuples become lists
     - floats become stable strings (via ``stable_float``)
     - ints/bools/strings/None pass through
+    - objects exposing ``to_dict()`` are reduced to their canonical dict
     """
     if isinstance(value, Mapping):
         return {str(k): canonicalize(v) for k, v in sorted(value.items(), key=str)}
@@ -68,7 +69,15 @@ def canonicalize(value: Any) -> Any:
     if value is None or isinstance(value, str):
         return value
     if hasattr(value, "to_dict"):
-        return canonicalize(value.to_dict())
+        data = value.to_dict()
+        if isinstance(data, dict):
+            # Observational / derived fields are never part of a result hash.
+            # Including them (e.g. ``SimulationResult.execution_timestamp`` /
+            # ``result_hash``) would make identical executions hash differently.
+            data = dict(data)
+            data.pop("execution_timestamp", None)
+            data.pop("result_hash", None)
+        return canonicalize(data)
     return str(value)
 
 

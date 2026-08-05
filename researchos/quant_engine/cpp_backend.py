@@ -378,3 +378,47 @@ class CppQuantAdapter(QuantComputationInterface):
         for r in returns:
             equity.append(equity[-1] * (1.0 + r))
         return equity
+def create_cpp_router():
+    """
+    Create a backend router with C++ backend registered.
+
+    Compatibility factory for integration tests and external callers.
+    """
+    from .router import BackendRouter
+    from .backend import PythonQuantBackend
+
+    router = BackendRouter(
+        reference_backend=PythonQuantBackend()
+    )
+
+    register_cpp_backend(router)
+
+    return router
+def register_cpp_backend(router=None, force=False):
+    """
+    Register C++ quant backend into BackendRouter.
+
+    Compatibility API for Phase 4 integration tests.
+    """
+    adapter = CppQuantAdapter()
+
+    if router is not None:
+        router.register(adapter)
+
+    return adapter
+
+
+def create_cpp_router():
+    """
+    Create router with Python reference backend and C++ candidate.
+    """
+    from .router import BackendRouter
+    from .backend import PythonQuantBackend
+
+    router = BackendRouter(
+        PythonQuantBackend()
+    )
+
+    register_cpp_backend(router)
+
+    return router

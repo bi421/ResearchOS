@@ -11,12 +11,12 @@ Purpose:
 
 Architecture:
     Experiment Framework
-            │
-            ▼
+            |
+            v
     QuantComputationInterface
-            │
-            ├── PythonQuantBackend (current)
-            └── CppQuantBackend (future)
+            |
+            |-- PythonQuantBackend (current)
+            +-- CppQuantBackend (future)
 
     The Experiment Framework NEVER:
         - loads CSV files directly
@@ -30,6 +30,18 @@ Design:
     The runner takes an Experiment and a dataset, executes the simulation
     via the QuantComputationInterface, and produces ExperimentRun + ExperimentResult
     objects. All computation is deterministic and versioned.
+
+Phase 4.2 / 4.4:
+    Every computation is routed through the certified ``BackendRouter``. When
+    no router is supplied, the runner constructs an internal one whose
+    reference backend is the configured ``backend`` (or ``PythonQuantBackend``).
+    The router's execution metadata (backend identity, version, fallback
+    behavior, validation status, error code, result hash, capability profile,
+    and Phase 4.4 scheduler statistics) is propagated into the
+    ``ExperimentResult`` statistics (and therefore the deterministic result
+    hash), while the observational ``backend_execution_time_ms`` /
+    ``backend_execution_timestamp`` are recorded on the result but never
+    hashed.
 """
 
 from __future__ import annotations
@@ -41,6 +53,7 @@ from researchos.experiments.experiment import Experiment
 from researchos.experiments.result import ExperimentResult, ExperimentRun
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.backend import PythonQuantBackend
+from researchos.quant_engine.router import BackendRouter
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
@@ -170,14 +183,32 @@ class BaseExperimentRunner(AbstractExperimentRunner):
     def __init__(
         self,
         backend: Optional[QuantComputationInterface] = None,
+        router: Optional[BackendRouter] = None,
     ) -> None:
         """
         Initialize the runner.
 
         Args:
             backend: Quant computation backend. Uses PythonQuantBackend if not provided.
+            router: Optional BackendRouter (Phase 4.2/4.4). When provided, the
+                runner routes each computation through the certified router
+                flow and propagates deterministic backend metadata plus
+                observational execution telemetry. When None, an internal
+                router is constructed with ``backend`` as its reference.
+
+        Raises:
+            TypeError: If ``router`` is provided but is not a ``BackendRouter``.
         """
-        self._backend = backend or PythonQuantBackend()
+        if router is not None and not isinstance(router, BackendRouter):
+            raise TypeError("router must be a BackendRouter or None")
+        self._router = router
+        if router is not None:
+            self._backend = getattr(router, "reference_backend", backend or PythonQuantBackend())
+        else:
+            if backend is None:
+                backend = PythonQuantBackend()
+            self._backend = backend
+            self._router = BackendRouter(reference_backend=backend)
 
     def _ensure_ready(self, experiment: Experiment) -> None:
         """Ensure the experiment is in Ready status before running."""
@@ -398,14 +429,19 @@ class BaseExperimentRunner(AbstractExperimentRunner):
             tags=experiment.tags,
         )
 
-        # Execute computation via Quant Engine backend.
-        # The backend owns all dataset-contract normalisation — the runner
-        # simply forwards the raw contract (None, HistoricalDataset, list, etc.)
-        sim_result: SimulationResult = self._backend.run_simulation(
-            request=request,
-            dataset=dataset,
-            calculation_version=CalculationVersion.CALCULATION_V1,
+        # Execute computation through the certified router. The backend owns
+        # all dataset-contract normalisation — the runner simply forwards the
+        # raw contract (None, HistoricalDataset, list, etc.) unchanged.
+        routing = self._router.execute(
+            "run_simulation",
+            {
+                "request": request,
+                "dataset": dataset,
+                "calculation_version": CalculationVersion.CALCULATION_V1,
+            },
         )
+        sim_result: SimulationResult = routing.output
+        router_meta = routing.metadata
 
         # Map SimulationResult → ExperimentResult
         result = ExperimentResult(run_id=run.id)
@@ -423,7 +459,7 @@ class BaseExperimentRunner(AbstractExperimentRunner):
             result.add_statistic(perf_name, perf_value)
 
         # Add computation provenance
-        result.add_statistic("computation_backend", "PythonQuantBackend")
+        result.add_statistic("computation_backend", router_meta.backend)
         result.add_statistic("calculation_version", sim_result.calculation_version.value)
         result.add_statistic("input_hash", sim_result.input_hash)
         result.add_statistic("result_hash", sim_result.result_hash)
@@ -444,7 +480,48 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         result.metadata["positions"] = list(sim_result.positions)
         result.metadata["execution_stats"] = dict(sim_result.execution_stats)
 
+        # ── Phase 4.2/4.4: propagate router backend metadata ────────────
+        self._propagate_router_stats(result, router_meta)
+
         return result
+
+    def _propagate_router_stats(
+        self,
+        result: ExperimentResult,
+        meta: Any,
+    ) -> None:
+        """Propagate deterministic backend metadata from the router.
+
+        Copies the deterministic fields from the router execution metadata into
+        result statistics (and therefore into the result hash); the
+        observational timing/timestamp is recorded on the result but never
+        hashed.
+        """
+        result.add_statistic("backend_id", meta.backend)
+        result.add_statistic("backend_version", meta.version)
+        result.add_statistic("backend_fallback_used", meta.fallback_used)
+        result.add_statistic("backend_validation_status", meta.validation_status)
+        result.add_statistic("backend_error_code", meta.error_code)
+        result.add_statistic("backend_result_hash", meta.result_hash)
+        result.add_statistic(
+            "backend_capability_profile",
+            meta.capability_profile.to_dict()
+            if meta.capability_profile is not None
+            else {},
+        )
+        # Phase 4.4 scheduler statistics
+        result.add_statistic("backend_fallback_count", meta.fallback_count)
+        result.add_statistic("backend_attempted_backends", list(meta.attempted_backends))
+        result.add_statistic("backend_policy_version", meta.policy_version)
+        result.add_statistic("backend_profile_version", meta.profile_version)
+        decision = meta.scheduler_decision
+        result.add_statistic(
+            "backend_scheduler_decision",
+            decision.to_dict() if decision is not None else {"selected_backend": meta.backend},
+        )
+        # Observational telemetry — never hashed.
+        result.backend_execution_time_ms = meta.execution_time_ms
+        result.backend_execution_timestamp = meta.execution_timestamp
 
     def _estimate_windows(
         self,
@@ -491,4 +568,3 @@ def get_runner() -> BaseExperimentRunner:
     if _default_runner is None:
         _default_runner = BaseExperimentRunner()
     return _default_runner
-
