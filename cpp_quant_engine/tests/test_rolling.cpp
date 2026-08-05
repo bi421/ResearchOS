@@ -114,6 +114,58 @@ TEST(RollingVolatility, FullWindowLength) {
   EXPECT_TRUE(std::isfinite(res.value()[0]));
 }
 
+TEST(RollingVariance, MatchesVolatilitySquared) {
+  std::vector<double> data = {0.01, -0.02, 0.03, -0.01, 0.02, 0.015, -0.005, 0.007};
+  auto v = RollingWindow::variance(data, 4);
+  auto vol = RollingWindow::volatility(data, 4);
+  ASSERT_TRUE(v.is_ok() && vol.is_ok());
+  ASSERT_EQ(v.value().size(), vol.value().size());
+  for (size_t i = 0; i < v.value().size(); ++i) {
+    EXPECT_NEAR(v.value()[i], vol.value()[i] * vol.value()[i], 1e-12);
+  }
+}
+
+TEST(RollingVariance, KnownSeries) {
+  std::vector<double> data = {1.0, 2.0, 3.0, 4.0, 5.0};
+  auto res = RollingWindow::variance(data, 3);
+  ASSERT_TRUE(res.is_ok());
+  // Window 3, ddof=1. Each consecutive triple has mean of the middle value and
+  // squared deviations {1,0,1} -> sum sq = 2 -> var = 2/(3-1) = 1.
+  std::vector<double> expected = {1.0, 1.0, 1.0};
+  expect_series(res.value(), expected, 1e-12);
+}
+
+TEST(RollingVariance, Deterministic) {
+  std::vector<double> data = {0.01, -0.02, 0.03, -0.01, 0.02, 0.015};
+  auto a = RollingWindow::variance(data, 3);
+  auto b = RollingWindow::variance(data, 3);
+  ASSERT_TRUE(a.is_ok() && b.is_ok());
+  expect_series(a.value(), b.value(), 1e-15);
+}
+
+TEST(RollingVariance, ConstantInputZeroVar) {
+  std::vector<double> data(10, 0.01);
+  auto res = RollingWindow::variance(data, 3);
+  ASSERT_TRUE(res.is_ok());
+  for (double v : res.value()) {
+    EXPECT_NEAR(v, 0.0, 1e-12);
+  }
+}
+
+TEST(RollingVariance, InsufficientData) {
+  std::vector<double> data = {1.0, 2.0};
+  auto res = RollingWindow::variance(data, 5);
+  ASSERT_TRUE(res.is_err());
+  EXPECT_EQ(res.error().code(), ErrorCode::InsufficientData);
+}
+
+TEST(RollingVariance, InvalidDdof) {
+  std::vector<double> data = {1.0, 2.0, 3.0, 4.0};
+  auto res = RollingWindow::variance(data, 3, 3);
+  ASSERT_TRUE(res.is_err());
+  EXPECT_EQ(res.error().code(), ErrorCode::InvalidArgument);
+}
+
 TEST(RollingVolatility, ReferenceMatchesNaive) {
   // Validate the reference against a hand-rolled naive per-window std.
   std::vector<double> data = {0.02, -0.01, 0.03, 0.005, -0.02, 0.01};

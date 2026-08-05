@@ -508,6 +508,54 @@ def rolling_volatility_incremental(data: List[float], window: int, ddof: int = 1
     return out
 
 
+def rolling_variance_incremental(data: List[float], window: int, ddof: int = 1) -> List[float]:
+    """Rolling variance over a sliding window.
+
+    Mirrors ``quant::RollingWindow::variance`` (C++ O(n) incremental one-pass
+    running-sum / running-sum-of-squares formulation).  Output length is
+    ``len(data) - window + 1``.
+
+    This mirrors the C++ accelerator exactly, including its scale-relative
+    epsilon clamp, so the Python reference is numerically equivalent to the
+    accelerated path (the variance is the square of the rolling volatility).
+
+    Raises:
+        ValueError: If window <= 0, window > len(data), or ddof not in [0, window).
+    """
+    if window <= 0:
+        raise ValueError("window must be > 0")
+    if len(data) < window:
+        raise ValueError("window size exceeds data length")
+    if ddof < 0 or ddof >= window:
+        raise ValueError("ddof must be in [0, window)")
+    n = len(data)
+    denom = float(window - ddof)
+    out: List[float] = []
+    s = 0.0
+    s2 = 0.0
+    for i in range(window):
+        s += data[i]
+        s2 += data[i] * data[i]
+    eps = 2.220446049250313e-16  # std::numeric_limits<double>::epsilon()
+
+    def var_of(cur_s: float, cur_s2: float) -> float:
+        numerator = cur_s2 - cur_s * cur_s / window
+        scale = cur_s2 + (cur_s * cur_s / window)
+        if scale > 0.0 and numerator <= eps * 8.0 * scale:
+            return 0.0
+        var = numerator / denom
+        return var if var > 0.0 else 0.0
+
+    out.append(var_of(s, s2))
+    for i in range(window, n):
+        s += data[i]
+        s2 += data[i] * data[i]
+        s -= data[i - window]
+        s2 -= data[i - window] * data[i - window]
+        out.append(var_of(s, s2))
+    return out
+
+
 def compute_statistics(
     returns: List[float],
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,

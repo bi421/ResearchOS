@@ -28,6 +28,7 @@ from researchos.quant_engine.statistics import (
     regression_slope,
     regression_standard_error,
     rolling_mean,
+    rolling_variance_incremental,
     rolling_volatility_incremental,
 )
 
@@ -93,6 +94,11 @@ def build_cases(cpp: CppQuantAdapter) -> List[Tuple[str, Callable[[Any], Any], C
             "rolling_volatility",
             lambda s: rolling_volatility_incremental(s, 21, ddof=1),
             lambda s: cpp.rolling_volatility_series(s, 21, ddof=1),
+        ),
+        (
+            "rolling_variance",
+            lambda s: rolling_variance_incremental(s, 21, ddof=1),
+            lambda s: cpp.rolling_variance_series(s, 21, ddof=1),
         ),
     ]
 

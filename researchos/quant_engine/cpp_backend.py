@@ -412,6 +412,24 @@ class CppQuantAdapter(QuantComputationInterface):
             self._call(self._backend.rolling_volatility_series_ext, data, window, ddof)
         )
 
+    def rolling_variance_series(
+        self,
+        data: List[float],
+        window: int,
+        ddof: int = 1,
+        calculation_version: CalculationVersion = CALCULATION_V1,
+    ) -> List[float]:
+        _require_v1(calculation_version)
+        if window <= 0:
+            raise ValueError("window must be > 0")
+        if len(data) < window:
+            raise ValueError("window size exceeds data length")
+        if ddof < 0 or ddof >= window:
+            raise ValueError("ddof must be in [0, window)")
+        return list(
+            self._call(self._backend.rolling_variance_ext, data, window, ddof)
+        )
+
     # ── Simulation ───────────────────────────────────────────────────────────
 
     def run_simulation(

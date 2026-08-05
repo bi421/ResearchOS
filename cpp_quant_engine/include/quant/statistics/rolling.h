@@ -40,9 +40,26 @@ struct RollingWindow {
    * @param ddof   Delta degrees of freedom (must be < window).
    * @return Series of length ``n - window + 1``.
    */
-  static Result<std::vector<double>> volatility(const std::vector<double>& data,
+static Result<std::vector<double>> volatility(const std::vector<double>& data,
                                                  size_t window,
                                                  int ddof = 1);
+
+  /**
+   * Rolling variance over a sliding window.  O(n).
+   *
+   * Uses the same incremental one-pass running-sum / running-sum-of-squares
+   * formulation as ``volatility``, returning the variance (the square of the
+   * standard deviation) with the requested delta degrees of freedom
+   * (default ddof=1 → sample variance).
+   *
+   * @param data   Input series.
+   * @param window Sliding window size.
+   * @param ddof   Delta degrees of freedom (must be < window).
+   * @return Series of length ``n - window + 1``.
+   */
+  static Result<std::vector<double>> variance(const std::vector<double>& data,
+                                               size_t window,
+                                               int ddof = 1);
 
   /**
    * Rolling volatility reference implementation.  O(n*w).

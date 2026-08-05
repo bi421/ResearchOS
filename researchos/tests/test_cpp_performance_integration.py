@@ -33,6 +33,7 @@ from researchos.quant_engine.statistics import (
     regression_slope,
     regression_standard_error,
     rolling_mean,
+    rolling_variance_incremental,
     rolling_volatility_incremental,
 )
 
@@ -182,6 +183,43 @@ class TestRollingVolatility:
             cpp.rolling_volatility_series(data, 21, ddof=21)
         with pytest.raises(ValueError):
             cpp.rolling_volatility_series(data, 21, ddof=-1)
+
+
+class TestRollingVariance:
+    def test_matches_reference_ddof1(self, cpp):
+        data = make_series(256)
+        window = 21
+        expected = rolling_variance_incremental(data, window, ddof=1)
+        actual = cpp.rolling_variance_series(data, window, ddof=1)
+        assert len(actual) == len(data) - window + 1
+        assert actual == pytest.approx(expected, rel=1e-9, abs=1e-12)
+
+    def test_matches_reference_ddof0(self, cpp):
+        data = make_series(256)
+        window = 21
+        expected = rolling_variance_incremental(data, window, ddof=0)
+        actual = cpp.rolling_variance_series(data, window, ddof=0)
+        assert len(actual) == len(data) - window + 1
+        assert actual == pytest.approx(expected, rel=1e-9, abs=1e-12)
+
+    def test_equals_volatility_squared(self, cpp):
+        # Variance must equal the square of the rolling volatility.
+        data = make_series(256)
+        window = 21
+        var = list(cpp.rolling_variance_series(data, window, ddof=1))
+        vol = list(cpp.rolling_volatility_series(data, window, ddof=1))
+        assert var == pytest.approx([v * v for v in vol], rel=1e-9, abs=1e-12)
+
+    def test_constant_series_zero_variance(self, cpp):
+        data = [5.0] * 30
+        assert list(cpp.rolling_variance_series(data, 10)) == [0.0] * 21
+
+    def test_invalid_ddof_raises(self, cpp):
+        data = make_series(64)
+        with pytest.raises(ValueError):
+            cpp.rolling_variance_series(data, 21, ddof=21)
+        with pytest.raises(ValueError):
+            cpp.rolling_variance_series(data, 21, ddof=-1)
 
 
 class TestComparatorCertification:

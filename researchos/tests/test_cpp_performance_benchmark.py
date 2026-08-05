@@ -46,6 +46,7 @@ def test_benchmark_reports_all_operations():
         "regression_standard_error",
         "rolling_mean",
         "rolling_volatility",
+        "rolling_variance",
     }
     assert ops == expected
     assert results["sizes"] == list(DATASET_SIZES)

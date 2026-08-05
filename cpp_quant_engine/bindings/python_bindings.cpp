@@ -544,9 +544,17 @@ public:
     return r.value();
   }
 
-  std::vector<double> rolling_volatility_series_ext(const std::vector<double>& data,
+std::vector<double> rolling_volatility_series_ext(const std::vector<double>& data,
                                                      size_t window, int ddof) {
     auto r = quant::RollingWindow::volatility(data, window, ddof);
+    if (r.is_err())
+      throw qe::InvalidArgumentError(r.error().message());
+    return r.value();
+  }
+
+  std::vector<double> rolling_variance_ext(const std::vector<double>& data,
+                                            size_t window, int ddof) {
+    auto r = quant::RollingWindow::variance(data, window, ddof);
     if (r.is_err())
       throw qe::InvalidArgumentError(r.error().message());
     return r.value();
@@ -621,7 +629,9 @@ PYBIND11_MODULE(cpp_quant_backend, m) {
            py::arg("x"), py::arg("y"))
       .def("rolling_mean", &CppQuantBackend::rolling_mean,
            py::arg("data"), py::arg("window"))
-      .def("rolling_volatility_series_ext", &CppQuantBackend::rolling_volatility_series_ext,
+.def("rolling_volatility_series_ext", &CppQuantBackend::rolling_volatility_series_ext,
+           py::arg("data"), py::arg("window"), py::arg("ddof") = 1)
+      .def("rolling_variance_ext", &CppQuantBackend::rolling_variance_ext,
            py::arg("data"), py::arg("window"), py::arg("ddof") = 1);
 
   m.def("version", []() { return quant::Version::current().to_string(); },
