@@ -16,6 +16,7 @@ Design:
 """
 
 from __future__ import annotations
+from researchos.quant_engine.dataset_contracts import extract_prices
 
 import hashlib
 import json
@@ -155,24 +156,57 @@ class CppQuantBackendWrapper(QuantComputationInterface):
         self,
         returns: List[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, float]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
-        result = self._backend.calculate_performance_analytics(returns)
-        return dict(result)
+        cpp_result = self._backend.calculate_performance_analytics(returns)
+        result = {k: float(v) for k, v in cpp_result.items()}
 
-    # ──────────────────────────────────────────────
-    # Simulation
-    # ──────────────────────────────────────────────
+        wins = [r for r in returns if r > 0]
+        losses = [r for r in returns if r < 0]
+
+        result.setdefault("average_win", (sum(wins) / len(wins)) if wins else 0.0)
+        result.setdefault("average_loss", (sum(losses) / len(losses)) if losses else 0.0)
+
+        avg_win = result["average_win"]
+        avg_loss = result["average_loss"]
+        result.setdefault(
+            "win_loss_ratio",
+            abs(avg_win / avg_loss) if avg_loss != 0 else 0.0,
+        )
+
+        max_win_streak = cur_win_streak = 0
+        max_loss_streak = cur_loss_streak = 0
+        for r in returns:
+            if r > 0:
+                cur_win_streak += 1
+                cur_loss_streak = 0
+            elif r < 0:
+                cur_loss_streak += 1
+                cur_win_streak = 0
+            else:
+                cur_win_streak = 0
+                cur_loss_streak = 0
+            max_win_streak = max(max_win_streak, cur_win_streak)
+            max_loss_streak = max(max_loss_streak, cur_loss_streak)
+
+        result.setdefault("max_consecutive_wins", float(max_win_streak))
+        result.setdefault("max_consecutive_losses", float(max_loss_streak))
+        result.setdefault("net_return", float(sum(returns)))
+        result.setdefault("total_returns", float(len(returns)))
+        result.setdefault("consistency", (len(wins) / len(returns)) if returns else 0.0)
+
+        return result
 
     def run_simulation(
         self,
         request: SimulationRequest,
-        prices: List[float],
+        dataset: Any,
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
     ) -> SimulationResult:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
+        prices = extract_prices(dataset)
 
         if len(prices) < 2:
             raise ValueError(

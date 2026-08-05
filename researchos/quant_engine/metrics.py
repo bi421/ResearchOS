@@ -107,8 +107,8 @@ def max_drawdown(equity_curve: List[float]) -> Dict[str, float]:
                 break
 
     return {
-        "max_drawdown": round(max_dd, 8),
-        "max_drawdown_pct": round(max_dd * 100, 6),
+        "max_drawdown": max_dd,
+        "max_drawdown_pct": max_dd * 100,
         "recovery_period": recovery_period,
     }
 

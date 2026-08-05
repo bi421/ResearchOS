@@ -123,6 +123,8 @@ def _as_float_rows(value: Any) -> Tuple[Tuple[float, ...], ...]:
     """
     if _is_number(value):
         return ((float(value),),)
+    if isinstance(value, dict):
+        return _as_float_rows(list(value.values()))
     if isinstance(value, (list, tuple)):
         if not value:
             return ()
