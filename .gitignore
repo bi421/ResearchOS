@@ -40,3 +40,16 @@ Thumbs.db
 
 # ── Generated audit artifacts ──────────────────────
 audit_mil_data.json
+
+# ── AI audit evidence (temporary session artifacts) ──
+AI_AUDIT_REQUEST.txt
+AI_GIT_HISTORY.txt
+AI_GIT_STATUS.txt
+AI_SOURCE_FILES.txt
+AI_TEST_INDEX.txt
+AI_TREE.txt
+Modelfile
+ai_audit.ps1
+collect_ai_evidence.ps1
+repo_structure.txt
+repo_tree.txt
