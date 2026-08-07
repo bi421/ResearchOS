@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from typing import Any
-from macro_intelligence.contracts.reaction import StatisticalSupport
 from macro_intelligence.contracts.enums import PatternType
 
 

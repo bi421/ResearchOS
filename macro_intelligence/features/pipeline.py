@@ -7,7 +7,7 @@ Status: FROZEN
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Optional, List, Dict
 from macro_intelligence.features.enums import FeatureCategory
 from macro_intelligence.features.definitions import (
@@ -15,7 +15,7 @@ from macro_intelligence.features.definitions import (
     FeatureValue,
     FeatureVector,
 )
-from macro_intelligence.time.normalizer import TimeNormalizer, UTC
+from macro_intelligence.time.normalizer import TimeNormalizer
 
 
 @dataclass(frozen=True)

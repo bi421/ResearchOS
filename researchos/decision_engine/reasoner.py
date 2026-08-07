@@ -31,10 +31,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from researchos.decision_engine.contracts import (
-    EvidenceItem,
     EvidenceSource,
     ProbabilityOutcome,
-    WeightConfiguration,
 )
 from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.score import EvidenceScore

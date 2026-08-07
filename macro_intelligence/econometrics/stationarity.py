@@ -10,9 +10,8 @@ MIL-ECM-007: Econometrics owns ADF and KPSS.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
-from macro_intelligence.statistics.distributions import normal_cdf
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.models import TestResult
 
@@ -57,7 +56,7 @@ def _estimate_p_value(stat: float, critical: Dict[float, float]) -> float:
     """
     # Sort levels ascending for the ADF (reject when stat < critical).
     levels = sorted(critical.keys())
-    stats = [critical[l] for l in levels]
+    stats = [critical[level] for level in levels]
     # If stat is beyond the most extreme critical value, clip.
     if stat <= stats[0]:
         return max(levels[0] / 2.0, 0.001)

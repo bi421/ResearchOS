@@ -1,23 +1,24 @@
 """
-Tests: Research Intelligence Layer Q13 — Deterministic RAG Knowledge Retrieval.
+Tests: Research Intelligence Layer Q13 – Deterministic RAG Knowledge Retrieval.
 
 Coverage:
     * RetrievalQuery construction, validation, serialization
     * RetrievalHit construction, validation, serialization
     * RetrievalResult construction, validation, sorting
     * RetrievalContext construction, validation
-    * DeterministicRetriever — tokenisation, scoring, retrieval
-    * SessionRetriever — multi-query context accumulation
+    * DeterministicRetriever – tokenisation, scoring, retrieval
+    * SessionRetriever – multi-query context accumulation
     * Frozen immutability across all dataclasses
-    * Determinism — same query always returns same results
-    * Boundary conditions — empty indexes, zero scores, max limits
+    * Determinism – same query always returns same results
+    * Boundary conditions – empty indexes, zero scores, max limits
 """
 
 from __future__ import annotations
 
 import json
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime
+from typing import Any, Dict
 
 from researchos.intelligence import (
     DeterministicRetriever,
@@ -92,7 +93,6 @@ def make_result(
 
 def build_indexed_graph() -> tuple[Dict[str, Dict[str, Any]], DeterministicRetriever]:
     """Build an EvidenceGraph and return its node index + retriever."""
-    from typing import Any, Dict
     graph = EvidenceGraph()
     graph.add_node(EvidenceNode("n1", NodeType.DATASET, "ref1", {"text": "bullish trend reversal", "tags": ["trend", "reversal"]}, "2024-01-01"))
     graph.add_node(EvidenceNode("n2", NodeType.EXPERIMENT, "ref2", {"text": "bearish momentum strategy", "tags": ["momentum"]}, "2024-06-01"))

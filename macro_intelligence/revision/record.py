@@ -7,18 +7,18 @@ Status: FROZEN
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Optional
 from macro_intelligence.revision.enums import (
     RevisionState,
     RevisionType,
 )
+
 # NOTE: `ProvenanceChain` is intentionally NOT imported eagerly here.
 # `revision` (tier 3) must not import `provenance` (tier 4) at module load;
 # the reverse-dependency invariant is preserved by lazy importlib inside
 # `from_dict`. The annotation below remains a string thanks to
 # `from __future__ import annotations`.
-
 
 @dataclass(frozen=True)
 class RevisionRecord:
@@ -60,7 +60,7 @@ class RevisionRecord:
     child_revision_ids: list[str] = field(default_factory=list)
     
     # Provenance
-    provenance: Optional[ProvenanceChain] = None
+    provenance: Optional[ProvenanceChain] = None  # noqa: F821 -- string annotation only (from __future__ import annotations); resolved lazily via importlib in from_dict() to respect MIL tier boundary (see NOTE above)  # noqa: F821 -- lazily resolved via importlib in from_dict(); see NOTE above (MIL-GRD-001 tier boundary)
     
     # Metadata
     metadata: dict = field(default_factory=dict)
@@ -216,7 +216,6 @@ class RevisionRecord:
             "effective_from": self.effective_from.isoformat(),
             "effective_to": self.effective_to.isoformat() if self.effective_to else None,
         }
-
 
 @dataclass(frozen=True)
 class RevisionChain:

@@ -351,7 +351,7 @@ class TestPurityGuards(unittest.TestCase):
         engine_src = open(
             os.path.join(_ORCH_DIR, "engine.py"), encoding="utf-8"
         ).read()
-        tree = compile(engine_src, "engine.py", "exec")
+        compile(engine_src, "engine.py", "exec")
         # Compilation succeeds (already proven), and the import section only
         # references the project package plus the stdlib.
         self.assertIn("import hashlib", engine_src)

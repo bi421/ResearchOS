@@ -493,7 +493,7 @@ class DeterministicRetriever:
         lines = [
             f"Query: '{query.text[:80]}...'" if len(query.text) > 80 else f"Query: '{query.text}'",
             f"Results: {len(hits)} of {total} objects matched (min_score={query.min_score:.2f}).",
-            f"Top hits:",
+            "Top hits:",
         ]
         for i, hit in enumerate(hits[:3], 1):
             lines.append(

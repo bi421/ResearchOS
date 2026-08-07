@@ -10,7 +10,7 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from typing import List, Optional, Dict, Any
-from math import sqrt, pi, exp, lgamma, log
+from math import sqrt, exp, lgamma, log
 from macro_intelligence.statistics.descriptive import (
     mean,
     std,

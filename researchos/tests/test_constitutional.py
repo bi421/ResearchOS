@@ -184,7 +184,6 @@ class TestDeterministicEvidence:
     """Test 8: Evidence computations are deterministic with fixed reference_time."""
 
     def test_evidence_weight_deterministic_with_reference_time(self):
-        from datetime import timedelta
         from researchos.objects.evidence import Evidence
         ref = datetime(2024, 12, 31, tzinfo=timezone.utc)
         ev = Evidence(
@@ -198,7 +197,6 @@ class TestDeterministicEvidence:
         assert w1 == w2
 
     def test_evidence_age_days_deterministic_with_reference_time(self):
-        from datetime import timedelta
         from researchos.objects.evidence import Evidence
         ref = datetime(2024, 12, 31, tzinfo=timezone.utc)
         ev = Evidence(

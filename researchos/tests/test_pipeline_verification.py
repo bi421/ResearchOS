@@ -6,12 +6,12 @@ Verification-only tests for the ResearchPipeline.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 import pytest
 
 from researchos.repository.memory import MemoryRepository
-from researchos.pipeline import ResearchPipeline, ReferenceValidator
+from researchos.pipeline import ResearchPipeline
 from researchos.objects.observation import Observation, MarketState, MacroState
 from researchos.objects.evidence import Evidence, EvidenceRegistry
 from researchos.objects.interpretation import Interpretation, Narrative
@@ -326,14 +326,14 @@ class TestPhase2_Reproducibility:
         h = pipeline.create_hypothesis(r.id, "Primary", "Repro hypothesis")
         e = pipeline.create_evidence(o.id, h.id, "Repro evidence", research_id=r.id)
         i = pipeline.create_interpretation([e.id], "rule_v1", "ctx", "Repro conclusion")
-        n = pipeline.create_narrative(r.id, "Repro narrative", interpretations=[i.id])
-        s = pipeline.create_scenario(r.id, h.id, "Base", "Repro scenario", 0.6)
-        c = pipeline.register_confidence(h.id, "Hypothesis", 0.8, research_id=r.id)
-        ct = pipeline.detect_contradiction(r.id, "Internal", "Repro conflict")
+        pipeline.create_narrative(r.id, "Repro narrative", interpretations=[i.id])
+        pipeline.create_scenario(r.id, h.id, "Base", "Repro scenario", 0.6)
+        pipeline.register_confidence(h.id, "Hypothesis", 0.8, research_id=r.id)
+        pipeline.detect_contradiction(r.id, "Internal", "Repro conflict")
         rp = pipeline.generate_report(r.id, "Repro Report")
-        v = pipeline.validate_research(r.id, rp.id, overall_status="Accurate", quality_score=0.85)
-        k = pipeline.extract_knowledge("Relationship", "CPI", "impacts", "Fed", source_references=[r.id])
-        ca = pipeline.assess_cognitive("trader-1", r.id, knowledge_score=0.8)
+        pipeline.validate_research(r.id, rp.id, overall_status="Accurate", quality_score=0.85)
+        pipeline.extract_knowledge("Relationship", "CPI", "impacts", "Fed", source_references=[r.id])
+        pipeline.assess_cognitive("trader-1", r.id, knowledge_score=0.8)
         return pipeline, repo
 
     def test_deterministic_object_ids(self):
@@ -531,7 +531,8 @@ class TestPhase4_RepositoryIntegrity:
     def test_save_and_load_by_id(self):
         """Create object, save, reload, compare hash."""
         from researchos.storage.repository import ResearchRepository
-        import tempfile, os
+        import tempfile
+        import os
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -561,7 +562,8 @@ class TestPhase4_RepositoryIntegrity:
     def test_load_by_type(self):
         """Save multiple types, load by type."""
         from researchos.storage.repository import ResearchRepository
-        import tempfile, os
+        import tempfile
+        import os
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -588,7 +590,8 @@ class TestPhase4_RepositoryIntegrity:
     def test_delete_object(self):
         """Save, delete, verify gone."""
         from researchos.storage.repository import ResearchRepository
-        import tempfile, os
+        import tempfile
+        import os
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -607,7 +610,8 @@ class TestPhase4_RepositoryIntegrity:
     def test_object_count(self):
         """Count objects by type."""
         from researchos.storage.repository import ResearchRepository
-        import tempfile, os
+        import tempfile
+        import os
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -628,7 +632,8 @@ class TestPhase4_RepositoryIntegrity:
     def test_type_preserved_through_round_trip(self):
         """Object type string must survive save/load cycle."""
         from researchos.storage.repository import ResearchRepository
-        import tempfile, os
+        import tempfile
+        import os
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -664,7 +669,7 @@ class TestPhase5_AuditChain:
         r = pipeline.start_research("Audit test", "Daily", "US")
         o = pipeline.add_observation(r.id, "MACRO:CPI", ts(), 3.2)
         h = pipeline.create_hypothesis(r.id, "Primary", "Test")
-        e = pipeline.create_evidence(o.id, h.id, "test", research_id=r.id)
+        pipeline.create_evidence(o.id, h.id, "test", research_id=r.id)
 
         audits = collect_audits(repo)
         actions = [a.action for a in audits]
@@ -890,12 +895,12 @@ class TestPhase6_Serialization:
         assert p.description == p2.description
 
     def test_lesson_round_trip(self):
-        l = Lesson(type="Insight", description="learned something")
-        d = l.to_dict()
+        lesson = Lesson(type="Insight", description="learned something")
+        d = lesson.to_dict()
         l2 = Lesson.from_dict(d)
-        assert l.id == l2.id
-        assert l.type == l2.type
-        assert l.description == l2.description
+        assert lesson.id == l2.id
+        assert lesson.type == l2.type
+        assert lesson.description == l2.description
 
     def test_bias_round_trip(self):
         b = Bias(type="Confirmation", trader_id="trader1", description="desc")
@@ -997,7 +1002,7 @@ class TestPhase6_RepositoryRehydration:
         assert not extra, f"Extra in OBJECT_REGISTRY: {extra}"
 
     def test_load_object_round_trip(self, tmp_path):
-        import json, os
+        import os
         db_path = str(tmp_path / "test_rehydrate.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1014,7 +1019,7 @@ class TestPhase6_RepositoryRehydration:
                 os.unlink(db_path)
 
     def test_load_objects_by_type(self, tmp_path):
-        import json, os
+        import os
         db_path = str(tmp_path / "test_by_type.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1033,7 +1038,9 @@ class TestPhase6_RepositoryRehydration:
 
     def test_load_object_unknown_type(self, tmp_path):
         """Loading an unknown object type raises ValueError."""
-        import json, os, sqlite3
+        import json
+        import os
+        import sqlite3
         db_path = str(tmp_path / "test_unknown.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1069,7 +1076,9 @@ class TestPhase6_RepositoryRehydration:
 
     def test_load_from_corrupt_data(self, tmp_path):
         """Invalid JSON in stored data raises ValueError."""
-        import json, os, sqlite3
+        import json
+        import os
+        import sqlite3
         db_path = str(tmp_path / "test_corrupt.db")
         storage = ResearchRepository(db_path=db_path)
         try:

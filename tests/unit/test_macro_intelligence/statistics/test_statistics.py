@@ -3,7 +3,7 @@ ResearchOS Macro Intelligence Layer - Statistics Tests
 """
 
 import pytest
-from datetime import datetime, timezone
+from datetime import timezone
 
 UTC = timezone.utc
 
@@ -497,7 +497,7 @@ class TestMILStatInvariants:
         values = [1.0, 2.0, 3.0, 4.0, 5.0]
         original = list(values)
         
-        result = mean(values)
+        mean(values)
         
         # Original list should not be modified
         assert values == original

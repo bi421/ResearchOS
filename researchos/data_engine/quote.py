@@ -19,8 +19,7 @@ from typing import Any, Dict, List, Optional
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import parse_timestamp, utc_now
-from researchos.data_engine.contracts import QuoteSide
+from researchos.core.timestamp import parse_timestamp
 
 
 class Quote(BaseObject):

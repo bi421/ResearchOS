@@ -5,7 +5,6 @@ Based on Article XVII: Object Model — Validation Layer.
 Covers: Validation, FailureAnalysis
 """
 
-import pytest
 
 from researchos.objects.validation import Validation, FailureAnalysis
 

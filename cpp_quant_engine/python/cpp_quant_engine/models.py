@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List
 
 DEFAULT_CALCULATION_VERSION = "CALCULATION_V1"
 

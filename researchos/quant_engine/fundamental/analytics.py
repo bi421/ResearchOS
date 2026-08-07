@@ -20,16 +20,14 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Sequence
 
 from researchos.quant_engine.fundamental.contracts import (
-    CentralBank,
     CommodityBasket,
     EconomicCalendarEvent,
     EventSeverity,
     MacroDataPoint,
     MacroFactorModel,
-    MacroIndicator,
     NewsEvent,
 )
 

@@ -14,7 +14,6 @@ Run with:
 
 import pytest
 import math
-from typing import Dict, List, Any
 
 from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.models import (

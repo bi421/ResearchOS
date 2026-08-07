@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 import pytest
-from typing import Any, Dict, List
+from typing import List
 
 from researchos.quant_engine import (
     # Interface
@@ -42,10 +42,6 @@ from researchos.quant_engine import (
     rolling_volatility,
     volatility_change,
     # Performance
-    win_rate,
-    loss_rate,
-    average_win,
-    average_loss,
     win_loss_ratio,
     profit_factor,
     consistency,
@@ -57,7 +53,6 @@ from researchos.quant_engine import (
     sharpe_ratio,
     sortino_ratio,
     calmar_ratio,
-    profit_factor_metric,
     max_drawdown,
     downside_deviation,
     compute_all_metrics,
@@ -715,7 +710,7 @@ class TestPerformanceAnalytics:
 
     def test_sharpe_ratio_positive(self, sample_returns):
         """Positive returns → positive Sharpe ratio."""
-        eq = [100000.0 * (1 + r) for r in [0.0] + sample_returns]
+        [100000.0 * (1 + r) for r in [0.0] + sample_returns]
         sr = sharpe_ratio(sample_returns, risk_free_rate=0.0)
         assert sr >= -5.0  # Sanity check
 
@@ -836,7 +831,6 @@ class TestEdgeCases:
     def test_zero_volatility_sharpe(self):
         """Constant returns → Sharpe ratio = 0."""
         r = [0.01, 0.01, 0.01, 0.01]
-        eq = [100.0, 101.0, 102.0, 103.0, 104.0]
         sr = sharpe_ratio(r)
         assert sr == 0.0
 

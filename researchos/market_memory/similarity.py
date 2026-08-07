@@ -7,10 +7,9 @@ and scenarios to find historical analogues.
 
 from __future__ import annotations
 
-from math import sqrt
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
-from researchos.market_memory.features import FeatureSet, compute_features
+from researchos.market_memory.features import compute_features
 from researchos.market_memory.models import HistoricalScenario, MarketSnapshot
 
 

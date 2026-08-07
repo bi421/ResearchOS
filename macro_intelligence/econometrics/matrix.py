@@ -19,7 +19,7 @@ MIL-ECM-003: Matrix operations are deterministic and pure.
 """
 from __future__ import annotations
 
-from typing import List, Sequence
+from typing import List
 
 Matrix = List[List[float]]
 

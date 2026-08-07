@@ -15,13 +15,11 @@ Covers:
 
 from __future__ import annotations
 
-import json
 import sqlite3
 import threading
 import time
 from datetime import datetime, timezone
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
@@ -80,11 +78,17 @@ class TestConcurrentWriters:
         t2 = threading.Thread(target=self._writer, args=(repo, 1, entries, start, done2))
         t3 = threading.Thread(target=self._writer, args=(repo, 2, entries, start, done3))
 
-        t1.start(); t2.start(); t3.start()
+        t1.start()
+        t2.start()
+        t3.start()
         start.set()
 
-        done1.wait(timeout=10); done2.wait(timeout=10); done3.wait(timeout=10)
-        t1.join(timeout=5); t2.join(timeout=5); t3.join(timeout=5)
+        done1.wait(timeout=10)
+        done2.wait(timeout=10)
+        done3.wait(timeout=10)
+        t1.join(timeout=5)
+        t2.join(timeout=5)
+        t3.join(timeout=5)
 
         assert repo.verify_audit_chain()
         loaded = repo.load_audit_entries()

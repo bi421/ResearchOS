@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 from math import sqrt
-from macro_intelligence.statistics.descriptive import mean, std
+from macro_intelligence.statistics.descriptive import mean
 
 
 def pearson_correlation(x: List[float], y: List[float]) -> Optional[float]:

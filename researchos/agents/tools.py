@@ -1,5 +1,4 @@
 import json
-from typing import Dict, Any
 from researchos.pipeline import ResearchPipeline
 from researchos.storage.repository import ResearchRepository
 from researchos.validation.prop_validator import TradingRiskCheck

@@ -7,7 +7,7 @@ Status: FROZEN
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Optional, List
 from macro_intelligence.features.enums import (
     FeatureCategory,

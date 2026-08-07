@@ -2,7 +2,7 @@
 ResearchOS Macro Intelligence Layer - Shared Enums
 """
 
-from enum import Enum, auto
+from enum import Enum
 
 
 class ErrorType(Enum):

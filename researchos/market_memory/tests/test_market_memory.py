@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
 from researchos.market_memory.models import (
     HistoricalScenario,
@@ -24,14 +23,12 @@ from researchos.market_memory.models import (
     MarketSnapshot,
 )
 from researchos.market_memory.repository import MarketMemoryRepository
-from researchos.market_memory.features import compute_features, FeatureSet
+from researchos.market_memory.features import compute_features
 from researchos.market_memory.similarity import (
     compare_snapshots,
-    compare_scenarios,
     find_similar_snapshots,
 )
 from researchos.market_memory.events import MarketEvent
-from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 
 

@@ -13,9 +13,6 @@ from typing import Any
 from macro_intelligence.statistics.provenance import content_hash
 from macro_intelligence.regime.classification.taxonomy import (
     MacroRegime,
-    LiquidityRegime,
-    RiskRegime,
-    MonetaryRegime,
 )
 from macro_intelligence.regime.classification.models import (
     ClassificationRule,

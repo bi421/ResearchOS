@@ -5,7 +5,6 @@ Based on Article XVII: Object Model â€” Process Layer.
 Covers: ResearchCycle, ReasoningChain, AuditEntry
 """
 
-import pytest
 
 from researchos.objects.process import ResearchCycle, ReasoningChain, AuditEntry
 
@@ -183,7 +182,7 @@ class TestAuditEntry:
         assert ae.is_chain_intact("") is True
 
     def test_chain_integrity_valid(self):
-        ae1 = AuditEntry("system", "CREATE", "obs_001", "Observation")
+        AuditEntry("system", "CREATE", "obs_001", "Observation")
         ae2 = AuditEntry(
             "system", "UPDATE", "obs_001", "Observation",
             previous_entry="valid_hash_placeholder",
@@ -191,7 +190,7 @@ class TestAuditEntry:
         assert ae2.is_chain_intact("valid_hash_placeholder") is True
 
     def test_chain_integrity_invalid(self):
-        ae1 = AuditEntry("system", "CREATE", "obs_001", "Observation")
+        AuditEntry("system", "CREATE", "obs_001", "Observation")
         ae2 = AuditEntry(
             "system", "UPDATE", "obs_001", "Observation",
             previous_entry="expected_hash",

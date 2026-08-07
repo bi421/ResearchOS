@@ -10,8 +10,6 @@ from __future__ import annotations
 from typing import Any
 from macro_intelligence.regime.classification.taxonomy import MacroRegime
 from macro_intelligence.regime.transition.transitions import (
-    DEFAULT_TRANSITION_PROBS,
-    normalize_transition_probs,
     get_default_transition_probs,
     update_transition_probs,
 )

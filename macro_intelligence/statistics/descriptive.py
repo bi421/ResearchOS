@@ -10,9 +10,8 @@ MIL-STAT-004: All outputs preserve provenance.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Dict, Any
-from math import sqrt, pow
-from macro_intelligence.time.normalizer import TimeNormalizer
+from typing import List, Tuple, Dict
+from math import sqrt
 
 
 def _py_min(values: List[float]) -> float:

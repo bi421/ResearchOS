@@ -17,7 +17,7 @@ Modules:
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 from researchos.quant_engine.historical.contracts import (
     DrawdownStatistics,
@@ -74,7 +74,7 @@ def pattern_frequencies(
 def consecutive_streaks(returns: ReturnSeries) -> Dict[str, float]:
     """Distribution of consecutive positive/negative streak lengths."""
     returns.validate()
-    ups = [1 if r > 0 else (1 if r == 0 else 0) for r in returns.returns]
+    [1 if r > 0 else (1 if r == 0 else 0) for r in returns.returns]
     pos_counts: Dict[int, int] = {}
     neg_counts: Dict[int, int] = {}
     pos_streak = 0
@@ -350,8 +350,6 @@ def drawdown_statistics(returns: ReturnSeries) -> DrawdownStatistics:
     dd_start = 0
     dd_depth = 0.0
     max_dd = 0.0
-    max_dd_start = 0
-    max_dd_end = 0
     drawdowns: List[Tuple[float, int]] = []  # (depth, length)
     recovery_periods: List[int] = []
     in_drawdown = False
@@ -364,8 +362,6 @@ def drawdown_statistics(returns: ReturnSeries) -> DrawdownStatistics:
                 recovery_periods.append(length)
                 if dd_depth < max_dd:
                     max_dd = dd_depth
-                    max_dd_start = dd_start
-                    max_dd_end = i
             peak = v
             peak_idx = i
             in_drawdown = False
@@ -386,8 +382,7 @@ def drawdown_statistics(returns: ReturnSeries) -> DrawdownStatistics:
         recovery_periods.append(length)
         if dd_depth < max_dd:
             max_dd = dd_depth
-            max_dd_start = dd_start
-            max_dd_end = len(price) - 1
+            len(price) - 1
 
     if not drawdowns:
         return DrawdownStatistics()

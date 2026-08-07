@@ -2,7 +2,6 @@
 ResearchOS Macro Intelligence Layer - Exceptions
 """
 
-from typing import Optional
 
 
 class MILException(Exception):

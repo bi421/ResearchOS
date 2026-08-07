@@ -8,10 +8,9 @@ This module enforces referential integrity without modifying
 any object model classes.
 """
 
-from typing import List, Optional
+from typing import List
 
 from researchos.repository.interface import RepositoryInterface
-from researchos.core.base_object import BaseObject
 
 
 class ReferenceValidator:

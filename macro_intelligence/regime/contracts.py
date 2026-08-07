@@ -12,9 +12,9 @@ MIL-REG-004: Contracts are backward compatible.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Optional, List
-from macro_intelligence.time.normalizer import TimeNormalizer, UTC
+from macro_intelligence.time.normalizer import TimeNormalizer
 from macro_intelligence.provenance.chain import ProvenanceChain
 
 

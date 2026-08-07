@@ -13,20 +13,16 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
 from researchos.core.identity import generate_id, deterministic_hash
-from researchos.core.lifecycle import Lifecycle, LifecycleStage
 from researchos.core.timestamp import utc_now
-from researchos.objects.observation import Observation, MarketState, MacroState
+from researchos.objects.observation import Observation
 from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.interpretation import Interpretation, Narrative
-from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+from researchos.objects.hypothesis import Hypothesis
 from researchos.objects.scenario import Scenario, ScenarioSet
-from researchos.objects.confidence import Confidence, ConfidenceReport
-from researchos.objects.contradiction import Contradiction, ContradictionReport
-from researchos.objects.knowledge import Knowledge, Pattern, Lesson
-from researchos.objects.research import Research, ResearchReport, ResearchQuestion
+from researchos.objects.confidence import Confidence
+from researchos.objects.contradiction import Contradiction
+from researchos.objects.research import Research, ResearchReport
 from researchos.validation.validators import get_validator
 from researchos.repository.memory import MemoryRepository
 

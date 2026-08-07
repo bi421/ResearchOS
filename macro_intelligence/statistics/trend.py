@@ -9,9 +9,9 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Dict, Any
-from macro_intelligence.statistics.descriptive import mean, std
-from macro_intelligence.statistics.regression import linear_regression, slope
+from typing import List, Optional, Dict, Any
+from macro_intelligence.statistics.descriptive import mean
+from macro_intelligence.statistics.regression import linear_regression
 
 
 def moving_average(
@@ -72,7 +72,6 @@ def exponential_moving_average(
     for i in range(1, len(values)):
         if adjust:
             # Adjusted EMA
-            s = sum(values[:i + 1]) / (i + 1)
             result.append(alpha * values[i] + (1 - alpha) * result[-1])
         else:
             # Unadjusted EMA
@@ -103,6 +102,7 @@ def trend_strength(
     
     # Calculate returns
     returns = [recent[i] - recent[i - 1] for i in range(1, len(recent))]
+
     
     if not returns:
         return 0.0

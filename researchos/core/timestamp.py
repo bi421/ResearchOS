@@ -8,7 +8,6 @@ Based on Article XVII: Object Model — every object has a timestamp.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
 
 
 def utc_now() -> datetime:

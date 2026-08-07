@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Dict, Any
 from math import sqrt
-from macro_intelligence.statistics.descriptive import mean, std
+from macro_intelligence.statistics.descriptive import std
 from macro_intelligence.statistics.rolling import rolling_std
 
 

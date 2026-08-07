@@ -863,10 +863,9 @@ class TestRegimeTransitionDetector:
         detector = RegimeTransitionDetector()
         
         # Goldilocks assessment
-        assessment1 = _make_test_assessment()
+        _make_test_assessment()
         
         # Recession assessment (high inflation + contraction)
-        from macro_intelligence.regime.detection.models import DetectionEvidence
         assessment2 = _make_test_assessment(
             inflation_signal=DetectionEvidence(
                 detector_name="inflation_detector",
@@ -1075,7 +1074,6 @@ class TestMILTransitionInvariants:
     def test_mil_trans_003_provenance(self):
         """MIL-TRANS-003: All transitions preserve provenance."""
         from macro_intelligence.regime.transition import RegimeTransitionDetector
-        from macro_intelligence.regime.detection.models import DetectionEvidence
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
 
         detector = RegimeTransitionDetector()

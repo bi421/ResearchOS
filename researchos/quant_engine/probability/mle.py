@@ -8,7 +8,7 @@ for distributions without closed-form solutions. Deterministic.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Sequence, Callable
+from typing import Dict, Sequence, Callable
 
 from researchos.quant_engine.probability.contracts import DistributionFit, DistributionType
 
@@ -35,7 +35,7 @@ def mle_log_normal(samples: Sequence[float]) -> DistributionFit:
         raise ValueError("log-normal MLE requires strictly positive samples")
     logs = [math.log(s) for s in samples]
     mu = sum(logs) / n
-    sigma2 = sum((l - mu) ** 2 for l in logs) / n
+    sigma2 = sum((lg - mu) ** 2 for lg in logs) / n
     if sigma2 <= 0:
         sigma2 = 1e-12
     return DistributionFit(

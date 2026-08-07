@@ -112,7 +112,7 @@ def fit_log_normal(samples: Sequence[float]) -> DistributionFit:
         raise ValueError("log-normal fit requires strictly positive samples")
     logs = [math.log(s) for s in samples]
     mean = sum(logs) / n
-    var = sum((l - mean) ** 2 for l in logs) / n
+    var = sum((lg - mean) ** 2 for lg in logs) / n
     return DistributionFit(
         distribution=DistributionType.LOG_NORMAL,
         parameters={"mu": mean, "sigma": math.sqrt(var)},

@@ -19,7 +19,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 

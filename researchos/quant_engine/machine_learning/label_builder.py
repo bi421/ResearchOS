@@ -8,7 +8,7 @@ FeatureBuilder, model training, dataset construction, and the decision engine.
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict
 
 from .label_contracts import LabelResult
 from .labels import (

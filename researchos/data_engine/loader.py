@@ -20,7 +20,7 @@ import csv
 import io
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import CandleField, LoaderConfig, Timeframe

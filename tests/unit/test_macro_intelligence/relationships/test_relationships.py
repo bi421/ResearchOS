@@ -579,7 +579,7 @@ class TestMILRelationshipInvariants:
     def test_mil_rel_006_deterministic_reconstruction(self):
         """MIL-REL-006: Historical reconstruction is deterministic."""
         from macro_intelligence.relationships.models import RelationshipResult, CorrelationResult
-        from datetime import datetime, timezone
+        from datetime import timezone
         
         UTC = timezone.utc
         base_time = datetime(2026, 8, 3, 12, 0, tzinfo=UTC)

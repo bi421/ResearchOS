@@ -15,18 +15,12 @@ Guarantees:
 
 from __future__ import annotations
 
-import hashlib
-import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from researchos.core.identity import deterministic_hash
 from researchos.data_engine.candle import Candle
-from researchos.data_engine.contracts import Timeframe
 from researchos.data_engine.dataset import HistoricalDataset
-from researchos.data_engine.quote import Quote
-from researchos.data_engine.tick import Tick
-from researchos.data_engine.trade import Trade
 
 
 def compute_dataset_hash(dataset: HistoricalDataset) -> str:

@@ -15,12 +15,11 @@ existing audit chain and serialization framework.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.objects.market_memory import (
     LiquidityEvent,
-    MarketEvent,
     MarketOutcome,
     MarketSession,
     MarketStructure,

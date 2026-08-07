@@ -492,7 +492,6 @@ class TestMILTimeInvariants:
     
     def test_mil_time_001_utc_storage(self):
         """MIL-TIME-001: All timestamps are stored in UTC."""
-        from macro_intelligence.time.normalizer import TimeNormalizer
         from macro_intelligence.time.schedule import PlannedRelease
         from macro_intelligence.time.enums import ReleaseStatus
         

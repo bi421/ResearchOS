@@ -1267,7 +1267,7 @@ class TestMILClassificationInvariants:
 
     def test_mil_reg_012_rules_versioned_immutable(self):
         """MIL-REG-012: Rules are versioned and immutable."""
-        from macro_intelligence.regime.classification import ClassificationRule, RegimeClassifier
+        from macro_intelligence.regime.classification import RegimeClassifier
 
         classifier = RegimeClassifier()
         rules = classifier.get_all_rules()

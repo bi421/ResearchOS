@@ -18,7 +18,6 @@ from macro_intelligence.regime.transition.models import (
     ALGORITHM_VERSION,
     TransitionSignal,
     RegimeTransition,
-    TransitionHistoryEntry,
     TransitionProbabilityMatrix,
     RegimePersistence,
     EarlyWarningSignal,
@@ -26,7 +25,6 @@ from macro_intelligence.regime.transition.models import (
     TransitionType,
 )
 from macro_intelligence.regime.transition.transitions import (
-    RULES_VERSION,
     classify_transition_type,
     should_generate_early_warning,
     estimate_early_warning_horizon,

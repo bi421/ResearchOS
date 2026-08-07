@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Mapping, Optional, Tuple
 
 DATASET_VERSION = "1.0.0"
 BUILDER_VERSION = "1.0.0"
@@ -83,6 +83,98 @@ class ResearchDataset:
                 self.created_at,
                 self.version,
             )
+        )
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, Any]) -> "ResearchDataset":
+        """Reconstruct a ``ResearchDataset`` from a dataset evidence payload.
+
+        This is the deterministic inverse of the Dataset evidence emission
+        projection (``researchos.evidence.dataset_emission.research_dataset_payload``),
+        enabling exact reproduction of a dataset from its immutable evidence
+        record.  It is strictly additive and never mutates the input payload.
+
+        The payload must be a primitives-only mapping carrying the keys:
+
+            - ``feature_names`` (list of str)
+            - ``features`` (list of list of float)
+            - ``labels`` (list of float)
+            - ``metadata`` (dict)
+            - ``sample_count`` (int)
+            - ``feature_count`` (int)
+            - ``label_name`` (str)
+            - ``version`` (str)
+
+        Note: the payload does not carry ``created_at`` (excluded from the
+        emission identity), so the reconstructed dataset has ``created_at=None``.
+
+        Args:
+            payload: A primitives-only dataset evidence payload.
+
+        Returns:
+            A frozen ``ResearchDataset`` reconstructed from the payload.
+
+        Raises:
+            ValueError: If the payload is missing required keys or has
+                inconsistent feature/label dimensions.
+            TypeError: If the payload is not a mapping.
+        """
+        if not isinstance(payload, Mapping):
+            raise TypeError(
+                f"payload must be a mapping, got {type(payload).__name__}"
+            )
+        required = (
+            "feature_names",
+            "features",
+            "labels",
+            "sample_count",
+            "feature_count",
+            "label_name",
+            "version",
+        )
+        missing = [k for k in required if k not in payload]
+        if missing:
+            raise ValueError(
+                f"payload missing required key(s): {', '.join(missing)}"
+            )
+
+        feature_names = tuple(str(n) for n in payload["feature_names"])
+        features = tuple(tuple(float(v) for v in row) for row in payload["features"])
+        labels = tuple(float(v) for v in payload["labels"])
+        metadata = dict(payload.get("metadata", {}) or {})
+
+        sample_count = int(payload["sample_count"])
+        feature_count = int(payload["feature_count"])
+        label_name = str(payload["label_name"])
+        version = str(payload["version"])
+
+        if sample_count != len(labels):
+            raise ValueError(
+                f"payload sample_count={sample_count} does not match "
+                f"len(labels)={len(labels)}"
+            )
+        if feature_count != len(feature_names):
+            raise ValueError(
+                f"payload feature_count={feature_count} does not match "
+                f"len(feature_names)={len(feature_names)}"
+            )
+        if features and any(len(row) != feature_count for row in features):
+            row_lengths = {len(row) for row in features}
+            raise ValueError(
+                f"payload feature rows have inconsistent widths {row_lengths}, "
+                f"expected {feature_count}"
+            )
+
+        return cls(
+            feature_names=feature_names,
+            features=features,
+            labels=labels,
+            metadata=metadata,
+            sample_count=sample_count,
+            feature_count=feature_count,
+            label_name=label_name,
+            created_at=None,
+            version=version,
         )
 
 

@@ -9,11 +9,10 @@ MIL-ECM-013: Econometrics owns confidence/prediction intervals.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from math import sqrt
 
-from macro_intelligence.statistics.distributions import t_distribution_p_value
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.models import IntervalResult
 

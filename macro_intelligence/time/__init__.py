@@ -13,7 +13,6 @@ from macro_intelligence.time.enums import (
 
 from macro_intelligence.time.normalizer import TimeNormalizer
 
-from macro_intelligence.time.normalizer import TimeNormalizer
 
 from macro_intelligence.time.schedule import (
     PlannedRelease,

@@ -3,9 +3,7 @@ ResearchOS Macro Intelligence Layer - Determinism & Hash Tests
 Tests for MIL-DET-001 invariant: Deterministic hashes must depend only on semantic content.
 """
 
-import pytest
-from datetime import date, datetime, timezone, timedelta
-import time
+from datetime import date, datetime, timezone
 
 
 UTC = timezone.utc
@@ -33,7 +31,6 @@ class TestNormalizedSeriesDeterminism:
     def test_identical_objects_same_hash(self):
         """Test that identical objects produce identical hashes."""
         from macro_intelligence.contracts.series import NormalizedSeries
-        from macro_intelligence.contracts.enums import FrequencyEnum
         
         data = self._create_base_series()
         
@@ -45,7 +42,6 @@ class TestNormalizedSeriesDeterminism:
     def test_different_values_different_hash(self):
         """Test that different semantic values produce different hashes."""
         from macro_intelligence.contracts.series import NormalizedSeries
-        from macro_intelligence.contracts.enums import FrequencyEnum
         
         data = self._create_base_series()
         
@@ -58,7 +54,6 @@ class TestNormalizedSeriesDeterminism:
     def test_different_timestamps_same_hash(self):
         """Test that different created_at timestamps don't affect hash."""
         from macro_intelligence.contracts.series import NormalizedSeries
-        from macro_intelligence.contracts.enums import FrequencyEnum
         
         data = self._create_base_series()
         
@@ -72,7 +67,6 @@ class TestNormalizedSeriesDeterminism:
     def test_serialization_deterministic(self):
         """Test that JSON serialization is deterministic."""
         from macro_intelligence.contracts.series import NormalizedSeries
-        from macro_intelligence.contracts.enums import FrequencyEnum
         
         data = self._create_base_series()
         
@@ -87,7 +81,6 @@ class TestNormalizedSeriesDeterminism:
     def test_roundtrip_preserves_data(self):
         """Test that deserialize(serialize(x)) == x for semantic fields."""
         from macro_intelligence.contracts.series import NormalizedSeries
-        from macro_intelligence.contracts.enums import FrequencyEnum
         
         data = self._create_base_series()
         

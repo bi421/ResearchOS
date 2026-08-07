@@ -21,19 +21,16 @@ from cpp_quant_engine.backend import (
     native_module,
 )
 from cpp_quant_engine.exceptions import (
-    BridgeError,
     EmptyDataError,
     HashMismatchError,
     InsufficientDataError,
     InvalidParameterError,
     InvalidTypeError,
     MalformedDataError,
-    UnsupportedVersionError,
     error_from_code,
 )
 from cpp_quant_engine.models import (
     BacktestRequest,
-    BacktestResult,
     Candle,
     MarketData,
     MarketDataRequest,
@@ -41,9 +38,7 @@ from cpp_quant_engine.models import (
     PerformanceRequest,
     PerformanceResult,
     RiskRequest,
-    RiskResult,
     SimulationRequest,
-    SimulationResult,
     StatisticsRequest,
     StatisticsResult,
     canonical_float,

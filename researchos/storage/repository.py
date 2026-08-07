@@ -51,7 +51,7 @@ from researchos.objects.macro import (
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 SCHEMA_VERSION_KEY = "researchos_schema_version"
 BUSY_TIMEOUT_MS = 5000
 MAX_WRITE_RETRIES = 5
@@ -227,7 +227,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             logger.warning("Database integrity check failed: %s", result)
         return result
 
-    # ------------------------------------------------------------------
+# ------------------------------------------------------------------
     # Schema migrations (ordered by target version)
     # ------------------------------------------------------------------
 
@@ -240,8 +240,46 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         if "ontology_tags" not in columns:
             cursor.execute("ALTER TABLE audit_logs ADD COLUMN ontology_tags TEXT DEFAULT '[]'")
 
+    @staticmethod
+    def _migrate_v2_to_v3(cursor: sqlite3.Cursor):
+        """Create the evidence & lineage tables (Phase 5.3a, v2 → v3).
+
+        Additive only: any pre-existing tables are preserved.  The new tables
+        are append-only, content-addressed evidence records and parent→child
+        lineage edges consumed by ``EvidenceRepository``.
+        """
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS evidence (
+                artifact_type TEXT NOT NULL,
+                artifact_hash TEXT PRIMARY KEY,
+                version TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                parent_hashes TEXT NOT NULL,
+                lineage_hash TEXT NOT NULL
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_evidence_type
+            ON evidence(artifact_type)
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lineage (
+                parent_hash TEXT NOT NULL,
+                child_hash TEXT NOT NULL,
+                relation TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (parent_hash, child_hash, relation)
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_lineage_child
+            ON lineage(child_hash)
+        """)
+
     MIGRATIONS: Dict[int, Any] = {
         2: _migrate_v1_to_v2,
+        3: _migrate_v2_to_v3,
     }
 
     def _get_schema_version(self, cursor: sqlite3.Cursor) -> int:

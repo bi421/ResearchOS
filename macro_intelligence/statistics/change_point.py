@@ -10,6 +10,7 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from typing import List, Optional, Tuple
+from math import sqrt
 from macro_intelligence.statistics.descriptive import mean
 
 
@@ -30,7 +31,7 @@ def cusum(
     if not values:
         return []
     
-    n = len(values)
+    len(values)
     
     # Calculate threshold if not provided
     if threshold is None:

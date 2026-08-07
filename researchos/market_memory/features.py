@@ -8,7 +8,7 @@ for pattern recognition and similarity comparison.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict
 
 from researchos.market_memory.models import MarketSnapshot
 
@@ -68,17 +68,17 @@ def compute_features(snapshot: MarketSnapshot) -> FeatureSet:
     Returns:
         A FeatureSet with all computed features.
     """
-    o, h, l, c = snapshot.open, snapshot.high, snapshot.low, snapshot.close
-    price_range = h - l
+    o, h, low, c = snapshot.open, snapshot.high, snapshot.low, snapshot.close
+    price_range = h - low
 
     body = abs(c - o)
     upper_wick = h - max(o, c)
-    lower_wick = min(o, c) - l
+    lower_wick = min(o, c) - low
     range_pct = (price_range / c * 100.0) if c != 0 else 0.0
     body_pct = (body / price_range) if price_range > 0 else 0.0
     is_bullish = c > o
     is_bearish = c < o
-    close_position = ((c - l) / price_range) if price_range > 0 else 0.5
+    close_position = ((c - low) / price_range) if price_range > 0 else 0.5
     volume_ratio = 1.0  # No historical baseline by default
 
     return FeatureSet(

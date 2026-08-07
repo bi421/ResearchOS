@@ -31,11 +31,9 @@ from cpp_quant_engine.exceptions import (
 from cpp_quant_engine.models import (
     BacktestRequest,
     BacktestResult,
-    Candle,
     MarketData,
     MarketDataRequest,
     MarketDataResult,
-    PerformanceReport,
     PerformanceRequest,
     PerformanceResult,
     RiskRequest,

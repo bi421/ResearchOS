@@ -112,7 +112,6 @@ def dependency_audit():
 
     # Detect reverse dependency (higher tier importing lower tier is OK; lower importing higher is a violation)
     reversals = []
-    circular = []
     for src, tgt in edges:
         src_pkg = top_level_pkg(src)
         tgt_pkg = top_level_pkg(tgt)

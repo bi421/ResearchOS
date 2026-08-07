@@ -529,18 +529,3 @@ def register_cpp_backend(router=None, force=False):
 
     return adapter
 
-
-def create_cpp_router():
-    """
-    Create router with Python reference backend and C++ candidate.
-    """
-    from .router import BackendRouter
-    from .backend import PythonQuantBackend
-
-    router = BackendRouter(
-        PythonQuantBackend()
-    )
-
-    register_cpp_backend(router)
-
-    return router

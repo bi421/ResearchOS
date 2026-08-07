@@ -13,14 +13,10 @@ Tests cover:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 
-from researchos.core.base_object import BaseObject
 from researchos.objects.attribution import (
-    ATTRIBUTION_COMPLETE_THRESHOLD,
-    ATTRIBUTION_PARTIAL_THRESHOLD,
     Attribution,
     AttributionGraph,
 )
@@ -29,10 +25,7 @@ from researchos.objects.evidence import Evidence
 from researchos.objects.interpretation import Interpretation
 from researchos.objects.hypothesis import Hypothesis
 from researchos.objects.scenario import Scenario
-from researchos.objects.research import Research, ResearchReport
-from researchos.objects.confidence import Confidence
-from researchos.objects.contradiction import Contradiction
-from researchos.objects.knowledge import Knowledge
+from researchos.objects.research import Research
 from researchos.objects.process import AuditEntry
 from researchos.engines.attribution import ATTRIBUTABLE_TYPES, TRAVERSAL_RULES, ResearchAttributionEngine
 from researchos.storage.repository import OBJECT_REGISTRY

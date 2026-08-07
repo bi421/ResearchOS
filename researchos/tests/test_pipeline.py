@@ -9,7 +9,7 @@ Tests:
     5. Deterministic IDs are preserved through the pipeline
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 import pytest
 
@@ -17,15 +17,7 @@ from researchos.repository.memory import MemoryRepository
 from researchos.pipeline import ResearchPipeline, ReferenceValidator
 from researchos.objects.observation import Observation
 from researchos.objects.evidence import Evidence
-from researchos.objects.interpretation import Interpretation
-from researchos.objects.hypothesis import Hypothesis
-from researchos.objects.scenario import Scenario
-from researchos.objects.confidence import Confidence
-from researchos.objects.contradiction import Contradiction
-from researchos.objects.research import Research, ResearchReport
-from researchos.objects.validation import Validation
-from researchos.objects.knowledge import Knowledge
-from researchos.objects.cognitive import CognitiveAssessment
+from researchos.objects.research import Research
 from researchos.objects.process import AuditEntry
 
 
@@ -245,7 +237,7 @@ class TestPipelineEndToEnd:
         research = pipeline.start_research("Test", "Daily", "US")
         obs = pipeline.add_observation(research.id, "T", self._ts(), 1.0)
         hyp = pipeline.create_hypothesis(research.id, "Primary", "Test")
-        ev = pipeline.create_evidence(
+        pipeline.create_evidence(
             observation_id=obs.id, hypothesis_id=hyp.id,
             interpretation="test", research_id=research.id,
         )
@@ -297,13 +289,13 @@ class TestSqlitePipeline:
         obs = pipeline.add_observation(research.id, "MACRO:CPI", datetime(2024, 6, 1, tzinfo=timezone.utc), 3.2)
         hyp = pipeline.create_hypothesis(research.id, "Primary", "Test")
         ev = pipeline.create_evidence(obs.id, hyp.id, "test", research_id=research.id)
-        scenario = pipeline.create_scenario(research.id, hyp.id, "Base", "Test", 0.5)
-        confidence = pipeline.register_confidence(hyp.id, "Hypothesis", 0.7, research_id=research.id)
-        contradiction = pipeline.detect_contradiction(research.id, "Internal", "test", sides=[])
+        pipeline.create_scenario(research.id, hyp.id, "Base", "Test", 0.5)
+        pipeline.register_confidence(hyp.id, "Hypothesis", 0.7, research_id=research.id)
+        pipeline.detect_contradiction(research.id, "Internal", "test", sides=[])
         report = pipeline.generate_report(research.id, "Report", "Summary")
-        validation = pipeline.validate_research(research.id, report.id, "Accurate", 0.8)
-        knowledge = pipeline.extract_knowledge("Relationship_Strength", "CPI", "impacts", "Fed", 0.7, source_references=[research.id])
-        assessment = pipeline.assess_cognitive("trader-1", research.id, 0.8, 0.7)
+        pipeline.validate_research(research.id, report.id, "Accurate", 0.8)
+        pipeline.extract_knowledge("Relationship_Strength", "CPI", "impacts", "Fed", 0.7, source_references=[research.id])
+        pipeline.assess_cognitive("trader-1", research.id, 0.8, 0.7)
 
         # All objects present
         assert sqlite_repo.get(research.id) is not None

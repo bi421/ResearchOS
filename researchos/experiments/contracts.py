@@ -85,6 +85,23 @@ class DatasetConfig:
     filters: List[str] = field(default_factory=list)
     parameters: Dict[str, Any] = field(default_factory=dict)
 
+    def snapshot(self) -> "DatasetConfig":
+        """Return an immutable, deep-copied snapshot of this config.
+
+        Used by ``ExperimentRun`` (and ``Experiment``) to decouple the
+        historical record from the live source config object.  Later external
+        mutation of the original config must not affect the recorded run.
+        """
+        return DatasetConfig(
+            source=self.source,
+            start_date=self.start_date,
+            end_date=self.end_date,
+            symbols=list(self.symbols),
+            resolution=self.resolution,
+            filters=list(self.filters),
+            parameters=dict(self.parameters),
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a dictionary."""
         return {
@@ -134,6 +151,22 @@ class SimulationConfig:
     slippage: str = "fixed:0.0"
     max_positions: int = 10
     parameters: Dict[str, Any] = field(default_factory=dict)
+
+    def snapshot(self) -> "SimulationConfig":
+        """Return an immutable, deep-copied snapshot of this config.
+
+        Used by ``ExperimentRun`` (and ``Experiment``) to decouple the
+        historical record from the live source config object.  Later external
+        mutation of the original config must not affect the recorded run.
+        """
+        return SimulationConfig(
+            seed=self.seed,
+            initial_capital=self.initial_capital,
+            commission=self.commission,
+            slippage=self.slippage,
+            max_positions=self.max_positions,
+            parameters=dict(self.parameters),
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a dictionary."""
@@ -198,4 +231,3 @@ class MetricDefinition:
             target=data.get("target"),
             tolerance=data.get("tolerance"),
         )
-

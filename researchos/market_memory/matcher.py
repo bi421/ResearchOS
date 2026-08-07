@@ -15,7 +15,7 @@ Every comparison is:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from researchos.market_memory.models import HistoricalScenario, MarketSnapshot
 from researchos.market_memory.similarity import compare_snapshots

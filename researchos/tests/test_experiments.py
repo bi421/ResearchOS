@@ -15,17 +15,13 @@ All objects are tested for:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 import pytest
 
-from researchos.core.identity import generate_id, deterministic_hash
-from researchos.core.lifecycle import Lifecycle, LifecycleStage
-from researchos.core.timestamp import utc_now
+from researchos.core.lifecycle import LifecycleStage
 from researchos.experiments.contracts import (
     DatasetConfig,
     ExperimentStatus,
-    ExperimentType,
     HypothesisStatus,
     MetricDefinition,
     SimulationConfig,

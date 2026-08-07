@@ -2,7 +2,6 @@
 ResearchOS Macro Intelligence Layer - Storage Tests
 """
 
-import pytest
 from pathlib import Path
 
 

@@ -12,14 +12,13 @@ MIL-ECM-006: Econometrics owns ACF/PACF.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from macro_intelligence.statistics.descriptive import mean
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.matrix import solve
 from macro_intelligence.econometrics.models import (
     TestResult,
-    deterministic_hash,
 )
 
 ACF_VERSION = "ecm/acf/v1"

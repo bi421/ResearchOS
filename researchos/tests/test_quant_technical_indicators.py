@@ -6,14 +6,11 @@ Unit tests for Technical Analysis Engine missing indicators:
 - Determinism and contract validation
 """
 
-import math
 from researchos.quant_engine.technical.contracts import (
     Bars,
-    IndicatorCategory,
-    IndicatorFamily,
     IndicatorSpec,
 )
-from researchos.quant_engine.technical.engine import TechnicalAnalysisEngine, get_technical_engine
+from researchos.quant_engine.technical.engine import get_technical_engine
 from researchos.quant_engine.technical.indicators import (
     ichimoku_cloud,
     parabolic_sar,

@@ -9,10 +9,10 @@ MIL-ECM-010: Econometrics owns VIF.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from macro_intelligence.statistics.provenance import StatisticalProvenance
-from macro_intelligence.econometrics.matrix import transpose, matmul, invert
+from macro_intelligence.econometrics.matrix import invert
 from macro_intelligence.econometrics.models import TestResult
 
 VIF_VERSION = "ecm/vif/v1"

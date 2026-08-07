@@ -15,7 +15,6 @@ existing audit chain and serialization framework.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from researchos.core.base_object import BaseObject
@@ -40,9 +39,6 @@ from researchos.objects.market_memory import (
     MarketEvent,
     MarketStructure,
     LiquidityEvent,
-    MarketSession,
-    VolatilityState,
-    NewsReference,
     MarketOutcome,
 )
 from researchos.repository.interface import RepositoryInterface
@@ -575,7 +571,7 @@ class ResearchAttributionEngine:
 
     def _describe_object(self, obj: BaseObject) -> str:
         """Generate a short description of an object for trace output."""
-        obj_type = type(obj).__name__
+        type(obj).__name__
 
         if isinstance(obj, Observation):
             return f"{obj.source} = {obj.value} @ {obj.timestamp.isoformat() if hasattr(obj, 'timestamp') else ''}"

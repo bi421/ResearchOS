@@ -13,7 +13,6 @@ Based on the ResearchOS reporting framework with full auditability.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
@@ -21,8 +20,6 @@ from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
 
-from researchos.market_memory.matcher import MatchResult
-from researchos.market_memory.outcome_analysis import OutcomeAnalysisResult
 
 
 class MarketMemoryReport(BaseObject):

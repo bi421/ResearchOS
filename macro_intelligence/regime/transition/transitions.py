@@ -60,8 +60,8 @@ def classify_transition_type(
         return TransitionType.UNKNOWN
 
     avg_strength = sum(signal_strengths) / len(signal_strengths)
-    max_strength = max(signal_strengths)
-    min_strength = min(signal_strengths)
+    max(signal_strengths)
+    min(signal_strengths)
     strength_variance = sum((s - avg_strength) ** 2 for s in signal_strengths) / len(signal_strengths)
 
     # STABLE: no significant signals

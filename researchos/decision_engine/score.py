@@ -32,7 +32,6 @@ from researchos.core.lifecycle import LifecycleStage
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
-    ProbabilityOutcome,
     WeightConfiguration,
 )
 

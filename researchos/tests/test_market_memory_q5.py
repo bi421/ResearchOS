@@ -20,14 +20,10 @@ import json
 import os
 import tempfile
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
 
 import pytest
 
-from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
 from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import utc_now, parse_timestamp
 
 from researchos.market_memory import (
     MarketSnapshot,
@@ -42,7 +38,6 @@ from researchos.market_memory import (
     compare_scenarios,
     ScenarioMatcher,
     MatchResult,
-    DEFAULT_FEATURE_WEIGHTS,
     OutcomeAnalysis,
     OutcomeAnalysisResult,
     MarketMemoryReport,

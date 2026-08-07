@@ -17,13 +17,10 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import Timeframe, ValidationReport
-from researchos.data_engine.quote import Quote
-from researchos.data_engine.tick import Tick
-from researchos.data_engine.trade import Trade
 
 
 class GapDetector:

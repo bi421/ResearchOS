@@ -15,10 +15,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from researchos.data_engine.candle import Candle
-from researchos.data_engine.contracts import Timeframe
 from researchos.data_engine.dataset import HistoricalDataset
 
 

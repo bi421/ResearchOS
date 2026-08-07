@@ -16,7 +16,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Optional
+from typing import Dict
 
 
 # Common timezone offsets (minutes from UTC)

@@ -9,7 +9,7 @@ MIL-ECM-008: Econometrics owns Engle-Granger.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from macro_intelligence.statistics.descriptive import mean
 from macro_intelligence.statistics.provenance import StatisticalProvenance
@@ -107,7 +107,7 @@ def engle_granger(
 
     # Approximate p-value by interpolation.
     levels = sorted(critical.keys())
-    stats = [critical[l] for l in levels]
+    stats = [critical[level] for level in levels]
     if eg_stat <= stats[0]:
         p_value = 0.005
     elif eg_stat >= stats[-1]:

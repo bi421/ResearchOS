@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from macro_intelligence.relationships.correlation import pearson_correlation
 from macro_intelligence.relationships.models import (
-    ALGORITHM_VERSION,
     LagRelationship,
     LagType,
 )

@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from typing import Iterator, List, Mapping, Optional, Tuple
+from typing import Iterator, Mapping, Optional, Tuple
 
 from researchos.orchestration.contracts import PipelineReport
 from researchos.orchestration.contracts import PipelineStatus
@@ -29,7 +29,6 @@ from .contracts import (
     InvalidPipelineRecordError,
     PipelineNotFoundError,
     PipelineRecord,
-    PipelineRepositoryError,
 )
 
 DEFAULT_PATH = "pipeline_repository.json"

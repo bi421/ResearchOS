@@ -3,7 +3,7 @@ ResearchOS Macro Intelligence Layer - Base Interface
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 
 T = TypeVar('T')

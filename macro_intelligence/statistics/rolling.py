@@ -10,8 +10,8 @@ MIL-STAT-004: All outputs preserve provenance.
 
 from __future__ import annotations
 
-from typing import List, Optional, Dict, Any
-from macro_intelligence.statistics.descriptive import mean, std, variance, percentile
+from typing import List, Optional, Dict
+from macro_intelligence.statistics.descriptive import mean, std, variance
 
 
 def rolling_mean(

@@ -18,9 +18,7 @@ Design:
 from __future__ import annotations
 from researchos.quant_engine.dataset_contracts import extract_prices
 
-import hashlib
-import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import (
@@ -28,7 +26,6 @@ from researchos.quant_engine.models import (
     SimulationRequest,
     SimulationResult,
 )
-from researchos.core.identity import deterministic_hash
 from researchos.core.timestamp import utc_now
 
 

@@ -8,7 +8,7 @@ denominator is undefined).
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence
+from typing import List, Sequence
 
 
 def _as_floats(values: Sequence) -> List[float]:

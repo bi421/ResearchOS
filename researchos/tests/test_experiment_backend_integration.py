@@ -224,7 +224,10 @@ class TestProvenance:
         assert result.statistics["result_hash"]
         assert result.statistics["simulation_id"].startswith("sim_")
         assert result.statistics["dataset_reference"] == "integration_source"
-        assert result.statistics["dataset_version"] == "1.0.0"
+        
+        # Issue #5: dataset_version is now a real content hash, not "1.0.0".
+        assert result.statistics["dataset_version"] != "1.0.0"
+        assert len(result.statistics["dataset_version"]) == 64  # sha256 hex
         assert result.statistics["seed"] == 42
         assert result.statistics["run_number"] == 1
 

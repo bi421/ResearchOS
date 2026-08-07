@@ -42,10 +42,18 @@ Phase 4.2 / 4.4:
     hash), while the observational ``backend_execution_time_ms`` /
     ``backend_execution_timestamp`` are recorded on the result but never
     hashed.
+
+Architecture Hardening (Issue #5):
+    The runner derives a deterministic dataset-provenance hash from the actual
+    dataset passed to ``run`` instead of a hardcoded ``"1.0.0"`` version string.
+    This closes the provenance gap: identical datasets always hash identically,
+    and different datasets always produce different ``dataset_version`` hashes.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -59,6 +67,19 @@ from researchos.quant_engine.models import (
     SimulationRequest,
     SimulationResult,
 )
+
+
+def _canonical(value: Any) -> Any:
+    """Return a deterministic, JSON-serializable canonical form of ``value``."""
+    if isinstance(value, dict):
+        return {str(k): _canonical(v) for k, v in sorted(value.items(), key=lambda kv: str(kv[0]))}
+    if isinstance(value, (list, tuple)):
+        return [_canonical(v) for v in value]
+    if hasattr(value, "to_dict"):
+        return _canonical(value.to_dict())
+    if isinstance(value, float):
+        return value
+    return value
 
 
 class AbstractExperimentRunner(ABC):
@@ -376,6 +397,26 @@ class BaseExperimentRunner(AbstractExperimentRunner):
 
         return results
 
+    def _dataset_provenance(self, dataset: Any) -> str:
+        """Return a deterministic content hash of ``dataset``.
+
+        This replaces the previously hardcoded ``"1.0.0"`` dataset version so
+        that every run carries real provenance of the exact dataset consumed.
+        The hash is stable for identical inputs and changes when the dataset
+        content changes (Issue #5).
+        """
+        canonical = _canonical(dataset)
+        try:
+            payload = json.dumps(
+                canonical,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+            ).encode("utf-8")
+        except (TypeError, ValueError):
+            payload = str(canonical).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
     def _execute_simulation(
         self,
         experiment: Experiment,
@@ -413,7 +454,7 @@ class BaseExperimentRunner(AbstractExperimentRunner):
             dataset_reference=(
                 dataset_config.source or "experiment"
             ),
-            dataset_version="1.0.0",
+            dataset_version=self._dataset_provenance(dataset),
             calculation_version=CalculationVersion.CALCULATION_V1,
             start_time=dataset_config.start_date,
             end_time=dataset_config.end_date,
@@ -470,15 +511,15 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         result.add_statistic("run_number", run.run_number)
 
         # Store equity curve and returns as metadata
-        result.metadata["equity_curve"] = sim_result.equity_curve
-        result.metadata["returns"] = sim_result.returns
+        result.set_metadata_item("equity_curve", sim_result.equity_curve)
+        result.set_metadata_item("returns", sim_result.returns)
 
         # Propagate backtest artifacts (packaging only — the backend produced
         # these deterministically; the runner never parses or computes them).
         result.trades = list(sim_result.trades)
         result.signals = list(sim_result.signals)
-        result.metadata["positions"] = list(sim_result.positions)
-        result.metadata["execution_stats"] = dict(sim_result.execution_stats)
+        result.set_metadata_item("positions", list(sim_result.positions))
+        result.set_metadata_item("execution_stats", dict(sim_result.execution_stats))
 
         # ── Phase 4.2/4.4: propagate router backend metadata ────────────
         self._propagate_router_stats(result, router_meta)

@@ -35,19 +35,15 @@ from __future__ import annotations
 import ast
 import inspect
 import random
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-import pytest
 
 from researchos.experiments.contracts import DatasetConfig, SimulationConfig
 from researchos.experiments.experiment import Experiment
-from researchos.experiments.result import ExperimentResult
 from researchos.experiments.runner import BaseExperimentRunner
 from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
@@ -76,7 +72,7 @@ def _executable_source(path: Path) -> str:
             isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
             and ast.get_docstring(node) is not None
         ):
-            doc = ast.get_docstring(node, clean=False)
+            ast.get_docstring(node, clean=False)
             # Remove the string literal node(s) used as the docstring.
             body = node.body
             if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
@@ -306,7 +302,9 @@ class TestExperimentResultProvenance:
         assert stats["result_hash"]
         assert stats["simulation_id"].startswith("sim_")
         assert stats["dataset_reference"] == "integration_source"
-        assert stats["dataset_version"] == "1.0.0"
+        # Issue #5: dataset_version is now a real content hash, not "1.0.0".
+        assert stats["dataset_version"] != "1.0.0"
+        assert len(stats["dataset_version"]) == 64  # sha256 hex
         assert stats["seed"] == 42
         assert stats["run_number"] == 1
 

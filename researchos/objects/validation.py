@@ -10,7 +10,6 @@ market outcomes to measure quality, identify errors, and calibrate confidence.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject

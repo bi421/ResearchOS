@@ -18,8 +18,6 @@ from typing import Any, Dict, List
 from researchos.quant_engine.models import CalculationVersion
 from researchos.quant_engine.statistics import (
     _validate_returns,
-    mean,
-    standard_deviation,
 )
 
 

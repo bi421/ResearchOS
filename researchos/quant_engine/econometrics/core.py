@@ -7,7 +7,7 @@ Pure Python, no external dependencies. All functions are deterministic.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Sequence
 
 from researchos.quant_engine.econometrics.contracts import (
     AcfResult,
@@ -277,7 +277,7 @@ def fit_ma(values: Sequence[float], q_order: int = 1) -> FittedModel:
 
     m = _mean(values)
     centered = [v - m for v in values]
-    est_var = _var(centered)
+    _var(centered)
 
     # Approximate MA coefficients via moment matching.
     acfs = [autocorrelation(centered, i) for i in range(1, q_order + 1)]

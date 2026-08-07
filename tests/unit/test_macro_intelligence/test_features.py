@@ -230,7 +230,7 @@ class TestFeatureVector:
     
     def test_create_feature_vector(self):
         """Test creating a feature vector."""
-        from macro_intelligence.features.definitions import FeatureVector, FeatureValue
+        from macro_intelligence.features.definitions import FeatureVector
         
         vector = FeatureVector(
             vector_id="VEC_20260803_120000",

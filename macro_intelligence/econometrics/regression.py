@@ -17,20 +17,19 @@ MIL-ECM-005: Econometrics never duplicates single-variable OLS.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from math import exp, log
 
-from macro_intelligence.statistics.descriptive import mean, std
+from macro_intelligence.statistics.descriptive import mean
 from macro_intelligence.statistics.distributions import (
-    normal_cdf,
     t_distribution_p_value,
 )
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.statistics.regression import linear_regression as _canonical_ols
 
 from macro_intelligence.econometrics.matrix import transpose, matmul, solve, invert
-from macro_intelligence.econometrics.models import RegressionResult, deterministic_hash
+from macro_intelligence.econometrics.models import RegressionResult
 
 # Algorithm version constants.
 MULTIPLE_VERSION = "ecm/reg/multiple/v1"
@@ -331,8 +330,8 @@ def logistic_regression(
                 grad[j] += diff * X[i][j]
             w = p * (1.0 - p)
             for j in range(k):
-                for l in range(k):
-                    hess[j][l] += w * X[i][j] * X[i][l]
+                for ll in range(k):
+                    hess[j][ll] += w * X[i][j] * X[i][ll]
         # Hessian is negative-definite; solve H delta = grad → delta = H^{-1} grad.
         try:
             hess_inv = invert(hess)
@@ -341,7 +340,7 @@ def logistic_regression(
             for j in range(k):
                 hess[j][j] += 1e-8
             hess_inv = invert(hess)
-        delta = [sum(hess_inv[j][l] * grad[l] for l in range(k)) for j in range(k)]
+        delta = [sum(hess_inv[j][ll] * grad[ll] for ll in range(k)) for j in range(k)]
         new_beta = [beta[j] + delta[j] for j in range(k)]
         max_change = max(abs(new_beta[j] - beta[j]) for j in range(k))
         beta = new_beta

@@ -4,8 +4,8 @@ Version: time/enums/v1
 Status: FROZEN
 """
 
-from enum import Enum, auto
-from datetime import datetime, timezone, timedelta
+from enum import Enum
+from datetime import timezone, timedelta
 from typing import Optional
 
 

@@ -10,8 +10,6 @@ from __future__ import annotations
 from typing import Any
 
 from macro_intelligence.relationships.correlation import (
-    pearson_correlation,
-    classify_relationship,
     compute_rolling_correlation,
 )
 from macro_intelligence.relationships.models import (

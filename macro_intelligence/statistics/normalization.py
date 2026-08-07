@@ -9,7 +9,7 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import List
 from macro_intelligence.statistics.descriptive import mean, std, percentile
 
 

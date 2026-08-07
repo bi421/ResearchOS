@@ -19,10 +19,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import parse_timestamp, utc_now
-from researchos.data_engine.contracts import DataQuality, DatasetStatus, Timeframe
+from researchos.core.timestamp import parse_timestamp
+from researchos.data_engine.contracts import DataQuality, DatasetStatus
 
 
 class DatasetMetadata(BaseObject):

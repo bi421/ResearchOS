@@ -200,13 +200,13 @@ def rsi(bars: Bars, period: int = 14) -> List[Optional[float]]:
 
     for i in range(period - 1, len(gains)):
         g = avg_gain[i]
-        l = avg_loss[i]
-        if g is None or l is None:
+        avg_loss_val = avg_loss[i]
+        if g is None or avg_loss_val is None:
             continue
-        if l == 0:
+        if avg_loss_val == 0:
             out[i + 1] = 100.0
         else:
-            rs = g / l
+            rs = g / avg_loss_val
             out[i + 1] = 100.0 - (100.0 / (1.0 + rs))
     return out
 
@@ -260,7 +260,7 @@ def cci(bars: Bars, period: int = 20) -> List[Optional[float]]:
     out: List[Optional[float]] = [None] * length
     if length < period:
         return out
-    tp = [(h + l + c) / 3.0 for h, l, c in zip(bars.high, bars.low, bars.close)]
+    tp = [(h + low + c) / 3.0 for h, low, c in zip(bars.high, bars.low, bars.close)]
     tp_sma = _sma(tp, period)
     for i in range(period - 1, length):
         mean = tp_sma[i]
@@ -361,10 +361,10 @@ def donchian_channel(
         window_high = bars.high[i - period + 1:i + 1]
         window_low = bars.low[i - period + 1:i + 1]
         u = max(window_high)
-        l = min(window_low)
+        lower_val = min(window_low)
         upper[i] = u
-        lower[i] = l
-        middle[i] = (u + l) / 2.0
+        lower[i] = lower_val
+        middle[i] = (u + lower_val) / 2.0
     return {"upper": upper, "middle": middle, "lower": lower}
 
 
@@ -412,7 +412,7 @@ def mfi(bars: Bars, period: int = 14) -> List[Optional[float]]:
     out: List[Optional[float]] = [None] * length
     if length < period + 1:
         return out
-    typical = [(h + l + c) / 3.0 for h, l, c in zip(bars.high, bars.low, bars.close)]
+    typical = [(h + low + c) / 3.0 for h, low, c in zip(bars.high, bars.low, bars.close)]
     raw_money = [t * v for t, v in zip(typical, bars.volume)]
 
     pos: List[float] = []
@@ -714,8 +714,8 @@ def ichimoku_cloud(
 
     def _hl_mid(start_idx: int, end_idx: int) -> float:
         h = max(bars.high[start_idx:end_idx + 1])
-        l = min(bars.low[start_idx:end_idx + 1])
-        return (h + l) / 2.0
+        low_val = min(bars.low[start_idx:end_idx + 1])
+        return (h + low_val) / 2.0
 
     for i in range(length):
         if i >= tenkan_period - 1:

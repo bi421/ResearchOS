@@ -16,7 +16,7 @@ All functions are pure and deterministic.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 from researchos.quant_engine.portfolio.contracts import (
     AllocationResult,
@@ -368,7 +368,7 @@ def allocate_capital(
 
     capital = [portfolio.initial_capital * f for f in frac]
 
-    returns = portfolio_returns(portfolio)
+    portfolio_returns(portfolio)
     p = 0.5
     b = 1.5
     kelly = kelly_fraction(p, b)

@@ -13,9 +13,6 @@ from typing import Any
 
 from macro_intelligence.regime.classification.taxonomy import (
     MacroRegime,
-    LiquidityRegime,
-    RiskRegime,
-    MonetaryRegime,
 )
 
 

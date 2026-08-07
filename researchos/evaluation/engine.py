@@ -31,7 +31,6 @@ from .contracts import (
     EVALUATION_VERSION,
     EvaluationReport,
     EvaluationScore,
-    InvalidEvaluationError,
     PipelineEvaluationError,
     _grade,
 )

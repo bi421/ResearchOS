@@ -7,7 +7,7 @@ that the computation layer can assume well-formed inputs.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from researchos.quant_engine.technical.contracts import Bars
 

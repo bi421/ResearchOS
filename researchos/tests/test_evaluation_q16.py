@@ -8,14 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import unittest
 from dataclasses import FrozenInstanceError
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from researchos.evaluation import (
     EVALUATION_VERSION,
-    EvaluationError,
     EvaluationReport,
     EvaluationScore,
     InvalidEvaluationError,

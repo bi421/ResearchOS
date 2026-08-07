@@ -5,7 +5,6 @@ Tests for deterministic regime detection engine.
 
 import pytest
 from datetime import datetime, timezone
-from copy import deepcopy
 
 UTC = timezone.utc
 

@@ -31,7 +31,6 @@ from macro_intelligence.knowledge.models import (
     ALGORITHM_VERSION,
     KnowledgeObject,
     KnowledgeProvenance,
-    KnowledgeType,
 )
 from macro_intelligence.knowledge.confidence import (
     ConfidenceCalculator,

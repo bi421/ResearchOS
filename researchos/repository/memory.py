@@ -10,7 +10,7 @@ should use a database-backed implementation.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Type, TypeVar
+from typing import Dict, List, Optional, TypeVar
 
 from researchos.core.base_object import BaseObject
 from researchos.repository.interface import RepositoryInterface

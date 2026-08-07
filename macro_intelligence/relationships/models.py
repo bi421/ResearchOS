@@ -118,7 +118,8 @@ class CorrelationResult:
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
@@ -171,7 +172,8 @@ class RollingCorrelationResult:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
@@ -227,7 +229,8 @@ class LagRelationship:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
@@ -280,7 +283,8 @@ class RegimeRelationship:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
@@ -336,7 +340,8 @@ class StructuralBreak:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
@@ -417,7 +422,8 @@ class RelationshipResult:
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,

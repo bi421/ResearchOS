@@ -39,7 +39,6 @@ from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id, deterministic_hash
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
-from researchos.objects.process import AuditEntry, ReasoningChain
 from researchos.decision_engine.contracts import (
     CalculationMethod,
     DecisionStatus,

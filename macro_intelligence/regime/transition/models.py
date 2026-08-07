@@ -71,7 +71,8 @@ class TransitionSignal:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"detector_name": self.detector_name, "signal_id": self.signal_id,
              "signal_type": self.signal_type, "strength": self.strength, "direction": self.direction}
         return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
@@ -139,7 +140,8 @@ class RegimeTransition:
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"transition_id": self.transition_id,
              "previous_regime": self.previous_regime.value,
              "current_regime": self.current_regime.value,
@@ -189,7 +191,8 @@ class TransitionHistoryEntry:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"transition_id": self.transition_id,
              "previous_regime": self.previous_regime.value,
              "current_regime": self.current_regime.value,
@@ -226,7 +229,8 @@ class TransitionProbabilityMatrix:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"algorithm_version": self.algorithm_version,
              "transition_probs": self.transition_probs,
              "observation_count": self.observation_count}
@@ -264,7 +268,8 @@ class RegimePersistence:
         )
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"regime": self.regime.value,
              "persistence_periods": self.persistence_periods,
              "continuation_probability": self.continuation_probability}
@@ -323,7 +328,8 @@ class EarlyWarningSignal:
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"warning_id": self.warning_id,
              "current_regime": self.current_regime.value,
              "predicted_regime": self.predicted_regime.value,
@@ -398,7 +404,8 @@ class TransitionAnalysisResult:
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
-        import hashlib, json
+        import hashlib
+        import json
         h = {"analysis_id": self.analysis_id,
              "current_regime": self.current_regime.value,
              "previous_regime": self.previous_regime.value if self.previous_regime else None,

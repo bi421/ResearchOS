@@ -18,9 +18,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any, Callable, Iterator, List, Optional, TypeVar
 
-from researchos.data_engine.candle import Candle
 from researchos.data_engine.dataset import HistoricalDataset
-from researchos.data_engine.contracts import Timeframe
 
 T = TypeVar("T")
 

@@ -22,10 +22,9 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 from __future__ import annotations
 
 import random
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from researchos.quant_engine.models import (
-    CalculationVersion,
     SimulationRequest,
     SimulationResult,
 )

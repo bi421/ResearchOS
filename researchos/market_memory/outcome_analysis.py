@@ -14,11 +14,10 @@ All calculations are deterministic and based solely on the provided data.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from math import sqrt
+from typing import Dict, List
 
 from researchos.market_memory.matcher import MatchResult
-from researchos.market_memory.models import HistoricalScenario, MarketSnapshot
+from researchos.market_memory.models import HistoricalScenario
 
 
 @dataclass

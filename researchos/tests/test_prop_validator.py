@@ -1,5 +1,4 @@
-﻿import pytest
-from researchos.validation.prop_validator import TradingRiskCheck
+﻿from researchos.validation.prop_validator import TradingRiskCheck
 
 def test_trading_risk_check_success():
     validator = TradingRiskCheck(initial_balance=10000.0)

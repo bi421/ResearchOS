@@ -11,7 +11,7 @@ bias profile, and learning progress over time.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id

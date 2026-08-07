@@ -16,7 +16,6 @@ invalid inputs (the canonical implementation raises ValueError).
 
 from __future__ import annotations
 
-from typing import Any
 
 from macro_intelligence.statistics.correlation import (
     pearson_correlation as _canonical_pearson,

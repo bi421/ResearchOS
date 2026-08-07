@@ -9,7 +9,7 @@ MIL-ECM-009: Econometrics owns Granger causality.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from macro_intelligence.statistics.distributions import t_distribution_p_value
 from macro_intelligence.statistics.provenance import StatisticalProvenance
@@ -101,7 +101,6 @@ def granger_causality(
         else:
             f_stat = ((rss_rest - rss_unrst) / df_num) / (rss_unrst / df_den)
             # Approximate p-value via t-distribution mapping (F is positive).
-            from math import exp
             p_value = t_distribution_p_value(f_stat ** 0.5, df_den)
 
     is_significant = p_value is not None and p_value < 0.05

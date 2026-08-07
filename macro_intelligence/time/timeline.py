@@ -7,14 +7,13 @@ Status: FROZEN
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional, List
+from datetime import datetime, timedelta
+from typing import Any, Optional
 from macro_intelligence.time.enums import (
     EventCategory,
     WindowType,
 )
 from macro_intelligence.time.normalizer import TimeNormalizer, UTC
-from macro_intelligence.time.normalizer import UTC
 
 
 @dataclass(frozen=True)

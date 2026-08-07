@@ -11,13 +11,10 @@ Unit tests for Econometrics Engine missing models:
 """
 
 import math
-import pytest
 from researchos.quant_engine.econometrics import (
     CointegrationTestResult,
-    FittedModel,
     JohansenTestResult,
     ModelFamily,
-    VolatilityModelResult,
     engle_granger_cointegration,
     fit_arima,
     fit_egarch,

@@ -14,15 +14,11 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from researchos.core.identity import deterministic_hash
-from researchos.core.timestamp import utc_now
 
 
 class CalculationVersion(str, Enum):

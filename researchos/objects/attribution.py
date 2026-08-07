@@ -14,13 +14,11 @@ Every attribution is deterministic, immutable, and fully auditable.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import parse_timestamp
 
 
 # Attribution integrity thresholds

@@ -13,7 +13,7 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from researchos.quant_engine.models import CalculationVersion
 

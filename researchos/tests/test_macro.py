@@ -608,7 +608,7 @@ class TestProbabilities:
         _load_mixed_drivers(engine)
         score = engine.compute_macro_score()
         regime = engine.classify_regime(score)
-        prob = engine.compute_probabilities(score, regime)
+        engine.compute_probabilities(score, regime)
         assert 40 <= score.aggregate_score <= 60
 
     def test_probability_sum_to_one(self, engine):
@@ -683,7 +683,7 @@ class TestRegimeClassification:
         """Mid-range score = Range_Bound."""
         _load_mixed_drivers(engine)
         score = engine.compute_macro_score()
-        regime = engine.classify_regime(score)
+        engine.classify_regime(score)
         assert 40 <= score.aggregate_score <= 60
 
     def test_regime_stability(self, engine):

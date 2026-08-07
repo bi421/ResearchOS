@@ -20,11 +20,10 @@ Coverage:
 
 from __future__ import annotations
 
-import hashlib
 import json
-import math
 import unittest
 from dataclasses import FrozenInstanceError
+from typing import Any
 
 from researchos.quant_engine.machine_learning.dataset_contracts import (
     ResearchDataset,
@@ -1224,15 +1223,8 @@ class TestPublicAPI(unittest.TestCase):
         # Verify that the public API is surface-stable
         from researchos.quant_engine.training import (
             ModelContract, ModelType, TrainingResult,
-            TrainConfig, Trainer, TrainingRepository,
-            accuracy, precision, recall, f1_score, mae, mse, rmse,
-            directional_accuracy, compute_metrics,
-            dataset_hash, validate_dataset,
-            TrainingError, InvalidDatasetError, InvalidModelError,
-            TrainingRepositoryError, DuplicateModelError,
-            TrainingResultNotFoundError,
-            TRAINING_VERSION, MODEL_CONTRACT_VERSION,
-            TRAINING_REPOSITORY_VERSION,
+            Trainer, TrainingRepository,
+            accuracy, precision,
         )
         self.assertIsNotNone(ModelContract)
         self.assertIsNotNone(ModelType)

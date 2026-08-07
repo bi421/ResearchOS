@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, List, Mapping, Optional
 
 from researchos.quant_engine.machine_learning.dataset_builder import DatasetBuilder
 from researchos.quant_engine.machine_learning.dataset_contracts import (
@@ -33,14 +33,12 @@ from researchos.quant_engine.models.contracts import (
 )
 from researchos.quant_engine.training.contracts import (
     ModelType as TrainingModelType,
-    InvalidModelError,
     ModelContract as TrainingModelContract,
 )
 from researchos.quant_engine.training.trainer import TrainConfig, Trainer
 from researchos.quant_engine.training.training_result import TrainingResult
 from researchos.quant_engine.validation.walk_forward import WalkForwardValidator
 from researchos.quant_engine.validation.contracts import (
-    ValidationError,
     ValidationResult,
 )
 

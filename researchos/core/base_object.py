@@ -13,13 +13,12 @@ All objects are:
 
 from __future__ import annotations
 
-import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.identity import generate_id, deterministic_hash
-from researchos.core.lifecycle import Lifecycle, LifecycleStage
+from researchos.core.lifecycle import Lifecycle
 from researchos.core.timestamp import utc_now, parse_timestamp
 
 

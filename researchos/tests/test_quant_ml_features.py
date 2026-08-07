@@ -86,7 +86,7 @@ class TestReturns(unittest.TestCase):
         # For small returns, log return ≈ simple return
         c = [100.0, 100.5]
         lr = log_returns(c)
-        simple = returns(c)[1]
+        returns(c)[1]
         # Should be close but not equal
         self.assertIsNotNone(lr[1])
         self.assertAlmostEqual(lr[1], math.log(100.5 / 100.0), places=10)
@@ -205,13 +205,13 @@ class TestTechnicalFeatures(unittest.TestCase):
         self.assertEqual(m1["macd"], m2["macd"])
 
     def test_atr_length(self):
-        h, l, c, v = _make_ohlcv(60)
-        atr = atr_feature(h, l, c, 14)
+        h, low, c, v = _make_ohlcv(60)
+        atr = atr_feature(h, low, c, 14)
         self.assertEqual(len(atr), 60)
 
     def test_atr_positive(self):
-        h, l, c, v = _make_ohlcv(60)
-        atr = atr_feature(h, l, c, 14)
+        h, low, c, v = _make_ohlcv(60)
+        atr = atr_feature(h, low, c, 14)
         for val in atr:
             if val is not None:
                 self.assertGreater(val, 0.0)
@@ -225,34 +225,34 @@ class TestTechnicalFeatures(unittest.TestCase):
     def test_bollinger_upper_gt_lower(self):
         c = _make_close(60)
         bb = bollinger_feature(c, 20)
-        for u, l in zip(bb["bb_upper"], bb["bb_lower"]):
-            if u is not None and l is not None:
-                self.assertGreaterEqual(u, l)
+        for u, lower in zip(bb["bb_upper"], bb["bb_lower"]):
+            if u is not None and lower is not None:
+                self.assertGreaterEqual(u, lower)
 
     def test_stochastic_bounds(self):
-        h, l, c, v = _make_ohlcv(60)
-        st = stochastic_feature(h, l, c, 14, 3)
+        h, low, c, v = _make_ohlcv(60)
+        st = stochastic_feature(h, low, c, 14, 3)
         for val in st["stoch_k"]:
             if val is not None:
                 self.assertGreaterEqual(val, 0.0)
                 self.assertLessEqual(val, 100.0)
 
     def test_cci_length(self):
-        h, l, c, v = _make_ohlcv(60)
-        cci = cci_feature(h, l, c, 20)
+        h, low, c, v = _make_ohlcv(60)
+        cci = cci_feature(h, low, c, 20)
         self.assertEqual(len(cci), 60)
 
     def test_mfi_bounds(self):
-        h, l, c, v = _make_ohlcv(60)
-        mfi = mfi_feature(h, l, c, v, 14)
+        h, low, c, v = _make_ohlcv(60)
+        mfi = mfi_feature(h, low, c, v, 14)
         for val in mfi:
             if val is not None:
                 self.assertGreaterEqual(val, 0.0)
                 self.assertLessEqual(val, 100.0)
 
     def test_vwap_length(self):
-        h, l, c, v = _make_ohlcv(60)
-        vwap = vwap_feature(h, l, c, v)
+        h, low, c, v = _make_ohlcv(60)
+        vwap = vwap_feature(h, low, c, v)
         self.assertEqual(len(vwap), 60)
 
     def test_roc_feature_determinism(self):

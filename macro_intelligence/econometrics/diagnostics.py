@@ -16,9 +16,8 @@ MIL-ECM-012: Econometrics owns diagnostics; diagnostics are separated from fit.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from math import exp
 
 from macro_intelligence.statistics.descriptive import mean, std, skewness, kurtosis
 from macro_intelligence.statistics.distributions import t_distribution_p_value

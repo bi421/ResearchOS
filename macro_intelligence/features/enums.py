@@ -4,8 +4,7 @@ Version: feat/enums/v1
 Status: FROZEN
 """
 
-from enum import Enum, auto
-from typing import Optional
+from enum import Enum
 
 
 class FeatureCategory(str, Enum):

@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Sequence
 
 
 @dataclass(frozen=True)
@@ -124,7 +124,7 @@ class HiddenMarkovModel:
         num_observations: int,
         seed: int = 42,
     ) -> None:
-        rng = random.Random(seed)
+        random.Random(seed)
         self.num_states = num_states
         self.num_observations = num_observations
         self.start_prob = [1.0 / num_states] * num_states

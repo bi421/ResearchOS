@@ -116,6 +116,27 @@ from researchos.quant_engine.metrics import (
     downside_deviation,
     compute_all_metrics,
 )
+from researchos.quant_engine.research_interface import (
+    RESEARCH_OPERATIONS,
+    RESEARCH_SURFACE_VERSION,
+    ResearchResult,
+    ResearchComputationInterface,
+    build_research_result,
+)
+from researchos.quant_engine.research_engine import (
+    PythonResearchBackend,
+    ResearchEngine,
+    research_capabilities,
+)
+from researchos.quant_engine.research_cpp_backend import (
+    ResearchCppBackend,
+    has_cpp_research_engine,
+)
+from researchos.quant_engine.research_registry import (
+    register_research_backend,
+    create_research_router,
+    create_research_engine,
+)
 
 __all__ = [
     # Interface
@@ -177,7 +198,7 @@ __all__ = [
     "consistency",
     "max_consecutive_wins",
     "max_consecutive_losses",
-    "distribution_analysis",
+"distribution_analysis",
     "compute_performance_analytics",
     # Metrics
     "sharpe_ratio",
@@ -187,4 +208,18 @@ __all__ = [
     "max_drawdown",
     "downside_deviation",
     "compute_all_metrics",
+    # Research analytical surface (Phase 5.1)
+    "RESEARCH_OPERATIONS",
+    "RESEARCH_SURFACE_VERSION",
+    "ResearchResult",
+    "ResearchComputationInterface",
+    "build_research_result",
+    "PythonResearchBackend",
+    "ResearchEngine",
+    "research_capabilities",
+    "ResearchCppBackend",
+    "has_cpp_research_engine",
+    "register_research_backend",
+    "create_research_router",
+    "create_research_engine",
 ]
