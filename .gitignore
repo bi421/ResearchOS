@@ -53,3 +53,5 @@ ai_audit.ps1
 collect_ai_evidence.ps1
 repo_structure.txt
 repo_tree.txt
+
+cpp_quant_engine/build/
