@@ -55,3 +55,7 @@ repo_structure.txt
 repo_tree.txt
 
 cpp_quant_engine/build/
+# Research datasets are local artifacts; large market-data files are not versioned.
+data/raw/
+data/curated/xauusd/*.csv
+data/curated/xauusd/*.parquet

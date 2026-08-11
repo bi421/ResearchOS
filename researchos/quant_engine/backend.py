@@ -231,7 +231,20 @@ class PythonQuantBackend(QuantComputationInterface):
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
     ) -> Dict[str, float]:
-        return compute_all_metrics(returns, equity_curve, risk_free_rate, calculation_version=calculation_version)
+        metrics = compute_all_metrics(
+            returns,
+            equity_curve,
+            risk_free_rate,
+            calculation_version=calculation_version,
+        )
+        if "max_drawdown" in metrics:
+            metrics["max_drawdown"] = round(float(metrics["max_drawdown"]), 8)
+            if metrics["max_drawdown"] != 0.0 and "mean_return" in metrics:
+                metrics["calmar_ratio"] = (
+                    float(metrics["mean_return"]) * 252
+                    / abs(metrics["max_drawdown"])
+                )
+        return metrics
 
     # ──────────────────────────────────────────────
     # Performance Analytics

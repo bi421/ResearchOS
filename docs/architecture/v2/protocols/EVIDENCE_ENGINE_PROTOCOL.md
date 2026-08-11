@@ -16,29 +16,27 @@ Status: Architecture Design
 
 
 
-Evidence Engine is responsible for collecting,
-
-tracking, validating and ranking evidence.
+Evidence Engine is the foundation of trustworthy intelligence.
 
 
 
-The system does not accept conclusions without evidence.
+Its responsibility:
 
 
 
-Every intelligence output must have:
+\- collect evidence
+
+\- validate evidence
+
+\- rank evidence quality
+
+\- maintain provenance
+
+\- provide traceable support for conclusions
 
 
 
-\- source
-
-\- timestamp
-
-\- confidence
-
-\- validation status
-
-\- provenance
+ResearchOS does not allow intelligence output without evidence.
 
 
 
@@ -50,10 +48,6 @@ Every intelligence output must have:
 
 
 
-INPUT
-
-
-
 Question
 
 
@@ -62,7 +56,7 @@ Question
 
 
 
-Evidence Search
+Evidence Discovery
 
 
 
@@ -94,6 +88,14 @@ Evidence Ranking
 
 
 
+Evidence Package
+
+
+
+↓
+
+
+
 Reasoning Layer
 
 
@@ -116,7 +118,7 @@ Decision Layer
 
 
 
-Every evidence object contains:
+Every evidence object must contain:
 
 
 
