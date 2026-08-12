@@ -9,11 +9,11 @@ independent of XAUUSD or any specific asset.
 Usage:
     from researchos.data_engine.loader import DataLoader
     
-    # Load XAUUSD (legacy)
+    # Load XAUUSD (frozen - legacy)
     candles = DataLoader.load("xauusd", "h1")
     
-    # Future: Load crypto
-    # candles = DataLoader.load("btcusdt", "1h", source="binance")
+    # Load Crypto (active development)
+    candles = DataLoader.load("btcusdt", "1h")
 """
 
 from pathlib import Path
@@ -33,22 +33,29 @@ class DataLoader:
     
     # Registry: Maps symbol -> configuration for file resolution
     _CONFIG: Dict[str, Dict[str, Any]] = {
+        # =========================================================
+        # ❄️ FROZEN (Legacy) - XAUUSD (Read-only, do not modify)
+        # =========================================================
         "xauusd": {
             "base_path": "data/curated/xauusd",
             "format": FORMAT_MT5,
             "file_pattern": "{symbol}_{timeframe}_*.csv",  # e.g., xauusd_h1_2021_2025_mt5.csv
         },
-        # 🔮 Ирээдүйд крипто нэмэхэд энд нэмэх:
-        # "btcusdt": {
-        #     "base_path": "data/curated/binance",
-        #     "format": FORMAT_TRADINGVIEW,
-        #     "file_pattern": "{symbol}_{timeframe}.csv",
-        # },
-        # "pepeusdt": {
-        #     "base_path": "data/curated/binance",
-        #     "format": FORMAT_TRADINGVIEW,
-        #     "file_pattern": "{symbol}_{timeframe}.csv",
-        # },
+        
+        # =========================================================
+        # 🚀 ACTIVE (Development) - Crypto Majors
+        # =========================================================
+        "btcusdt": {
+            "base_path": "data/curated/binance",
+            "format": FORMAT_TRADINGVIEW,  # Binance exports match TradingView format
+            "file_pattern": "{symbol}_{timeframe}.csv",
+        },
+        "ethusdt": {
+            "base_path": "data/curated/binance",
+            "format": FORMAT_TRADINGVIEW,
+            "file_pattern": "{symbol}_{timeframe}.csv",
+        },
+        # 🔮 Future Junk coins (e.g., pepeusdt) can be added here later
     }
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
