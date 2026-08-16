@@ -110,7 +110,7 @@ class TestSmallParity:
             cpp_result.metrics["max_drawdown"], abs=0.0
         )
         # Both use the ResearchOS 8dp rounding of max_drawdown.
-        assert py_result.metrics["max_drawdown"] == round(
+        assert cpp_result.metrics["max_drawdown"] == round(
             py_result.metrics["max_drawdown"], 8
         )
 

@@ -184,9 +184,9 @@ class CppQuantAdapter(QuantComputationInterface):
     def _normalize_drawdown(drawdown: Dict[str, Any]) -> Dict[str, Any]:
         out: Dict[str, Any] = {}
         if "max_drawdown" in drawdown:
-            out["max_drawdown"] = round(float(drawdown["max_drawdown"]), 8)
+            out["max_drawdown"] = float(drawdown["max_drawdown"])
         if "max_drawdown_pct" in drawdown:
-            out["max_drawdown_pct"] = round(float(drawdown["max_drawdown_pct"]), 6)
+            out["max_drawdown_pct"] = float(drawdown["max_drawdown_pct"])
         if "recovery_period" in drawdown:
             out["recovery_period"] = int(drawdown["recovery_period"])
         return out
@@ -528,4 +528,3 @@ def register_cpp_backend(router=None, force=False):
         router.register(adapter)
 
     return adapter
-
