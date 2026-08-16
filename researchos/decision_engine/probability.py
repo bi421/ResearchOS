@@ -23,7 +23,7 @@ Computation (pure aggregation, no hidden weights, no source priority):
     For each EvidenceItem read:
         item.confidence
         item.weight
-        item.metadata.get("direction", "neutral")   # "bullish" | "bearish" | "neutral"
+        item.direction    # ProbabilityOutcome ("Bullish" | "Bearish" | "Neutral")
 
     contribution = confidence * weight
 
@@ -49,8 +49,12 @@ from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id, deterministic_hash
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import utc_now, parse_timestamp
-from researchos.decision_engine.contracts import CalculationMethod
-from researchos.decision_engine.evidence import EvidenceCollection, EvidenceItem
+from researchos.decision_engine.contracts import (
+    CalculationMethod,
+    EvidenceItem,
+    ProbabilityOutcome,
+)
+from researchos.decision_engine.evidence import EvidenceCollection
 
 
 # ---------------------------------------------------------------------------
@@ -280,8 +284,8 @@ class ProbabilityCalculator:
     ProbabilityAssessment.
 
     The calculator performs **pure aggregation** — it reads only the existing
-    fields of each EvidenceItem (``confidence``, ``weight``, ``metadata``) and
-    applies a single normalisation pass.  There are:
+    fields of each EvidenceItem (``confidence``, ``weight``, ``direction``)
+    and applies a single normalisation pass.  There are:
 
         * no hidden weights,
         * no source priority,
@@ -361,9 +365,12 @@ class ProbabilityCalculator:
             confidences.append(confidence)
             weighted_contributions.append(contribution)
 
-            direction = _normalize_direction(
-                item.metadata.get("direction", _DIRECTION_NEUTRAL)
+            raw_direction = (
+                item.direction.value
+                if isinstance(item.direction, ProbabilityOutcome)
+                else item.direction
             )
+            direction = _normalize_direction(raw_direction)
             if direction == _DIRECTION_BULLISH:
                 bullish_weight += contribution
             elif direction == _DIRECTION_BEARISH:

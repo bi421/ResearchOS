@@ -62,7 +62,9 @@ where = ["."]
 include = ["researchos*"]
 
 [tool.pytest.ini_options]
-testpaths = ["researchos/tests"]
+# Mirrors the CI suite (.github/workflows/test-python.yml):
+#   pytest researchos/tests/ tests/unit/
+testpaths = ["researchos/tests", "tests/unit"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

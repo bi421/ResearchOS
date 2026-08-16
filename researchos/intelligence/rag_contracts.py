@@ -112,7 +112,7 @@ class RetrievalQuery:
             max_hits=int(data.get("max_hits", 10)),
             min_score=float(data.get("min_score", 0.0)),
             timestamp=datetime.fromisoformat(data["timestamp"])
-                if isinstance(data.get("timestamp"), str) else data.get("timestamp", datetime.now(timezone.utc)()),
+                if isinstance(data.get("timestamp"), str) else data.get("timestamp", datetime.now(timezone.utc)),
             context_tags=tuple(data.get("context_tags", [])),
         )
 
@@ -295,7 +295,7 @@ class RetrievalContext:
                 RetrievalHit.from_dict(h) for h in data.get("all_hits", [])
             ),
             session_start=datetime.fromisoformat(data["session_start"])
-                if isinstance(data.get("session_start"), str) else data.get("session_start", datetime.now(timezone.utc)()),
+                if isinstance(data.get("session_start"), str) else data.get("session_start", datetime.now(timezone.utc)),
             relevance_threshold=float(data.get("relevance_threshold", 0.3)),
         )
 

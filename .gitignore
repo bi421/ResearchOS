@@ -75,3 +75,10 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+
+# Temporary AI-agent backup/audit directories
+repair_backup_*/
+*_BACKUP_*/
+*_AUDIT_*/
+EMERGENCY_*/
+*.bak

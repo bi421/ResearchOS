@@ -172,7 +172,6 @@ class DecisionReasoner:
             details={
                 "total_evidence": score.evidence_count,
                 "source_counts": source_counts,
-                "evidence_version": context.evidence_version,
             },
         )
 
@@ -218,7 +217,7 @@ class DecisionReasoner:
             e for e in score.evidence_items
             if e.source == EvidenceSource.MARKET_MEMORY
         ]
-        match_count = len(context.historical_match_data)
+        match_count = len(context.historical_scenario_ids)
 
         scenario_ids = []
         for item in mm_items:
@@ -231,7 +230,7 @@ class DecisionReasoner:
                 f"from {match_count} historical matches. "
                 f"Score={score.market_memory_score:.4f}"
             ),
-            inputs=context.historical_matches,
+            inputs=context.historical_scenario_ids,
             outputs=[],
             rule="MarketMemoryEvidence",
             details={
@@ -258,13 +257,13 @@ class DecisionReasoner:
                 f"Experiment contribution: {len(exp_items)} experiment results. "
                 f"Score={score.experiment_score:.4f}"
             ),
-            inputs=context.experiment_ids,
+            inputs=context.experiment_result_ids,
             outputs=[],
             rule="ExperimentEvidence",
             details={
                 "evidence_count": len(exp_items),
                 "experiment_score": score.experiment_score,
-                "experiment_ids": context.experiment_ids,
+                "experiment_result_ids": context.experiment_result_ids,
             },
         )
 
@@ -281,7 +280,7 @@ class DecisionReasoner:
             order=5,
             description=(
                 f"Macro Intelligence contribution: {len(macro_items)} items. "
-                f"Regime={context.regime_name}, Score={score.macro_score:.4f}"
+                f"Regime={context.market_regime_id}, Score={score.macro_score:.4f}"
             ),
             inputs=[context.macro_state_id] if context.macro_state_id else [],
             outputs=[],
@@ -289,7 +288,7 @@ class DecisionReasoner:
             details={
                 "evidence_count": len(macro_items),
                 "macro_score": score.macro_score,
-                "regime": context.regime_name,
+                "market_regime_id": context.market_regime_id,
                 "macro_state_id": context.macro_state_id,
             },
         )
@@ -334,13 +333,12 @@ class DecisionReasoner:
                 f"Quant Engine contribution: {len(quant_items)} statistical summaries. "
                 f"Score={score.quant_score:.4f}"
             ),
-            inputs=[context.quant_summary_id] if context.quant_summary_id else [],
+            inputs=context.simulation_result_ids,
             outputs=[],
             rule="QuantEngineEvidence",
             details={
                 "evidence_count": len(quant_items),
                 "quant_score": score.quant_score,
-                "statistics": context.quant_statistics,
             },
         )
 
@@ -414,7 +412,7 @@ class DecisionReasoner:
                 "confidence": probability.confidence,
                 "uncertainty": probability.uncertainty,
                 "sample_size": probability.sample_size,
-                "historical_support": probability.historical_support,
+                "historical_consistency": probability.historical_consistency,
                 "calculation_method": probability.calculation_method.value,
                 "calculation_version": probability.calculation_version,
             },

@@ -56,7 +56,6 @@ __all__ = [
     "classify_policy_action",
     "yield_curve_metrics",
     "commodity_correlations",
-    "commodity_ratio",
     "bond_convexity",
     "duration_estimate",
     "real_yield",

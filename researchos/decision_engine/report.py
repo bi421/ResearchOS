@@ -334,29 +334,32 @@ def generate_decision_report(
 
     reasoning_steps = reasoner.reason(context, score, probability)
 
-    # Gather supporting evidence
-    supporting_ids = list(set(
+    # Gather supporting evidence (sorted for deterministic report content)
+    supporting_ids = sorted({
         item.source_id for item in score.evidence_items if item.source_id
-    ))
+    })
 
     # Gather historical scenarios
-    historical_ids = list(set(
-        mid for mid in context.historical_matches
-    ))
+    historical_ids = sorted(set(context.historical_scenario_ids))
 
     # Gather experiment IDs
-    experiment_ids = list(context.experiment_ids)
+    experiment_ids = list(context.experiment_result_ids)
 
-    # Macro factors
+    # Macro factors — DecisionContext carries only object references, so the
+    # report lists which canonical macro references were considered.
     macro_factors = []
-    if context.macro_state_data:
-        for key, value in context.macro_state_data.items():
-            if key != "confidence" and key != "overall_assessment":
-                macro_factors.append({
-                    "indicator": key,
-                    "value": value,
-                    "impact": "considered",
-                })
+    if context.macro_state_id:
+        macro_factors.append({
+            "indicator": "macro_state_id",
+            "value": context.macro_state_id,
+            "impact": "considered",
+        })
+    if context.market_regime_id:
+        macro_factors.append({
+            "indicator": "market_regime_id",
+            "value": context.market_regime_id,
+            "impact": "considered",
+        })
 
     # Risk factors
     risk_factors = []
@@ -366,7 +369,7 @@ def generate_decision_report(
         risk_factors.append(f"Low evidence confidence (confidence={score.confidence_score:.2f})")
     if len(score.evidence_items) < 3:
         risk_factors.append(f"Insufficient evidence volume ({len(score.evidence_items)} items)")
-    if not context.historical_match_data:
+    if not context.historical_scenario_ids:
         risk_factors.append("No historical scenario matches available")
 
     # Evidence summary
@@ -390,21 +393,19 @@ def generate_decision_report(
         f"Neutral={probability.neutral_probability:.1%}. "
         f"Based on {len(reasoning_steps)} reasoning steps, "
         f"{score.evidence_count} evidence items, "
-        f"{len(context.historical_match_data)} historical matches."
+        f"{len(context.historical_scenario_ids)} historical matches."
     )
 
     return DecisionReport(
         asset=context.asset,
         timeframe=context.timeframe,
-        decision_timestamp=context.timestamp,
+        decision_timestamp=context.decision_timestamp,
         context_id=context.id,
         score_id=score.id,
         probability_id=probability.id,
-        evidence_version=context.evidence_version,
         scoring_version=score.scoring_version,
         probability_version=probability.calculation_version,
         reasoner_version=reasoner.reasoning_version,
-        weight_config=context.weight_config,
         bullish_probability=probability.bullish_probability,
         bearish_probability=probability.bearish_probability,
         neutral_probability=probability.neutral_probability,
@@ -421,6 +422,6 @@ def generate_decision_report(
         limitations=probability.limitations,
         calculation_method=probability.calculation_method,
         calculation_version=probability.calculation_version,
-        tags=context.tags,
+        tags=context.ontology_tags,
         ontology_tags=["decision_engine", "decision_report"],
     )
