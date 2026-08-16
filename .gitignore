@@ -59,3 +59,19 @@ cpp_quant_engine/build/
 data/raw/
 data/curated/xauusd/*.csv
 data/curated/xauusd/*.parquet
+
+# Build artifacts
+cpp_quant_engine/build/
+cpp_quant_engine/_deps/
+*.pyd
+*.ilk
+*.pdb
+
+# Databases
+*.db
+
+# Python runtime
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
