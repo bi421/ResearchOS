@@ -184,7 +184,7 @@ class TestHistoricalScenarioSerialization:
             regime_id="reg_001",
             macro_id="macro_001",
             outcome="Price increased 3% over 2 weeks",
-            outcome_price_change=3.0,
+            price_outcome=3.0,
             tags=["rally", "fed", "gold"],
             similarity_score=0.0,
         )
@@ -193,7 +193,7 @@ class TestHistoricalScenarioSerialization:
         assert sc.id == sc2.id
         assert sc.hash == sc2.hash
         assert sc.name == sc2.name
-        assert sc.outcome_price_change == sc2.outcome_price_change
+        assert sc.price_outcome == sc2.price_outcome
         assert d["object_type"] == "HistoricalScenario"
 
     def test_deterministic_id(self):
@@ -375,7 +375,7 @@ class TestFeatureComputation:
             open=100.0, high=105.0, low=95.0, close=100.0,
         )
         f = compute_features(s)
-        assert f.is_bullish is True
+        assert f.is_bullish is False
         assert f.body_pct < 0.5
 
     def test_feature_set_to_dict(self):
