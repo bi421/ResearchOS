@@ -33,8 +33,10 @@ classifiers = [
     "Topic :: Office/Business :: Financial",
 ]
 dependencies = [
-    # ResearchOS has minimal external dependencies by design.
-    # All computation is deterministic and uses only the Python standard library.
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "polars>=1.0",
+    "pydantic>=2.0",
 ]
 
 
