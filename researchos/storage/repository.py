@@ -190,7 +190,43 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         self.db_path = db_path
         self._conn: Optional[sqlite3.Connection] = None
         self._lock = threading.Lock()
+        self._closed = False
         self._init_db()
+
+    def close(self) -> None:
+        """Close the repository SQLite connection safely."""
+        with self._lock:
+            if self._conn is not None:
+                try:
+                    self._conn.close()
+                except sqlite3.Error:
+                    logger.debug(
+                        "SQLite connection close failed",
+                        exc_info=True,
+                    )
+                finally:
+                    self._conn = None
+            self._closed = True
+
+    def __enter__(self) -> "ResearchRepository":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[object],
+    ) -> bool:
+        self.close()
+        return False
+
+    def __del__(self):
+        """Best-effort cleanup for callers that do not explicitly close."""
+        try:
+            self.close()
+        except Exception:
+            # Never allow destructor cleanup to raise.
+            pass
 
     def _configure_conn(self, conn: sqlite3.Connection):
         """Apply standard PRAGMAs to a connection."""
@@ -199,6 +235,9 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         conn.execute("PRAGMA foreign_keys=ON")
 
     def _get_conn(self) -> sqlite3.Connection:
+        if self._closed:
+            raise RuntimeError("ResearchRepository is closed")
+
         if self._conn is None:
             self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self._configure_conn(self._conn)

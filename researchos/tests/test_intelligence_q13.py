@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from researchos.intelligence import (
@@ -378,7 +378,7 @@ class TestRetrievalContext(unittest.TestCase):
             session_id="s1",
             queries=("q1", "q2"),
             all_hits=(),
-            session_start=datetime.utcnow(),
+            session_start=datetime.now(timezone.utc),
         )
         self.assertEqual(ctx.session_id, "s1")
         self.assertEqual(ctx.queries, ("q1", "q2"))
@@ -387,18 +387,18 @@ class TestRetrievalContext(unittest.TestCase):
     def test_empty_session_id_raises(self):
         with self.assertRaises(ValueError):
             RetrievalContext(session_id="", queries=(), all_hits=(),
-                             session_start=datetime.utcnow())
+                             session_start=datetime.now(timezone.utc))
 
     def test_hits_sorted_by_score(self):
         hits = (make_hit("h2", score=0.5), make_hit("h1", score=0.9))
         ctx = RetrievalContext(session_id="s", queries=(), all_hits=hits,
-                                session_start=datetime.utcnow())
+                                session_start=datetime.now(timezone.utc))
         self.assertEqual(ctx.all_hits[0].hit_id, "h1")
 
     def test_to_dict_roundtrip(self):
         ctx = RetrievalContext(
             session_id="s1", queries=("q1",), all_hits=(),
-            session_start=datetime.utcnow(),
+            session_start=datetime.now(timezone.utc),
         )
         restored = RetrievalContext.from_dict(ctx.to_dict())
         self.assertEqual(restored.session_id, ctx.session_id)
@@ -685,7 +685,7 @@ class TestFrozenImmutability(unittest.TestCase):
     def test_context_is_frozen(self):
         ctx = RetrievalContext(
             session_id="s", queries=(), all_hits=(),
-            session_start=datetime.utcnow(),
+            session_start=datetime.now(timezone.utc),
         )
         with self.assertRaises(Exception):
             ctx.session_id = "x"  # type: ignore[misc]
@@ -814,7 +814,7 @@ class TestRecencyBonus(unittest.TestCase):
     def test_recent_date_gets_bonus(self):
         retriever = DeterministicRetriever()
         # Use a recent date
-        recent = datetime.utcnow().isoformat()
+        recent = datetime.now(timezone.utc).isoformat()
         bonus = retriever._recency_bonus(recent)
         self.assertGreater(bonus, 0.0)
 
