@@ -1,0 +1,72 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ master, develop, feature/* ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for git commands
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -e ".[dev]"
+        pip install pytest pytest-cov pytest-xdist
+    
+    - name: Lint with flake8 (warnings only)
+      run: |
+        pip install flake8
+        # Stop the build only on errors, not warnings
+        flake8 researchos tests --count --select=E9,F63,F7,F82 --show-source --statistics || true
+    
+    - name: Run pytest suite
+      run: |
+        pytest researchos/tests/ tests/unit/ researchos/data_engine/tests/ researchos/market_memory/tests/ researchos/experiments/phase51/tests/ -v --tb=short --junitxml=test-results.xml
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: test-results.xml
+    
+    - name: Generate coverage report
+      if: matrix.python-version == '3.11'
+      run: |
+        pytest researchos/tests/ tests/unit/ researchos/data_engine/tests/ researchos/market_memory/tests/ researchos/experiments/phase51/tests/ --cov=researchos --cov=macro_intelligence --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        flags: unittests
+        fail_ci_if_error: false
+        verbose: true
+
+  test-status:
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: test
+    steps:
+    - name: Report test failure
+      run: |
+        echo "❌ Python test suite FAILED"
+        echo "All code changes require passing tests before merge."
+        exit 1
