@@ -20,37 +20,37 @@ Architecture invariants:
 
 from __future__ import annotations
 
-from macro_intelligence.relationships.models import (
-    ALGORITHM_VERSION,
-    RelationshipType,
-    RelationshipStrength,
-    LagType,
-    BreakType,
-    CorrelationResult,
-    RollingCorrelationResult,
-    LagRelationship,
-    RegimeRelationship,
-    StructuralBreak,
-    RelationshipResult,
+from macro_intelligence.relationships.break_detection import (
+    compare_correlation_windows,
+    detect_structural_breaks,
 )
 from macro_intelligence.relationships.correlation import (
-    pearson_correlation,
-    spearman_correlation,
+    approximate_p_value,
     classify_relationship,
     compute_rolling_correlation,
-    approximate_p_value,
-)
-from macro_intelligence.relationships.rolling import compute_rolling, analyze_relationship_stability
-from macro_intelligence.relationships.lag_analysis import find_optimal_lag, detect_reaction_delay
-from macro_intelligence.relationships.regime_relationship import (
-    compute_regime_correlation,
-    compute_all_regime_correlations,
-)
-from macro_intelligence.relationships.break_detection import (
-    detect_structural_breaks,
-    compare_correlation_windows,
+    pearson_correlation,
+    spearman_correlation,
 )
 from macro_intelligence.relationships.engine import RelationshipEngine
+from macro_intelligence.relationships.lag_analysis import detect_reaction_delay, find_optimal_lag
+from macro_intelligence.relationships.models import (
+    ALGORITHM_VERSION,
+    BreakType,
+    CorrelationResult,
+    LagRelationship,
+    LagType,
+    RegimeRelationship,
+    RelationshipResult,
+    RelationshipStrength,
+    RelationshipType,
+    RollingCorrelationResult,
+    StructuralBreak,
+)
+from macro_intelligence.relationships.regime_relationship import (
+    compute_all_regime_correlations,
+    compute_regime_correlation,
+)
+from macro_intelligence.relationships.rolling import analyze_relationship_stability, compute_rolling
 
 __all__ = [
     # Models

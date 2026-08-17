@@ -1,4 +1,10 @@
-<!DOCTYPE html>
+import os
+
+base_dir = r"C:\Users\User\Desktop\ResearchOS"
+static_dir = os.path.join(base_dir, "static")
+os.makedirs(static_dir, exist_ok=True)
+
+html_content = r"""<!DOCTYPE html>
 <html lang="mn">
 <head>
     <meta charset="UTF-8">
@@ -379,3 +385,10 @@ checkAudit();
 </script>
 </body>
 </html>
+"""
+
+file_path = os.path.join(static_dir, "index.html")
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Dashboard successfully generated!")

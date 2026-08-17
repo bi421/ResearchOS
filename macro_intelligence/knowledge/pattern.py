@@ -526,7 +526,9 @@ class PatternDetector:
         if finding:
             findings.append(finding)
 
-        finding = self.detect_risk_off_safe_haven(risk_regime, risk_confidence, safe_haven_correlations)
+        finding = self.detect_risk_off_safe_haven(
+            risk_regime, risk_confidence, safe_haven_correlations
+        )
         if finding:
             findings.append(finding)
 

@@ -4,10 +4,9 @@ Version: time/enums/v1
 Status: FROZEN
 """
 
+from datetime import timedelta, timezone
 from enum import Enum
-from datetime import timezone, timedelta
 from typing import Optional
-
 
 UTC = timezone.utc
 
@@ -15,7 +14,7 @@ UTC = timezone.utc
 class TimezoneType(str, Enum):
     """
     Timezone classification for macro events.
-    
+
     Types:
     - UTC: Coordinated Universal Time
     - US_EASTERN: US Eastern Time (ET)
@@ -24,13 +23,14 @@ class TimezoneType(str, Enum):
     - ASIAN: Asian Time (JST, etc.)
     - LOCAL: Local time of data source
     """
+
     UTC = "utc"
     US_EASTERN = "us_eastern"
     US_CENTRAL = "us_central"
     EUROPEAN = "european"
     ASIAN = "asian"
     LOCAL = "local"
-    
+
     def to_offset(self) -> timezone:
         """Convert to timezone offset."""
         offsets = {
@@ -42,7 +42,7 @@ class TimezoneType(str, Enum):
             TimezoneType.LOCAL: UTC,  # Default to UTC
         }
         return offsets.get(self, UTC)
-    
+
     def is_utc(self) -> bool:
         """Check if this is UTC timezone."""
         return self == TimezoneType.UTC
@@ -51,7 +51,7 @@ class TimezoneType(str, Enum):
 class EventCategory(str, Enum):
     """
     Category of economic event.
-    
+
     Categories:
     - DATA_RELEASE: Scheduled data release
     - CENTRAL_BANK: Central bank meeting/speech
@@ -61,6 +61,7 @@ class EventCategory(str, Enum):
     - HOLIDAY: Market holiday
     - UNSCHEDULED: Unscheduled event
     """
+
     DATA_RELEASE = "data_release"
     CENTRAL_BANK = "central_bank"
     POLICY = "policy"
@@ -68,7 +69,7 @@ class EventCategory(str, Enum):
     MARKET = "market"
     HOLIDAY = "holiday"
     UNSCHEDULED = "unscheduled"
-    
+
     def is_scheduled(self) -> bool:
         """Check if event is scheduled."""
         return self in (
@@ -77,7 +78,7 @@ class EventCategory(str, Enum):
             EventCategory.POLICY,
             EventCategory.HOLIDAY,
         )
-    
+
     def is_unscheduled(self) -> bool:
         """Check if event is unscheduled."""
         return self in (
@@ -89,7 +90,7 @@ class EventCategory(str, Enum):
 class ReleaseStatus(str, Enum):
     """
     Status of a data release.
-    
+
     Statuses:
     - PLANNED: Scheduled but not yet released
     - ACTIVE: Currently being released
@@ -98,20 +99,21 @@ class ReleaseStatus(str, Enum):
     - CANCELLED: Release cancelled
     - REVISED: Release was revised
     """
+
     PLANNED = "planned"
     ACTIVE = "active"
     COMPLETED = "completed"
     DELAYED = "delayed"
     CANCELLED = "cancelled"
     REVISED = "revised"
-    
+
     def is_final(self) -> bool:
         """Check if release is in final state."""
         return self in (
             ReleaseStatus.COMPLETED,
             ReleaseStatus.CANCELLED,
         )
-    
+
     def is_terminal(self) -> bool:
         """Check if status is terminal."""
         return self in (
@@ -120,8 +122,8 @@ class ReleaseStatus(str, Enum):
             ReleaseStatus.CANCELLED,
             ReleaseStatus.REVISED,
         )
-    
-    def can_transition_to(self, target: 'ReleaseStatus') -> bool:
+
+    def can_transition_to(self, target: "ReleaseStatus") -> bool:
         """Check if transition to target is allowed."""
         transitions = {
             ReleaseStatus.PLANNED: {
@@ -149,7 +151,7 @@ class ReleaseStatus(str, Enum):
 class MarketSession(str, Enum):
     """
     Trading session classification.
-    
+
     Sessions:
     - PRE_MARKET: Pre-market trading
     - REGULAR: Regular trading hours
@@ -157,12 +159,13 @@ class MarketSession(str, Enum):
     - OVERNIGHT: Overnight trading
     - CLOSED: Market closed
     """
+
     PRE_MARKET = "pre_market"
     REGULAR = "regular"
     AFTER_HOURS = "after_hours"
     OVERNIGHT = "overnight"
     CLOSED = "closed"
-    
+
     def is_trading_session(self) -> bool:
         """Check if this is a trading session."""
         return self in (
@@ -175,13 +178,14 @@ class MarketSession(str, Enum):
 class WindowType(str, Enum):
     """
     Type of time window for market reaction analysis.
-    
+
     Types:
     - PRE_EVENT: Window before event
     - POST_EVENT: Window after event
     - FULL_EVENT: Complete event window
     - CUSTOM: User-defined window
     """
+
     PRE_EVENT = "pre_event"
     POST_EVENT = "post_event"
     FULL_EVENT = "full_event"
@@ -191,7 +195,7 @@ class WindowType(str, Enum):
 class Frequency(str, Enum):
     """
     Data frequency classification.
-    
+
     Frequencies:
     - INTRADAILY: Multiple times per day
     - DAILY: Once per day
@@ -201,6 +205,7 @@ class Frequency(str, Enum):
     - ANNUAL: Once per year
     - IRREGULAR: No fixed schedule
     """
+
     INTRADAILY = "intradaily"
     DAILY = "daily"
     WEEKLY = "weekly"
@@ -208,7 +213,7 @@ class Frequency(str, Enum):
     QUARTERLY = "quarterly"
     ANNUAL = "annual"
     IRREGULAR = "irregular"
-    
+
     def get_expected_interval(self) -> Optional[timedelta]:
         """Get expected interval between releases."""
         intervals = {

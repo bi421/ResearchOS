@@ -93,17 +93,19 @@ class DatasetVersion(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "dataset_id": self.dataset_id,
-            "version": self.version,
-            "previous_version": self.previous_version,
-            "dataset_hash": self.dataset_hash,
-            "record_count": self.record_count,
-            "change_description": self.change_description,
-            "change_reason": self.change_reason,
-            "author": self.author,
-            "is_current": self.is_current,
-        })
+        base.update(
+            {
+                "dataset_id": self.dataset_id,
+                "version": self.version,
+                "previous_version": self.previous_version,
+                "dataset_hash": self.dataset_hash,
+                "record_count": self.record_count,
+                "change_description": self.change_description,
+                "change_reason": self.change_reason,
+                "author": self.author,
+                "is_current": self.is_current,
+            }
+        )
         return base
 
     @classmethod
@@ -158,4 +160,3 @@ def bump_dataset_version(
         return f"{major}.{minor}.{patch + 1}"
     else:
         raise ValueError(f"Invalid bump type: {bump_type}")
-

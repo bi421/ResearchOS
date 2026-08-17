@@ -27,7 +27,8 @@ from pathlib import Path
 
 import pytest
 
-from researchos.decision_engine import contracts, evidence as evidence_module
+from researchos.decision_engine import contracts
+from researchos.decision_engine import evidence as evidence_module
 from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
     EvidenceSource,
@@ -95,9 +96,9 @@ def make_item(
     confidence: float = 0.7,
     description: str = "test evidence",
 ):
-    from researchos.decision_engine.contracts import EvidenceItem
+    from researchos.decision_engine.contracts import DecisionEvidenceItem
 
-    return EvidenceItem(
+    return DecisionEvidenceItem(
         source=source,
         source_id=source_id,
         direction=direction,
@@ -131,7 +132,7 @@ def build_pipeline(context: DecisionContext, items=None):
 class TestEvidenceRegressionGuard:
     def test_canonical_identity_preserved(self):
         assert contracts.EvidenceSource is evidence_module.EvidenceSource
-        assert contracts.EvidenceItem is evidence_module.EvidenceItem
+        assert contracts.DecisionEvidenceItem is evidence_module.DecisionEvidenceItem
 
 
 # =============================================================================
@@ -200,9 +201,15 @@ class TestProbabilityContractConsumption:
     def test_step10_consumes_canonical_probability_fields(self):
         context = make_context()
         items = [
-            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
-            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
-            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
+            make_item(
+                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
+            ),
+            make_item(
+                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
+            ),
+            make_item(
+                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
+            ),
         ]
         score, probability = build_pipeline(context, items=items)
         steps = DecisionReasoner().reason(context, score, probability)
@@ -222,9 +229,15 @@ class TestProbabilityContractConsumption:
     def test_historical_consistency_path(self):
         context = make_context()
         items = [
-            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
-            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
-            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
+            make_item(
+                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
+            ),
+            make_item(
+                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
+            ),
+            make_item(
+                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
+            ),
         ]
         _, probability = build_pipeline(context, items=items)
         # contributions 0.4 / 0.3 / 0.1 -> max probability = 0.5

@@ -17,6 +17,7 @@ from researchos.reasoning_engine.contracts import (
     EvidenceType,
     Fact,
     Hypothesis,
+    ReasoningEvidence,
 )
 
 __version__ = "1.0.0"
@@ -24,6 +25,9 @@ __status__ = "Phase 4.5.1 - Reasoning Engine Contracts Foundation"
 
 __all__ = [
     "EvidenceType",
+    # Canonical name; ``EvidenceItem`` is a deprecated compatibility alias
+    # for the same class.
+    "ReasoningEvidence",
     "EvidenceItem",
     "Fact",
     "Hypothesis",

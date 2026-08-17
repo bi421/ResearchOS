@@ -207,13 +207,10 @@ def emit_result(
     """
     if envelope.artifact_type != RESULT_ARTIFACT_TYPE:
         raise ValueError(
-            f"emit_result() expects artifact_type='Result', got "
-            f"'{envelope.artifact_type}'"
+            f"emit_result() expects artifact_type='Result', got '{envelope.artifact_type}'"
         )
     if not envelope.verify():
-        raise ValueError(
-            f"Result evidence lineage mismatch for {envelope.artifact_hash}"
-        )
+        raise ValueError(f"Result evidence lineage mismatch for {envelope.artifact_hash}")
     repo = repository or EvidenceRepository()
     return repo.append_artifact(envelope)
 

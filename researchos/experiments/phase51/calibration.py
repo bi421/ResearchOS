@@ -74,9 +74,7 @@ def evaluate_calibration(
     up_probs = [float(p.get(1, 0.0)) for p in probs]
     up_actual = [1 if a == 1 else 0 for a in actuals]
     try:
-        reliability = probability_calibration(
-            up_probs, up_actual, num_bins=num_bins
-        )
+        reliability = probability_calibration(up_probs, up_actual, num_bins=num_bins)
     except ValueError:
         reliability = {"bin_labels": [], "predicted_probabilities": [], "observed_frequencies": []}
 

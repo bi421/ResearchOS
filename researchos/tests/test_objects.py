@@ -13,18 +13,17 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.timestamp import utc_now
-from researchos.objects.observation import Observation
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.hypothesis import Hypothesis
-from researchos.objects.scenario import Scenario, ScenarioSet
 from researchos.objects.confidence import Confidence
 from researchos.objects.contradiction import Contradiction
+from researchos.objects.evidence import Evidence, EvidenceRegistry
+from researchos.objects.hypothesis import Hypothesis
+from researchos.objects.observation import Observation
 from researchos.objects.research import Research, ResearchReport
-from researchos.validation.validators import get_validator
+from researchos.objects.scenario import Scenario, ScenarioSet
 from researchos.repository.memory import MemoryRepository
+from researchos.validation.validators import get_validator
 
 
 class TestIdentity:
@@ -392,12 +391,16 @@ class TestDeterminism:
         """Same inputs should produce same hash."""
         rt = datetime(2024, 6, 15, tzinfo=timezone.utc)
         obs1 = Observation(
-            source="TEST", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            value=42, retrieval_time=rt,
+            source="TEST",
+            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            value=42,
+            retrieval_time=rt,
         )
         obs2 = Observation(
-            source="TEST", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            value=42, retrieval_time=rt,
+            source="TEST",
+            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            value=42,
+            retrieval_time=rt,
         )
         assert obs1.hash == obs2.hash
 

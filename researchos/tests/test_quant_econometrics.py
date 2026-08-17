@@ -11,6 +11,7 @@ Unit tests for Econometrics Engine missing models:
 """
 
 import math
+
 from researchos.quant_engine.econometrics import (
     CointegrationTestResult,
     JohansenTestResult,

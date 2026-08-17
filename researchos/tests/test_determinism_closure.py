@@ -25,7 +25,6 @@ import pytest
 from researchos.experiments.contracts import DatasetConfig, SimulationConfig
 from researchos.experiments.result import ExperimentResult, ExperimentRun
 
-
 # =============================================================================
 # Issue A — run_hash determinism
 # =============================================================================

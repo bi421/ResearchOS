@@ -6,6 +6,7 @@ Unit tests for Fundamental Analytics missing models:
 """
 
 import pytest
+
 from researchos.quant_engine.fundamental.analytics import (
     bond_spread,
     bond_spread_series,

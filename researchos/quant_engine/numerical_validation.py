@@ -138,12 +138,8 @@ def _as_float_rows(value: Any) -> Tuple[Tuple[float, ...], ...]:
             return (tuple(float(x) for x in value),)
         if isinstance(first, (list, tuple)):
             return tuple(tuple(float(x) for x in row) for row in value)
-        raise NumericalComparisonError(
-            "unsupported element type in numeric structure"
-        )
-    raise NumericalComparisonError(
-        "expected a scalar, vector, or matrix of numbers"
-    )
+        raise NumericalComparisonError("unsupported element type in numeric structure")
+    raise NumericalComparisonError("expected a scalar, vector, or matrix of numbers")
 
 
 def _structural_content(value: Any) -> Any:
@@ -190,18 +186,12 @@ def _values_equivalent(expected: Any, actual: Any, atol: float, rtol: float) -> 
     if isinstance(expected, Mapping) and isinstance(actual, Mapping):
         if set(expected.keys()) != set(actual.keys()):
             return False
-        return all(
-            _values_equivalent(expected[k], actual[k], atol, rtol)
-            for k in expected
-        )
+        return all(_values_equivalent(expected[k], actual[k], atol, rtol) for k in expected)
 
     if isinstance(expected, (list, tuple)) and isinstance(actual, (list, tuple)):
         if len(expected) != len(actual):
             return False
-        return all(
-            _values_equivalent(a, b, atol, rtol)
-            for a, b in zip(expected, actual)
-        )
+        return all(_values_equivalent(a, b, atol, rtol) for a, b in zip(expected, actual))
 
     return expected == actual
 
@@ -241,9 +231,7 @@ class NumericalComparator:
         rtol: float = DEFAULT_RTOL,
     ) -> NumericalValidationResult:
         """Compare two scalar numbers."""
-        return self._compare_rows(
-            _as_float_rows(expected), _as_float_rows(actual), atol, rtol
-        )
+        return self._compare_rows(_as_float_rows(expected), _as_float_rows(actual), atol, rtol)
 
     def compare_vector(
         self,
@@ -253,9 +241,7 @@ class NumericalComparator:
         rtol: float = DEFAULT_RTOL,
     ) -> NumericalValidationResult:
         """Compare two vectors (equal length required)."""
-        return self._compare_rows(
-            _as_float_rows(expected), _as_float_rows(actual), atol, rtol
-        )
+        return self._compare_rows(_as_float_rows(expected), _as_float_rows(actual), atol, rtol)
 
     def compare_matrix(
         self,
@@ -265,9 +251,7 @@ class NumericalComparator:
         rtol: float = DEFAULT_RTOL,
     ) -> NumericalValidationResult:
         """Compare two matrices (identical dimensions required)."""
-        return self._compare_rows(
-            _as_float_rows(expected), _as_float_rows(actual), atol, rtol
-        )
+        return self._compare_rows(_as_float_rows(expected), _as_float_rows(actual), atol, rtol)
 
     def compare_structural(
         self,
@@ -302,9 +286,7 @@ class NumericalComparator:
         passed = _values_equivalent(exp_content, act_content, atol, rtol)
         comparison_hash = self._structural_hash(exp_content, act_content, atol, rtol)
         return NumericalValidationResult(
-            status=(
-                ValidationStatus.PASSED if passed else ValidationStatus.FAILED
-            ),
+            status=(ValidationStatus.PASSED if passed else ValidationStatus.FAILED),
             shape_match=passed,
             has_nan=False,
             has_inf=False,
@@ -355,9 +337,7 @@ class NumericalComparator:
                     if not (abs_error <= atol + rtol * abs(act)):
                         passed = False
 
-        comparison_hash = self._compute_repeat_hash(
-            expected_rows, actual_rows, atol, rtol
-        )
+        comparison_hash = self._compute_repeat_hash(expected_rows, actual_rows, atol, rtol)
 
         status = ValidationStatus.PASSED if passed else ValidationStatus.FAILED
         return NumericalValidationResult(

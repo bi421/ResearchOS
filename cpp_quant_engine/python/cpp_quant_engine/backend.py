@@ -82,6 +82,7 @@ def error_codes() -> Dict[str, int]:
 
 # ── Typed backend ───────────────────────────────────────────────────────────
 
+
 def _native_call(fn, *args):
     """Invoke a pybind11 method, normalizing type errors.
 
@@ -113,7 +114,9 @@ class CppQuantEngineBackend:
 
     # ── MarketData ────────────────────────────────────────────────────────
 
-    def market_data_load(self, request: Union[MarketDataRequest, MarketData, Dict[str, Any]]) -> MarketDataResult:
+    def market_data_load(
+        self, request: Union[MarketDataRequest, MarketData, Dict[str, Any]]
+    ) -> MarketDataResult:
         req = _coerce_request(request, MarketDataRequest)
         raw = _native_call(self._cpp.market_data_load, req.to_base_object())
         result = MarketDataResult.from_base_object(raw)
@@ -122,7 +125,9 @@ class CppQuantEngineBackend:
 
     # ── Statistics ────────────────────────────────────────────────────────
 
-    def statistics_compute(self, request: Union[StatisticsRequest, Dict[str, Any]]) -> StatisticsResult:
+    def statistics_compute(
+        self, request: Union[StatisticsRequest, Dict[str, Any]]
+    ) -> StatisticsResult:
         req = _coerce_request(request, StatisticsRequest)
         raw = _native_call(self._cpp.statistics_compute, req.to_base_object())
         result = StatisticsResult.from_base_object(raw)
@@ -199,6 +204,7 @@ def default_backend() -> CppQuantEngineBackend:
 
 
 # ── Stable facade APIs ──────────────────────────────────────────────────────
+
 
 class Statistics:
     """Descriptive statistics (delegates to the C++ engine)."""

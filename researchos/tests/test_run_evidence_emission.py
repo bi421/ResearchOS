@@ -153,12 +153,8 @@ class TestBuildRunEnvelope:
     def test_changed_dataset_config_different_artifact_hash(self):
         d1 = DatasetConfig(source="yahoo", symbols=["AAPL"])
         d2 = DatasetConfig(source="google", symbols=["GOOG"])
-        e1 = build_run_envelope(
-            _make_run(dataset=d1), experiment_hash="exp-hash-1"
-        )
-        e2 = build_run_envelope(
-            _make_run(dataset=d2), experiment_hash="exp-hash-1"
-        )
+        e1 = build_run_envelope(_make_run(dataset=d1), experiment_hash="exp-hash-1")
+        e2 = build_run_envelope(_make_run(dataset=d2), experiment_hash="exp-hash-1")
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_changed_experiment_hash_different_artifact_hash(self):
@@ -184,12 +180,8 @@ class TestBuildRunEnvelope:
         assert e.verify() is True
 
     def test_version_binds_into_identity(self):
-        e1 = build_run_envelope(
-            _make_run(), experiment_hash="exp-hash-1", version="1.0.0"
-        )
-        e2 = build_run_envelope(
-            _make_run(), experiment_hash="exp-hash-1", version="2.0.0"
-        )
+        e1 = build_run_envelope(_make_run(), experiment_hash="exp-hash-1", version="1.0.0")
+        e2 = build_run_envelope(_make_run(), experiment_hash="exp-hash-1", version="2.0.0")
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_returns_immutable_envelope(self):
@@ -201,7 +193,8 @@ class TestBuildRunEnvelope:
 class TestExperimentLineage:
     def test_experiment_parent_preserved(self):
         e = build_run_envelope(
-            _make_run(), experiment_hash="exp-hash-1",
+            _make_run(),
+            experiment_hash="exp-hash-1",
             parent_hashes=["exp-hash-1"],
         )
         assert "exp-hash-1" in e.parent_hashes
@@ -252,9 +245,7 @@ class TestExperimentRunLineage:
     def test_lineage_edge_experiment_to_run(self):
         repo = _make_repo()
         exp_hash = "exp-hash-0001"
-        e = build_run_envelope(
-            _make_run(), experiment_hash=exp_hash, parent_hashes=[exp_hash]
-        )
+        e = build_run_envelope(_make_run(), experiment_hash=exp_hash, parent_hashes=[exp_hash])
         emit_run(e, repo)
         children = repo.get_children(exp_hash)
         assert e.artifact_hash in children
@@ -280,21 +271,13 @@ class TestProgressTracking:
 
     def test_acceptance_identical_runs_identical_hash(self):
         assert (
-            build_run_envelope(
-                _make_run(), experiment_hash="exp-hash-1"
-            ).artifact_hash
-            == build_run_envelope(
-                _make_run(), experiment_hash="exp-hash-1"
-            ).artifact_hash
+            build_run_envelope(_make_run(), experiment_hash="exp-hash-1").artifact_hash
+            == build_run_envelope(_make_run(), experiment_hash="exp-hash-1").artifact_hash
         )
 
     def test_acceptance_changed_logical_input_diff_hash(self):
-        e1 = build_run_envelope(
-            _make_run(params={"lookback": 20}), experiment_hash="exp-hash-1"
-        )
-        e2 = build_run_envelope(
-            _make_run(params={"lookback": 30}), experiment_hash="exp-hash-1"
-        )
+        e1 = build_run_envelope(_make_run(params={"lookback": 20}), experiment_hash="exp-hash-1")
+        e2 = build_run_envelope(_make_run(params={"lookback": 30}), experiment_hash="exp-hash-1")
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_acceptance_runtime_timing_no_effect(self):

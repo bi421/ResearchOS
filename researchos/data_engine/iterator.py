@@ -129,10 +129,7 @@ class HistoricalIterator:
     def windows(self, window_size: int, step: int = 1) -> Iterator[List[Any]]:
         i = 0
         while i + window_size <= len(self._indices):
-            window = [
-                self.dataset._records[self._indices[j]]
-                for j in range(i, i + window_size)
-            ]
+            window = [self.dataset._records[self._indices[j]] for j in range(i, i + window_size)]
             yield window
             i += step
 
@@ -177,4 +174,3 @@ class HistoricalIterator:
         if not self._indices:
             return 1.0
         return min(1.0, self._index / len(self._indices))
-

@@ -19,30 +19,30 @@ Architecture invariants:
 
 from __future__ import annotations
 
+from macro_intelligence.regime.transition.detector import RegimeTransitionDetector
+from macro_intelligence.regime.transition.history import TransitionHistory
 from macro_intelligence.regime.transition.models import (
     ALGORITHM_VERSION,
-    TransitionType,
-    TransitionSignal,
+    EarlyWarningSignal,
+    RegimePersistence,
     RegimeTransition,
+    TransitionAnalysisResult,
     TransitionHistoryEntry,
     TransitionProbabilityMatrix,
-    RegimePersistence,
-    EarlyWarningSignal,
-    TransitionAnalysisResult,
-)
-from macro_intelligence.regime.transition.transitions import (
-    RULES_VERSION,
-    classify_transition_type,
-    should_generate_early_warning,
-    estimate_early_warning_horizon,
-    calculate_continuation_probability,
-    get_default_transition_probs,
-    normalize_transition_probs,
-    update_transition_probs,
+    TransitionSignal,
+    TransitionType,
 )
 from macro_intelligence.regime.transition.probability import TransitionProbabilityEngine
-from macro_intelligence.regime.transition.history import TransitionHistory
-from macro_intelligence.regime.transition.detector import RegimeTransitionDetector
+from macro_intelligence.regime.transition.transitions import (
+    RULES_VERSION,
+    calculate_continuation_probability,
+    classify_transition_type,
+    estimate_early_warning_horizon,
+    get_default_transition_probs,
+    normalize_transition_probs,
+    should_generate_early_warning,
+    update_transition_probs,
+)
 
 __all__ = [
     # Models

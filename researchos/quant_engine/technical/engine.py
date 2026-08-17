@@ -40,7 +40,9 @@ from researchos.quant_engine.technical.validation import (
 INDICATOR_REGISTRY: Dict[str, Any] = {}
 
 
-def register_indicator(name: str, category: IndicatorCategory, param_schema: Dict[str, Any]) -> Callable:
+def register_indicator(
+    name: str, category: IndicatorCategory, param_schema: Dict[str, Any]
+) -> Callable:
     """
     Decorator to register an indicator computation function.
 
@@ -119,8 +121,7 @@ class TechnicalAnalysisEngine:
                 self._primary_key_for(spec.name), [None] * bars.length
             )
             aux: Dict[str, List[Optional[float]]] = {
-                k: v for k, v in result.items()
-                if k != self._primary_key_for(spec.name)
+                k: v for k, v in result.items() if k != self._primary_key_for(spec.name)
             }
         else:
             values = result
@@ -187,21 +188,34 @@ class TechnicalAnalysisEngine:
 # Register all built-in indicators.
 # (Registration uses functions imported lazily to keep the registry clean.)
 
+
 def _register_builtins() -> None:
     from researchos.quant_engine.technical import indicators as ind
 
     # Trend
-    register_indicator("SMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.sma(bars, period))
-    register_indicator("EMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.ema(bars, period))
-    register_indicator("WMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.wma(bars, period))
-    register_indicator("HMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.hma(bars, period))
-    register_indicator("VWMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.vwma(bars, period))
+    register_indicator("SMA", IndicatorCategory.TREND, {"period": 20})(
+        lambda bars, period: ind.sma(bars, period)
+    )
+    register_indicator("EMA", IndicatorCategory.TREND, {"period": 20})(
+        lambda bars, period: ind.ema(bars, period)
+    )
+    register_indicator("WMA", IndicatorCategory.TREND, {"period": 20})(
+        lambda bars, period: ind.wma(bars, period)
+    )
+    register_indicator("HMA", IndicatorCategory.TREND, {"period": 20})(
+        lambda bars, period: ind.hma(bars, period)
+    )
+    register_indicator("VWMA", IndicatorCategory.TREND, {"period": 20})(
+        lambda bars, period: ind.vwma(bars, period)
+    )
     register_indicator("SuperTrend", IndicatorCategory.TREND, {"period": 10, "multiplier": 3.0})(
         lambda bars, period, multiplier: ind.supertrend(bars, period, multiplier)
     )
-    register_indicator("Ichimoku", IndicatorCategory.TREND, {
-        "tenkan_period": 9, "kijun_period": 26, "senkou_b_period": 52, "displacement": 26
-    })(
+    register_indicator(
+        "Ichimoku",
+        IndicatorCategory.TREND,
+        {"tenkan_period": 9, "kijun_period": 26, "senkou_b_period": 52, "displacement": 26},
+    )(
         lambda bars, tenkan_period, kijun_period, senkou_b_period, displacement: ind.ichimoku_cloud(
             bars, tenkan_period, kijun_period, senkou_b_period, displacement
         )
@@ -211,21 +225,35 @@ def _register_builtins() -> None:
     )
 
     # Momentum
-    register_indicator("RSI", IndicatorCategory.MOMENTUM, {"period": 14})(lambda bars, period: ind.rsi(bars, period))
-    register_indicator("Stochastic", IndicatorCategory.MOMENTUM, {"period": 14, "smooth_k": 3, "smooth_d": 3})(
-        lambda bars, period, smooth_k, smooth_d: ind.stochastic(bars, period, smooth_k, smooth_d)
+    register_indicator("RSI", IndicatorCategory.MOMENTUM, {"period": 14})(
+        lambda bars, period: ind.rsi(bars, period)
     )
-    register_indicator("CCI", IndicatorCategory.MOMENTUM, {"period": 20})(lambda bars, period: ind.cci(bars, period))
-    register_indicator("ROC", IndicatorCategory.MOMENTUM, {"period": 12})(lambda bars, period: ind.roc(bars, period))
-    register_indicator("Momentum", IndicatorCategory.MOMENTUM, {"period": 12})(lambda bars, period: ind.momentum(bars, period))
+    register_indicator(
+        "Stochastic", IndicatorCategory.MOMENTUM, {"period": 14, "smooth_k": 3, "smooth_d": 3}
+    )(lambda bars, period, smooth_k, smooth_d: ind.stochastic(bars, period, smooth_k, smooth_d))
+    register_indicator("CCI", IndicatorCategory.MOMENTUM, {"period": 20})(
+        lambda bars, period: ind.cci(bars, period)
+    )
+    register_indicator("ROC", IndicatorCategory.MOMENTUM, {"period": 12})(
+        lambda bars, period: ind.roc(bars, period)
+    )
+    register_indicator("Momentum", IndicatorCategory.MOMENTUM, {"period": 12})(
+        lambda bars, period: ind.momentum(bars, period)
+    )
 
     # Volatility
-    register_indicator("ATR", IndicatorCategory.VOLATILITY, {"period": 14})(lambda bars, period: ind.atr(bars, period))
+    register_indicator("ATR", IndicatorCategory.VOLATILITY, {"period": 14})(
+        lambda bars, period: ind.atr(bars, period)
+    )
     register_indicator("Bollinger", IndicatorCategory.VOLATILITY, {"period": 20, "std_dev": 2.0})(
         lambda bars, period, std_dev: ind.bollinger_bands(bars, period, std_dev)
     )
-    register_indicator("Keltner", IndicatorCategory.VOLATILITY, {"period": 20, "atr_period": 10, "multiplier": 2.0})(
-        lambda bars, period, atr_period, multiplier: ind.keltner_channel(bars, period, atr_period, multiplier)
+    register_indicator(
+        "Keltner", IndicatorCategory.VOLATILITY, {"period": 20, "atr_period": 10, "multiplier": 2.0}
+    )(
+        lambda bars, period, atr_period, multiplier: ind.keltner_channel(
+            bars, period, atr_period, multiplier
+        )
     )
     register_indicator("Donchian", IndicatorCategory.VOLATILITY, {"period": 20})(
         lambda bars, period: ind.donchian_channel(bars, period)
@@ -234,14 +262,20 @@ def _register_builtins() -> None:
     # Volume
     register_indicator("OBV", IndicatorCategory.VOLUME, {})(lambda bars: ind.obv(bars))
     register_indicator("VWAP", IndicatorCategory.VOLUME, {})(lambda bars: ind.vwap(bars))
-    register_indicator("MFI", IndicatorCategory.VOLUME, {"period": 14})(lambda bars, period: ind.mfi(bars, period))
-    register_indicator("CMF", IndicatorCategory.VOLUME, {"period": 20})(lambda bars, period: ind.cmf(bars, period))
+    register_indicator("MFI", IndicatorCategory.VOLUME, {"period": 14})(
+        lambda bars, period: ind.mfi(bars, period)
+    )
+    register_indicator("CMF", IndicatorCategory.VOLUME, {"period": 20})(
+        lambda bars, period: ind.cmf(bars, period)
+    )
     register_indicator("Accumulation/Distribution", IndicatorCategory.VOLUME, {})(
         lambda bars: ind.accumulation_distribution(bars)
     )
 
     # Trend strength
-    register_indicator("ADX", IndicatorCategory.TREND_STRENGTH, {"period": 14})(lambda bars, period: ind.adx(bars, period))
+    register_indicator("ADX", IndicatorCategory.TREND_STRENGTH, {"period": 14})(
+        lambda bars, period: ind.adx(bars, period)
+    )
     register_indicator("DMI", IndicatorCategory.TREND_STRENGTH, {"period": 14})(
         lambda bars, period: ind.dmi(bars, period)
     )
@@ -259,4 +293,3 @@ _register_builtins()
 def get_technical_engine() -> TechnicalAnalysisEngine:
     """Get a fresh TechnicalAnalysisEngine instance."""
     return TechnicalAnalysisEngine()
-

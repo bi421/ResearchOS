@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Tuple
 
-
 # --------------------------------------------------------------------------- #
 # Enumerations
 # --------------------------------------------------------------------------- #
@@ -75,14 +74,10 @@ def _require_nonempty(value: Any, name: str) -> str:
 def _require_score(value: Any, name: str) -> float:
     """Validate that *value* is a number within the closed interval [0.0, 1.0]."""
     if not isinstance(value, (int, float)):
-        raise InvalidReliabilityScoreError(
-            f"{name} must be a number, got {type(value).__name__}"
-        )
+        raise InvalidReliabilityScoreError(f"{name} must be a number, got {type(value).__name__}")
     score = float(value)
     if score < 0.0 or score > 1.0:
-        raise InvalidReliabilityScoreError(
-            f"{name} must be in the range [0.0, 1.0], got {score}"
-        )
+        raise InvalidReliabilityScoreError(f"{name} must be in the range [0.0, 1.0], got {score}")
     return score
 
 
@@ -96,12 +91,10 @@ def _require_evidence_type(value: Any) -> EvidenceType:
         except ValueError:
             valid = ", ".join(member.value for member in EvidenceType)
             raise InvalidEvidenceTypeError(
-                f"evidence_type {value!r} is not a valid EvidenceType; "
-                f"allowed values: {valid}"
+                f"evidence_type {value!r} is not a valid EvidenceType; allowed values: {valid}"
             ) from None
     raise InvalidEvidenceTypeError(
-        f"evidence_type must be an EvidenceType or str, "
-        f"got {type(value).__name__}"
+        f"evidence_type must be an EvidenceType or str, got {type(value).__name__}"
     )
 
 
@@ -112,22 +105,21 @@ def _require_str_tuple(value: Any, name: str) -> Tuple[str, ...]:
     if isinstance(value, (list, tuple)):
         return tuple(str(item) for item in value)
     raise InvalidIdentifierError(
-        f"{name} must be a list or tuple of strings, "
-        f"got {type(value).__name__}"
+        f"{name} must be a list or tuple of strings, got {type(value).__name__}"
     )
 
 
 # --------------------------------------------------------------------------- #
-# EvidenceItem
+# ReasoningEvidence (canonical) — alias: EvidenceItem
 # --------------------------------------------------------------------------- #
 
 
 @dataclass(frozen=True)
-class EvidenceItem:
+class ReasoningEvidence:
     """
     A single piece of verified evidence that feeds into reasoning.
 
-    Based on Article X: Reasoning Engine -- EvidenceItem contract.
+    Based on Article X: Reasoning Engine -- evidence contract.
 
     Attributes:
         id: Unique evidence identifier.
@@ -174,8 +166,8 @@ class EvidenceItem:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvidenceItem":
-        """Reconstruct an :class:`EvidenceItem` from a ``to_dict()`` mapping."""
+    def from_dict(cls, data: Dict[str, Any]) -> "ReasoningEvidence":
+        """Reconstruct a :class:`ReasoningEvidence` from a ``to_dict()`` mapping."""
         return cls(
             id=str(data["id"]),
             source=str(data["source"]),
@@ -183,6 +175,14 @@ class EvidenceItem:
             content_hash=str(data["content_hash"]),
             reliability_score=float(data["reliability_score"]),
         )
+
+
+# Deprecated compatibility alias — canonical name is ``ReasoningEvidence``
+# (renamed 2026-08-17 to end the collision with
+# ``researchos.decision_engine.contracts.EvidenceItem``; the schemas are
+# different bounded contexts and are NOT unified — see
+# docs/architecture/OWNERSHIP.md).
+EvidenceItem = ReasoningEvidence
 
 
 # --------------------------------------------------------------------------- #
@@ -199,7 +199,7 @@ class Fact:
 
     Attributes:
         statement: The asserted factual statement.
-        evidence_ids: Immutable tuple of :class:`EvidenceItem` ids supporting the fact.
+        evidence_ids: Immutable tuple of :class:`ReasoningEvidence` ids supporting the fact.
     """
 
     statement: str
@@ -294,6 +294,7 @@ class Hypothesis:
 
 __all__ = [
     "EvidenceType",
+    "ReasoningEvidence",
     "EvidenceItem",
     "Fact",
     "Hypothesis",

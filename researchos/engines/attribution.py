@@ -24,25 +24,24 @@ from researchos.objects.attribution import (
     Attribution,
     AttributionGraph,
 )
+from researchos.objects.confidence import Confidence
+from researchos.objects.contradiction import Contradiction
 from researchos.objects.evidence import Evidence, EvidenceRegistry
 from researchos.objects.hypothesis import Hypothesis, HypothesisSet
 from researchos.objects.interpretation import Interpretation, Narrative
+from researchos.objects.knowledge import Knowledge, Lesson, Pattern
+from researchos.objects.market_memory import (
+    LiquidityEvent,
+    MarketEvent,
+    MarketOutcome,
+    MarketStructure,
+)
 from researchos.objects.observation import Observation
 from researchos.objects.process import AuditEntry
-from researchos.objects.scenario import Scenario, ScenarioSet
-from researchos.objects.confidence import Confidence
-from researchos.objects.contradiction import Contradiction
 from researchos.objects.research import Research, ResearchReport
+from researchos.objects.scenario import Scenario, ScenarioSet
 from researchos.objects.validation import Validation
-from researchos.objects.knowledge import Knowledge, Pattern, Lesson
-from researchos.objects.market_memory import (
-    MarketEvent,
-    MarketStructure,
-    LiquidityEvent,
-    MarketOutcome,
-)
 from researchos.repository.interface import RepositoryInterface
-
 
 # Type-based traversal rules: mapping conclusion types to their parent/input fields
 TRAVERSAL_RULES: Dict[str, List[str]] = {
@@ -156,7 +155,11 @@ class ResearchAttributionEngine:
         )
 
         self.repo.save(attribution)
-        self._audit("ATTRIBUTION_CREATED", attribution.id, f"Attribution for {conclusion_type} {conclusion_id[:8]}...")
+        self._audit(
+            "ATTRIBUTION_CREATED",
+            attribution.id,
+            f"Attribution for {conclusion_type} {conclusion_id[:8]}...",
+        )
 
         return attribution
 
@@ -276,7 +279,9 @@ class ResearchAttributionEngine:
 
             if isinstance(mem_obj, (MarketStructure, LiquidityEvent, MarketEvent)):
                 entry["asset"] = getattr(mem_obj, "asset", "")
-                entry["event_type"] = getattr(mem_obj, "event_type", "") or getattr(mem_obj, "structure_type", "")
+                entry["event_type"] = getattr(mem_obj, "event_type", "") or getattr(
+                    mem_obj, "structure_type", ""
+                )
                 entry["direction"] = getattr(mem_obj, "direction", "")
                 entry["price_level"] = getattr(mem_obj, "price_level", 0.0)
 
@@ -324,9 +329,13 @@ class ResearchAttributionEngine:
             research = self.repo.get(research_id)
             if research is not None and isinstance(research, Research):
                 # Walk all attributable sub-objects
-                for field in ["hypothesis_set_id", "scenario_set_id",
-                              "confidence_report_id", "contradiction_report_id",
-                              "report_id"]:
+                for field in [
+                    "hypothesis_set_id",
+                    "scenario_set_id",
+                    "confidence_report_id",
+                    "contradiction_report_id",
+                    "report_id",
+                ]:
                     obj_id = getattr(research, field, None)
                     if obj_id:
                         sub_obj = self.repo.get(obj_id)
@@ -351,7 +360,9 @@ class ResearchAttributionEngine:
                 graph.add_attribution(attr)
 
         self.repo.save(graph)
-        self._audit("GRAPH_CREATED", graph.id, f"Attribution graph for research {research_id[:8]}...")
+        self._audit(
+            "GRAPH_CREATED", graph.id, f"Attribution graph for research {research_id[:8]}..."
+        )
         return graph
 
     def get_attribution_report(self, research_id: str) -> Dict[str, Any]:
@@ -385,7 +396,9 @@ class ResearchAttributionEngine:
                 chain = self._trace_chain(obj.conclusion_id, obj.conclusion_type)
                 for oid in chain[1]:
                     ref = self.repo.get(oid)
-                    if isinstance(ref, (Hypothesis, Scenario, Narrative)) and hasattr(ref, "research_id"):
+                    if isinstance(ref, (Hypothesis, Scenario, Narrative)) and hasattr(
+                        ref, "research_id"
+                    ):
                         if ref.research_id == research_id:
                             all_attributions.append(obj)
                             break
@@ -674,11 +687,7 @@ class ResearchAttributionEngine:
         # Observation coverage
         obs_coverage = min(1.0, len(observation_ids) / max(len(reasoning_object_ids), 1))
 
-        confidence = (
-            resolve_rate * 0.5 +
-            ev_quality * 0.3 +
-            obs_coverage * 0.2
-        )
+        confidence = resolve_rate * 0.5 + ev_quality * 0.3 + obs_coverage * 0.2
 
         return round(min(1.0, max(0.0, confidence)), 4)
 

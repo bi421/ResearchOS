@@ -60,7 +60,6 @@ from researchos.quant_engine.machine_learning.dataset_contracts import (
     ResearchDataset,
 )
 
-
 # =========================================================================
 # Runner-dataset marshalling
 # =========================================================================
@@ -277,9 +276,7 @@ class ReproductionEngine:
         try:
             _, reproduced_result = self._runner.run(experiment, runner_dataset)
         except Exception as e:
-            raise ExecutionFailure(
-                f"Certified execution failed during reproduction: {e}"
-            ) from e
+            raise ExecutionFailure(f"Certified execution failed during reproduction: {e}") from e
 
         # ---------------------------------------------------------------
         # 5. Extract original result_hash
@@ -360,9 +357,7 @@ class ReproductionEngine:
         try:
             return ResearchDataset.from_payload(payload)
         except (TypeError, ValueError) as e:
-            raise ReconstructionFailure(
-                f"Failed to reconstruct ResearchDataset: {e}"
-            ) from e
+            raise ReconstructionFailure(f"Failed to reconstruct ResearchDataset: {e}") from e
 
     @staticmethod
     def _reconstruct_dataset_config(
@@ -378,9 +373,7 @@ class ReproductionEngine:
             raise ReconstructionFailure("Run envelope is None")
         payload = run_env.payload
         if not isinstance(payload, Mapping):
-            raise ReconstructionFailure(
-                f"Run payload is not a mapping: {type(payload).__name__}"
-            )
+            raise ReconstructionFailure(f"Run payload is not a mapping: {type(payload).__name__}")
         config_data = payload.get("dataset_config")
         if not isinstance(config_data, Mapping):
             raise ReconstructionFailure(
@@ -389,9 +382,7 @@ class ReproductionEngine:
         try:
             return DatasetConfig.from_dict(dict(config_data))
         except (TypeError, ValueError, KeyError) as e:
-            raise ReconstructionFailure(
-                f"Failed to reconstruct DatasetConfig: {e}"
-            ) from e
+            raise ReconstructionFailure(f"Failed to reconstruct DatasetConfig: {e}") from e
 
     @staticmethod
     def _reconstruct_simulation_config(
@@ -407,9 +398,7 @@ class ReproductionEngine:
             raise ReconstructionFailure("Run envelope is None")
         payload = run_env.payload
         if not isinstance(payload, Mapping):
-            raise ReconstructionFailure(
-                f"Run payload is not a mapping: {type(payload).__name__}"
-            )
+            raise ReconstructionFailure(f"Run payload is not a mapping: {type(payload).__name__}")
         config_data = payload.get("simulation_config")
         if not isinstance(config_data, Mapping):
             raise ReconstructionFailure(
@@ -418,9 +407,7 @@ class ReproductionEngine:
         try:
             return SimulationConfig.from_dict(dict(config_data))
         except (TypeError, ValueError, KeyError) as e:
-            raise ReconstructionFailure(
-                f"Failed to reconstruct SimulationConfig: {e}"
-            ) from e
+            raise ReconstructionFailure(f"Failed to reconstruct SimulationConfig: {e}") from e
 
     @staticmethod
     def _reconstruct_experiment(
@@ -463,8 +450,7 @@ class ReproductionEngine:
                 dataset_config=dataset_config,
                 simulation_config=simulation_config,
                 metric_definitions=[
-                    MetricDefinition.from_dict(m)
-                    for m in payload.get("metric_definitions", [])
+                    MetricDefinition.from_dict(m) for m in payload.get("metric_definitions", [])
                 ],
                 parameters=dict(payload.get("parameters", {})),
                 version=str(payload.get("version", "1.0.0")),
@@ -475,9 +461,7 @@ class ReproductionEngine:
             experiment.mark_ready()
             return experiment
         except (TypeError, ValueError, KeyError) as e:
-            raise ReconstructionFailure(
-                f"Failed to reconstruct Experiment: {e}"
-            ) from e
+            raise ReconstructionFailure(f"Failed to reconstruct Experiment: {e}") from e
 
 
 __all__ = [

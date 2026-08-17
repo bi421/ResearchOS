@@ -20,7 +20,6 @@ from researchos.intelligence.rag_contracts import (
     RetrievalQuery,
 )
 
-
 # =============================================================================
 # BUG-01 — missing-timestamp default branch
 # =============================================================================
@@ -61,9 +60,7 @@ class TestRetrievalContextMissingTimestamp:
 
     def test_existing_session_start_round_trip_preserved(self):
         fixed = datetime(2025, 1, 15, 14, 30, 0, tzinfo=timezone.utc)
-        context = RetrievalContext(
-            session_id="s1", queries=(), all_hits=(), session_start=fixed
-        )
+        context = RetrievalContext(session_id="s1", queries=(), all_hits=(), session_start=fixed)
         restored = RetrievalContext.from_dict(context.to_dict())
         assert restored.session_start == fixed
 

@@ -112,9 +112,7 @@ def directional_accuracy(y_true: Sequence, y_pred: Sequence) -> float:
             return -1.0
         return 0.0
 
-    return sum(
-        1.0 for t, p in zip(y_true, y_pred) if _sign(t) == _sign(p)
-    ) / len(y_true)
+    return sum(1.0 for t, p in zip(y_true, y_pred) if _sign(t) == _sign(p)) / len(y_true)
 
 
 def compute_metrics(y_true: Sequence, y_pred: Sequence) -> dict:
@@ -142,4 +140,3 @@ __all__ = [
     "recall",
     "rmse",
 ]
-

@@ -21,6 +21,7 @@ from researchos.core.timestamp import parse_timestamp, utc_now
 # 1. US Real Yields
 # ---------------------------------------------------------------------------
 
+
 class RealYieldSnapshot(BaseObject):
     """Snapshot of US real yield conditions and their impact on gold.
 
@@ -92,20 +93,22 @@ class RealYieldSnapshot(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "ten_year_yield": self.ten_year_yield,
-            "five_year_yield": self.five_year_yield,
-            "inflation_expectations": self.inflation_expectations,
-            "tips_yield": self.tips_yield,
-            "real_yield_curve": self.real_yield_curve,
-            "real_yield_trend": self.real_yield_trend,
-            "historical_correlation": self.historical_correlation,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-            "expected_gold_impact": self.expected_gold_impact,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "ten_year_yield": self.ten_year_yield,
+                "five_year_yield": self.five_year_yield,
+                "inflation_expectations": self.inflation_expectations,
+                "tips_yield": self.tips_yield,
+                "real_yield_curve": self.real_yield_curve,
+                "real_yield_trend": self.real_yield_trend,
+                "historical_correlation": self.historical_correlation,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+                "expected_gold_impact": self.expected_gold_impact,
+            }
+        )
         return base
 
     @classmethod
@@ -129,6 +132,7 @@ class RealYieldSnapshot(BaseObject):
 # ---------------------------------------------------------------------------
 # 2. US Dollar (DXY)
 # ---------------------------------------------------------------------------
+
 
 class DollarStrengthSnapshot(BaseObject):
     """Snapshot of US Dollar strength and its implications for gold.
@@ -171,7 +175,9 @@ class DollarStrengthSnapshot(BaseObject):
         self.score = score
         self.confidence = confidence
         self.evidence_ids: List[str] = evidence_ids or []
-        self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Dollar strength snapshot analyzed")
+        self.lifecycle.transition(
+            LifecycleStage.ANALYZED, reason="Dollar strength snapshot analyzed"
+        )
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -188,17 +194,19 @@ class DollarStrengthSnapshot(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "dxy": self.dxy,
-            "dxy_trend": self.dxy_trend,
-            "dxy_momentum": self.dxy_momentum,
-            "relative_strength": self.relative_strength,
-            "multi_timeframe_trend": self.multi_timeframe_trend,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "dxy": self.dxy,
+                "dxy_trend": self.dxy_trend,
+                "dxy_momentum": self.dxy_momentum,
+                "relative_strength": self.relative_strength,
+                "multi_timeframe_trend": self.multi_timeframe_trend,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+            }
+        )
         return base
 
     @classmethod
@@ -219,6 +227,7 @@ class DollarStrengthSnapshot(BaseObject):
 # ---------------------------------------------------------------------------
 # 3. Federal Reserve
 # ---------------------------------------------------------------------------
+
 
 class FedPolicyAssessment(BaseObject):
     """Assessment of Federal Reserve policy stance and impact on gold.
@@ -286,19 +295,21 @@ class FedPolicyAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "rate_decision": self.rate_decision,
-            "rate_change_bps": self.rate_change_bps,
-            "dot_plot_median": self.dot_plot_median,
-            "balance_sheet_change": self.balance_sheet_change,
-            "policy_classification": self.policy_classification,
-            "hawkishness_score": self.hawkishness_score,
-            "gold_pressure": self.gold_pressure,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "rate_decision": self.rate_decision,
+                "rate_change_bps": self.rate_change_bps,
+                "dot_plot_median": self.dot_plot_median,
+                "balance_sheet_change": self.balance_sheet_change,
+                "policy_classification": self.policy_classification,
+                "hawkishness_score": self.hawkishness_score,
+                "gold_pressure": self.gold_pressure,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+            }
+        )
         return base
 
     @classmethod
@@ -321,6 +332,7 @@ class FedPolicyAssessment(BaseObject):
 # ---------------------------------------------------------------------------
 # 4. Inflation
 # ---------------------------------------------------------------------------
+
 
 class InflationAssessment(BaseObject):
     """Assessment of inflation conditions and implications for gold.
@@ -388,19 +400,21 @@ class InflationAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "cpi": self.cpi,
-            "core_cpi": self.core_cpi,
-            "ppi": self.ppi,
-            "pce": self.pce,
-            "inflation_expectations_5y": self.inflation_expectations_5y,
-            "inflation_regime": self.inflation_regime,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-            "expected_fed_reaction": self.expected_fed_reaction,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "cpi": self.cpi,
+                "core_cpi": self.core_cpi,
+                "ppi": self.ppi,
+                "pce": self.pce,
+                "inflation_expectations_5y": self.inflation_expectations_5y,
+                "inflation_regime": self.inflation_regime,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+                "expected_fed_reaction": self.expected_fed_reaction,
+            }
+        )
         return base
 
     @classmethod
@@ -423,6 +437,7 @@ class InflationAssessment(BaseObject):
 # ---------------------------------------------------------------------------
 # 5. Labor Market
 # ---------------------------------------------------------------------------
+
 
 class LaborMarketAssessment(BaseObject):
     """Assessment of US labor market conditions.
@@ -494,20 +509,22 @@ class LaborMarketAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "nfp": self.nfp,
-            "unemployment_rate": self.unemployment_rate,
-            "initial_claims": self.initial_claims,
-            "continuing_claims": self.continuing_claims,
-            "wage_growth": self.wage_growth,
-            "jolts": self.jolts,
-            "economic_strength": self.economic_strength,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-            "expected_fed_path": self.expected_fed_path,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "nfp": self.nfp,
+                "unemployment_rate": self.unemployment_rate,
+                "initial_claims": self.initial_claims,
+                "continuing_claims": self.continuing_claims,
+                "wage_growth": self.wage_growth,
+                "jolts": self.jolts,
+                "economic_strength": self.economic_strength,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+                "expected_fed_path": self.expected_fed_path,
+            }
+        )
         return base
 
     @classmethod
@@ -531,6 +548,7 @@ class LaborMarketAssessment(BaseObject):
 # ---------------------------------------------------------------------------
 # 6. Economic Growth
 # ---------------------------------------------------------------------------
+
 
 class EconomicGrowthAssessment(BaseObject):
     """Assessment of US economic growth and recession risk.
@@ -602,20 +620,22 @@ class EconomicGrowthAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "gdp": self.gdp,
-            "ism_manufacturing": self.ism_manufacturing,
-            "ism_services": self.ism_services,
-            "retail_sales": self.retail_sales,
-            "durable_goods": self.durable_goods,
-            "industrial_production": self.industrial_production,
-            "growth_phase": self.growth_phase,
-            "recession_risk": self.recession_risk,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "gdp": self.gdp,
+                "ism_manufacturing": self.ism_manufacturing,
+                "ism_services": self.ism_services,
+                "retail_sales": self.retail_sales,
+                "durable_goods": self.durable_goods,
+                "industrial_production": self.industrial_production,
+                "growth_phase": self.growth_phase,
+                "recession_risk": self.recession_risk,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+            }
+        )
         return base
 
     @classmethod
@@ -639,6 +659,7 @@ class EconomicGrowthAssessment(BaseObject):
 # ---------------------------------------------------------------------------
 # 7. Safe Haven Demand
 # ---------------------------------------------------------------------------
+
 
 class SafeHavenAssessment(BaseObject):
     """Assessment of safe haven demand for gold from geopolitical/financial stress.
@@ -698,17 +719,19 @@ class SafeHavenAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "risk_aversion_score": self.risk_aversion_score,
-            "safe_haven_demand": self.safe_haven_demand,
-            "active_conflicts": self.active_conflicts,
-            "financial_stress": self.financial_stress,
-            "vix_equivalent": self.vix_equivalent,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "risk_aversion_score": self.risk_aversion_score,
+                "safe_haven_demand": self.safe_haven_demand,
+                "active_conflicts": self.active_conflicts,
+                "financial_stress": self.financial_stress,
+                "vix_equivalent": self.vix_equivalent,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+            }
+        )
         return base
 
     @classmethod
@@ -729,6 +752,7 @@ class SafeHavenAssessment(BaseObject):
 # ---------------------------------------------------------------------------
 # 8. Central Bank Gold Purchases
 # ---------------------------------------------------------------------------
+
 
 class CentralBankDemand(BaseObject):
     """Assessment of central bank gold reserve accumulation.
@@ -792,18 +816,20 @@ class CentralBankDemand(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "monthly_purchases": self.monthly_purchases,
-            "quarterly_purchases": self.quarterly_purchases,
-            "annual_purchases": self.annual_purchases,
-            "largest_buyers": self.largest_buyers,
-            "demand_trend": self.demand_trend,
-            "reserve_diversification": self.reserve_diversification,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "monthly_purchases": self.monthly_purchases,
+                "quarterly_purchases": self.quarterly_purchases,
+                "annual_purchases": self.annual_purchases,
+                "largest_buyers": self.largest_buyers,
+                "demand_trend": self.demand_trend,
+                "reserve_diversification": self.reserve_diversification,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+            }
+        )
         return base
 
     @classmethod
@@ -825,6 +851,7 @@ class CentralBankDemand(BaseObject):
 # ---------------------------------------------------------------------------
 # 9. Physical Gold Market
 # ---------------------------------------------------------------------------
+
 
 class PhysicalDemandSnapshot(BaseObject):
     """Snapshot of physical gold market supply and demand conditions.
@@ -900,21 +927,23 @@ class PhysicalDemandSnapshot(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "comex_inventories": self.comex_inventories,
-            "shanghai_premium": self.shanghai_premium,
-            "etf_flows_monthly": self.etf_flows_monthly,
-            "indian_demand": self.indian_demand,
-            "chinese_demand": self.chinese_demand,
-            "mining_production": self.mining_production,
-            "aisc": self.aisc,
-            "seasonality": self.seasonality,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-            "supply_pressure": self.supply_pressure,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "comex_inventories": self.comex_inventories,
+                "shanghai_premium": self.shanghai_premium,
+                "etf_flows_monthly": self.etf_flows_monthly,
+                "indian_demand": self.indian_demand,
+                "chinese_demand": self.chinese_demand,
+                "mining_production": self.mining_production,
+                "aisc": self.aisc,
+                "seasonality": self.seasonality,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+                "supply_pressure": self.supply_pressure,
+            }
+        )
         return base
 
     @classmethod
@@ -939,6 +968,7 @@ class PhysicalDemandSnapshot(BaseObject):
 # ---------------------------------------------------------------------------
 # 10. Positioning
 # ---------------------------------------------------------------------------
+
 
 class PositioningAssessment(BaseObject):
     """Assessment of gold futures and ETF positioning.
@@ -1012,21 +1042,23 @@ class PositioningAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "managed_money_long": self.managed_money_long,
-            "managed_money_short": self.managed_money_short,
-            "commercial_long": self.commercial_long,
-            "commercial_short": self.commercial_short,
-            "open_interest": self.open_interest,
-            "etf_holdings": self.etf_holdings,
-            "net_positioning": self.net_positioning,
-            "crowded_side": self.crowded_side,
-            "positioning_extreme": self.positioning_extreme,
-            "score": self.score,
-            "confidence": self.confidence,
-            "evidence_ids": self.evidence_ids,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "managed_money_long": self.managed_money_long,
+                "managed_money_short": self.managed_money_short,
+                "commercial_long": self.commercial_long,
+                "commercial_short": self.commercial_short,
+                "open_interest": self.open_interest,
+                "etf_holdings": self.etf_holdings,
+                "net_positioning": self.net_positioning,
+                "crowded_side": self.crowded_side,
+                "positioning_extreme": self.positioning_extreme,
+                "score": self.score,
+                "confidence": self.confidence,
+                "evidence_ids": self.evidence_ids,
+            }
+        )
         return base
 
     @classmethod
@@ -1051,6 +1083,7 @@ class PositioningAssessment(BaseObject):
 # ---------------------------------------------------------------------------
 # Aggregate Macro Score
 # ---------------------------------------------------------------------------
+
 
 class MacroScore(BaseObject):
     """Aggregate macro score for XAUUSD combining all 10 macro drivers.
@@ -1090,7 +1123,9 @@ class MacroScore(BaseObject):
         self.dominant_driver = dominant_driver
         self.agreeing_drivers: List[str] = agreeing_drivers or []
         self.conflicting_drivers: List[str] = conflicting_drivers or []
-        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Macro score computed: {aggregate_score:.1f}")
+        self.lifecycle.transition(
+            LifecycleStage.ANALYZED, reason=f"Macro score computed: {aggregate_score:.1f}"
+        )
 
     @property
     def driver_count(self) -> int:
@@ -1109,15 +1144,17 @@ class MacroScore(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "aggregate_score": self.aggregate_score,
-            "component_scores": self.component_scores,
-            "component_confidences": self.component_confidences,
-            "dominant_driver": self.dominant_driver,
-            "agreeing_drivers": self.agreeing_drivers,
-            "conflicting_drivers": self.conflicting_drivers,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "aggregate_score": self.aggregate_score,
+                "component_scores": self.component_scores,
+                "component_confidences": self.component_confidences,
+                "dominant_driver": self.dominant_driver,
+                "agreeing_drivers": self.agreeing_drivers,
+                "conflicting_drivers": self.conflicting_drivers,
+            }
+        )
         return base
 
     @classmethod
@@ -1136,6 +1173,7 @@ class MacroScore(BaseObject):
 # ---------------------------------------------------------------------------
 # Macro Probability Assessment
 # ---------------------------------------------------------------------------
+
 
 class MacroProbability(BaseObject):
     """Probability distribution over gold market outcomes.
@@ -1185,7 +1223,9 @@ class MacroProbability(BaseObject):
         self.historical_analogues: List[str] = historical_analogues or []
         self.methodology = methodology
         self.dominant_bias = dominant_bias
-        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Probabilities computed: LONG={probability_long:.2f}")
+        self.lifecycle.transition(
+            LifecycleStage.ANALYZED, reason=f"Probabilities computed: LONG={probability_long:.2f}"
+        )
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -1203,18 +1243,20 @@ class MacroProbability(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "probability_long": self.probability_long,
-            "probability_short": self.probability_short,
-            "probability_range": self.probability_range,
-            "probability_high_volatility": self.probability_high_volatility,
-            "probability_breakout": self.probability_breakout,
-            "probability_fakeout": self.probability_fakeout,
-            "historical_analogues": self.historical_analogues,
-            "methodology": self.methodology,
-            "dominant_bias": self.dominant_bias,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "probability_long": self.probability_long,
+                "probability_short": self.probability_short,
+                "probability_range": self.probability_range,
+                "probability_high_volatility": self.probability_high_volatility,
+                "probability_breakout": self.probability_breakout,
+                "probability_fakeout": self.probability_fakeout,
+                "historical_analogues": self.historical_analogues,
+                "methodology": self.methodology,
+                "dominant_bias": self.dominant_bias,
+            }
+        )
         return base
 
     @classmethod
@@ -1236,6 +1278,7 @@ class MacroProbability(BaseObject):
 # ---------------------------------------------------------------------------
 # Macro Regime
 # ---------------------------------------------------------------------------
+
 
 class MacroRegime(BaseObject):
     """Current macro regime classification for XAUUSD.
@@ -1278,7 +1321,9 @@ class MacroRegime(BaseObject):
         self.stability = stability
         self.score = score
         self.confidence = confidence
-        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Regime classified: {regime_name}")
+        self.lifecycle.transition(
+            LifecycleStage.ANALYZED, reason=f"Regime classified: {regime_name}"
+        )
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -1294,16 +1339,18 @@ class MacroRegime(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "regime_name": self.regime_name,
-            "regime_description": self.regime_description,
-            "primary_driver": self.primary_driver,
-            "secondary_drivers": self.secondary_drivers,
-            "stability": self.stability,
-            "score": self.score,
-            "confidence": self.confidence,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "regime_name": self.regime_name,
+                "regime_description": self.regime_description,
+                "primary_driver": self.primary_driver,
+                "secondary_drivers": self.secondary_drivers,
+                "stability": self.stability,
+                "score": self.score,
+                "confidence": self.confidence,
+            }
+        )
         return base
 
     @classmethod
@@ -1323,6 +1370,7 @@ class MacroRegime(BaseObject):
 # ---------------------------------------------------------------------------
 # Institutional Macro Report
 # ---------------------------------------------------------------------------
+
 
 class MacroReport(BaseObject):
     """Complete institutional macro report for XAUUSD.
@@ -1402,21 +1450,23 @@ class MacroReport(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "title": self.title,
-            "regime": self.regime,
-            "dominant_drivers": self.dominant_drivers,
-            "conflicting_drivers": self.conflicting_drivers,
-            "macro_score_id": self.macro_score_id,
-            "probability_id": self.probability_id,
-            "narrative": self.narrative,
-            "risk_assessment": self.risk_assessment,
-            "expected_volatility": self.expected_volatility,
-            "suggested_bias": self.suggested_bias,
-            "key_levels": self.key_levels,
-            "report_format": self.report_format,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "title": self.title,
+                "regime": self.regime,
+                "dominant_drivers": self.dominant_drivers,
+                "conflicting_drivers": self.conflicting_drivers,
+                "macro_score_id": self.macro_score_id,
+                "probability_id": self.probability_id,
+                "narrative": self.narrative,
+                "risk_assessment": self.risk_assessment,
+                "expected_volatility": self.expected_volatility,
+                "suggested_bias": self.suggested_bias,
+                "key_levels": self.key_levels,
+                "report_format": self.report_format,
+            }
+        )
         return base
 
     @classmethod

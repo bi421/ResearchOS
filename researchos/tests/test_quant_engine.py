@@ -17,50 +17,52 @@ Covers:
 from __future__ import annotations
 
 import math
-import pytest
 from typing import List
 
+import pytest
+
 from researchos.quant_engine import (
-    # Interface
-    QuantComputationInterface,
-    PythonQuantBackend,
     # Models
     CalculationVersion,
-    SimulationRequest,
-    SimulationResult,
     # Engine
     HistoricalSimulationEngine,
+    PythonQuantBackend,
+    # Interface
+    QuantComputationInterface,
+    SimulationRequest,
+    SimulationResult,
     # Statistics
     calculate_returns_from_prices,
+    calmar_ratio,
+    compute_all_metrics,
+    compute_performance_analytics,
     compute_statistics,
+    consistency,
+    distribution_analysis,
+    downside_deviation,
+    kurtosis,
+    max_consecutive_losses,
+    max_consecutive_wins,
+    max_drawdown,
     mean,
+    profit_factor,
+    rolling_volatility,
+    # Metrics
+    sharpe_ratio,
+    skewness,
+    sortino_ratio,
     standard_deviation,
     variance,
-    skewness,
-    kurtosis,
-    z_score,
-    rolling_volatility,
     volatility_change,
     # Performance
     win_loss_ratio,
-    profit_factor,
-    consistency,
-    max_consecutive_wins,
-    max_consecutive_losses,
-    distribution_analysis,
-    compute_performance_analytics,
-    # Metrics
-    sharpe_ratio,
-    sortino_ratio,
-    calmar_ratio,
-    max_drawdown,
-    downside_deviation,
-    compute_all_metrics,
+    z_score,
 )
 
 # ──────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────
+
 
 @pytest.fixture
 def sample_prices() -> List[float]:
@@ -99,6 +101,7 @@ def simulation_request() -> SimulationRequest:
 # ──────────────────────────────────────────────
 # 1. Deterministic Calculations
 # ──────────────────────────────────────────────
+
 
 class TestDeterministicCalculations:
     """Same inputs → same outputs for all calculation types."""
@@ -145,6 +148,7 @@ class TestDeterministicCalculations:
 # ──────────────────────────────────────────────
 # 2. Return Calculation Accuracy
 # ──────────────────────────────────────────────
+
 
 class TestReturnCalculation:
     """Verify return calculations match known formulas."""
@@ -197,8 +201,8 @@ class TestReturnCalculation:
 # 3. Volatility Calculation
 # ──────────────────────────────────────────────
 
-class TestVolatilityCalculation:
 
+class TestVolatilityCalculation:
     def test_standard_deviation_constant_returns(self):
         """Constant returns → zero volatility."""
         assert standard_deviation([0.01, 0.01, 0.01]) == 0.0
@@ -252,8 +256,8 @@ class TestVolatilityCalculation:
 # 4. Drawdown Calculation
 # ──────────────────────────────────────────────
 
-class TestDrawdownCalculation:
 
+class TestDrawdownCalculation:
     def test_max_drawdown_strictly_increasing(self):
         """No drawdown when equity never decreases."""
         equity = [100.0, 102.0, 105.0, 110.0]
@@ -300,8 +304,8 @@ class TestDrawdownCalculation:
 # 5. Simulation Replay Consistency
 # ──────────────────────────────────────────────
 
-class TestSimulationReplay:
 
+class TestSimulationReplay:
     def test_replay_returns_result(self, engine, simulation_request, sample_prices):
         result = engine.replay(simulation_request, sample_prices)
         assert isinstance(result, SimulationResult)
@@ -362,8 +366,8 @@ class TestSimulationReplay:
 # 6. Result Hashing
 # ──────────────────────────────────────────────
 
-class TestResultHashing:
 
+class TestResultHashing:
     def test_simulation_result_hash(self):
         result = SimulationResult(
             simulation_id="test_001",
@@ -394,8 +398,8 @@ class TestResultHashing:
 # 7. Serialization
 # ──────────────────────────────────────────────
 
-class TestSerialization:
 
+class TestSerialization:
     def test_simulation_request_roundtrip(self):
         req = SimulationRequest(
             dataset_reference="test",
@@ -441,8 +445,8 @@ class TestSerialization:
 # 8. Interface Compatibility
 # ──────────────────────────────────────────────
 
-class TestInterfaceCompatibility:
 
+class TestInterfaceCompatibility:
     def test_backend_implements_interface(self, backend):
         assert isinstance(backend, QuantComputationInterface)
 
@@ -484,9 +488,11 @@ class TestInterfaceCompatibility:
 # 9. Integration with Experiment Framework
 # ──────────────────────────────────────────────
 
-class TestExperimentIntegration:
 
-    def test_simulation_result_feeds_experiment_result(self, engine, simulation_request, sample_prices):
+class TestExperimentIntegration:
+    def test_simulation_result_feeds_experiment_result(
+        self, engine, simulation_request, sample_prices
+    ):
         """SimulationResult can populate ExperimentResult fields."""
         sim_result = engine.replay(simulation_request, sample_prices)
 
@@ -506,7 +512,9 @@ class TestExperimentIntegration:
         assert exp_result.performance["win_rate"] == sim_result.performance["win_rate"]
         assert exp_result.equity_curve == sim_result.equity_curve
 
-    def test_simulation_result_serializable_via_experiment(self, engine, simulation_request, sample_prices):
+    def test_simulation_result_serializable_via_experiment(
+        self, engine, simulation_request, sample_prices
+    ):
         """SimulationResult data survives ExperimentResult serialization."""
         sim_result = engine.replay(simulation_request, sample_prices)
         from researchos.experiments.result import ExperimentResult
@@ -539,8 +547,8 @@ class TestExperimentIntegration:
 # 10. Integration with Market Memory
 # ──────────────────────────────────────────────
 
-class TestMarketMemoryIntegration:
 
+class TestMarketMemoryIntegration:
     def test_simulation_request_from_market_scenario(self, engine):
         """SimulationRequest can reference a market memory scenario."""
         request = SimulationRequest(
@@ -555,7 +563,9 @@ class TestMarketMemoryIntegration:
         assert "rate_hike_scenario" in request.tags
         assert request.compute_input_hash() != ""
 
-    def test_simulation_result_stores_dataset_reference(self, engine, simulation_request, sample_prices):
+    def test_simulation_result_stores_dataset_reference(
+        self, engine, simulation_request, sample_prices
+    ):
         """SimulationResult preserves the dataset reference for audit."""
         result = engine.replay(simulation_request, sample_prices)
         assert result.dataset_reference == "XAU/USD:2020-2024"
@@ -580,8 +590,8 @@ class TestMarketMemoryIntegration:
 # Statistics Edge Cases
 # ──────────────────────────────────────────────
 
-class TestStatisticsEdgeCases:
 
+class TestStatisticsEdgeCases:
     def test_empty_returns_raises(self):
         with pytest.raises(ValueError, match="empty dataset"):
             mean([])
@@ -651,8 +661,8 @@ class TestStatisticsEdgeCases:
 # Performance Analytics
 # ──────────────────────────────────────────────
 
-class TestPerformanceAnalytics:
 
+class TestPerformanceAnalytics:
     def test_all_positive_returns(self):
         """100% win rate when all returns are positive."""
         r = [0.01, 0.02, 0.03]
@@ -728,12 +738,14 @@ class TestPerformanceAnalytics:
 # Walk-Forward and Monte Carlo
 # ──────────────────────────────────────────────
 
-class TestSimulationModes:
 
+class TestSimulationModes:
     def test_walk_forward(self, engine, simulation_request, sample_prices):
         results = engine.walk_forward(
-            simulation_request, sample_prices,
-            window_size=5, step_size=3,
+            simulation_request,
+            sample_prices,
+            window_size=5,
+            step_size=3,
         )
         assert len(results) >= 1
         for r in results:
@@ -745,7 +757,8 @@ class TestSimulationModes:
 
     def test_monte_carlo(self, engine, simulation_request, sample_prices):
         results = engine.monte_carlo(
-            simulation_request, sample_prices,
+            simulation_request,
+            sample_prices,
             num_simulations=5,
         )
         assert len(results) == 5
@@ -774,8 +787,8 @@ class TestSimulationModes:
 # Backend Interface
 # ──────────────────────────────────────────────
 
-class TestBackendInterface:
 
+class TestBackendInterface:
     def test_calculate_drawdown(self, backend):
         equity = [100.0, 110.0, 90.0, 95.0, 85.0, 120.0]
         dd = backend.calculate_drawdown(equity)
@@ -826,8 +839,8 @@ class TestBackendInterface:
 # Edge Cases
 # ──────────────────────────────────────────────
 
-class TestEdgeCases:
 
+class TestEdgeCases:
     def test_zero_volatility_sharpe(self):
         """Constant returns → Sharpe ratio = 0."""
         r = [0.01, 0.01, 0.01, 0.01]
@@ -860,6 +873,7 @@ class TestEdgeCases:
 # ──────────────────────────────────────────────
 # Consistency Metrics
 # ──────────────────────────────────────────────
+
 
 class TestConsistency:
     """Consistency = win_rate for binary classification."""

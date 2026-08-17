@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
 from researchos.experiments.contracts import (
@@ -186,23 +186,25 @@ class Experiment(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "hypothesis_id": self.hypothesis_id,
-            "name": self.name,
-            "description": self.description,
-            "experiment_type": self.experiment_type,
-            "dataset_config": self.dataset_config.to_dict(),
-            "simulation_config": self.simulation_config.to_dict(),
-            "metric_definitions": [m.to_dict() for m in self.metric_definitions],
-            "parameters": self.parameters,
-            "run_ids": self.run_ids,
-            "best_run_id": self.best_run_id,
-            "experiment_hash": self.experiment_hash,
-            "version": self.version,
-            "tags": self.tags,
-            "experiment_trace": self.experiment_trace,
-            "status": self.status.value,
-        })
+        base.update(
+            {
+                "hypothesis_id": self.hypothesis_id,
+                "name": self.name,
+                "description": self.description,
+                "experiment_type": self.experiment_type,
+                "dataset_config": self.dataset_config.to_dict(),
+                "simulation_config": self.simulation_config.to_dict(),
+                "metric_definitions": [m.to_dict() for m in self.metric_definitions],
+                "parameters": self.parameters,
+                "run_ids": self.run_ids,
+                "best_run_id": self.best_run_id,
+                "experiment_hash": self.experiment_hash,
+                "version": self.version,
+                "tags": self.tags,
+                "experiment_trace": self.experiment_trace,
+                "status": self.status.value,
+            }
+        )
         return base
 
     @classmethod
@@ -212,12 +214,8 @@ class Experiment(BaseObject):
         obj.name = data.get("name", "")
         obj.description = data.get("description", "")
         obj.experiment_type = data.get("experiment_type", "Backtest")
-        obj.dataset_config = DatasetConfig.from_dict(
-            data.get("dataset_config", {"source": ""})
-        )
-        obj.simulation_config = SimulationConfig.from_dict(
-            data.get("simulation_config", {})
-        )
+        obj.dataset_config = DatasetConfig.from_dict(data.get("dataset_config", {"source": ""}))
+        obj.simulation_config = SimulationConfig.from_dict(data.get("simulation_config", {}))
         obj.metric_definitions = [
             MetricDefinition.from_dict(m) for m in data.get("metric_definitions", [])
         ]
@@ -229,5 +227,7 @@ class Experiment(BaseObject):
         obj.tags = list(data.get("tags", []))
         obj.experiment_trace = data.get("experiment_trace", "")
         obj.status = ExperimentStatus(data.get("status", "Draft"))
-        obj.created_at = parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
+        obj.created_at = (
+            parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
+        )
         return obj

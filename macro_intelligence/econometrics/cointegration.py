@@ -7,13 +7,14 @@ Canonical owner of the Engle-Granger cointegration test.
 
 MIL-ECM-008: Econometrics owns Engle-Granger.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional
 
+from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.descriptive import mean
 from macro_intelligence.statistics.provenance import StatisticalProvenance
-from macro_intelligence.econometrics.models import TestResult
 
 ENGLE_GRANGER_VERSION = "ecm/engle_granger/v1"
 
@@ -59,7 +60,8 @@ def engle_granger(
 
     # Step 1: OLS y on x with intercept.
     X = [[1.0, xi] for xi in x]
-    from macro_intelligence.econometrics.matrix import transpose, matmul, solve
+    from macro_intelligence.econometrics.matrix import matmul, solve, transpose
+
     Xt = transpose(X)
     XtX = matmul(Xt, X)
     Xty = matmul(Xt, [[v] for v in y])

@@ -24,12 +24,12 @@ from __future__ import annotations
 import random
 from typing import Any, Dict, List, Optional
 
+from researchos.quant_engine.backend import PythonQuantBackend
+from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import (
     SimulationRequest,
     SimulationResult,
 )
-from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.quant_engine.interface import QuantComputationInterface
 
 
 class HistoricalSimulationEngine:
@@ -125,8 +125,7 @@ class HistoricalSimulationEngine:
 
         if start_idx < 0 or end_idx > len(prices) or start_idx >= end_idx:
             raise ValueError(
-                f"Invalid slice indices: start={start_idx}, end={end_idx}, "
-                f"length={len(prices)}"
+                f"Invalid slice indices: start={start_idx}, end={end_idx}, length={len(prices)}"
             )
 
         return prices[start_idx:end_idx]
@@ -200,8 +199,7 @@ class HistoricalSimulationEngine:
         """
         if len(prices) < window_size:
             raise ValueError(
-                f"Price series length ({len(prices)}) is less than "
-                f"window size ({window_size})"
+                f"Price series length ({len(prices)}) is less than window size ({window_size})"
             )
 
         results: List[SimulationResult] = []
@@ -251,12 +249,11 @@ class HistoricalSimulationEngine:
             List of SimulationResult (one per simulation).
         """
         if len(prices) < 2:
-            raise ValueError(
-                f"Need at least 2 prices for Monte Carlo, got {len(prices)}"
-            )
+            raise ValueError(f"Need at least 2 prices for Monte Carlo, got {len(prices)}")
 
         # Calculate historical returns for resampling
         from researchos.quant_engine.statistics import calculate_returns_from_prices
+
         historical_returns = calculate_returns_from_prices(prices, "percentage")
 
         if not historical_returns:
@@ -271,9 +268,7 @@ class HistoricalSimulationEngine:
             synthetic_prices = [prices[0]]
             for _ in range(len(historical_returns)):
                 sampled_return = self._rng.choice(historical_returns)
-                synthetic_prices.append(
-                    synthetic_prices[-1] * (1.0 + sampled_return)
-                )
+                synthetic_prices.append(synthetic_prices[-1] * (1.0 + sampled_return))
 
             mc_request = SimulationRequest(
                 dataset_reference=request.dataset_reference,

@@ -39,4 +39,3 @@ __all__ = [
     "validate_params",
     "validate_period",
 ]
-

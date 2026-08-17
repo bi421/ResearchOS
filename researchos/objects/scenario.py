@@ -155,28 +155,30 @@ class Scenario(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "hypothesis_id": self.hypothesis_id,
-            "type": self.type,
-            "label": self.label,
-            "thesis": self.thesis,
-            "probability": self.probability,
-            "calibrated_probability": self.calibrated_probability,
-            "confidence_interval": self.confidence_interval,
-            "expected_return": self.expected_return,
-            "return_range": self.return_range,
-            "volatility": self.volatility,
-            "regime": self.regime,
-            "assumptions": self.assumptions,
-            "dependencies": self.dependencies,
-            "valid_if": self.valid_if,
-            "invalid_if": self.invalid_if,
-            "supporting_evidence": self.supporting_evidence,
-            "contradicting_evidence": self.contradicting_evidence,
-            "milestones": self.milestones,
-            "construction_trace": self.construction_trace,
-            "status": self.status,
-        })
+        base.update(
+            {
+                "hypothesis_id": self.hypothesis_id,
+                "type": self.type,
+                "label": self.label,
+                "thesis": self.thesis,
+                "probability": self.probability,
+                "calibrated_probability": self.calibrated_probability,
+                "confidence_interval": self.confidence_interval,
+                "expected_return": self.expected_return,
+                "return_range": self.return_range,
+                "volatility": self.volatility,
+                "regime": self.regime,
+                "assumptions": self.assumptions,
+                "dependencies": self.dependencies,
+                "valid_if": self.valid_if,
+                "invalid_if": self.invalid_if,
+                "supporting_evidence": self.supporting_evidence,
+                "contradicting_evidence": self.contradicting_evidence,
+                "milestones": self.milestones,
+                "construction_trace": self.construction_trace,
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod
@@ -289,10 +291,12 @@ class ScenarioSet(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "scenario_ids": self.scenario_ids,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "scenario_ids": self.scenario_ids,
+            }
+        )
         return base
 
     @classmethod

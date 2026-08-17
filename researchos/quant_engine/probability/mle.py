@@ -8,7 +8,7 @@ for distributions without closed-form solutions. Deterministic.
 from __future__ import annotations
 
 import math
-from typing import Dict, Sequence, Callable
+from typing import Callable, Dict, Sequence
 
 from researchos.quant_engine.probability.contracts import DistributionFit, DistributionType
 
@@ -127,4 +127,3 @@ def generic_grid_mle(
     if not best_params:
         raise ValueError("MLE grid search failed")
     return best_params
-

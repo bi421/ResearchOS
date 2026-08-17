@@ -16,6 +16,7 @@ Guards included:
 All guards are pure AST-based, stdlib-only, and read-only. They never modify
 source; they only inspect and report.
 """
+
 from __future__ import annotations
 
 import ast
@@ -75,9 +76,7 @@ FORBIDDEN_PATTERNS = [
 ]
 
 # Function/subroutine names that indicate non-deterministic runtime sources.
-_RUNTIME_RANDOM = frozenset(
-    {"random", "uuid4", "randint", "utcnow", "now", "secrets"}
-)
+_RUNTIME_RANDOM = frozenset({"random", "uuid4", "randint", "utcnow", "now", "secrets"})
 
 
 def _milk_root() -> str:
@@ -213,8 +212,7 @@ def check_persistent_id_determinism() -> List[Tuple[str, str]]:
     """
     hits = []
     # Functions that plausibly generate persistent IDs (by name).
-    id_hint = ("id", "identifier", "hash", "analysis_id", "transition_id",
-               "classification_id")
+    id_hint = ("id", "identifier", "hash", "analysis_id", "transition_id", "classification_id")
     for path in _python_files(_milk_root()):
         try:
             tree = ast.parse(open(path, encoding="utf-8").read())

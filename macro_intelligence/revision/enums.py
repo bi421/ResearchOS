@@ -10,7 +10,7 @@ from enum import Enum
 class RevisionState(str, Enum):
     """
     Revision state enumeration.
-    
+
     States:
     - ORIGINAL: Initial creation of the object
     - REVISED: Updated with new information
@@ -18,19 +18,20 @@ class RevisionState(str, Enum):
     - SUPERSEDED: Replaced by a newer version
     - DEPRECATED: No longer used, retained for history
     """
+
     ORIGINAL = "original"
     REVISED = "revised"
     CORRECTED = "corrected"
     SUPERSEDED = "superseded"
     DEPRECATED = "deprecated"
-    
+
     def is_terminal(self) -> bool:
         """Check if this is a terminal state."""
         return self in (
             RevisionState.SUPERSEDED,
             RevisionState.DEPRECATED,
         )
-    
+
     def is_intermediate(self) -> bool:
         """Check if this is an intermediate state."""
         return self in (
@@ -38,8 +39,8 @@ class RevisionState(str, Enum):
             RevisionState.REVISED,
             RevisionState.CORRECTED,
         )
-    
-    def can_transition_to(self, target: 'RevisionState') -> bool:
+
+    def can_transition_to(self, target: "RevisionState") -> bool:
         """Check if transition to target state is allowed."""
         transitions = {
             RevisionState.ORIGINAL: {
@@ -69,7 +70,7 @@ class RevisionState(str, Enum):
 class RevisionType(str, Enum):
     """
     Type of revision operation.
-    
+
     Types:
     - DATA_UPDATE: New data value received
     - DATA_CORRECTION: Error in previous data fixed
@@ -78,20 +79,21 @@ class RevisionType(str, Enum):
     - SOURCE_CHANGE: Data source changed
     - CLASSIFICATION_UPDATE: Classification updated
     """
+
     DATA_UPDATE = "data_update"
     DATA_CORRECTION = "data_correction"
     FORECAST_UPDATE = "forecast_update"
     METHODOLOGY_CHANGE = "methodology_change"
     SOURCE_CHANGE = "source_change"
     CLASSIFICATION_UPDATE = "classification_update"
-    
+
     def is_corrective(self) -> bool:
         """Check if this is a corrective revision."""
         return self in (
             RevisionType.DATA_CORRECTION,
             RevisionType.METHODOLOGY_CHANGE,
         )
-    
+
     def is_additive(self) -> bool:
         """Check if this is an additive revision."""
         return self in (
@@ -103,7 +105,7 @@ class RevisionType(str, Enum):
 class ProvenanceSource(str, Enum):
     """
     Source type enumeration for provenance tracking.
-    
+
     Types:
     - FRED: Federal Reserve Economic Data
     - BLS: Bureau of Labor Statistics
@@ -115,6 +117,7 @@ class ProvenanceSource(str, Enum):
     - BEA: Bureau of Economic Analysis
     - OTHER: Other source
     """
+
     FRED = "fred"
     BLS = "bls"
     CBOE = "cboe"
@@ -124,9 +127,9 @@ class ProvenanceSource(str, Enum):
     FED = "fed"
     BEA = "bea"
     OTHER = "other"
-    
+
     @classmethod
-    def from_string(cls, source: str) -> 'ProvenanceSource':
+    def from_string(cls, source: str) -> "ProvenanceSource":
         """Convert string to enum value."""
         source_lower = source.lower()
         mapping = {
@@ -147,7 +150,7 @@ class ProvenanceSource(str, Enum):
 class AuditAction(str, Enum):
     """
     Audit action enumeration.
-    
+
     Actions:
     - CREATE: Object created
     - UPDATE: Object updated (new revision)
@@ -156,20 +159,21 @@ class AuditAction(str, Enum):
     - RECONSTRUCT: Historical state reconstructed
     - VERIFY: Integrity verified
     """
+
     CREATE = "create"
     UPDATE = "update"
     VALIDATE = "validate"
     AUDIT = "audit"
     RECONSTRUCT = "reconstruct"
     VERIFY = "verify"
-    
+
     def is_write_operation(self) -> bool:
         """Check if this is a write operation."""
         return self in (
             AuditAction.CREATE,
             AuditAction.UPDATE,
         )
-    
+
     def is_read_operation(self) -> bool:
         """Check if this is a read operation."""
         return self in (
@@ -183,20 +187,21 @@ class AuditAction(str, Enum):
 class IntegrityLevel(str, Enum):
     """
     Integrity verification level.
-    
+
     Levels:
     - BASIC: Basic format checks
     - STANDARD: Standard validation
     - STRICT: Strict validation with cross-checks
     - FULL: Full integrity verification
     """
+
     BASIC = "basic"
     STANDARD = "standard"
     STRICT = "strict"
     FULL = "full"
-    
+
     @classmethod
-    def from_string(cls, level: str) -> 'IntegrityLevel':
+    def from_string(cls, level: str) -> "IntegrityLevel":
         """Convert string to enum value."""
         mapping = {
             "basic": cls.BASIC,

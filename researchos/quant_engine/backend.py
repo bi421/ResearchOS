@@ -17,17 +17,25 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from researchos.quant_engine.interface import QuantComputationInterface
+from researchos.core.timestamp import utc_now
 from researchos.quant_engine.capabilities import (
     QUANT_OPERATIONS,
     REFERENCE_BACKEND_NAME,
     REFERENCE_BACKEND_VERSION,
     BackendCapabilities,
 )
+from researchos.quant_engine.interface import QuantComputationInterface
+from researchos.quant_engine.metrics import (
+    compute_all_metrics,
+    max_drawdown,
+)
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
     SimulationResult,
+)
+from researchos.quant_engine.performance import (
+    compute_performance_analytics,
 )
 from researchos.quant_engine.statistics import (
     calculate_returns_from_prices,
@@ -35,14 +43,6 @@ from researchos.quant_engine.statistics import (
     rolling_volatility,
     volatility_change,
 )
-from researchos.quant_engine.metrics import (
-    compute_all_metrics,
-    max_drawdown,
-)
-from researchos.quant_engine.performance import (
-    compute_performance_analytics,
-)
-from researchos.core.timestamp import utc_now
 
 
 class PythonQuantBackend(QuantComputationInterface):
@@ -181,6 +181,7 @@ class PythonQuantBackend(QuantComputationInterface):
 
         if method == "standard_deviation":
             from researchos.quant_engine.statistics import standard_deviation
+
             return standard_deviation(returns)
         elif method == "rolling":
             rolling = rolling_volatility(returns)
@@ -241,8 +242,7 @@ class PythonQuantBackend(QuantComputationInterface):
             metrics["max_drawdown"] = round(float(metrics["max_drawdown"]), 8)
             if metrics["max_drawdown"] != 0.0 and "mean_return" in metrics:
                 metrics["calmar_ratio"] = (
-                    float(metrics["mean_return"]) * 252
-                    / abs(metrics["max_drawdown"])
+                    float(metrics["mean_return"]) * 252 / abs(metrics["max_drawdown"])
                 )
         return metrics
 
@@ -286,9 +286,7 @@ class PythonQuantBackend(QuantComputationInterface):
         prices = self._extract_prices(dataset)
 
         if len(prices) < 2:
-            raise ValueError(
-                f"Need at least 2 prices for simulation, got {len(prices)}"
-            )
+            raise ValueError(f"Need at least 2 prices for simulation, got {len(prices)}")
 
         # Compute input hash for provenance
         input_hash = request.compute_input_hash()
@@ -297,7 +295,9 @@ class PythonQuantBackend(QuantComputationInterface):
         sim_id = f"sim_{input_hash[:16]}"
 
         # Calculate returns
-        returns = self.calculate_returns(prices, return_type="percentage", calculation_version=calculation_version)
+        returns = self.calculate_returns(
+            prices, return_type="percentage", calculation_version=calculation_version
+        )
 
         # Build equity curve from returns
         initial_capital = request.parameters.get("initial_capital", 100000.0)
@@ -379,9 +379,7 @@ class PythonQuantBackend(QuantComputationInterface):
 
         prices = self._extract_prices(dataset)
         if len(prices) < 2:
-            raise ValueError(
-                f"Need at least 2 prices for backtest, got {len(prices)}"
-            )
+            raise ValueError(f"Need at least 2 prices for backtest, got {len(prices)}")
 
         # Fresh execution layer per call → no shared state, fully deterministic.
         execution = ExecutionSimulationLayer(
@@ -405,9 +403,7 @@ class PythonQuantBackend(QuantComputationInterface):
         )
 
         risk_free_rate = float(request.parameters.get("risk_free_rate", 0.0))
-        metrics = self.calculate_metrics(
-            returns, equity_curve, risk_free_rate, calculation_version
-        )
+        metrics = self.calculate_metrics(returns, equity_curve, risk_free_rate, calculation_version)
         statistics = self.calculate_statistics(returns, calculation_version)
         performance = self.calculate_performance_analytics(returns, calculation_version)
 

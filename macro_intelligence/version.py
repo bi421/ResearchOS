@@ -8,20 +8,21 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class VersionInfo:
     """Semantic version information."""
+
     major: int = 1
     minor: int = 0
     patch: int = 0
     build_date: str = "2026-08-03"
     commit_hash: str = "architectural_frozen"
-    
+
     @property
     def version_string(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
-    
+
     @property
     def full_version(self) -> str:
         return f"{self.version_string}-{self.build_date}-{self.commit_hash}"
-    
+
     def to_dict(self) -> dict:
         return {
             "major": self.major,

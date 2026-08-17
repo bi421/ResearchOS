@@ -11,9 +11,9 @@ Requires:
     - pytest (for reliable timing)
 """
 
-import time
 import random
-from typing import List, Callable, Tuple
+import time
+from typing import Callable, List, Tuple
 
 
 def generate_prices(n: int = 1000) -> List[float]:
@@ -22,7 +22,7 @@ def generate_prices(n: int = 1000) -> List[float]:
     price = 100.0
     prices = [price]
     for _ in range(n - 1):
-        price *= (1.0 + random.gauss(0.0, 0.01))
+        price *= 1.0 + random.gauss(0.0, 0.01)
         prices.append(price)
     return prices
 
@@ -94,10 +94,12 @@ def run_benchmarks():
     print("Loading backends...")
 
     from researchos.quant_engine.backend import PythonQuantBackend
+
     py_backend = PythonQuantBackend()
 
     try:
         from cpp_quant_engine.backend_wrapper import CppQuantBackendWrapper
+
         cpp_backend = CppQuantBackendWrapper()
         if not cpp_backend.is_cpp:
             print("  WARNING: C++ backend not available — using Python fallback")

@@ -5,8 +5,8 @@ ResearchOS Macro Intelligence Layer - Series Registry
 from __future__ import annotations
 
 from typing import Any
-from macro_intelligence.contracts.enums import FrequencyEnum
 
+from macro_intelligence.contracts.enums import FrequencyEnum
 
 # Supported series registry
 SUPPORTED_SERIES: dict[str, dict[str, Any]] = {
@@ -192,8 +192,7 @@ SUPPORTED_SERIES: dict[str, dict[str, Any]] = {
 
 # Validation ranges for range validator
 SERIES_RANGES: dict[str, tuple[float, float]] = {
-    series: info["range"]
-    for series, info in SUPPORTED_SERIES.items()
+    series: info["range"] for series, info in SUPPORTED_SERIES.items()
 }
 
 

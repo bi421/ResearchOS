@@ -2,7 +2,7 @@
 Comprehensive tests for Market Memory Engine (Phase 5).
 
 Tests cover:
-    - Data models (MarketSnapshot, MarketRegime, MacroState, HistoricalScenario)
+    - Data models (MarketSnapshot, MarketRegime, MacroContextSnapshot, HistoricalScenario)
     - Feature extraction (compute_features, FeatureSet)
     - Similarity comparison (compare_snapshots, find_similar_snapshots, compare_scenarios)
     - ScenarioMatcher (weighted matching, deterministic ranking)
@@ -24,32 +24,31 @@ from datetime import datetime, timezone
 import pytest
 
 from researchos.core.lifecycle import LifecycleStage
-
 from researchos.market_memory import (
-    MarketSnapshot,
-    MarketRegime,
-    MacroState,
-    HistoricalScenario,
-    MarketMemoryRepository,
-    compute_features,
     FeatureSet,
-    compare_snapshots,
-    find_similar_snapshots,
-    compare_scenarios,
-    ScenarioMatcher,
+    HistoricalScenario,
+    IntegrationContext,
+    MacroContextSnapshot,
+    MacroMarketEvent,
+    MarketMemoryIntegrator,
+    MarketMemoryReport,
+    MarketMemoryRepository,
+    MarketRegime,
+    MarketSnapshot,
     MatchResult,
     OutcomeAnalysis,
     OutcomeAnalysisResult,
-    MarketMemoryReport,
-    MarketMemoryIntegrator,
-    IntegrationContext,
-    MarketEvent,
+    ScenarioMatcher,
+    compare_scenarios,
+    compare_snapshots,
+    compute_features,
+    find_similar_snapshots,
 )
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def market_snapshot() -> MarketSnapshot:
@@ -123,9 +122,9 @@ def market_regime() -> MarketRegime:
 
 
 @pytest.fixture
-def macro_state() -> MacroState:
+def macro_state() -> MacroContextSnapshot:
     """Create a macro state for testing."""
-    return MacroState(
+    return MacroContextSnapshot(
         timestamp=datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc),
         geography="US",
         dxy=103.5,
@@ -184,6 +183,7 @@ def populated_repository(
 # =============================================================================
 # Data Model Tests
 # =============================================================================
+
 
 class TestMarketSnapshot:
     """Tests for MarketSnapshot data model."""
@@ -275,7 +275,7 @@ class TestMarketRegime:
 
 
 class TestMacroState:
-    """Tests for MacroState data model."""
+    """Tests for MacroContextSnapshot data model."""
 
     def test_create(self, macro_state):
         assert macro_state.geography == "US"
@@ -285,14 +285,14 @@ class TestMacroState:
 
     def test_to_dict_roundtrip(self, macro_state):
         data = macro_state.to_dict()
-        restored = MacroState.from_dict(data)
+        restored = MacroContextSnapshot.from_dict(data)
         assert restored.geography == macro_state.geography
         assert restored.dxy == macro_state.dxy
         assert restored.real_yield == macro_state.real_yield
         assert restored.hash == macro_state.hash
 
     def test_geopolitical_events(self):
-        ms = MacroState(
+        ms = MacroContextSnapshot(
             timestamp=datetime(2024, 1, 15, tzinfo=timezone.utc),
             geopolitical_events=["Middle East tensions", "EU election"],
         )
@@ -359,6 +359,7 @@ class TestHistoricalScenario:
 # =============================================================================
 # Feature Extraction Tests
 # =============================================================================
+
 
 class TestFeatureExtraction:
     """Tests for feature extraction functions."""
@@ -429,6 +430,7 @@ class TestFeatureExtraction:
 # Similarity Comparison Tests
 # =============================================================================
 
+
 class TestSimilarity:
     """Tests for similarity comparison functions."""
 
@@ -455,9 +457,7 @@ class TestSimilarity:
         diff_score = compare_snapshots(market_snapshot, different_snapshot)
         assert sim_score > diff_score
 
-    def test_find_similar_snapshots(
-        self, market_snapshot, similar_snapshot, different_snapshot
-    ):
+    def test_find_similar_snapshots(self, market_snapshot, similar_snapshot, different_snapshot):
         results = find_similar_snapshots(
             market_snapshot,
             [similar_snapshot, different_snapshot],
@@ -501,6 +501,7 @@ class TestSimilarity:
 # ScenarioMatcher Tests
 # =============================================================================
 
+
 class TestScenarioMatcher:
     """Tests for ScenarioMatcher."""
 
@@ -524,9 +525,7 @@ class TestScenarioMatcher:
         results = matcher.match_scenario(market_snapshot, [])
         assert len(results) == 0
 
-    def test_match_with_scenarios(
-        self, market_snapshot, similar_snapshot, historical_scenario
-    ):
+    def test_match_with_scenarios(self, market_snapshot, similar_snapshot, historical_scenario):
         matcher = ScenarioMatcher()
         snapshots = {similar_snapshot.id: similar_snapshot}
         # Add the similar snapshot as a scenario reference
@@ -590,6 +589,7 @@ class TestScenarioMatcher:
 # OutcomeAnalysis Tests
 # =============================================================================
 
+
 class TestOutcomeAnalysis:
     """Tests for OutcomeAnalysis."""
 
@@ -638,9 +638,15 @@ class TestOutcomeAnalysis:
         s2 = HistoricalScenario(name="Up2", price_outcome=1.5, snapshot_ids=["s2"])
         s3 = HistoricalScenario(name="Down1", price_outcome=-1.0, snapshot_ids=["s3"])
 
-        m1 = MatchResult(scenario_id=s1.id, scenario_name="Up1", overall_score=0.9, feature_scores={})
-        m2 = MatchResult(scenario_id=s2.id, scenario_name="Up2", overall_score=0.8, feature_scores={})
-        m3 = MatchResult(scenario_id=s3.id, scenario_name="Down1", overall_score=0.7, feature_scores={})
+        m1 = MatchResult(
+            scenario_id=s1.id, scenario_name="Up1", overall_score=0.9, feature_scores={}
+        )
+        m2 = MatchResult(
+            scenario_id=s2.id, scenario_name="Up2", overall_score=0.8, feature_scores={}
+        )
+        m3 = MatchResult(
+            scenario_id=s3.id, scenario_name="Down1", overall_score=0.7, feature_scores={}
+        )
 
         scenarios = {s1.id: s1, s2.id: s2, s3.id: s3}
         result = analysis.analyze([m1, m2, m3], scenarios)
@@ -683,6 +689,7 @@ class TestOutcomeAnalysis:
 # =============================================================================
 # MarketMemoryReport Tests
 # =============================================================================
+
 
 class TestMarketMemoryReport:
     """Tests for MarketMemoryReport."""
@@ -766,6 +773,7 @@ class TestMarketMemoryReport:
 # =============================================================================
 # Repository Tests
 # =============================================================================
+
 
 class TestMarketMemoryRepository:
     """Tests for MarketMemoryRepository."""
@@ -898,6 +906,7 @@ class TestMarketMemoryRepository:
 # Integration Layer Tests
 # =============================================================================
 
+
 class TestMarketMemoryIntegrator:
     """Tests for MarketMemoryIntegrator."""
 
@@ -983,14 +992,15 @@ class TestMarketMemoryIntegrator:
 
 
 # =============================================================================
-# MarketEvent Tests
+# MacroMarketEvent Tests
 # =============================================================================
 
+
 class TestMarketEvent:
-    """Tests for MarketEvent model."""
+    """Tests for MacroMarketEvent model."""
 
     def test_create(self):
-        event = MarketEvent(
+        event = MacroMarketEvent(
             event_type="Fed",
             timestamp=datetime(2024, 1, 31, 18, 0, tzinfo=timezone.utc),
             asset="XAUUSD",
@@ -1006,7 +1016,7 @@ class TestMarketEvent:
         assert event.actual_value == 5.5
 
     def test_to_dict_roundtrip(self):
-        event = MarketEvent(
+        event = MacroMarketEvent(
             event_type="CPI",
             timestamp=datetime(2024, 1, 11, 13, 30, tzinfo=timezone.utc),
             impact="High",
@@ -1014,7 +1024,7 @@ class TestMarketEvent:
             expected_value=3.3,
         )
         data = event.to_dict()
-        restored = MarketEvent.from_dict(data)
+        restored = MacroMarketEvent.from_dict(data)
         assert restored.event_type == "CPI"
         assert restored.actual_value == 3.4
         assert restored.expected_value == 3.3
@@ -1022,14 +1032,15 @@ class TestMarketEvent:
 
     def test_deterministic_id(self):
         ts = datetime(2024, 1, 31, 18, 0, tzinfo=timezone.utc)
-        a = MarketEvent(event_type="Fed", timestamp=ts, description="Rate Decision")
-        b = MarketEvent(event_type="Fed", timestamp=ts, description="Rate Decision")
+        a = MacroMarketEvent(event_type="Fed", timestamp=ts, description="Rate Decision")
+        b = MacroMarketEvent(event_type="Fed", timestamp=ts, description="Rate Decision")
         assert a.id == b.id
 
 
 # =============================================================================
 # Determinism Guarantee Tests
 # =============================================================================
+
 
 class TestDeterminism:
     """Verifies that all operations produce identical outputs for identical inputs."""
@@ -1063,7 +1074,10 @@ class TestDeterminism:
             "id1": MarketSnapshot(
                 asset="XAUUSD",
                 timestamp=datetime(2024, 1, 15, tzinfo=timezone.utc),
-                close=2000.0, high=2010.0, low=1990.0, open=1995.0,
+                close=2000.0,
+                high=2010.0,
+                low=1990.0,
+                open=1995.0,
             ),
         }
         r1 = matcher.match_scenario(market_snapshot, [s1, s2], snapshots_index=snapshots)
@@ -1085,6 +1099,7 @@ class TestDeterminism:
 # Edge Case Tests
 # =============================================================================
 
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
@@ -1102,7 +1117,10 @@ class TestEdgeCases:
         snap = MarketSnapshot(
             asset="XAUUSD",
             timestamp=datetime(2024, 1, 15, tzinfo=timezone.utc),
-            open=100.0, high=105.0, low=95.0, close=100.0,
+            open=100.0,
+            high=105.0,
+            low=95.0,
+            close=100.0,
         )
         features = compute_features(snap)
         assert features.is_bullish is False  # Close == Open → not bullish
@@ -1112,12 +1130,18 @@ class TestEdgeCases:
         a = MarketSnapshot(
             asset="XAUUSD",
             timestamp=datetime(2024, 1, 15, tzinfo=timezone.utc),
-            high=2000.0, low=1900.0, close=1950.0, volatility=10.0,
+            high=2000.0,
+            low=1900.0,
+            close=1950.0,
+            volatility=10.0,
         )
         b = MarketSnapshot(
             asset="XAUUSD",
             timestamp=datetime(2024, 1, 15, tzinfo=timezone.utc),
-            high=2000.0, low=1900.0, close=1950.0, volatility=10.0,
+            high=2000.0,
+            low=1900.0,
+            close=1950.0,
+            volatility=10.0,
         )
         score = compare_snapshots(a, b)
         assert score == pytest.approx(1.0)
@@ -1156,19 +1180,20 @@ class TestEdgeCases:
         assert result.total_examples == 0
 
     def test_macro_state_with_minimal_data(self):
-        ms = MacroState(
+        ms = MacroContextSnapshot(
             timestamp=datetime(2024, 1, 15, tzinfo=timezone.utc),
         )
         assert ms.dxy == 0.0
         assert ms.overall_assessment == ""
         data = ms.to_dict()
-        restored = MacroState.from_dict(data)
+        restored = MacroContextSnapshot.from_dict(data)
         assert restored.dxy == 0.0
 
 
 # =============================================================================
 # Integration Workflow Tests
 # =============================================================================
+
 
 class TestWorkflow:
     """End-to-end workflow tests."""
@@ -1204,9 +1229,7 @@ class TestWorkflow:
         # 3. Match
         matcher = ScenarioMatcher()
         snapshots = {historical.id: historical}
-        matches = matcher.match_scenario(
-            current, [scenario], snapshots_index=snapshots, top_n=5
-        )
+        matches = matcher.match_scenario(current, [scenario], snapshots_index=snapshots, top_n=5)
 
         # 4. Analyze
         analysis = OutcomeAnalysis()

@@ -57,7 +57,9 @@ def timed(fn: Callable[[], Any], budget: float = _BUDGET_SECONDS) -> float:
     return _time_once(fn)
 
 
-def build_cases(cpp: CppQuantAdapter) -> List[Tuple[str, Callable[[Any], Any], Callable[[Any], Any]]]:
+def build_cases(
+    cpp: CppQuantAdapter,
+) -> List[Tuple[str, Callable[[Any], Any], Callable[[Any], Any]]]:
     """Return (name, python_call, cpp_call) pairs for the new operations."""
     return [
         (

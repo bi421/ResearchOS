@@ -54,4 +54,3 @@ def to_csv(dataset: ResearchDataset) -> str:
 
 
 __all__ = ["to_csv", "to_dict", "to_json"]
-

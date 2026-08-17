@@ -30,13 +30,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
     EvidenceSource,
     ProbabilityOutcome,
 )
-from researchos.decision_engine.context import DecisionContext
-from researchos.decision_engine.score import EvidenceScore
 from researchos.decision_engine.probability import ProbabilityAssessment
+from researchos.decision_engine.score import EvidenceScore
 
 
 class ReasoningStep:
@@ -209,14 +209,9 @@ class DecisionReasoner:
             },
         )
 
-    def _step_market_memory(
-        self, context: DecisionContext, score: EvidenceScore
-    ) -> ReasoningStep:
+    def _step_market_memory(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 3: Market memory contribution."""
-        mm_items = [
-            e for e in score.evidence_items
-            if e.source == EvidenceSource.MARKET_MEMORY
-        ]
+        mm_items = [e for e in score.evidence_items if e.source == EvidenceSource.MARKET_MEMORY]
         match_count = len(context.historical_scenario_ids)
 
         scenario_ids = []
@@ -242,14 +237,9 @@ class DecisionReasoner:
             },
         )
 
-    def _step_experiments(
-        self, context: DecisionContext, score: EvidenceScore
-    ) -> ReasoningStep:
+    def _step_experiments(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 4: Experiment contribution."""
-        exp_items = [
-            e for e in score.evidence_items
-            if e.source == EvidenceSource.EXPERIMENT
-        ]
+        exp_items = [e for e in score.evidence_items if e.source == EvidenceSource.EXPERIMENT]
 
         return ReasoningStep(
             order=4,
@@ -267,13 +257,10 @@ class DecisionReasoner:
             },
         )
 
-    def _step_macro(
-        self, context: DecisionContext, score: EvidenceScore
-    ) -> ReasoningStep:
+    def _step_macro(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 5: Macro intelligence contribution."""
         macro_items = [
-            e for e in score.evidence_items
-            if e.source == EvidenceSource.MACRO_INTELLIGENCE
+            e for e in score.evidence_items if e.source == EvidenceSource.MACRO_INTELLIGENCE
         ]
 
         return ReasoningStep(
@@ -293,14 +280,9 @@ class DecisionReasoner:
             },
         )
 
-    def _step_validation(
-        self, context: DecisionContext, score: EvidenceScore
-    ) -> ReasoningStep:
+    def _step_validation(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 6: Validation contribution."""
-        val_items = [
-            e for e in score.evidence_items
-            if e.source == EvidenceSource.VALIDATION
-        ]
+        val_items = [e for e in score.evidence_items if e.source == EvidenceSource.VALIDATION]
 
         return ReasoningStep(
             order=6,
@@ -318,14 +300,9 @@ class DecisionReasoner:
             },
         )
 
-    def _step_quant_engine(
-        self, context: DecisionContext, score: EvidenceScore
-    ) -> ReasoningStep:
+    def _step_quant_engine(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 7: Quant engine contribution."""
-        quant_items = [
-            e for e in score.evidence_items
-            if e.source == EvidenceSource.QUANT_ENGINE
-        ]
+        quant_items = [e for e in score.evidence_items if e.source == EvidenceSource.QUANT_ENGINE]
 
         return ReasoningStep(
             order=7,
@@ -346,9 +323,7 @@ class DecisionReasoner:
         """Step 8: Confidence assessment."""
         evidence_confidences = [e.confidence for e in score.evidence_items]
         avg_confidence = (
-            sum(evidence_confidences) / len(evidence_confidences)
-            if evidence_confidences
-            else 0.0
+            sum(evidence_confidences) / len(evidence_confidences) if evidence_confidences else 0.0
         )
 
         return ReasoningStep(
@@ -436,4 +411,3 @@ class DecisionReasoner:
                 "limitation_count": len(probability.limitations),
             },
         )
-

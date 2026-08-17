@@ -33,14 +33,14 @@ def compute_rolling(
 ) -> RollingCorrelationResult:
     """
     Compute rolling correlation between two series.
-    
+
     Args:
         series_a_values: Values for series A
         series_b_values: Values for series B
         window_size: Rolling window size
         timestamps: Optional timestamp strings (uses indices if None)
         evidence_refs: Optional evidence references
-    
+
     Returns:
         RollingCorrelationResult
     """
@@ -48,17 +48,17 @@ def compute_rolling(
         timestamps = [str(i) for i in range(len(series_a_values))]
     if evidence_refs is None:
         evidence_refs = []
-    
+
     correlations, corr_timestamps, stability = compute_rolling_correlation(
         series_a_values, series_b_values, window_size
     )
-    
+
     # Align timestamps
     if len(corr_timestamps) < len(timestamps):
         aligned_ts = [timestamps[t] for t in corr_timestamps]
     else:
-        aligned_ts = [timestamps[t] for t in corr_timestamps[:len(correlations)]]
-    
+        aligned_ts = [timestamps[t] for t in corr_timestamps[: len(correlations)]]
+
     return RollingCorrelationResult(
         series_a="",  # Set by caller
         series_b="",
@@ -83,18 +83,18 @@ def analyze_relationship_stability(
     """
     if len(correlations) < 2:
         return {"stable": True, "variability": 0.0, "trend": "insufficient_data"}
-    
+
     # Compute variability (std dev) — canonical Statistics layer.
     # Preserve original population-std behavior (denominator = N).
     std_dev = _canonical_std(correlations, sample=False)
-    
+
     # Detect trend (linear regression slope on indices) — canonical layer
     n = len(correlations)
     x_idx = [float(i) for i in range(n)]
     slope = _canonical_slope(x_idx, correlations)
-    
+
     mean_c = sum(correlations) / len(correlations)
-    
+
     # Classify stability
     if std_dev < 0.1:
         stable = True
@@ -105,7 +105,7 @@ def analyze_relationship_stability(
     else:
         stable = False
         trend = "trending" if abs(slope) > 0.02 else "volatile"
-    
+
     return {
         "stable": stable,
         "variability": round(float(std_dev), 6),

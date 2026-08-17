@@ -33,21 +33,36 @@ class Timeframe(str, Enum):
         """Parse a timeframe from a string, case-insensitive."""
         mapping = {
             "tick": cls.TICK,
-            "1m": cls.M1, "1min": cls.M1, "minute": cls.M1,
-            "5m": cls.M5, "5min": cls.M5,
-            "15m": cls.M15, "15min": cls.M15,
-            "30m": cls.M30, "30min": cls.M30,
-            "1h": cls.H1, "1hour": cls.H1, "hour": cls.H1,
-            "4h": cls.H4, "4hour": cls.H4,
-            "1d": cls.D1, "1day": cls.D1, "daily": cls.D1, "day": cls.D1,
-            "1w": cls.W1, "1week": cls.W1, "weekly": cls.W1, "week": cls.W1,
-            "1mo": cls.MN1, "1month": cls.MN1, "monthly": cls.MN1, "month": cls.MN1,
+            "1m": cls.M1,
+            "1min": cls.M1,
+            "minute": cls.M1,
+            "5m": cls.M5,
+            "5min": cls.M5,
+            "15m": cls.M15,
+            "15min": cls.M15,
+            "30m": cls.M30,
+            "30min": cls.M30,
+            "1h": cls.H1,
+            "1hour": cls.H1,
+            "hour": cls.H1,
+            "4h": cls.H4,
+            "4hour": cls.H4,
+            "1d": cls.D1,
+            "1day": cls.D1,
+            "daily": cls.D1,
+            "day": cls.D1,
+            "1w": cls.W1,
+            "1week": cls.W1,
+            "weekly": cls.W1,
+            "week": cls.W1,
+            "1mo": cls.MN1,
+            "1month": cls.MN1,
+            "monthly": cls.MN1,
+            "month": cls.MN1,
         }
         normalized = value.lower().strip()
         if normalized not in mapping:
-            raise ValueError(
-                f"Unknown timeframe '{value}'. Valid options: {list(mapping.keys())}"
-            )
+            raise ValueError(f"Unknown timeframe '{value}'. Valid options: {list(mapping.keys())}")
         return mapping[normalized]
 
     def to_seconds(self) -> int:
@@ -131,8 +146,7 @@ class DatasetType(str, Enum):
         normalized = value.lower().strip()
         if normalized not in mapping:
             raise ValueError(
-                f"Unknown dataset type '{value}'. "
-                f"Valid options: {list(mapping.keys())}"
+                f"Unknown dataset type '{value}'. Valid options: {list(mapping.keys())}"
             )
         return mapping[normalized]
 
@@ -303,4 +317,3 @@ class ValidationReport:
             errors=list(data.get("errors", [])),
             warnings=list(data.get("warnings", [])),
         )
-

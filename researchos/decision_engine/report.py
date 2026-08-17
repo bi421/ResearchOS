@@ -36,18 +36,18 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
+from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
     CalculationMethod,
     DecisionStatus,
     WeightConfiguration,
 )
-from researchos.decision_engine.context import DecisionContext
-from researchos.decision_engine.score import EvidenceScore
 from researchos.decision_engine.probability import ProbabilityAssessment
 from researchos.decision_engine.reasoner import DecisionReasoner, ReasoningStep
+from researchos.decision_engine.score import EvidenceScore
 
 
 class DecisionReport(BaseObject):
@@ -175,8 +175,8 @@ class DecisionReport(BaseObject):
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
             reason=f"Decision report generated for {asset}: "
-                   f"B={bullish_probability:.2%}, Be={bearish_probability:.2%}, "
-                   f"N={neutral_probability:.2%}",
+            f"B={bullish_probability:.2%}, Be={bearish_probability:.2%}, "
+            f"N={neutral_probability:.2%}",
         )
 
     @property
@@ -227,39 +227,41 @@ class DecisionReport(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "asset": self.asset,
-            "timeframe": self.timeframe,
-            "decision_timestamp": self.decision_timestamp.isoformat(),
-            "context_id": self.context_id,
-            "score_id": self.score_id,
-            "probability_id": self.probability_id,
-            "report_version": self.report_version,
-            "evidence_version": self.evidence_version,
-            "scoring_version": self.scoring_version,
-            "probability_version": self.probability_version,
-            "reasoner_version": self.reasoner_version,
-            "weight_config": self.weight_config.to_dict(),
-            "bullish_probability": self.bullish_probability,
-            "bearish_probability": self.bearish_probability,
-            "neutral_probability": self.neutral_probability,
-            "confidence": self.confidence,
-            "uncertainty": self.uncertainty,
-            "summary": self.summary,
-            "reasoning_steps": [s.to_dict() for s in self.reasoning_steps],
-            "evidence_summary": self.evidence_summary,
-            "supporting_evidence": self.supporting_evidence,
-            "historical_scenarios": self.historical_scenarios,
-            "experiment_ids": self.experiment_ids,
-            "macro_factors": self.macro_factors,
-            "risk_factors": self.risk_factors,
-            "limitations": self.limitations,
-            "calculation_method": self.calculation_method.value,
-            "calculation_version": self.calculation_version,
-            "status": self.status.value,
-            "tags": self.tags,
-            "report_hash": self._report_hash,
-        })
+        base.update(
+            {
+                "asset": self.asset,
+                "timeframe": self.timeframe,
+                "decision_timestamp": self.decision_timestamp.isoformat(),
+                "context_id": self.context_id,
+                "score_id": self.score_id,
+                "probability_id": self.probability_id,
+                "report_version": self.report_version,
+                "evidence_version": self.evidence_version,
+                "scoring_version": self.scoring_version,
+                "probability_version": self.probability_version,
+                "reasoner_version": self.reasoner_version,
+                "weight_config": self.weight_config.to_dict(),
+                "bullish_probability": self.bullish_probability,
+                "bearish_probability": self.bearish_probability,
+                "neutral_probability": self.neutral_probability,
+                "confidence": self.confidence,
+                "uncertainty": self.uncertainty,
+                "summary": self.summary,
+                "reasoning_steps": [s.to_dict() for s in self.reasoning_steps],
+                "evidence_summary": self.evidence_summary,
+                "supporting_evidence": self.supporting_evidence,
+                "historical_scenarios": self.historical_scenarios,
+                "experiment_ids": self.experiment_ids,
+                "macro_factors": self.macro_factors,
+                "risk_factors": self.risk_factors,
+                "limitations": self.limitations,
+                "calculation_method": self.calculation_method.value,
+                "calculation_version": self.calculation_version,
+                "status": self.status.value,
+                "tags": self.tags,
+                "report_hash": self._report_hash,
+            }
+        )
         return base
 
     @classmethod
@@ -276,18 +278,14 @@ class DecisionReport(BaseObject):
         obj.scoring_version = data.get("scoring_version", "SCORE_V1")
         obj.probability_version = data.get("probability_version", "DECISION_V1")
         obj.reasoner_version = data.get("reasoner_version", "REASON_V1")
-        obj.weight_config = WeightConfiguration.from_dict(
-            data.get("weight_config", {})
-        )
+        obj.weight_config = WeightConfiguration.from_dict(data.get("weight_config", {}))
         obj.bullish_probability = float(data.get("bullish_probability", 0.33))
         obj.bearish_probability = float(data.get("bearish_probability", 0.33))
         obj.neutral_probability = float(data.get("neutral_probability", 0.34))
         obj.confidence = float(data.get("confidence", 0.0))
         obj.uncertainty = float(data.get("uncertainty", 1.0))
         obj.summary = data.get("summary", "")
-        obj.reasoning_steps = [
-            ReasoningStep(**s) for s in data.get("reasoning_steps", [])
-        ]
+        obj.reasoning_steps = [ReasoningStep(**s) for s in data.get("reasoning_steps", [])]
         obj.evidence_summary = data.get("evidence_summary", "")
         obj.supporting_evidence = list(data.get("supporting_evidence", []))
         obj.historical_scenarios = list(data.get("historical_scenarios", []))
@@ -335,9 +333,7 @@ def generate_decision_report(
     reasoning_steps = reasoner.reason(context, score, probability)
 
     # Gather supporting evidence (sorted for deterministic report content)
-    supporting_ids = sorted({
-        item.source_id for item in score.evidence_items if item.source_id
-    })
+    supporting_ids = sorted({item.source_id for item in score.evidence_items if item.source_id})
 
     # Gather historical scenarios
     historical_ids = sorted(set(context.historical_scenario_ids))
@@ -349,17 +345,21 @@ def generate_decision_report(
     # report lists which canonical macro references were considered.
     macro_factors = []
     if context.macro_state_id:
-        macro_factors.append({
-            "indicator": "macro_state_id",
-            "value": context.macro_state_id,
-            "impact": "considered",
-        })
+        macro_factors.append(
+            {
+                "indicator": "macro_state_id",
+                "value": context.macro_state_id,
+                "impact": "considered",
+            }
+        )
     if context.market_regime_id:
-        macro_factors.append({
-            "indicator": "market_regime_id",
-            "value": context.market_regime_id,
-            "impact": "considered",
-        })
+        macro_factors.append(
+            {
+                "indicator": "market_regime_id",
+                "value": context.market_regime_id,
+                "impact": "considered",
+            }
+        )
 
     # Risk factors
     risk_factors = []
@@ -384,7 +384,13 @@ def generate_decision_report(
     )
 
     # Human-readable summary
-    directional_label = "Bullish" if probability.bullish_probability > probability.bearish_probability else "Bearish" if probability.bearish_probability > probability.bullish_probability else "Neutral"
+    directional_label = (
+        "Bullish"
+        if probability.bullish_probability > probability.bearish_probability
+        else "Bearish"
+        if probability.bearish_probability > probability.bullish_probability
+        else "Neutral"
+    )
     summary = (
         f"{directional_label} bias for {context.asset} ({context.timeframe}) "
         f"with {probability.confidence:.0%} confidence. "

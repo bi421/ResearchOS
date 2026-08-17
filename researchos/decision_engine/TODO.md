@@ -2,7 +2,7 @@
 
 ## Implementation Steps
 
-- [x] Step 1: Create `contracts.py` — Enums, dataclasses (EvidenceItem, WeightConfiguration, CalculationVersion)
+- [x] Step 1: Create `contracts.py` — Enums, dataclasses (DecisionEvidenceItem, WeightConfiguration, CalculationVersion)
 - [x] Step 2: Create `context.py` — DecisionContext (BaseObject)
 - [x] Step 3: Create `evidence.py` — EvidenceAggregator (collects from all modules)
 - [x] Step 4: Create `score.py` — EvidenceScore (BaseObject, intermediate normalization)

@@ -14,6 +14,7 @@ from typing import Any
 @dataclass(frozen=True)
 class WindowSpec:
     """Window specification for market reaction analysis."""
+
     start_offset: timedelta
     end_offset: timedelta
     start_price: float | None = None
@@ -21,7 +22,7 @@ class WindowSpec:
     start_volatility: float | None = None
     end_volatility: float | None = None
     start_liquidity: float | None = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "start_offset_seconds": self.start_offset.total_seconds(),
@@ -32,12 +33,12 @@ class WindowSpec:
             "end_volatility": self.end_volatility,
             "start_liquidity": self.start_liquidity,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> WindowSpec:
         return cls(
-            start_offset=timedelta(seconds=data.get("start_offset_seconds", -24*3600)),
-            end_offset=timedelta(seconds=data.get("end_offset_seconds", 24*3600)),
+            start_offset=timedelta(seconds=data.get("start_offset_seconds", -24 * 3600)),
+            end_offset=timedelta(seconds=data.get("end_offset_seconds", 24 * 3600)),
             start_price=data.get("start_price"),
             end_price=data.get("end_price"),
             start_volatility=data.get("start_volatility"),
@@ -49,6 +50,7 @@ class WindowSpec:
 @dataclass(frozen=True)
 class ReactionMetrics:
     """Quantified reaction metrics."""
+
     return_bps: float
     volatility_change_bps: float
     volume_change_pct: float
@@ -56,7 +58,7 @@ class ReactionMetrics:
     max_drawdown_bps: float
     max_spike_bps: float
     reaction_significance: float
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "return_bps": self.return_bps,
@@ -67,7 +69,7 @@ class ReactionMetrics:
             "max_spike_bps": self.max_spike_bps,
             "reaction_significance": self.reaction_significance,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ReactionMetrics:
         return cls(
@@ -85,32 +87,32 @@ class ReactionMetrics:
 class MarketReaction:
     """
     Immutable market reaction object.
-    
+
     Version: mr/v1
     Immutable: Yes (frozen=True)
-    
+
     Captures pre/post event market state and reactions.
     """
-    
+
     # Identity
     event_id: str
     instrument: str
-    
+
     # Windows
     window_before: WindowSpec
     window_after: WindowSpec
-    
+
     # Metrics
     reaction_metrics: ReactionMetrics
-    
+
     # Metadata
     calculation_version: str = "mr/v1.0.0"
     metadata: dict = field(default_factory=dict)
-    
+
     # Generated
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     version: str = "mr/v1"
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -124,7 +126,7 @@ class MarketReaction:
             "created_at": self.created_at.isoformat(),
             "version": self.version,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> MarketReaction:
         """Deserialize from dictionary."""
@@ -136,38 +138,43 @@ class MarketReaction:
             reaction_metrics=ReactionMetrics.from_dict(data["reaction_metrics"]),
             calculation_version=data.get("calculation_version", "mr/v1.0.0"),
             metadata=data.get("metadata", {}),
-            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
+            created_at=datetime.fromisoformat(
+                data.get("created_at", datetime.now(timezone.utc).isoformat())
+            ),
             version=data.get("version", "mr/v1"),
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON with deterministic ordering."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> MarketReaction:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """
         Compute deterministic hash for the market reaction.
-        
+
         MIL-DET-001: Hash depends ONLY on semantic data, never on runtime metadata.
-        
+
         Allowed hash fields:
         - event_id, instrument
         - window specs, reaction metrics
-        
+
         Forbidden hash fields:
         - created_at (runtime metadata)
         - version (schema version, not semantic)
         """
         import hashlib
         import json
+
         # Create hash-specific dict excluding runtime metadata
         hash_data = {
             "event_id": self.event_id,
@@ -177,13 +184,14 @@ class MarketReaction:
             "reaction_metrics": self.reaction_metrics.to_dict(),
             "calculation_version": self.calculation_version,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
 class StatisticalSupport:
     """Statistical backing for knowledge claims."""
+
     sample_size: int
     p_value: float
     confidence_interval: tuple[float, float]
@@ -191,7 +199,7 @@ class StatisticalSupport:
     test_method: str
     assumptions_valid: bool
     limitations: list[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "sample_size": self.sample_size,
@@ -202,7 +210,7 @@ class StatisticalSupport:
             "assumptions_valid": self.assumptions_valid,
             "limitations": self.limitations,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> StatisticalSupport:
         return cls(

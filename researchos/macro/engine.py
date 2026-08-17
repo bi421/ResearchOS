@@ -36,7 +36,6 @@ from researchos.objects.macro import (
 from researchos.objects.process import AuditEntry
 from researchos.repository.interface import RepositoryInterface
 
-
 # Macro driver names (consistent identifiers)
 DRIVER_REAL_YIELD = "Real_Yield"
 DRIVER_DXY = "DXY"
@@ -50,9 +49,16 @@ DRIVER_PHYSICAL = "Physical_Demand"
 DRIVER_POSITIONING = "Positioning"
 
 ALL_DRIVERS = [
-    DRIVER_REAL_YIELD, DRIVER_DXY, DRIVER_FED, DRIVER_INFLATION,
-    DRIVER_LABOR, DRIVER_GROWTH, DRIVER_SAFE_HAVEN,
-    DRIVER_CENTRAL_BANK, DRIVER_PHYSICAL, DRIVER_POSITIONING,
+    DRIVER_REAL_YIELD,
+    DRIVER_DXY,
+    DRIVER_FED,
+    DRIVER_INFLATION,
+    DRIVER_LABOR,
+    DRIVER_GROWTH,
+    DRIVER_SAFE_HAVEN,
+    DRIVER_CENTRAL_BANK,
+    DRIVER_PHYSICAL,
+    DRIVER_POSITIONING,
 ]
 
 # Weights for aggregate macro score (sums to 1.0)
@@ -353,11 +359,16 @@ class MacroAnalysisEngine:
         self._audit("FED_ASSESSED", assessment.id, f"Policy={policy_classification}, Score={score}")
         return assessment
 
-    def _score_fed_policy(self, classification: str, hawkishness: float, rate_change: float) -> float:
+    def _score_fed_policy(
+        self, classification: str, hawkishness: float, rate_change: float
+    ) -> float:
         # Higher score = more dovish = more gold bullish
         class_map = {
-            "Extremely_Dovish": 90, "Dovish": 75, "Neutral": 50,
-            "Hawkish": 25, "Extremely_Hawkish": 10,
+            "Extremely_Dovish": 90,
+            "Dovish": 75,
+            "Neutral": 50,
+            "Hawkish": 25,
+            "Extremely_Hawkish": 10,
         }
         base = class_map.get(classification, 50.0)
 
@@ -522,8 +533,11 @@ class MacroAnalysisEngine:
     def _score_labor_market(self, strength: str, ue: float) -> float:
         # Weaker labor market = more gold bullish (fed cuts)
         strength_map = {
-            "Very_Strong": 20, "Strong": 35, "Moderate": 50,
-            "Weak": 70, "Very_Weak": 85,
+            "Very_Strong": 20,
+            "Strong": 35,
+            "Moderate": 50,
+            "Weak": 70,
+            "Very_Weak": 85,
         }
         base = strength_map.get(strength, 50)
 
@@ -618,13 +632,20 @@ class MacroAnalysisEngine:
     def _score_growth(self, phase: str, recession: str) -> float:
         # Weaker growth = more gold bullish (safe haven + fed support)
         phase_map = {
-            "Boom": 20, "Expansion": 30, "Slowdown": 55,
-            "Contraction": 75, "Recovery": 45,
+            "Boom": 20,
+            "Expansion": 30,
+            "Slowdown": 55,
+            "Contraction": 75,
+            "Recovery": 45,
         }
         base = phase_map.get(phase, 50)
 
         rec_adj = {
-            "Imminent": 20, "High": 15, "Elevated": 8, "Moderate": 3, "Low": 0,
+            "Imminent": 20,
+            "High": 15,
+            "Elevated": 8,
+            "Moderate": 3,
+            "Low": 0,
         }.get(recession, 0)
 
         return max(0.0, min(100.0, base + rec_adj))
@@ -644,8 +665,12 @@ class MacroAnalysisEngine:
         ontology_tags: Optional[List[str]] = None,
     ) -> SafeHavenAssessment:
         """Assess safe haven demand for gold."""
-        score = self._score_safe_haven(risk_aversion_score, safe_haven_demand, financial_stress, vix_equivalent)
-        confidence = self._compute_safe_haven_confidence(risk_aversion_score, len(active_conflicts or []))
+        score = self._score_safe_haven(
+            risk_aversion_score, safe_haven_demand, financial_stress, vix_equivalent
+        )
+        confidence = self._compute_safe_haven_confidence(
+            risk_aversion_score, len(active_conflicts or [])
+        )
 
         assessment = SafeHavenAssessment(
             risk_aversion_score=risk_aversion_score,
@@ -674,7 +699,18 @@ class MacroAnalysisEngine:
 
         vix_score = min(100, vix * 2)
 
-        return max(0.0, min(100.0, (aversion_score * 0.35 + demand_score * 0.30 + stress_score * 0.20 + vix_score * 0.15)))
+        return max(
+            0.0,
+            min(
+                100.0,
+                (
+                    aversion_score * 0.35
+                    + demand_score * 0.30
+                    + stress_score * 0.20
+                    + vix_score * 0.15
+                ),
+            ),
+        )
 
     def _compute_safe_haven_confidence(self, aversion: float, conflict_count: int) -> float:
         if conflict_count > 2 and aversion > 70:
@@ -717,7 +753,11 @@ class MacroAnalysisEngine:
             ontology_tags=ontology_tags,
         )
         self.repo.save(assessment)
-        self._audit("CB_DEMAND_ASSESSED", assessment.id, f"Monthly={monthly_purchases}t, Trend={demand_trend}")
+        self._audit(
+            "CB_DEMAND_ASSESSED",
+            assessment.id,
+            f"Monthly={monthly_purchases}t, Trend={demand_trend}",
+        )
         return assessment
 
     def _score_central_bank_demand(self, monthly: float, annual: float, trend: str) -> float:
@@ -739,7 +779,13 @@ class MacroAnalysisEngine:
         else:
             volume_score = 20
 
-        trend_adj = {"Surge": 15, "Accelerating": 10, "Stable": 0, "Declining": -10, "Minimal": -15}.get(trend, 0)
+        trend_adj = {
+            "Surge": 15,
+            "Accelerating": 10,
+            "Stable": 0,
+            "Declining": -10,
+            "Minimal": -15,
+        }.get(trend, 0)
 
         return max(0.0, min(100.0, volume_score + trend_adj))
 
@@ -769,7 +815,9 @@ class MacroAnalysisEngine:
         ontology_tags: Optional[List[str]] = None,
     ) -> PhysicalDemandSnapshot:
         """Assess physical gold market conditions."""
-        score = self._score_physical_demand(etf_flows_monthly, indian_demand, chinese_demand, seasonality, supply_pressure)
+        score = self._score_physical_demand(
+            etf_flows_monthly, indian_demand, chinese_demand, seasonality, supply_pressure
+        )
         confidence = self._compute_physical_confidence(comex_inventories, etf_flows_monthly)
 
         snapshot = PhysicalDemandSnapshot(
@@ -791,21 +839,48 @@ class MacroAnalysisEngine:
         self._audit("PHYSICAL_ASSESSED", snapshot.id, f"ETF_Flows={etf_flows_monthly}t")
         return snapshot
 
-    def _score_physical_demand(self, etf_flows: float, india: str, china: str, seasonality: str, supply: str) -> float:
+    def _score_physical_demand(
+        self, etf_flows: float, india: str, china: str, seasonality: str, supply: str
+    ) -> float:
         # ETF flows (positive = bullish)
         etf_score = max(0, min(100, 50 + etf_flows * 5))
 
-        demand_map = {"Strong": 80, "Festive_Season": 75, "Policy_Driven": 70, "Moderate": 50, "Price_Sensitive": 40, "Weak": 25}
+        demand_map = {
+            "Strong": 80,
+            "Festive_Season": 75,
+            "Policy_Driven": 70,
+            "Moderate": 50,
+            "Price_Sensitive": 40,
+            "Weak": 25,
+        }
         india_score = demand_map.get(india, 50)
         china_score = demand_map.get(china, 50)
 
-        seas_map = {"Strong_Positive": 75, "Positive": 65, "Neutral": 50, "Negative": 35, "Strong_Negative": 20}
+        seas_map = {
+            "Strong_Positive": 75,
+            "Positive": 65,
+            "Neutral": 50,
+            "Negative": 35,
+            "Strong_Negative": 20,
+        }
         seas_score = seas_map.get(seasonality, 50)
 
         supply_map = {"Disrupted": 85, "Constrained": 70, "Balanced": 50, "Abundant": 30}
         supply_score = supply_map.get(supply, 50)
 
-        return max(0.0, min(100.0, (etf_score * 0.25 + india_score * 0.20 + china_score * 0.20 + seas_score * 0.15 + supply_score * 0.20)))
+        return max(
+            0.0,
+            min(
+                100.0,
+                (
+                    etf_score * 0.25
+                    + india_score * 0.20
+                    + china_score * 0.20
+                    + seas_score * 0.15
+                    + supply_score * 0.20
+                ),
+            ),
+        )
 
     def _compute_physical_confidence(self, inventories: float, etf_flows: float) -> float:
         if inventories > 0 and etf_flows != 0:
@@ -936,7 +1011,9 @@ class MacroAnalysisEngine:
         aggregate = round(weighted_sum / max(total_weight, 0.01), 1)
 
         # Determine dominant driver (highest weighted contribution)
-        dominant = max(scores, key=lambda d: scores[d] * DRIVER_WEIGHTS.get(d, 0.1) * confidences.get(d, 0.5))
+        dominant = max(
+            scores, key=lambda d: scores[d] * DRIVER_WEIGHTS.get(d, 0.1) * confidences.get(d, 0.5)
+        )
 
         # Determine agreeing vs conflicting drivers
         agreeing, conflicting = self._classify_drivers(scores, dominant)
@@ -951,10 +1028,14 @@ class MacroAnalysisEngine:
             ontology_tags=ontology_tags,
         )
         self.repo.save(macro_score)
-        self._audit("MACRO_SCORE_COMPUTED", macro_score.id, f"Aggregate={aggregate}, Dominant={dominant}")
+        self._audit(
+            "MACRO_SCORE_COMPUTED", macro_score.id, f"Aggregate={aggregate}, Dominant={dominant}"
+        )
         return macro_score
 
-    def _classify_drivers(self, scores: Dict[str, float], dominant: str) -> Tuple[List[str], List[str]]:
+    def _classify_drivers(
+        self, scores: Dict[str, float], dominant: str
+    ) -> Tuple[List[str], List[str]]:
         """Classify drivers as agreeing or conflicting with the dominant driver."""
         dom_score = scores.get(dominant, 50)
         dom_bias = "bullish" if dom_score >= 55 else ("bearish" if dom_score <= 45 else "neutral")
@@ -1037,9 +1118,14 @@ class MacroAnalysisEngine:
 
         # Volatility probability
         regime_vol_map = {
-            "Crisis": 0.8, "Risk_Off": 0.6, "Stagflation": 0.55,
-            "Fed_Pivot": 0.5, "Inflation_Scare": 0.45, "Goldilocks": 0.25,
-            "Risk_On": 0.3, "Range_Bound": 0.2,
+            "Crisis": 0.8,
+            "Risk_Off": 0.6,
+            "Stagflation": 0.55,
+            "Fed_Pivot": 0.5,
+            "Inflation_Scare": 0.45,
+            "Goldilocks": 0.25,
+            "Risk_On": 0.3,
+            "Range_Bound": 0.2,
         }
         p_high_vol = regime_vol_map.get(regime.regime_name, 0.3)
         if agg > 80 or agg < 20:
@@ -1083,7 +1169,11 @@ class MacroAnalysisEngine:
             ontology_tags=ontology_tags,
         )
         self.repo.save(probability)
-        self._audit("PROBABILITY_COMPUTED", probability.id, f"LONG={p_long:.2f}, SHORT={p_short:.2f}, Bias={bias}")
+        self._audit(
+            "PROBABILITY_COMPUTED",
+            probability.id,
+            f"LONG={p_long:.2f}, SHORT={p_short:.2f}, Bias={bias}",
+        )
         return probability
 
     def _compute_agreement_ratio(self, macro_score: MacroScore) -> float:
@@ -1125,8 +1215,9 @@ class MacroAnalysisEngine:
         # Find matching regime
         regime_name = "Range_Bound"
         description = "No dominant macro catalyst, gold ranging"
-        for name, (low, high, _, desc) in sorted(REGIME_SCORE_MAP.items(),
-                                                   key=lambda x: abs(x[1][0] + x[1][1]) / 2 - agg):
+        for name, (low, high, _, desc) in sorted(
+            REGIME_SCORE_MAP.items(), key=lambda x: abs(x[1][0] + x[1][1]) / 2 - agg
+        ):
             if low <= agg <= high:
                 if abs(low + high) / 2 - agg < 20:  # Closest match
                     regime_name = name
@@ -1187,25 +1278,30 @@ class MacroAnalysisEngine:
         """
         # Build dominant drivers list
         dominant_list = []
-        for driver, score in sorted(macro_score.component_scores.items(),
-                                     key=lambda x: x[1], reverse=True)[:5]:
+        for driver, score in sorted(
+            macro_score.component_scores.items(), key=lambda x: x[1], reverse=True
+        )[:5]:
             impact = self._classify_gold_impact(score)
-            dominant_list.append({
-                "driver": driver,
-                "score": score,
-                "confidence": macro_score.component_confidences.get(driver, 0.0),
-                "impact": impact,
-            })
+            dominant_list.append(
+                {
+                    "driver": driver,
+                    "score": score,
+                    "confidence": macro_score.component_confidences.get(driver, 0.0),
+                    "impact": impact,
+                }
+            )
 
         # Build conflicting drivers
         conflicting_list = []
         for driver in macro_score.conflicting_drivers:
             score = macro_score.component_scores.get(driver, 50)
-            conflicting_list.append({
-                "driver": driver,
-                "score": score,
-                "reason": f"Score {score:.0f} diverges from dominant driver {macro_score.dominant_driver}",
-            })
+            conflicting_list.append(
+                {
+                    "driver": driver,
+                    "score": score,
+                    "reason": f"Score {score:.0f} diverges from dominant driver {macro_score.dominant_driver}",
+                }
+            )
 
         # Risk assessment
         risk_assessment = {
@@ -1254,7 +1350,9 @@ class MacroAnalysisEngine:
         self._audit("REPORT_GENERATED", report.id, f"Bias={suggested_bias}, Vol={expected_vol}")
         return report
 
-    def _generate_narrative(self, macro_score: MacroScore, regime: MacroRegime, probabilities: MacroProbability) -> str:
+    def _generate_narrative(
+        self, macro_score: MacroScore, regime: MacroRegime, probabilities: MacroProbability
+    ) -> str:
         """Generate a deterministic narrative based on current macro conditions."""
         parts = []
         agg = macro_score.aggregate_score
@@ -1275,7 +1373,9 @@ class MacroAnalysisEngine:
 
         if macro_score.dominant_driver:
             dom_score = macro_score.component_scores.get(macro_score.dominant_driver, 50)
-            parts.append(f"The dominant driver is {macro_score.dominant_driver} (score: {dom_score:.0f}).")
+            parts.append(
+                f"The dominant driver is {macro_score.dominant_driver} (score: {dom_score:.0f})."
+            )
 
         if macro_score.agreeing_drivers:
             parts.append(f"Agreeing drivers: {', '.join(macro_score.agreeing_drivers[:4])}.")
@@ -1290,16 +1390,24 @@ class MacroAnalysisEngine:
 
         bias = probabilities.dominant_bias
         if bias == "Long":
-            parts.append(f"The balance of evidence suggests a bullish bias (P(LONG)={probabilities.probability_long:.0%}).")
+            parts.append(
+                f"The balance of evidence suggests a bullish bias (P(LONG)={probabilities.probability_long:.0%})."
+            )
         elif bias == "Short":
-            parts.append(f"The balance of evidence suggests a bearish bias (P(SHORT)={probabilities.probability_short:.0%}).")
+            parts.append(
+                f"The balance of evidence suggests a bearish bias (P(SHORT)={probabilities.probability_short:.0%})."
+            )
         elif bias == "Neutral":
             parts.append("Evidence is evenly balanced — no directional bias is warranted.")
 
         if probabilities.probability_fakeout > 0.35:
-            parts.append(f"Elevated fakeout probability ({probabilities.probability_fakeout:.0%}) — confirm before acting.")
+            parts.append(
+                f"Elevated fakeout probability ({probabilities.probability_fakeout:.0%}) — confirm before acting."
+            )
         if probabilities.probability_high_volatility > 0.5:
-            parts.append(f"High volatility expected ({probabilities.probability_high_volatility:.0%}) — size accordingly.")
+            parts.append(
+                f"High volatility expected ({probabilities.probability_high_volatility:.0%}) — size accordingly."
+            )
 
         return " ".join(parts)
 

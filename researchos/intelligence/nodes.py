@@ -47,8 +47,7 @@ class NodeType(str, Enum):
         normalized = str(value).lower().strip()
         if normalized not in mapping:
             raise ValueError(
-                f"Unknown node type {value!r}. "
-                f"Valid options: {[t.value for t in cls]}"
+                f"Unknown node type {value!r}. Valid options: {[t.value for t in cls]}"
             )
         return mapping[normalized]
 

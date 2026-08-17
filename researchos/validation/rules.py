@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
 
-
-
 # Validation rule definitions
 VALIDATION_RULES: Dict[str, Dict[str, Any]] = {
     "observation": {
@@ -97,7 +95,8 @@ def validate_observation(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         errors.append("Value must not be None")
 
     # Timeliness check
-    from researchos.core.timestamp import utc_now, parse_timestamp
+    from researchos.core.timestamp import parse_timestamp, utc_now
+
     timestamp = data.get("timestamp")
     if timestamp:
         try:

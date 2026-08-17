@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional, List, Dict
-from macro_intelligence.features.enums import FeatureCategory
+from typing import Any, Dict, List, Optional
+
 from macro_intelligence.features.definitions import (
     FeatureDefinition,
     FeatureValue,
     FeatureVector,
 )
+from macro_intelligence.features.enums import FeatureCategory
 from macro_intelligence.time.normalizer import TimeNormalizer
 
 
@@ -23,7 +24,7 @@ class FeatureCalculationResult:
     """
     Result of a feature calculation.
     """
-    
+
     feature_id: str
     timestamp: datetime
     value: Optional[float]
@@ -31,7 +32,7 @@ class FeatureCalculationResult:
     calculation_time_ms: float
     evidence_ids: List[str]
     errors: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -43,7 +44,7 @@ class FeatureCalculationResult:
             "evidence_ids": sorted(self.evidence_ids),
             "errors": self.errors,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> FeatureCalculationResult:
         """Deserialize from dictionary."""
@@ -61,13 +62,13 @@ class FeatureCalculationResult:
 class FeatureExtractor:
     """
     Extracts features from evidence.
-    
+
     MIL-FEAT-001: Features are deterministic functions of evidence.
     """
-    
+
     def __init__(self):
         self.extractors: Dict[str, FeatureCategory] = {}
-    
+
     def register_extractor(
         self,
         feature_id: str,
@@ -75,7 +76,7 @@ class FeatureExtractor:
     ) -> None:
         """Register a feature extractor."""
         self.extractors[feature_id] = category
-    
+
     def extract(
         self,
         definition: FeatureDefinition,
@@ -84,7 +85,7 @@ class FeatureExtractor:
     ) -> FeatureCalculationResult:
         """
         Extract a feature from evidence.
-        
+
         Returns:
             FeatureCalculationResult
         """
@@ -105,7 +106,7 @@ class FeatureValidator:
     """
     Validates feature values.
     """
-    
+
     def validate(
         self,
         feature: FeatureValue,
@@ -113,30 +114,29 @@ class FeatureValidator:
     ) -> tuple[bool, List[str]]:
         """
         Validate a feature value.
-        
+
         Returns:
             (is_valid, list_of_errors)
         """
         errors = []
-        
+
         # Validate basic feature properties
         is_valid, base_errors = feature.validate()
         errors.extend(base_errors)
-        
+
         # Validate against expected range
         if feature.value is not None and definition.expected_range:
             low, high = definition.expected_range
             if not (low <= feature.value <= high):
-                errors.append(
-                    f"Value {feature.value} outside expected range [{low}, {high}]"
-                )
-        
+                errors.append(f"Value {feature.value} outside expected range [{low}, {high}]")
+
         # Validate no NaN or Inf
         if feature.value is not None:
             import math
+
             if math.isnan(feature.value) or math.isinf(feature.value):
                 errors.append(f"Value {feature.value} is NaN or Inf")
-        
+
         return (len(errors) == 0, errors)
 
 
@@ -144,7 +144,7 @@ class FeatureNormalizer:
     """
     Normalizes feature values.
     """
-    
+
     def normalize(
         self,
         feature: FeatureValue,
@@ -153,12 +153,12 @@ class FeatureNormalizer:
     ) -> FeatureValue:
         """
         Normalize a feature value.
-        
+
         Args:
             feature: Feature to normalize
             method: Normalization method (zscore, minmax, etc.)
             history: Historical values for normalization
-        
+
         Returns:
             Normalized feature
         """
@@ -169,17 +169,17 @@ class FeatureNormalizer:
 class FeaturePipeline:
     """
     Complete feature engineering pipeline.
-    
+
     Flow:
-    Evidence -> Feature Extraction -> Feature Validation -> 
+    Evidence -> Feature Extraction -> Feature Validation ->
     Feature Normalization -> Feature Store -> Feature Vector
     """
-    
+
     def __init__(self):
         self.extractor = FeatureExtractor()
         self.validator = FeatureValidator()
         self.normalizer = FeatureNormalizer()
-    
+
     def run(
         self,
         definitions: List[FeatureDefinition],
@@ -188,7 +188,7 @@ class FeaturePipeline:
     ) -> FeatureVector:
         """
         Run the complete feature pipeline.
-        
+
         Returns:
             FeatureVector with all calculated features
         """
@@ -197,12 +197,12 @@ class FeaturePipeline:
             vector_id=vector_id,
             timestamp=timestamp,
         )
-        
+
         # Process each feature definition
         for definition in definitions:
             # Extract feature
             result = self.extractor.extract(definition, evidence, timestamp)
-            
+
             # Create feature value
             feature = FeatureValue(
                 feature_id=definition.feature_id,
@@ -212,7 +212,7 @@ class FeaturePipeline:
                 evidence_ids=result.evidence_ids,
                 calculation_version=definition.calculation_version,
             )
-            
+
             # Validate feature
             is_valid, errors = self.validator.validate(feature, definition)
             if not is_valid:
@@ -220,19 +220,19 @@ class FeaturePipeline:
                     **feature.to_dict(),
                     is_valid=False,
                 )
-            
+
             # Add to vector
             vector = vector.add_feature(feature)
-        
+
         return vector
-    
+
     def get_dependency_graph(
         self,
         definitions: List[FeatureDefinition],
     ) -> Dict[str, List[str]]:
         """
         Get dependency graph for feature definitions.
-        
+
         Returns:
             Dict mapping feature_id to list of dependencies
         """
@@ -242,35 +242,35 @@ class FeaturePipeline:
             dependencies.extend(definition.prerequisite_features)
             graph[definition.feature_id] = dependencies
         return graph
-    
+
     def get_topological_order(
         self,
         definitions: List[FeatureDefinition],
     ) -> List[str]:
         """
         Get topological order for feature calculation.
-        
+
         Returns:
             List of feature_ids in calculation order
         """
         graph = self.get_dependency_graph(definitions)
-        
+
         # Simple topological sort
         ordered = []
         visited = set()
-        
+
         def visit(feature_id: str):
             if feature_id in visited:
                 return
             visited.add(feature_id)
-            
+
             # Visit dependencies first
             for dep in graph.get(feature_id, []):
                 visit(dep)
-            
+
             ordered.append(feature_id)
-        
+
         for feature_id in graph:
             visit(feature_id)
-        
+
         return ordered

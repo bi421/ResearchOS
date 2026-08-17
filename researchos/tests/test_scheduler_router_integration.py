@@ -33,13 +33,13 @@ from researchos.quant_engine import (
     PythonQuantBackend,
 )
 from researchos.quant_engine.capabilities import QUANT_OPERATIONS
+from researchos.quant_engine.models import CalculationVersion
 from researchos.quant_engine.scheduler import (
     BackendScheduler,
     CertifiedPerformanceProfile,
     DatasetSizeClass,
     PerformanceStat,
 )
-from researchos.quant_engine.models import CalculationVersion
 
 _V1 = CalculationVersion.CALCULATION_V1
 
@@ -87,9 +87,7 @@ def _profile_for(op: str) -> CertifiedPerformanceProfile:
     """Profile where FastBackend beats SlowBackend for `op` at every size."""
     profile = CertifiedPerformanceProfile(version="1.0.0", source="test")
     for size in DatasetSizeClass:
-        profile = profile.add(
-            "FastBackend", op, size, PerformanceStat(1.0)
-        ).add(
+        profile = profile.add("FastBackend", op, size, PerformanceStat(1.0)).add(
             "SlowBackend", op, size, PerformanceStat(10.0)
         )
     return profile
@@ -112,9 +110,7 @@ class TestAdaptiveSelection:
             candidates=[_SlowBackend(), _FastBackend()],
             scheduler=BackendScheduler(profile=_profile_for("calculate_returns")),
         )
-        result = router.execute(
-            "calculate_returns", {"prices": _prices(200)}
-        )
+        result = router.execute("calculate_returns", {"prices": _prices(200)})
         assert result.metadata.backend == "FastBackend"
         assert result.metadata.error_code == ERROR_OK
         assert result.metadata.fallback_used is False
@@ -123,14 +119,12 @@ class TestAdaptiveSelection:
         assert result.metadata.fallback_count == 0
 
     def test_size_class_drives_selection(self):
-        profile = CertifiedPerformanceProfile(version="1.0.0", source="test").add(
-            "FastBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)
-        ).add(
-            "SlowBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0)
-        ).add(
-            "FastBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(5.0)
-        ).add(
-            "SlowBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(50.0)
+        profile = (
+            CertifiedPerformanceProfile(version="1.0.0", source="test")
+            .add("FastBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0))
+            .add("SlowBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
+            .add("FastBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(5.0))
+            .add("SlowBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         )
         router = BackendRouter(
             candidates=[_FastBackend(), _SlowBackend()],
@@ -165,10 +159,15 @@ class TestAdaptiveSelection:
         # The Python reference is a schedulable option when a scheduler is
         # configured: the per-operation adoption policy selects it when it is
         # the faster certified backend (not a failure-driven fallback).
-        profile = CertifiedPerformanceProfile(version="1.0.0", source="test").add(
-            "FastBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)
-        ).add(
-            "PythonQuantBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0)
+        profile = (
+            CertifiedPerformanceProfile(version="1.0.0", source="test")
+            .add("FastBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0))
+            .add(
+                "PythonQuantBackend",
+                "calculate_returns",
+                DatasetSizeClass.SMALL,
+                PerformanceStat(5.0),
+            )
         )
         router = BackendRouter(
             candidates=[_FastBackend()],
@@ -180,9 +179,7 @@ class TestAdaptiveSelection:
         assert result.metadata.error_code == ERROR_OK  # deliberate, not a failure
         assert result.metadata.validation_status == "not_required"
         assert result.metadata.fallback_count == 0
-        assert (
-            result.metadata.scheduler_decision.selected_backend == "PythonQuantBackend"
-        )
+        assert result.metadata.scheduler_decision.selected_backend == "PythonQuantBackend"
         assert result.output == PythonQuantBackend().calculate_returns(_prices(200))
 
 
@@ -196,10 +193,7 @@ class TestDeterminism:
         b = router.execute("calculate_returns", {"prices": _prices(200)})
         assert a.metadata.result_hash == b.metadata.result_hash
         assert a.metadata.backend == b.metadata.backend
-        assert (
-            a.metadata.scheduler_decision.to_dict()
-            == b.metadata.scheduler_decision.to_dict()
-        )
+        assert a.metadata.scheduler_decision.to_dict() == b.metadata.scheduler_decision.to_dict()
 
     def test_metadata_roundtrip_preserves_scheduler_fields(self):
         router = BackendRouter(
@@ -283,8 +277,10 @@ class TestTelemetry:
 
         # result_hash covers operation/backend/version/input/output only — the
         # scheduling decision and timings are observational and excluded.
-        from researchos.quant_engine.backend_hash import compute_backend_result_hash
-        from researchos.quant_engine.backend_hash import compute_input_hash
+        from researchos.quant_engine.backend_hash import (
+            compute_backend_result_hash,
+            compute_input_hash,
+        )
 
         recomputed = compute_backend_result_hash(
             result.metadata.operation,
@@ -311,9 +307,7 @@ class TestRecalibration:
         assert new_profile.measured() > 0
         # The recalibrated profile now contains history entries for both backends.
         assert (
-            new_profile.estimate_ms(
-                "FastBackend", "calculate_returns", DatasetSizeClass.SMALL
-            )
+            new_profile.estimate_ms("FastBackend", "calculate_returns", DatasetSizeClass.SMALL)
             is not None
         )
 

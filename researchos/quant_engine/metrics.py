@@ -78,9 +78,7 @@ def max_drawdown(equity_curve: List[float]) -> Dict[str, float]:
         ValueError: If equity_curve has fewer than 2 elements.
     """
     if len(equity_curve) < 2:
-        raise ValueError(
-            f"Need at least 2 equity values, got {len(equity_curve)}"
-        )
+        raise ValueError(f"Need at least 2 equity values, got {len(equity_curve)}")
 
     peak = equity_curve[0]
     max_dd = 0.0

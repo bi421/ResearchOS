@@ -26,7 +26,6 @@ from typing import Any
 
 from macro_intelligence.knowledge.models import ALGORITHM_VERSION
 
-
 # =============================================================================
 # Deterministic component weights
 # =============================================================================

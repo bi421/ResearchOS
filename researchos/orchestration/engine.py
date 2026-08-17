@@ -32,25 +32,26 @@ from researchos.quant_engine.models.contracts import (
     ModelContract as RegistryModelContract,
 )
 from researchos.quant_engine.training.contracts import (
-    ModelType as TrainingModelType,
     ModelContract as TrainingModelContract,
+)
+from researchos.quant_engine.training.contracts import (
+    ModelType as TrainingModelType,
 )
 from researchos.quant_engine.training.trainer import TrainConfig, Trainer
 from researchos.quant_engine.training.training_result import TrainingResult
-from researchos.quant_engine.validation.walk_forward import WalkForwardValidator
 from researchos.quant_engine.validation.contracts import (
     ValidationResult,
 )
+from researchos.quant_engine.validation.walk_forward import WalkForwardValidator
 
 from .contracts import (
     ORCHESTRATION_VERSION,
-    OrchestrationError,
-    PipelineStatus,
     EvidenceEdgeDescriptor,
     EvidenceNodeDescriptor,
+    OrchestrationError,
     PipelineReport,
+    PipelineStatus,
 )
-
 
 # ---------------------------------------------------------------------------
 # deterministic helpers
@@ -77,9 +78,7 @@ def _make_pipeline_id(
         "validation_size": validation_size,
         "step_size": step_size,
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
-        "utf-8"
-    )
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()[:16]
 
 
@@ -107,9 +106,7 @@ def _dataset_hash(dataset: ResearchDataset) -> str:
         "labels": list(dataset.labels),
         "label_name": dataset.label_name,
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
-        "utf-8"
-    )
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -180,8 +177,7 @@ class ResearchOrchestrator:
             return builder.build_with_multiclass(horizon=label_horizon)
 
         raise OrchestrationError(
-            f"unknown label_type: {label_type!r}; "
-            f"expected 'binary', 'regression', or 'multiclass'"
+            f"unknown label_type: {label_type!r}; expected 'binary', 'regression', or 'multiclass'"
         )
 
     def validate(
@@ -330,7 +326,9 @@ class ResearchOrchestrator:
                 step_size=step_size,
             )
             validation_hash_str = hashlib.sha256(
-                json.dumps(validation.to_dict(), sort_keys=True, separators=(",", ":")).encode("utf-8")
+                json.dumps(validation.to_dict(), sort_keys=True, separators=(",", ":")).encode(
+                    "utf-8"
+                )
             ).hexdigest()
 
             # Step 3: Train deterministic model.
@@ -367,8 +365,14 @@ class ResearchOrchestrator:
 
             # Step 5: Build evidence descriptors (pure, for downstream consumption).
             pipeline_id = _make_pipeline_id(
-                close, high, low, volume, model_id,
-                train_size, validation_size, step_size,
+                close,
+                high,
+                low,
+                volume,
+                model_id,
+                train_size,
+                validation_size,
+                step_size,
             )
 
             dataset_node_id = _make_node_id("dataset", dhash, model_id)
@@ -457,8 +461,14 @@ class ResearchOrchestrator:
             # fully-valid PipelineReport; construct all nested contracts with
             # fields that satisfy the locked-module validators.
             pipeline_id = _make_pipeline_id(
-                close, high, low, volume, model_id,
-                train_size, validation_size, step_size,
+                close,
+                high,
+                low,
+                volume,
+                model_id,
+                train_size,
+                validation_size,
+                step_size,
             )
             # Use ValidationResult constructor with defaults.
             failed_validation = ValidationResult(

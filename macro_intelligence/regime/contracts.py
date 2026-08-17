@@ -13,24 +13,26 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional, List
-from macro_intelligence.time.normalizer import TimeNormalizer
+from typing import Any, List, Optional
+
 from macro_intelligence.provenance.chain import ProvenanceChain
+from macro_intelligence.time.normalizer import TimeNormalizer
 
 
 @dataclass(frozen=True)
 class RegimeConfidence:
     """
     Immutable confidence measurement for regime classification.
-    
+
     MIL-REG-001: Regime objects are immutable.
     """
+
     level: float  # 0.0 to 1.0
     evidence_count: int
     data_quality: float  # 0.0 to 1.0
     model_version: str
     calculated_at: datetime
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -40,7 +42,7 @@ class RegimeConfidence:
             "model_version": self.model_version,
             "calculated_at": TimeNormalizer.get_deterministic_timestamp(self.calculated_at),
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RegimeConfidence:
         """Deserialize from dictionary."""
@@ -51,46 +53,50 @@ class RegimeConfidence:
             model_version=data["model_version"],
             calculated_at=TimeNormalizer.parse_deterministic_timestamp(data["calculated_at"]),
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> RegimeConfidence:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """Compute deterministic hash."""
         import hashlib
+
         hash_data = {
             "level": self.level,
             "evidence_count": self.evidence_count,
             "data_quality": self.data_quality,
             "model_version": self.model_version,
         }
-        canonical = __import__('json').dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = __import__("json").dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
 class RegimeEvidence:
     """
     Immutable evidence supporting regime classification.
-    
+
     MIL-REG-002: Every regime preserves provenance.
     """
+
     evidence_id: str
     source: str
     timestamp: datetime
     value: float
     contribution: float  # How much this evidence contributes to regime
     weight: float  # Weight assigned to this evidence
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -101,7 +107,7 @@ class RegimeEvidence:
             "contribution": self.contribution,
             "weight": self.weight,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RegimeEvidence:
         """Deserialize from dictionary."""
@@ -113,22 +119,25 @@ class RegimeEvidence:
             contribution=data["contribution"],
             weight=data["weight"],
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> RegimeEvidence:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """Compute deterministic hash."""
         import hashlib
+
         hash_data = {
             "evidence_id": self.evidence_id,
             "source": self.source,
@@ -136,18 +145,19 @@ class RegimeEvidence:
             "contribution": self.contribution,
             "weight": self.weight,
         }
-        canonical = __import__('json').dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = __import__("json").dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
 class RegimeAssessment:
     """
     Immutable assessment of a regime state.
-    
+
     MIL-REG-001: Regime objects are immutable.
     MIL-REG-003: Same evidence produces identical regime object.
     """
+
     assessment_id: str
     timestamp: datetime
     inflation_state: str
@@ -160,7 +170,7 @@ class RegimeAssessment:
     evidence: List[RegimeEvidence] = field(default_factory=list)
     severity: str = "normal"
     notes: str = ""
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -177,14 +187,12 @@ class RegimeAssessment:
             "severity": self.severity,
             "notes": self.notes,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RegimeAssessment:
         """Deserialize from dictionary."""
         confidence = RegimeConfidence.from_dict(data["confidence"])
-        evidence = [
-            RegimeEvidence.from_dict(e) for e in data.get("evidence", [])
-        ]
+        evidence = [RegimeEvidence.from_dict(e) for e in data.get("evidence", [])]
         return cls(
             assessment_id=data["assessment_id"],
             timestamp=TimeNormalizer.parse_deterministic_timestamp(data["timestamp"]),
@@ -199,22 +207,25 @@ class RegimeAssessment:
             severity=data.get("severity", "normal"),
             notes=data.get("notes", ""),
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> RegimeAssessment:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """Compute deterministic hash."""
         import hashlib
+
         hash_data = {
             "assessment_id": self.assessment_id,
             "timestamp": TimeNormalizer.get_deterministic_timestamp(self.timestamp),
@@ -227,24 +238,25 @@ class RegimeAssessment:
             "severity": self.severity,
             "confidence_level": self.confidence.level,
         }
-        canonical = __import__('json').dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = __import__("json").dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
 class RegimeSnapshot:
     """
     Immutable snapshot of regime state at a point in time.
-    
+
     MIL-REG-001: Regime objects are immutable.
     MIL-REG-002: Every regime preserves provenance.
     """
+
     snapshot_id: str
     timestamp: datetime
     assessment: RegimeAssessment
     version: str = "regime/contracts/v1"
     provenance: Optional[ProvenanceChain] = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -254,7 +266,7 @@ class RegimeSnapshot:
             "version": self.version,
             "has_provenance": self.provenance is not None,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RegimeSnapshot:
         """Deserialize from dictionary."""
@@ -269,40 +281,44 @@ class RegimeSnapshot:
             version=data.get("version", "regime/contracts/v1"),
             provenance=provenance,
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> RegimeSnapshot:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """Compute deterministic hash."""
         import hashlib
+
         hash_data = {
             "snapshot_id": self.snapshot_id,
             "timestamp": TimeNormalizer.get_deterministic_timestamp(self.timestamp),
             "assessment_hash": self.assessment.compute_hash(),
             "version": self.version,
         }
-        canonical = __import__('json').dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = __import__("json").dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
 class MacroRegime:
     """
     Immutable macro regime definition.
-    
+
     MIL-REG-001: Regime objects are immutable.
     MIL-REG-003: Same evidence produces identical regime object.
     """
+
     regime_id: str
     name: str
     description: str
@@ -318,7 +334,7 @@ class MacroRegime:
     evidence: List[RegimeEvidence] = field(default_factory=list)
     version: str = "regime/contracts/v1"
     provenance: Optional[ProvenanceChain] = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -338,14 +354,12 @@ class MacroRegime:
             "version": self.version,
             "has_provenance": self.provenance is not None,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> MacroRegime:
         """Deserialize from dictionary."""
         confidence = RegimeConfidence.from_dict(data["confidence"])
-        evidence = [
-            RegimeEvidence.from_dict(e) for e in data.get("evidence", [])
-        ]
+        evidence = [RegimeEvidence.from_dict(e) for e in data.get("evidence", [])]
         provenance = None
         if data.get("has_provenance") and data.get("provenance"):
             provenance = ProvenanceChain.from_dict(data["provenance"])
@@ -366,22 +380,25 @@ class MacroRegime:
             version=data.get("version", "regime/contracts/v1"),
             provenance=provenance,
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> MacroRegime:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """Compute deterministic hash."""
         import hashlib
+
         hash_data = {
             "regime_id": self.regime_id,
             "name": self.name,
@@ -396,8 +413,8 @@ class MacroRegime:
             "confidence_level": self.confidence.level,
             "version": self.version,
         }
-        canonical = __import__('json').dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = __import__("json").dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 # Type aliases for clarity

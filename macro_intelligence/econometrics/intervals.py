@@ -7,14 +7,14 @@ Canonical owner of confidence and prediction intervals.
 
 MIL-ECM-013: Econometrics owns confidence/prediction intervals.
 """
+
 from __future__ import annotations
 
+from math import sqrt
 from typing import List, Optional
 
-from math import sqrt
-
-from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.models import IntervalResult
+from macro_intelligence.statistics.provenance import StatisticalProvenance
 
 CONFIDENCE_VERSION = "ecm/ci/v1"
 PREDICTION_VERSION = "ecm/pi/v1"

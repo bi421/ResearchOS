@@ -132,4 +132,3 @@ def compute_range_hash(
         "record_hashes": [compute_record_hash(r) for r in records],
     }
     return deterministic_hash(content)
-

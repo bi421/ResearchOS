@@ -51,10 +51,10 @@ from researchos.quant_engine.models import (
     SimulationResult,
 )
 
-
 # ──────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────
+
 
 def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> List[float]:
     """Deterministic synthetic price series."""
@@ -101,6 +101,7 @@ def _metrics_key(result: ExperimentResult) -> str:
 # ──────────────────────────────────────────────
 # 1. Same dataset + same config = identical result
 # ──────────────────────────────────────────────
+
 
 class TestDeterminism:
     def test_same_dataset_same_config_identical_result(self):
@@ -150,13 +151,14 @@ class TestDeterminism:
 # 2. Different dataset → different result
 # ──────────────────────────────────────────────
 
+
 class TestDifferentDataset:
     def test_different_prices_produce_different_result(self):
         """A different price series must change the computed result hash."""
         runner = BaseExperimentRunner()
         exp = _make_experiment()
 
-        _, result_up = runner.run(exp, _prices(drift=0.001))   # trending up
+        _, result_up = runner.run(exp, _prices(drift=0.001))  # trending up
         _, result_down = runner.run(exp, _prices(drift=-0.001))  # trending down
 
         assert result_up.result_hash != result_down.result_hash
@@ -180,9 +182,11 @@ class TestDifferentDataset:
 # 3. No RNG dependency remains
 # ──────────────────────────────────────────────
 
+
 class TestNoRngDependency:
     def test_experiment_execution_is_rng_free(self, monkeypatch):
         """Running an experiment must never touch the random module."""
+
         def _raise(*args: Any, **kwargs: Any) -> Any:
             raise AssertionError("random module accessed during experiment execution")
 
@@ -211,6 +215,7 @@ class TestNoRngDependency:
 # 4. ExperimentResult stores computation provenance
 # ──────────────────────────────────────────────
 
+
 class TestProvenance:
     def test_result_stores_computation_provenance(self):
         """ExperimentResult must carry computation provenance statistics."""
@@ -224,7 +229,7 @@ class TestProvenance:
         assert result.statistics["result_hash"]
         assert result.statistics["simulation_id"].startswith("sim_")
         assert result.statistics["dataset_reference"] == "integration_source"
-        
+
         # Issue #5: dataset_version is now a real content hash, not "1.0.0".
         assert result.statistics["dataset_version"] != "1.0.0"
         assert len(result.statistics["dataset_version"]) == 64  # sha256 hex
@@ -250,6 +255,7 @@ class TestProvenance:
 # ──────────────────────────────────────────────
 # 5. Runner forwards the raw dataset contract
 # ──────────────────────────────────────────────
+
 
 class TestBoundary:
     def test_runner_forwards_dataset_contract(self):
@@ -311,6 +317,7 @@ class TestBoundary:
 # 6. Backtest artifacts propagate to ExperimentResult
 # ──────────────────────────────────────────────
 
+
 class TestBacktestArtifacts:
     """Mode B backtest artifacts must flow from SimulationResult into ExperimentResult."""
 
@@ -365,4 +372,3 @@ class TestBacktestArtifacts:
         assert result1.signals == result2.signals
         assert result1.metadata["positions"] == result2.metadata["positions"]
         assert result1.metadata["execution_stats"] == result2.metadata["execution_stats"]
-

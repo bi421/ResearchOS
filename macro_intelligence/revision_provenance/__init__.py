@@ -1,28 +1,27 @@
 """
 ResearchOS Macro Intelligence Layer - Revision & Provenance Package
 """
+
 from __future__ import annotations
 
 import importlib
 
-from macro_intelligence.revision.enums import (
-    RevisionState,
-    RevisionType,
-    ProvenanceSource,
-    AuditAction,
-    IntegrityLevel,
-)
-
-from macro_intelligence.revision.record import (
-    RevisionRecord,
-    RevisionChain,
-)
-
 from macro_intelligence.provenance.chain import (
+    EvidenceReference,
+    ProcessingRecord,
     ProvenanceChain,
     SourceRecord,
-    ProcessingRecord,
-    EvidenceReference,
+)
+from macro_intelligence.revision.enums import (
+    AuditAction,
+    IntegrityLevel,
+    ProvenanceSource,
+    RevisionState,
+    RevisionType,
+)
+from macro_intelligence.revision.record import (
+    RevisionChain,
+    RevisionRecord,
 )
 
 # NOTE: `audit` (tier 12) is intentionally NOT imported eagerly here.

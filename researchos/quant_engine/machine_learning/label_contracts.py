@@ -36,4 +36,3 @@ class LabelResult:
 
 
 __all__ = ["LabelResult"]
-

@@ -17,9 +17,9 @@ from __future__ import annotations
 import pytest
 
 from researchos.reasoning_engine.contracts import (
-    EvidenceItem,
     EvidenceType,
     InvalidIdentifierError,
+    ReasoningEvidence,
 )
 from researchos.reasoning_engine.evidence import EvidenceRecord
 from researchos.reasoning_engine.validation import EvidenceValidator
@@ -31,8 +31,8 @@ def _make_evidence(
     source: str = "historical_dataset",
     id: str = "dataset_xauusd_001",
     evidence_type: EvidenceType = EvidenceType.DATASET,
-) -> EvidenceItem:
-    return EvidenceItem(
+) -> ReasoningEvidence:
+    return ReasoningEvidence(
         id=id,
         source=source,
         evidence_type=evidence_type,
@@ -47,7 +47,7 @@ def validator() -> EvidenceValidator:
 
 
 class TestValidEvidence:
-    """A well-formed EvidenceItem is accepted."""
+    """A well-formed ReasoningEvidence is accepted."""
 
     def test_valid_evidence_accepted(self, validator: EvidenceValidator):
         """Valid evidence accepted."""
@@ -90,15 +90,15 @@ class TestShortHash:
 class TestEmptySource:
     """Rule 3: source must contain meaningful text.
 
-    The EvidenceItem contract already rejects empty sources at construction,
+    The ReasoningEvidence contract already rejects empty sources at construction,
     so an empty source can never reach the validator.  We assert that boundary
     here and confirm the validator never reports a source error for valid input.
     """
 
     def test_empty_source_rejected(self):
-        """Empty source rejected (enforced by the EvidenceItem contract)."""
+        """Empty source rejected (enforced by the ReasoningEvidence contract)."""
         with pytest.raises(InvalidIdentifierError):
-            EvidenceItem(
+            ReasoningEvidence(
                 id="ev_001",
                 source="",
                 evidence_type=EvidenceType.OBSERVATION,
@@ -108,7 +108,7 @@ class TestEmptySource:
 
     def test_whitespace_source_rejected(self):
         with pytest.raises(InvalidIdentifierError):
-            EvidenceItem(
+            ReasoningEvidence(
                 id="ev_001",
                 source="   ",
                 evidence_type=EvidenceType.OBSERVATION,
@@ -116,9 +116,7 @@ class TestEmptySource:
                 reliability_score=0.9,
             )
 
-    def test_validator_reports_no_source_error_for_valid_input(
-        self, validator: EvidenceValidator
-    ):
+    def test_validator_reports_no_source_error_for_valid_input(self, validator: EvidenceValidator):
         record = validator.validate(_make_evidence(source="historical_dataset"))
         assert "source must contain meaningful text" not in record.validation_errors
 
@@ -128,9 +126,7 @@ class TestMultipleErrors:
 
     def test_multiple_errors_collected(self, validator: EvidenceValidator):
         """Multiple errors collected."""
-        record = validator.validate(
-            _make_evidence(reliability_score=0.2, content_hash="abc1234")
-        )
+        record = validator.validate(_make_evidence(reliability_score=0.2, content_hash="abc1234"))
         assert record.validated is False
         # Both achievable rules fire.
         assert "reliability_score below threshold" in record.validation_errors
@@ -139,7 +135,7 @@ class TestMultipleErrors:
 
 
 class TestDeterministicOutput:
-    """The same EvidenceItem always yields an identical EvidenceRecord."""
+    """The same ReasoningEvidence always yields an identical EvidenceRecord."""
 
     def test_deterministic_output(self, validator: EvidenceValidator):
         """Deterministic output."""

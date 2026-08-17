@@ -17,9 +17,9 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import Lifecycle
-from researchos.core.timestamp import utc_now, parse_timestamp
+from researchos.core.timestamp import parse_timestamp, utc_now
 
 
 class BaseObject:
@@ -53,7 +53,7 @@ class BaseObject:
         self.ontology_tags: List[str] = ontology_tags or []
         self.lifecycle = Lifecycle()
         self._hash: Optional[str] = None
-        
+
         if self.id is None:
             tags_str = "|".join(sorted(self.ontology_tags)) if self.ontology_tags else "BaseObject"
             self.id = generate_id(tags_str)
@@ -111,7 +111,9 @@ class BaseObject:
         """
         obj = cls.__new__(cls)
         obj.id = data.get("id")
-        obj.created_at = parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
+        obj.created_at = (
+            parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
+        )
         obj.ontology_tags = data.get("ontology_tags", [])
         obj.lifecycle = Lifecycle.from_dict(data.get("lifecycle", {"transitions": []}))
         obj._hash = None

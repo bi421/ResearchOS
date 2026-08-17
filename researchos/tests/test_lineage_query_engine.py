@@ -24,7 +24,6 @@ Verification requirements:
 
 from __future__ import annotations
 
-
 from researchos.evidence.envelope import (
     build_envelope,
 )
@@ -103,19 +102,27 @@ def _build_chain(repo: EvidenceRepository) -> dict:
 
     dataset = build_envelope("Dataset", payloads["dataset"], version="1.0.0")
     experiment = build_envelope(
-        "Experiment", payloads["experiment"], version="1.0.0",
+        "Experiment",
+        payloads["experiment"],
+        version="1.0.0",
         parent_hashes=[dataset.artifact_hash],
     )
     run = build_envelope(
-        "Run", payloads["run"], version="1.0.0",
+        "Run",
+        payloads["run"],
+        version="1.0.0",
         parent_hashes=[experiment.artifact_hash],
     )
     result = build_envelope(
-        "Result", payloads["result"], version="1.0.0",
+        "Result",
+        payloads["result"],
+        version="1.0.0",
         parent_hashes=[run.artifact_hash],
     )
     validation = build_envelope(
-        "Validation", payloads["validation"], version="1.0.0",
+        "Validation",
+        payloads["validation"],
+        version="1.0.0",
         parent_hashes=[result.artifact_hash],
     )
 
@@ -243,12 +250,8 @@ class TestLineageTree:
         tree = engine.lineage_tree(h["result"])
         # Walk down to Dataset via Run -> Experiment -> Dataset.
         run_node = next(p for p in tree.parents if p.node.artifact_hash == h["run"])
-        exp_node = next(
-            p for p in run_node.parents if p.node.artifact_hash == h["experiment"]
-        )
-        dataset_node = next(
-            p for p in exp_node.parents if p.node.artifact_hash == h["dataset"]
-        )
+        exp_node = next(p for p in run_node.parents if p.node.artifact_hash == h["experiment"])
+        dataset_node = next(p for p in exp_node.parents if p.node.artifact_hash == h["dataset"])
         assert dataset_node.node.artifact_type == "Dataset"
 
     def test_tree_to_dict_is_deterministic(self):
@@ -325,9 +328,16 @@ class TestResolveReference:
         # dataset_version when present. Build a dedicated payload with it.
         ds_env = build_envelope(
             "Dataset",
-            {"feature_names": [], "features": [], "labels": [], "metadata": {},
-             "sample_count": 0, "feature_count": 0, "label_name": "t",
-             "version": "3.2.1"},
+            {
+                "feature_names": [],
+                "features": [],
+                "labels": [],
+                "metadata": {},
+                "sample_count": 0,
+                "feature_count": 0,
+                "label_name": "t",
+                "version": "3.2.1",
+            },
         )
         repo.append_artifact(ds_env)
         refs = engine.resolve_reference(ds_env.artifact_hash)
@@ -339,9 +349,16 @@ class TestResolveReference:
         # A Result referencing a run_hash that was never stored.
         env = build_envelope(
             "Result",
-            {"result_hash": "r", "run_id": "x", "run_hash": "missing-run",
-             "experiment_hash": "missing-exp", "metrics": {}, "statistics": {},
-             "performance": {}, "metadata": {}},
+            {
+                "result_hash": "r",
+                "run_id": "x",
+                "run_hash": "missing-run",
+                "experiment_hash": "missing-exp",
+                "metrics": {},
+                "statistics": {},
+                "performance": {},
+                "metadata": {},
+            },
         )
         repo.append_artifact(env)
         engine = LineageQueryEngine(repo)
@@ -479,13 +496,12 @@ class TestDeterministicOrdering:
         h = _build_chain(repo)
         engine1 = LineageQueryEngine(repo)
         engine2 = LineageQueryEngine(repo)
-        assert engine1.explain(h["result"]).to_dict() == engine2.explain(
-            h["result"]
-        ).to_dict()
+        assert engine1.explain(h["result"]).to_dict() == engine2.explain(h["result"]).to_dict()
         assert engine1.ancestors(h["result"]) == engine2.ancestors(h["result"])
-        assert engine1.lineage_tree(h["result"]).to_dict() == engine2.lineage_tree(
-            h["result"]
-        ).to_dict()
+        assert (
+            engine1.lineage_tree(h["result"]).to_dict()
+            == engine2.lineage_tree(h["result"]).to_dict()
+        )
 
 
 class TestReadOnly:

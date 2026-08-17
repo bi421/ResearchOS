@@ -20,7 +20,6 @@ from typing import Dict, List, Optional
 from researchos.market_memory.models import HistoricalScenario, MarketSnapshot
 from researchos.market_memory.similarity import compare_snapshots
 
-
 # Default feature weights for scenario matching
 # These sum to 1.0 and are configurable per use case
 DEFAULT_FEATURE_WEIGHTS: Dict[str, float] = {
@@ -82,7 +81,9 @@ class ScenarioMatcher:
         self,
         feature_weights: Optional[Dict[str, float]] = None,
     ):
-        self.feature_weights = dict(feature_weights) if feature_weights else dict(DEFAULT_FEATURE_WEIGHTS)
+        self.feature_weights = (
+            dict(feature_weights) if feature_weights else dict(DEFAULT_FEATURE_WEIGHTS)
+        )
         self._validate_weights()
 
     def _validate_weights(self) -> None:
@@ -90,8 +91,7 @@ class ScenarioMatcher:
         total = sum(self.feature_weights.values())
         if abs(total - 1.0) > 0.01:
             raise ValueError(
-                f"Feature weights must sum to 1.0, got {total:.3f}. "
-                f"Weights: {self.feature_weights}"
+                f"Feature weights must sum to 1.0, got {total:.3f}. Weights: {self.feature_weights}"
             )
 
     def match_scenario(
@@ -123,13 +123,15 @@ class ScenarioMatcher:
             if score >= min_score:
                 # Build feature scores (same computation as overall)
                 feature_scores = self._compute_feature_scores(snapshot, scenario, snapshots_index)
-                results.append(MatchResult(
-                    scenario_id=scenario.id,
-                    scenario_name=scenario.name,
-                    overall_score=score,
-                    feature_scores=feature_scores,
-                    weight_profile=dict(self.feature_weights),
-                ))
+                results.append(
+                    MatchResult(
+                        scenario_id=scenario.id,
+                        scenario_name=scenario.name,
+                        overall_score=score,
+                        feature_scores=feature_scores,
+                        weight_profile=dict(self.feature_weights),
+                    )
+                )
 
         # Sort by overall score descending, then by scenario_id for deterministic ties
         results.sort(key=lambda r: (-r.overall_score, r.scenario_id))
@@ -190,6 +192,7 @@ class ScenarioMatcher:
                 if scenario_snap.id == snapshot.id:
                     continue
                 from researchos.market_memory.features import compute_features
+
                 fa = compute_features(snapshot)
                 fb = compute_features(scenario_snap)
 

@@ -39,7 +39,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-
 from researchos.experiments.contracts import DatasetConfig, SimulationConfig
 from researchos.experiments.experiment import Experiment
 from researchos.experiments.runner import BaseExperimentRunner
@@ -57,6 +56,7 @@ BACKEND_PATH = Path(inspect.getfile(PythonQuantBackend)).resolve()
 # ─────────────────────────────────────────────────────────────────────────────
 # Static helpers (AST-based source scanning)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _executable_source(path: Path) -> str:
     """Return the module source with docstrings and comments stripped.
@@ -110,28 +110,44 @@ def _forbidden_tokens(source: str, tokens: List[str]) -> List[str]:
 # TEST-001: ExperimentRunner cannot access OHLCV parsing logic
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestRunnerNoOhlcvKnowledge:
     """ExperimentRunner must be orchestration-only and MUST NOT know OHLCV."""
 
     def test_runner_has_no_data_engine_import(self):
         """runner.py must not import from researchos.data_engine."""
-        forbidden = ["researchos.data_engine", "researchos.data_engine.dataset",
-                     "researchos.data_engine.candle"]
+        forbidden = [
+            "researchos.data_engine",
+            "researchos.data_engine.dataset",
+            "researchos.data_engine.candle",
+        ]
         hits = _forbidden_import(RUNNER_PATH, forbidden)
         assert hits == [], f"ExperimentRunner imports data_engine symbols: {hits}"
 
     def test_runner_executable_source_has_no_ohlcv_field_access(self):
         """No .open/.high/.low/.close/.volume attribute access outside docstrings."""
         source = _executable_source(RUNNER_PATH)
-        tokens = [".open", ".high", ".low", ".close", ".volume", "OHLCV",
-                  "historical", "HistoricalDataset", "Candle", "records"]
+        tokens = [
+            ".open",
+            ".high",
+            ".low",
+            ".close",
+            ".volume",
+            "OHLCV",
+            "historical",
+            "HistoricalDataset",
+            "Candle",
+            "records",
+        ]
         hits = _forbidden_tokens(source, tokens)
         assert hits == [], f"OHLCV/record-field patterns found in runner source: {hits}"
 
     def test_runner_has_no_price_extraction_helper(self):
         """_extract_prices and friends must not exist in the runner."""
         runner = BaseExperimentRunner()
-        forbidden = [name for name in dir(runner) if "price" in name.lower() or "extract" in name.lower()]
+        forbidden = [
+            name for name in dir(runner) if "price" in name.lower() or "extract" in name.lower()
+        ]
         assert forbidden == [], f"Price-extraction helpers found on runner: {forbidden}"
 
     def test_runner_forwards_raw_dataset_contract(self):
@@ -139,7 +155,13 @@ class TestRunnerNoOhlcvKnowledge:
         captured: Dict[str, Any] = {}
 
         class RecordingBackend(PythonQuantBackend):
-            def run_simulation(self, request, dataset, calculation_version=CalculationVersion.CALCULATION_V1, strategy=None):
+            def run_simulation(
+                self,
+                request,
+                dataset,
+                calculation_version=CalculationVersion.CALCULATION_V1,
+                strategy=None,
+            ):
                 captured["dataset"] = dataset
                 captured["request"] = request
                 return super().run_simulation(request, dataset, calculation_version, strategy)
@@ -158,6 +180,7 @@ class TestRunnerNoOhlcvKnowledge:
 # TEST-002: ExperimentRunner has no RNG dependency
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestRunnerNoRngDependency:
     """ExperimentRunner must not import random, own RNG state, or call RNG."""
 
@@ -169,7 +192,16 @@ class TestRunnerNoRngDependency:
     def test_runner_executable_source_has_no_rng_patterns(self):
         """No random.Random / .uniform / randint / choice / shuffle / random() calls."""
         source = _executable_source(RUNNER_PATH)
-        tokens = ["random.", "_rng", "Random(", "uniform(", "randint(", "choice(", "shuffle(", "np.random"]
+        tokens = [
+            "random.",
+            "_rng",
+            "Random(",
+            "uniform(",
+            "randint(",
+            "choice(",
+            "shuffle(",
+            "np.random",
+        ]
         hits = _forbidden_tokens(source, tokens)
         assert hits == [], f"RNG patterns found in runner source: {hits}"
 
@@ -181,11 +213,23 @@ class TestRunnerNoRngDependency:
 
     def test_experiment_execution_is_rng_free(self, monkeypatch):
         """Running an experiment must never touch the random module."""
+
         def _raise(*args: Any, **kwargs: Any) -> Any:
             raise AssertionError("random module accessed during experiment execution")
 
-        for name in ("random", "uniform", "randint", "randrange", "choice",
-                     "shuffle", "sample", "gauss", "normalvariate", "Random", "seed"):
+        for name in (
+            "random",
+            "uniform",
+            "randint",
+            "randrange",
+            "choice",
+            "shuffle",
+            "sample",
+            "gauss",
+            "normalvariate",
+            "Random",
+            "seed",
+        ):
             monkeypatch.setattr(random, name, _raise, raising=False)
 
         runner = BaseExperimentRunner()
@@ -200,6 +244,7 @@ class TestRunnerNoRngDependency:
 # TEST-003: Backend produces deterministic result_hash
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestBackendDeterminism:
     """PythonQuantBackend must produce identical hashes for identical inputs."""
 
@@ -210,7 +255,9 @@ class TestBackendDeterminism:
 
     def test_backend_deterministic_result_hash(self):
         backend = PythonQuantBackend()
-        request = SimulationRequest(dataset_reference="det", parameters={"initial_capital": 100000.0}, seed=42)
+        request = SimulationRequest(
+            dataset_reference="det", parameters={"initial_capital": 100000.0}, seed=42
+        )
         prices = _prices()
         r1: SimulationResult = backend.run_simulation(request, prices)
         r2: SimulationResult = backend.run_simulation(request, prices)
@@ -221,6 +268,7 @@ class TestBackendDeterminism:
 
     def test_backend_rng_free(self, monkeypatch):
         """Backend simulation must not call random even with monkeypatched raising."""
+
         def _raise(*args: Any, **kwargs: Any) -> Any:
             raise AssertionError("random accessed in backend computation")
 
@@ -236,6 +284,7 @@ class TestBackendDeterminism:
 # ─────────────────────────────────────────────────────────────────────────────
 # TEST-004: Same dataset + same configuration = identical result
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestSameInputsSameResult:
     """Identical dataset + configuration must yield identical ExperimentResult."""
@@ -262,6 +311,7 @@ class TestSameInputsSameResult:
 # TEST-005: Different dataset = different result
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestDifferentDatasetDifferentResult:
     """Changing the dataset must change the computed result."""
 
@@ -286,6 +336,7 @@ class TestDifferentDatasetDifferentResult:
 # ─────────────────────────────────────────────────────────────────────────────
 # TEST-006: ExperimentResult contains required provenance fields
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestExperimentResultProvenance:
     """Every ExperimentResult must preserve full computation provenance."""
@@ -348,6 +399,7 @@ class TestExperimentResultProvenance:
 # Shared fixtures / helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> List[float]:
     """Deterministic synthetic price series."""
     return [base * (1.0 + drift * i) for i in range(n)]
@@ -359,14 +411,16 @@ def _make_dataset_contract() -> List[Dict[str, Any]]:
     ts = datetime(2020, 1, 1, tzinfo=timezone.utc)
     price = 100.0
     for i in range(252):
-        out.append({
-            "timestamp": ts,
-            "open": price,
-            "high": price * 1.01,
-            "low": price * 0.99,
-            "close": price,
-            "volume": 1000 + i,
-        })
+        out.append(
+            {
+                "timestamp": ts,
+                "open": price,
+                "high": price * 1.01,
+                "low": price * 0.99,
+                "close": price,
+                "volume": 1000 + i,
+            }
+        )
         price *= 1.0001
         ts = ts.replace(day=ts.day + 1) if ts.day < 28 else ts.replace(month=ts.month + 1, day=1)
     return out
@@ -381,4 +435,3 @@ def _make_experiment(name: str = "Boundary Test") -> Experiment:
     )
     exp.mark_ready()
     return exp
-

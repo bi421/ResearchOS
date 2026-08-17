@@ -60,9 +60,14 @@ GENERIC_CSV = """timestamp,open,high,low,close,volume
 
 def _candle(hour):
     return Candle(
-        symbol="XAU/USD", timeframe="1h",
+        symbol="XAU/USD",
+        timeframe="1h",
         timestamp=BASE + timedelta(hours=hour),
-        open=2000.0, high=2010.0, low=1995.0, close=2005.0, volume=1000.0,
+        open=2000.0,
+        high=2010.0,
+        low=1995.0,
+        close=2005.0,
+        volume=1000.0,
     )
 
 
@@ -101,7 +106,10 @@ class TestMetadataExtended:
 
     def test_timezone_set(self):
         meta = DatasetMetadata(
-            dataset_id="x", symbol="XAU/USD", timeframe="1h", timezone="EST",
+            dataset_id="x",
+            symbol="XAU/USD",
+            timeframe="1h",
+            timezone="EST",
         )
         assert meta.timezone == "EST"
 
@@ -109,8 +117,11 @@ class TestMetadataExtended:
         start = datetime(2024, 1, 1, tzinfo=timezone.utc)
         end = datetime(2024, 1, 2, tzinfo=timezone.utc)
         meta = DatasetMetadata(
-            dataset_id="x", symbol="XAU/USD", timeframe="1h",
-            start_time=start, end_time=end,
+            dataset_id="x",
+            symbol="XAU/USD",
+            timeframe="1h",
+            start_time=start,
+            end_time=end,
         )
         assert meta.date_range == (start, end)
 
@@ -120,7 +131,10 @@ class TestMetadataExtended:
 
     def test_serialization_roundtrip(self):
         meta = DatasetMetadata(
-            dataset_id="x", symbol="XAU/USD", timeframe="1h", timezone="EST",
+            dataset_id="x",
+            symbol="XAU/USD",
+            timeframe="1h",
+            timezone="EST",
             start_time=datetime(2024, 1, 1, tzinfo=timezone.utc),
             end_time=datetime(2024, 1, 2, tzinfo=timezone.utc),
         )
@@ -182,7 +196,10 @@ class TestCsvLoaderMt5:
 
     def test_mt5_detect_format(self):
         loader = CsvLoader()
-        assert loader.detect_format(["Date", "Time", "Open", "High", "Low", "Close", "Volume"]) == "mt5"
+        assert (
+            loader.detect_format(["Date", "Time", "Open", "High", "Low", "Close", "Volume"])
+            == "mt5"
+        )
 
 
 class TestCsvLoaderTradingView:
@@ -212,13 +229,14 @@ class TestCsvLoaderTradingView:
     def test_tradingview_keep_duplicates(self):
         dup_csv = TRADINGVIEW_CSV + "\n1704096000,2000.0,2010.0,1995.0,2005.0,1000.0"
         loader = CsvLoader()
-        candles = loader.load_tradingview_candles_from_text(dup_csv, "XAU/USD", remove_duplicates=False)
+        candles = loader.load_tradingview_candles_from_text(
+            dup_csv, "XAU/USD", remove_duplicates=False
+        )
         assert len(candles) == 4
 
     def test_tradingview_symbol_column(self):
         csv_text = "time,symbol,open,high,low,close,volume\n" + "\n".join(
-            f"{t},XAU/USD,2000.0,2010.0,1995.0,2005.0,1000.0"
-            for t in (1704096000, 1704099600)
+            f"{t},XAU/USD,2000.0,2010.0,1995.0,2005.0,1000.0" for t in (1704096000, 1704099600)
         )
         loader = CsvLoader()
         candles = loader.load_tradingview_candles_from_text(csv_text, "XAU/USD")
@@ -256,7 +274,10 @@ class TestCsvLoaderAuto:
 
     def test_detect_format_generic(self):
         loader = CsvLoader()
-        assert loader.detect_format(["timestamp", "open", "high", "low", "close", "volume"]) == "generic"
+        assert (
+            loader.detect_format(["timestamp", "open", "high", "low", "close", "volume"])
+            == "generic"
+        )
 
     def test_detect_columns_aliases(self):
         loader = CsvLoader()
@@ -439,18 +460,30 @@ class TestHashingExtended:
     def test_candle_hash_changes_with_spread(self):
         c1 = _candle(0)
         c2 = Candle(
-            symbol="XAU/USD", timeframe="1h", timestamp=c1.timestamp,
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-            volume=1000.0, spread=3.0,
+            symbol="XAU/USD",
+            timeframe="1h",
+            timestamp=c1.timestamp,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
+            spread=3.0,
         )
         assert c1.hash != c2.hash
 
     def test_candle_hash_with_tick_volume(self):
         c1 = _candle(0)
         c2 = Candle(
-            symbol="XAU/USD", timeframe="1h", timestamp=c1.timestamp,
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-            volume=1000.0, tick_volume=500.0,
+            symbol="XAU/USD",
+            timeframe="1h",
+            timestamp=c1.timestamp,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
+            tick_volume=500.0,
         )
         assert c1.hash != c2.hash
 
@@ -515,7 +548,9 @@ class TestEndToEndDeterminism:
     def test_duplicate_detection_after_tradingview_load(self):
         dup_csv = TRADINGVIEW_CSV + "\n1704096000,2000.0,2010.0,1995.0,2005.0,1000.0"
         loader = CsvLoader()
-        candles = loader.load_tradingview_candles_from_text(dup_csv, "XAU/USD", remove_duplicates=False)
+        candles = loader.load_tradingview_candles_from_text(
+            dup_csv, "XAU/USD", remove_duplicates=False
+        )
         detector = DuplicateDetector()
         assert len(detector.detect(candles)) == 1
 

@@ -114,19 +114,21 @@ class Validation(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "research_report_id": self.research_report_id,
-            "validation_date": self.validation_date.isoformat(),
-            "time_horizon": self.time_horizon,
-            "overall_status": self.overall_status,
-            "quality_score": self.quality_score,
-            "scenario_results": self.scenario_results,
-            "target_results": self.target_results,
-            "failure_analysis_id": self.failure_analysis_id,
-            "statistics_update_id": self.statistics_update_id,
-            "validation_trace": self.validation_trace,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "research_report_id": self.research_report_id,
+                "validation_date": self.validation_date.isoformat(),
+                "time_horizon": self.time_horizon,
+                "overall_status": self.overall_status,
+                "quality_score": self.quality_score,
+                "scenario_results": self.scenario_results,
+                "target_results": self.target_results,
+                "failure_analysis_id": self.failure_analysis_id,
+                "statistics_update_id": self.statistics_update_id,
+                "validation_trace": self.validation_trace,
+            }
+        )
         return base
 
     @classmethod
@@ -134,7 +136,9 @@ class Validation(BaseObject):
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.research_report_id = data["research_report_id"]
-        obj.validation_date = parse_timestamp(data["validation_date"]) if data.get("validation_date") else None
+        obj.validation_date = (
+            parse_timestamp(data["validation_date"]) if data.get("validation_date") else None
+        )
         obj.time_horizon = data.get("time_horizon", "")
         obj.overall_status = data.get("overall_status", "In Progress")
         obj.quality_score = data.get("quality_score", 0.0)
@@ -214,11 +218,13 @@ class FailureAnalysis(BaseObject):
             "preventable": preventable,
         }
         self.failures.append(failure)
-        self.severity_scores.append({
-            "failure": description,
-            "severity": severity,
-            "category": category,
-        })
+        self.severity_scores.append(
+            {
+                "failure": description,
+                "severity": severity,
+                "category": category,
+            }
+        )
         if root_cause not in self.root_causes:
             self.root_causes.append(root_cause)
 
@@ -243,15 +249,17 @@ class FailureAnalysis(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "validation_id": self.validation_id,
-            "research_id": self.research_id,
-            "failures": self.failures,
-            "root_causes": self.root_causes,
-            "severity_scores": self.severity_scores,
-            "improvement_areas": self.improvement_areas,
-            "failure_trace": self.failure_trace,
-        })
+        base.update(
+            {
+                "validation_id": self.validation_id,
+                "research_id": self.research_id,
+                "failures": self.failures,
+                "root_causes": self.root_causes,
+                "severity_scores": self.severity_scores,
+                "improvement_areas": self.improvement_areas,
+                "failure_trace": self.failure_trace,
+            }
+        )
         return base
 
     @classmethod

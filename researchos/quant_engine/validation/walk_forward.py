@@ -16,8 +16,8 @@ from typing import List, Optional, Sequence, Tuple
 
 from ..machine_learning.dataset_contracts import ResearchDataset
 from .contracts import (
-    FoldResult,
     VALIDATION_VERSION,
+    FoldResult,
     ValidationError,
     ValidationResult,
 )
@@ -68,9 +68,7 @@ class WalkForwardValidator:
             raise ValidationError("validation_size must be a positive integer")
         if not isinstance(step_size, int) or step_size <= 0:
             raise ValidationError("step_size must be a positive integer")
-        if test_size is not None and (
-            not isinstance(test_size, int) or test_size < 0
-        ):
+        if test_size is not None and (not isinstance(test_size, int) or test_size < 0):
             raise ValidationError("test_size must be a non-negative integer")
 
         self.train_size = train_size
@@ -85,9 +83,7 @@ class WalkForwardValidator:
         if not isinstance(dataset, ResearchDataset):
             raise TypeError("expected a ResearchDataset")
         if dataset.sample_count < self.train_size + self.validation_size:
-            raise ValidationError(
-                "dataset too small for the requested window sizes"
-            )
+            raise ValidationError("dataset too small for the requested window sizes")
 
     def _check_fold_leakage(self, folds: List[Fold], length: int) -> None:
         if not folds:
@@ -106,9 +102,7 @@ class WalkForwardValidator:
             if fold.validation_start != prev_val_end + 1:
                 # Folds may be separated by a gap only if that gap is the
                 # reserved pseudo-test region.  Otherwise this is a leak.
-                raise ValidationError(
-                    "overlapping or gapped forbidden window detected"
-                )
+                raise ValidationError("overlapping or gapped forbidden window detected")
             # Training data must not appear after validation data.
             if fold.train_end > fold.validation_start:
                 raise ValidationError("training data appears after validation")
@@ -131,11 +125,11 @@ class WalkForwardValidator:
         for every validation sample.  This is a pure, leak-free baseline used
         to demonstrate the engine; callers can plug in their own predictors.
         """
-        train_labels = [float(v) for v in dataset.labels[fold.train_start: fold.train_end + 1]]
+        train_labels = [float(v) for v in dataset.labels[fold.train_start : fold.train_end + 1]]
         if not train_labels:
             raise ValidationError("empty training window")
         base = train_labels[-1]
-        y_true = [float(v) for v in dataset.labels[fold.validation_start: fold.validation_end + 1]]
+        y_true = [float(v) for v in dataset.labels[fold.validation_start : fold.validation_end + 1]]
         y_pred = [base] * len(y_true)
         return y_true, y_pred
 
@@ -202,4 +196,3 @@ __all__ = [
     "ValidationResult",
     "ValidationError",
 ]
-

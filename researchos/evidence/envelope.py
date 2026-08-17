@@ -98,9 +98,7 @@ def _validate_payload(payload: Any) -> None:
     if isinstance(payload, dict):
         for key, value in payload.items():
             if not isinstance(key, str):
-                raise TypeError(
-                    f"payload dict keys must be str, got {type(key).__name__}"
-                )
+                raise TypeError(f"payload dict keys must be str, got {type(key).__name__}")
             _validate_payload(value)
         return
     if isinstance(payload, list):
@@ -201,8 +199,7 @@ class EvidenceEnvelope:
         object.__setattr__(self, "parent_hashes", tuple(sorted(self.parent_hashes)))
         if self.artifact_type not in ARTIFACT_TYPES:
             raise ValueError(
-                f"Unknown artifact_type '{self.artifact_type}'. "
-                f"Expected one of {ARTIFACT_TYPES}."
+                f"Unknown artifact_type '{self.artifact_type}'. Expected one of {ARTIFACT_TYPES}."
             )
         if not self.artifact_hash:
             raise ValueError("artifact_hash is required")

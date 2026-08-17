@@ -7,14 +7,15 @@ Canonical owner of the Granger causality test.
 
 MIL-ECM-009: Econometrics owns Granger causality.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional
 
+from macro_intelligence.econometrics.matrix import matmul, solve, transpose
+from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.distributions import t_distribution_p_value
 from macro_intelligence.statistics.provenance import StatisticalProvenance
-from macro_intelligence.econometrics.matrix import transpose, matmul, solve
-from macro_intelligence.econometrics.models import TestResult
 
 GRANGER_VERSION = "ecm/granger/v1"
 
@@ -101,7 +102,7 @@ def granger_causality(
         else:
             f_stat = ((rss_rest - rss_unrst) / df_num) / (rss_unrst / df_den)
             # Approximate p-value via t-distribution mapping (F is positive).
-            p_value = t_distribution_p_value(f_stat ** 0.5, df_den)
+            p_value = t_distribution_p_value(f_stat**0.5, df_den)
 
     is_significant = p_value is not None and p_value < 0.05
     params = {"max_lag": max_lag, "n_observations": len(y_aligned)}

@@ -123,23 +123,25 @@ class Research(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "question": self.question,
-            "timestamp": self.timestamp.isoformat(),
-            "time_horizon": self.time_horizon,
-            "asset": self.asset,
-            "methodology_version": self.methodology_version,
-            "status": self.status,
-            "observation_ids": self.observation_ids,
-            "evidence_registry_id": self.evidence_registry_id,
-            "hypothesis_set_id": self.hypothesis_set_id,
-            "scenario_set_id": self.scenario_set_id,
-            "confidence_report_id": self.confidence_report_id,
-            "contradiction_report_id": self.contradiction_report_id,
-            "report_id": self.report_id,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "validated_at": self.validated_at.isoformat() if self.validated_at else None,
-        })
+        base.update(
+            {
+                "question": self.question,
+                "timestamp": self.timestamp.isoformat(),
+                "time_horizon": self.time_horizon,
+                "asset": self.asset,
+                "methodology_version": self.methodology_version,
+                "status": self.status,
+                "observation_ids": self.observation_ids,
+                "evidence_registry_id": self.evidence_registry_id,
+                "hypothesis_set_id": self.hypothesis_set_id,
+                "scenario_set_id": self.scenario_set_id,
+                "confidence_report_id": self.confidence_report_id,
+                "contradiction_report_id": self.contradiction_report_id,
+                "report_id": self.report_id,
+                "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+                "validated_at": self.validated_at.isoformat() if self.validated_at else None,
+            }
+        )
         return base
 
     @classmethod
@@ -158,8 +160,12 @@ class Research(BaseObject):
         obj.confidence_report_id = data.get("confidence_report_id")
         obj.contradiction_report_id = data.get("contradiction_report_id")
         obj.report_id = data.get("report_id")
-        obj.completed_at = parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
-        obj.validated_at = parse_timestamp(data["validated_at"]) if data.get("validated_at") else None
+        obj.completed_at = (
+            parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
+        )
+        obj.validated_at = (
+            parse_timestamp(data["validated_at"]) if data.get("validated_at") else None
+        )
         return obj
 
 
@@ -216,13 +222,15 @@ class ResearchQuestion(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "question": self.question,
-            "sub_questions": self.sub_questions,
-            "priority": self.priority,
-            "answerable": self.answerable,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "question": self.question,
+                "sub_questions": self.sub_questions,
+                "priority": self.priority,
+                "answerable": self.answerable,
+            }
+        )
         return base
 
     @classmethod
@@ -355,26 +363,28 @@ class ResearchReport(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "title": self.title,
-            "executive_summary": self.executive_summary,
-            "research_question": self.research_question,
-            "hypotheses": self.hypotheses,
-            "evidence_summary": self.evidence_summary,
-            "analyses": self.analyses,
-            "narrative": self.narrative,
-            "scenarios": self.scenarios,
-            "confidence": self.confidence,
-            "contradictions": self.contradictions,
-            "risk_factors": self.risk_factors,
-            "invalidation_conditions": self.invalidation_conditions,
-            "known_unknowns": self.known_unknowns,
-            "open_questions": self.open_questions,
-            "methodology_version": self.methodology_version,
-            "format": self.format,
-            "status": self.status,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "title": self.title,
+                "executive_summary": self.executive_summary,
+                "research_question": self.research_question,
+                "hypotheses": self.hypotheses,
+                "evidence_summary": self.evidence_summary,
+                "analyses": self.analyses,
+                "narrative": self.narrative,
+                "scenarios": self.scenarios,
+                "confidence": self.confidence,
+                "contradictions": self.contradictions,
+                "risk_factors": self.risk_factors,
+                "invalidation_conditions": self.invalidation_conditions,
+                "known_unknowns": self.known_unknowns,
+                "open_questions": self.open_questions,
+                "methodology_version": self.methodology_version,
+                "format": self.format,
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod

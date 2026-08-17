@@ -8,12 +8,13 @@ KPSS. Deterministic, pure, stdlib-only.
 
 MIL-ECM-007: Econometrics owns ADF and KPSS.
 """
+
 from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.models import TestResult
+from macro_intelligence.statistics.provenance import StatisticalProvenance
 
 ADF_VERSION = "ecm/adf/v1"
 KPSS_VERSION = "ecm/kpss/v1"
@@ -126,7 +127,8 @@ def augmented_dickey_fuller(
     # (e.g. a pure linear trend makes the lagged differences collinear with
     # the intercept), apply a tiny ridge to the diagonal to obtain a stable
     # (deterministic) solution rather than failing.
-    from macro_intelligence.econometrics.matrix import transpose, matmul, solve
+    from macro_intelligence.econometrics.matrix import matmul, solve, transpose
+
     Xt = transpose(X)
     XtX = matmul(Xt, X)
     Xty = matmul(Xt, [[v] for v in y])
@@ -177,7 +179,8 @@ def _coefficient_se(
     idx: int,
 ) -> float:
     """Standard error of a coefficient in an OLS regression."""
-    from macro_intelligence.econometrics.matrix import transpose, matmul, invert
+    from macro_intelligence.econometrics.matrix import invert, matmul, transpose
+
     n = len(y)
     k = len(beta)
     fitted = [sum(b * xi for b, xi in zip(beta, row)) for row in X]
@@ -228,7 +231,8 @@ def kpss(
     else:
         X = [[1.0, float(i)] for i in range(n)]
 
-    from macro_intelligence.econometrics.matrix import transpose, matmul, solve
+    from macro_intelligence.econometrics.matrix import matmul, solve, transpose
+
     Xt = transpose(X)
     XtX = matmul(Xt, X)
     Xty = matmul(Xt, [[v] for v in values])
@@ -245,7 +249,7 @@ def kpss(
         s.append(s[-1] + r)
 
     # Long-run variance (Bartlett kernel with lag = int(n ** 0.5)).
-    lags = max(1, int(n ** 0.5))
+    lags = max(1, int(n**0.5))
     sigma2 = sum(r * r for r in residuals) / n
     for lag in range(1, lags + 1):
         weight = 1.0 - lag / (lags + 1.0)

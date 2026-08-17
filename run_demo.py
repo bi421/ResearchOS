@@ -1,7 +1,8 @@
-﻿import os
+import os
+
+from researchos.agents.tools import ResearchOSAgentTools
 from researchos.pipeline import ResearchPipeline
 from researchos.storage.repository import ResearchRepository
-from researchos.agents.tools import ResearchOSAgentTools
 
 
 def run_system_demo():

@@ -13,7 +13,6 @@ These tests validate that the research backends register with the existing
 Pure research-only tests; no trading logic.
 """
 
-
 from researchos.quant_engine.research_cpp_backend import ResearchCppBackend
 from researchos.quant_engine.research_engine import PythonResearchBackend
 from researchos.quant_engine.research_registry import (

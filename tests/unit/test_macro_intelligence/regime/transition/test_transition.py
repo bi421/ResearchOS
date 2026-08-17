@@ -3,15 +3,16 @@ ResearchOS Macro Intelligence Layer - Regime Transition Tests
 Tests for deterministic regime transition analysis engine.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 UTC = timezone.utc
 
 
 def _make_test_assessment(**kwargs):
     """Module-level helper to create a RegimeAssessment with default values."""
-    from macro_intelligence.regime.detection.models import RegimeAssessment, DetectionEvidence
+    from macro_intelligence.regime.detection.models import DetectionEvidence, RegimeAssessment
 
     defaults = {
         "assessment_time": datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
@@ -126,7 +127,7 @@ class TestTransitionSignal:
             direction="DOWN",
         )
 
-        json_str = original.to_json() if hasattr(original, 'to_json') else original.to_dict()
+        json_str = original.to_json() if hasattr(original, "to_json") else original.to_dict()
         restored = TransitionSignal.from_dict(json_str if isinstance(json_str, dict) else json_str)
         assert restored.detector_name == original.detector_name
 
@@ -172,8 +173,8 @@ class TestRegimeTransition:
 
     def test_create_transition(self):
         """Test creating a regime transition."""
-        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
 
         transition = RegimeTransition(
             transition_id="TRANS-001",
@@ -190,8 +191,8 @@ class TestRegimeTransition:
 
     def test_transition_to_dict(self):
         """Test transition serialization."""
-        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
 
         transition = RegimeTransition(
             transition_id="TRANS-001",
@@ -224,8 +225,8 @@ class TestRegimeTransition:
 
     def test_transition_roundtrip(self):
         """Test transition JSON roundtrip."""
-        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
 
         original = RegimeTransition(
             transition_id="TRANS-001",
@@ -246,8 +247,8 @@ class TestRegimeTransition:
 
     def test_transition_immutability(self):
         """Test transition immutability."""
-        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
 
         transition = RegimeTransition(
             transition_id="TRANS-001",
@@ -263,8 +264,8 @@ class TestRegimeTransition:
 
     def test_transition_hash_deterministic(self):
         """Test transition hash determinism."""
-        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
 
         t1 = RegimeTransition(
             transition_id="TRANS-001",
@@ -291,8 +292,8 @@ class TestEarlyWarningSignal:
 
     def test_create_warning(self):
         """Test creating an early warning signal."""
-        from macro_intelligence.regime.transition import EarlyWarningSignal
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import EarlyWarningSignal
 
         warning = EarlyWarningSignal(
             warning_id="WARN-001",
@@ -309,8 +310,8 @@ class TestEarlyWarningSignal:
 
     def test_warning_to_dict(self):
         """Test warning serialization."""
-        from macro_intelligence.regime.transition import EarlyWarningSignal
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import EarlyWarningSignal
 
         warning = EarlyWarningSignal(
             warning_id="WARN-001",
@@ -326,8 +327,8 @@ class TestEarlyWarningSignal:
 
     def test_warning_roundtrip(self):
         """Test warning JSON roundtrip."""
-        from macro_intelligence.regime.transition import EarlyWarningSignal
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import EarlyWarningSignal
 
         original = EarlyWarningSignal(
             warning_id="WARN-001",
@@ -345,8 +346,8 @@ class TestEarlyWarningSignal:
 
     def test_warning_immutability(self):
         """Test warning immutability."""
-        from macro_intelligence.regime.transition import EarlyWarningSignal
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import EarlyWarningSignal
 
         warning = EarlyWarningSignal(
             warning_id="WARN-001",
@@ -365,8 +366,8 @@ class TestTransitionAnalysisResult:
 
     def test_create_result(self):
         """Test creating a transition analysis result."""
-        from macro_intelligence.regime.transition import TransitionAnalysisResult
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionAnalysisResult
 
         result = TransitionAnalysisResult(
             analysis_id="ANALYSIS-001",
@@ -379,8 +380,8 @@ class TestTransitionAnalysisResult:
 
     def test_result_to_dict(self):
         """Test result serialization."""
-        from macro_intelligence.regime.transition import TransitionAnalysisResult
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionAnalysisResult
 
         result = TransitionAnalysisResult(
             analysis_id="ANALYSIS-001",
@@ -393,8 +394,8 @@ class TestTransitionAnalysisResult:
 
     def test_result_roundtrip(self):
         """Test result JSON roundtrip."""
-        from macro_intelligence.regime.transition import TransitionAnalysisResult
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionAnalysisResult
 
         original = TransitionAnalysisResult(
             analysis_id="ANALYSIS-001",
@@ -410,8 +411,8 @@ class TestTransitionAnalysisResult:
 
     def test_result_immutability(self):
         """Test result immutability."""
-        from macro_intelligence.regime.transition import TransitionAnalysisResult
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionAnalysisResult
 
         result = TransitionAnalysisResult(
             analysis_id="ANALYSIS-001",
@@ -494,8 +495,8 @@ class TestTransitionRules:
     def test_classify_early_warning(self):
         """Test early warning generation."""
         from macro_intelligence.regime.transition.transitions import (
-            should_generate_early_warning,
             estimate_early_warning_horizon,
+            should_generate_early_warning,
         )
 
         # Should generate warning
@@ -510,7 +511,9 @@ class TestTransitionRules:
 
     def test_continuation_probability(self):
         """Test continuation probability calculation."""
-        from macro_intelligence.regime.transition.transitions import calculate_continuation_probability
+        from macro_intelligence.regime.transition.transitions import (
+            calculate_continuation_probability,
+        )
 
         # High persistence, low signals → high continuation prob
         prob = calculate_continuation_probability(10, 6.0, [0.2, 0.3])
@@ -549,8 +552,8 @@ class TestTransitionProbabilityEngine:
 
     def test_get_transition_probability(self):
         """Test getting transition probability."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
         prob = engine.get_transition_probability(
@@ -560,57 +563,57 @@ class TestTransitionProbabilityEngine:
 
     def test_get_all_transition_probabilities(self):
         """Test getting all transition probabilities from a regime."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
         probs = engine.get_all_transition_probabilities(MacroRegime.GOLDILOCKS)
-        
+
         assert len(probs) == 6
         total = sum(probs.values())
         assert abs(total - 1.0) < 0.001
 
     def test_get_next_regime_probabilities(self):
         """Test getting next regime probabilities excluding current."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
         probs = engine.get_next_regime_probabilities(MacroRegime.GOLDILOCKS)
-        
+
         assert MacroRegime.GOLDILOCKS not in probs
         total = sum(probs.values())
         assert abs(total - 1.0) < 0.001
 
     def test_get_most_likely_next_regime(self):
         """Test getting most likely next regime."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
         next_regime, prob = engine.get_most_likely_next_regime(MacroRegime.GOLDILOCKS)
-        
+
         assert next_regime != MacroRegime.GOLDILOCKS
         assert 0.0 < prob <= 1.0
 
     def test_transition_risk_score(self):
         """Test transition risk score."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
         risk = engine.get_transition_risk_score(MacroRegime.GOLDILOCKS)
-        
+
         assert 0.0 <= risk <= 1.0
 
     def test_stability_score(self):
         """Test stability score."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
         stability = engine.get_stability_score(MacroRegime.GOLDILOCKS)
-        
+
         assert 0.0 <= stability <= 1.0
 
     def test_update_with_observations(self):
@@ -619,32 +622,38 @@ class TestTransitionProbabilityEngine:
 
         engine = TransitionProbabilityEngine()
         original_probs = engine.get_all_transition_probabilities(
-            __import__('macro_intelligence.regime.classification.taxonomy', fromlist=['MacroRegime']).MacroRegime.GOLDILOCKS
+            __import__(
+                "macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]
+            ).MacroRegime.GOLDILOCKS
         )
-        
-        engine.update_with_observations([
-            ("goldilocks", "inflationary_growth"),
-            ("goldilocks", "inflationary_growth"),
-            ("goldilocks", "goldilocks"),
-        ])
-        
+
+        engine.update_with_observations(
+            [
+                ("goldilocks", "inflationary_growth"),
+                ("goldilocks", "inflationary_growth"),
+                ("goldilocks", "goldilocks"),
+            ]
+        )
+
         # Probabilities should have updated
         new_probs = engine.get_all_transition_probabilities(
-            __import__('macro_intelligence.regime.classification.taxonomy', fromlist=['MacroRegime']).MacroRegime.GOLDILOCKS
+            __import__(
+                "macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]
+            ).MacroRegime.GOLDILOCKS
         )
-        
+
         assert engine.observation_count == 3
         # The probability of staying in goldilocks should have decreased
         assert new_probs.get("goldilocks", 0.0) < original_probs.get("goldilocks", 1.0)
 
     def test_engine_deterministic(self):
         """Test that engine produces deterministic output."""
-        from macro_intelligence.regime.transition import TransitionProbabilityEngine
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine1 = TransitionProbabilityEngine()
         engine2 = TransitionProbabilityEngine()
-        
+
         assert engine1.get_transition_probability(
             MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH
         ) == engine2.get_transition_probability(
@@ -670,8 +679,12 @@ class TestTransitionHistory:
 
     def test_add_transition(self):
         """Test adding a transition to history."""
-        from macro_intelligence.regime.transition import TransitionHistory, RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import (
+            RegimeTransition,
+            TransitionHistory,
+            TransitionType,
+        )
 
         history = TransitionHistory()
         transition = RegimeTransition(
@@ -682,25 +695,31 @@ class TestTransitionHistory:
             confidence=0.85,
             detected_at=datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
         )
-        
+
         entry = history.add_transition(transition)
-        
+
         assert history.count == 1
         assert entry.transition_id == "TRANS-001"
 
     def test_get_transitions_filtered(self):
         """Test filtering transitions."""
-        from macro_intelligence.regime.transition import TransitionHistory, RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import (
+            RegimeTransition,
+            TransitionHistory,
+            TransitionType,
+        )
 
         history = TransitionHistory()
-        
+
         # Add multiple transitions
-        for i, (prev, curr) in enumerate([
-            (MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH),
-            (MacroRegime.INFLATIONARY_GROWTH, MacroRegime.STAGFLATION),
-            (MacroRegime.STAGFLATION, MacroRegime.RECESSION),
-        ]):
+        for i, (prev, curr) in enumerate(
+            [
+                (MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH),
+                (MacroRegime.INFLATIONARY_GROWTH, MacroRegime.STAGFLATION),
+                (MacroRegime.STAGFLATION, MacroRegime.RECESSION),
+            ]
+        ):
             transition = RegimeTransition(
                 transition_id=f"TRANS-{i:03d}",
                 previous_regime=prev,
@@ -710,7 +729,7 @@ class TestTransitionHistory:
                 detected_at=datetime(2026, 8, 3, 12, i, tzinfo=UTC),
             )
             history.add_transition(transition)
-        
+
         # Filter by target regime
         recession_transitions = history.get_transitions(to_regime=MacroRegime.RECESSION)
         assert len(recession_transitions) == 1
@@ -718,8 +737,12 @@ class TestTransitionHistory:
 
     def test_update_outcome(self):
         """Test updating transition outcome."""
-        from macro_intelligence.regime.transition import TransitionHistory, RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import (
+            RegimeTransition,
+            TransitionHistory,
+            TransitionType,
+        )
 
         history = TransitionHistory()
         transition = RegimeTransition(
@@ -730,10 +753,10 @@ class TestTransitionHistory:
             confidence=0.85,
             detected_at=datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
         )
-        
+
         history.add_transition(transition)
         updated = history.update_outcome("TRANS-001", "confirmed", duration_observed=6)
-        
+
         assert updated is True
         entry = history.get_last_transition()
         assert entry.outcome == "confirmed"
@@ -749,11 +772,15 @@ class TestTransitionHistory:
 
     def test_get_transition_counts(self):
         """Test transition frequency counts."""
-        from macro_intelligence.regime.transition import TransitionHistory, RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import (
+            RegimeTransition,
+            TransitionHistory,
+            TransitionType,
+        )
 
         history = TransitionHistory()
-        
+
         for i in range(3):
             transition = RegimeTransition(
                 transition_id=f"TRANS-{i:03d}",
@@ -764,18 +791,22 @@ class TestTransitionHistory:
                 detected_at=datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
             )
             history.add_transition(transition)
-        
+
         counts = history.get_transition_counts()
         assert counts["goldilocks"]["inflationary_growth"] == 3
 
     def test_history_deterministic(self):
         """Test that history hash is deterministic."""
-        from macro_intelligence.regime.transition import TransitionHistory, RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import (
+            RegimeTransition,
+            TransitionHistory,
+            TransitionType,
+        )
 
         history1 = TransitionHistory()
         history2 = TransitionHistory()
-        
+
         transition = RegimeTransition(
             transition_id="TRANS-001",
             previous_regime=MacroRegime.GOLDILOCKS,
@@ -784,16 +815,20 @@ class TestTransitionHistory:
             confidence=0.85,
             detected_at=datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
         )
-        
+
         history1.add_transition(transition)
         history2.add_transition(transition)
-        
+
         assert history1.compute_hash() == history2.compute_hash()
 
     def test_history_serialization(self):
         """Test history serialization roundtrip."""
-        from macro_intelligence.regime.transition import TransitionHistory, RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import (
+            RegimeTransition,
+            TransitionHistory,
+            TransitionType,
+        )
 
         history = TransitionHistory()
         transition = RegimeTransition(
@@ -805,10 +840,10 @@ class TestTransitionHistory:
             detected_at=datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
         )
         history.add_transition(transition)
-        
+
         data = history.to_dict()
         restored = TransitionHistory.from_dict(data)
-        
+
         assert restored.count == history.count
         assert restored.entries[0].transition_id == transition.transition_id
 
@@ -834,37 +869,37 @@ class TestRegimeTransitionDetector:
 
         detector = RegimeTransitionDetector()
         meta = detector.to_dict()
-        
+
         assert meta["version"] == "trans-det/v4.0.0"
         assert meta["history_count"] == 0
 
     def test_detect_no_transition_same_regime(self):
         """Test that no transition is detected when regime is the same."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
         assessment = _make_test_assessment()
-        
+
         # First call - no previous regime, should return None
         result = detector.detect_transition(assessment, None)
         assert result is None
-        
+
         # Second call - same regime, should return None
         result2 = detector.detect_transition(assessment, MacroRegime.GOLDILOCKS)
         assert result2 is None
 
     def test_detect_transition_different_regime(self):
         """Test that transition is detected when regime changes."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
-        from macro_intelligence.regime.detection.models import DetectionEvidence
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.detection.models import DetectionEvidence
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
-        
+
         # Goldilocks assessment
         _make_test_assessment()
-        
+
         # Recession assessment (high inflation + contraction)
         assessment2 = _make_test_assessment(
             inflation_signal=DetectionEvidence(
@@ -886,10 +921,10 @@ class TestRegimeTransitionDetector:
                 algorithm_version="risk-det/v2.0.0",
             ),
         )
-        
+
         # First: detect transition from goldilocks to recession
         result = detector.detect_transition(assessment2, MacroRegime.GOLDILOCKS)
-        
+
         assert result is not None
         assert result.previous_regime == MacroRegime.GOLDILOCKS
         assert result.confidence > 0
@@ -897,12 +932,12 @@ class TestRegimeTransitionDetector:
 
     def test_detect_transition_deterministic(self):
         """Test that transition detection is deterministic."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
-        from macro_intelligence.regime.detection.models import DetectionEvidence
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.detection.models import DetectionEvidence
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
-        
+
         assessment = _make_test_assessment(
             inflation_signal=DetectionEvidence(
                 detector_name="inflation_detector",
@@ -917,14 +952,14 @@ class TestRegimeTransitionDetector:
                 algorithm_version="grw-det/v2.0.0",
             ),
         )
-        
+
         # Run multiple times - should get consistent results
         results = []
         for _ in range(5):
             result = detector.detect_transition(assessment, MacroRegime.GOLDILOCKS)
             if result:
                 results.append(result)
-        
+
         if len(results) >= 2:
             # Same transition type and confidence
             assert results[0].transition_type == results[1].transition_type
@@ -932,11 +967,11 @@ class TestRegimeTransitionDetector:
 
     def test_analyze_transitions(self):
         """Test full transition analysis."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
         from macro_intelligence.regime.detection.models import DetectionEvidence
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
-        
+
         assessment1 = _make_test_assessment()
         assessment2 = _make_test_assessment(
             inflation_signal=DetectionEvidence(
@@ -952,9 +987,9 @@ class TestRegimeTransitionDetector:
                 algorithm_version="grw-det/v2.0.0",
             ),
         )
-        
+
         result = detector.analyze_transitions(assessment2, assessment1)
-        
+
         assert result.analysis_id is not None
         assert result.current_regime is not None
         # History should have at least one entry if transition detected
@@ -966,19 +1001,19 @@ class TestRegimeTransitionDetector:
 
         detector = RegimeTransitionDetector()
         assessment = _make_test_assessment()
-        
+
         result = detector.analyze_transitions(assessment, assessment)
-        
+
         assert result.transition_detected is False
 
     def test_provenance_preserved(self):
         """Test that provenance is preserved in transitions."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
-        from macro_intelligence.regime.detection.models import DetectionEvidence
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.detection.models import DetectionEvidence
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
-        
+
         assessment = _make_test_assessment(
             inflation_signal=DetectionEvidence(
                 detector_name="inflation_detector",
@@ -995,9 +1030,9 @@ class TestRegimeTransitionDetector:
                 evidence_refs=["EV_003"],
             ),
         )
-        
+
         transition = detector.detect_transition(assessment, MacroRegime.GOLDILOCKS)
-        
+
         if transition:
             # Check that detector provenance is preserved (transition algorithm version)
             for signal in transition.signals:
@@ -1014,12 +1049,12 @@ class TestMILTransitionInvariants:
 
     def test_mil_trans_001_deterministic(self):
         """MIL-TRANS-001: Same input produces identical transition output."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
-        from macro_intelligence.regime.detection.models import DetectionEvidence
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.detection.models import DetectionEvidence
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
-        
+
         assessment = _make_test_assessment(
             inflation_signal=DetectionEvidence(
                 detector_name="inflation_detector",
@@ -1034,14 +1069,14 @@ class TestMILTransitionInvariants:
                 algorithm_version="grw-det/v2.0.0",
             ),
         )
-        
+
         # Run detection multiple times
         results = []
         for _ in range(10):
             result = detector.detect_transition(assessment, MacroRegime.GOLDILOCKS)
             if result:
                 results.append(result)
-        
+
         if len(results) >= 2:
             # Same transition type and confidence
             assert results[0].transition_type == results[1].transition_type
@@ -1051,8 +1086,8 @@ class TestMILTransitionInvariants:
 
     def test_mil_trans_002_immutability(self):
         """MIL-TRANS-002: Transition objects are immutable."""
-        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransition, TransitionType
 
         transition = RegimeTransition(
             transition_id="TRANS-001",
@@ -1062,7 +1097,7 @@ class TestMILTransitionInvariants:
             confidence=0.85,
             detected_at=datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
         )
-        
+
         # All fields should be immutable
         with pytest.raises(AttributeError):
             transition.transition_id = "MODIFIED"
@@ -1073,14 +1108,14 @@ class TestMILTransitionInvariants:
 
     def test_mil_trans_003_provenance(self):
         """MIL-TRANS-003: All transitions preserve provenance."""
-        from macro_intelligence.regime.transition import RegimeTransitionDetector
         from macro_intelligence.regime.classification.taxonomy import MacroRegime
+        from macro_intelligence.regime.transition import RegimeTransitionDetector
 
         detector = RegimeTransitionDetector()
-        
+
         assessment = _make_test_assessment()
         transition = detector.detect_transition(assessment, MacroRegime.GOLDILOCKS)
-        
+
         if transition:
             # All signals should have algorithm versions
             for signal in transition.signals:
@@ -1090,14 +1125,14 @@ class TestMILTransitionInvariants:
     def test_mil_trans_004_versioned(self):
         """MIL-TRANS-004: Algorithms are versioned."""
         from macro_intelligence.regime.transition import (
-            RegimeTransitionDetector,
             ALGORITHM_VERSION,
             RULES_VERSION,
+            RegimeTransitionDetector,
         )
 
         detector = RegimeTransitionDetector()
         assert detector.version == ALGORITHM_VERSION
-        
+
         # Rules version should be consistent
         assert RULES_VERSION.startswith("trans-rules/")
 
@@ -1105,9 +1140,10 @@ class TestMILTransitionInvariants:
         """MIL-TRANS-005: No dependency on ResearchOS V1."""
         # This test verifies that the transition module only imports
         # from macro_intelligence modules, not from researchos core
-        from macro_intelligence.regime.transition import detector as det_module
         import inspect
-        
+
+        from macro_intelligence.regime.transition import detector as det_module
+
         source = inspect.getsource(det_module)
         # Should not import from researchos.core or similar V1 paths
         assert "researchos.core" not in source

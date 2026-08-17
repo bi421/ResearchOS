@@ -7,13 +7,14 @@ Canonical owner of the Variance Inflation Factor (VIF).
 
 MIL-ECM-010: Econometrics owns VIF.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional
 
-from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.matrix import invert
 from macro_intelligence.econometrics.models import TestResult
+from macro_intelligence.statistics.provenance import StatisticalProvenance
 
 VIF_VERSION = "ecm/vif/v1"
 

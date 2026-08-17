@@ -15,21 +15,20 @@ explicit convergence report.
 MIL-ECM-004: Econometrics owns multiple/polynomial/logistic regression.
 MIL-ECM-005: Econometrics never duplicates single-variable OLS.
 """
+
 from __future__ import annotations
 
+from math import exp, log
 from typing import Any, Dict, List, Optional, Tuple
 
-from math import exp, log
-
+from macro_intelligence.econometrics.matrix import invert, matmul, solve, transpose
+from macro_intelligence.econometrics.models import RegressionResult
 from macro_intelligence.statistics.descriptive import mean
 from macro_intelligence.statistics.distributions import (
     t_distribution_p_value,
 )
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.statistics.regression import linear_regression as _canonical_ols
-
-from macro_intelligence.econometrics.matrix import transpose, matmul, solve, invert
-from macro_intelligence.econometrics.models import RegressionResult
 
 # Algorithm version constants.
 MULTIPLE_VERSION = "ecm/reg/multiple/v1"
@@ -179,7 +178,9 @@ def multiple_regression(
         "n_predictors": k,
         "add_intercept": True,
     }
-    prov = _provenance("multiple_regression", MULTIPLE_VERSION, params, dataset_id, dataset_version, dataset_hash)
+    prov = _provenance(
+        "multiple_regression", MULTIPLE_VERSION, params, dataset_id, dataset_version, dataset_hash
+    )
     return RegressionResult(
         coefficients=beta,
         r_squared=r2,
@@ -227,7 +228,7 @@ def polynomial_regression(
         raise ValueError("x and y must have the same number of observations")
 
     # Build power design matrix.
-    X = [[1.0] + [xi ** d for d in range(1, degree + 1)] for xi in x]
+    X = [[1.0] + [xi**d for d in range(1, degree + 1)] for xi in x]
     beta, fitted = _ols_solve(X, y)
     r2 = _r_squared(y, fitted)
     k = len(beta) - 1
@@ -236,7 +237,14 @@ def polynomial_regression(
     residuals = [y[i] - fitted[i] for i in range(n)]
 
     params = {"degree": degree, "add_intercept": True}
-    prov = _provenance("polynomial_regression", POLYNOMIAL_VERSION, params, dataset_id, dataset_version, dataset_hash)
+    prov = _provenance(
+        "polynomial_regression",
+        POLYNOMIAL_VERSION,
+        params,
+        dataset_id,
+        dataset_version,
+        dataset_hash,
+    )
     return RegressionResult(
         coefficients=beta,
         r_squared=r2,
@@ -375,7 +383,9 @@ def logistic_regression(
         "converged": converged,
         "iterations": iterations,
     }
-    prov = _provenance("logistic_regression", LOGISTIC_VERSION, params, dataset_id, dataset_version, dataset_hash)
+    prov = _provenance(
+        "logistic_regression", LOGISTIC_VERSION, params, dataset_id, dataset_version, dataset_hash
+    )
     return RegressionResult(
         coefficients=beta,
         r_squared=r2,

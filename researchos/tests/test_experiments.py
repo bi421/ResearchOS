@@ -15,7 +15,6 @@ All objects are tested for:
 
 from __future__ import annotations
 
-
 import pytest
 
 from researchos.core.lifecycle import LifecycleStage
@@ -27,15 +26,14 @@ from researchos.experiments.contracts import (
     SimulationConfig,
     ValidationStatus,
 )
-from researchos.experiments.hypothesis import QuantHypothesis
 from researchos.experiments.experiment import Experiment
-from researchos.experiments.result import ExperimentRun, ExperimentResult
-from researchos.experiments.runner import BaseExperimentRunner, get_runner
-from researchos.experiments.validation import ExperimentValidation
+from researchos.experiments.hypothesis import QuantHypothesis
 from researchos.experiments.learning import LearningRecord
 from researchos.experiments.reports import ExperimentReport
+from researchos.experiments.result import ExperimentResult, ExperimentRun
+from researchos.experiments.runner import BaseExperimentRunner, get_runner
+from researchos.experiments.validation import ExperimentValidation
 from researchos.repository.memory import MemoryRepository
-
 
 # =============================================================================
 # Contracts Tests
@@ -596,9 +594,7 @@ class TestExperimentRunner:
         exp.mark_ready()
 
         runner = BaseExperimentRunner()
-        results = runner.run_monte_carlo(
-            exp, dataset=None, num_simulations=5, seed=42
-        )
+        results = runner.run_monte_carlo(exp, dataset=None, num_simulations=5, seed=42)
 
         assert len(results) == 5
         for run, result in results:
@@ -732,7 +728,8 @@ class TestExperimentValidation:
             hypothesis_id="hyp1",
         )
         val.validate_against_benchmark(
-            {"sharpe": 1.5}, {"sharpe": 1.0},
+            {"sharpe": 1.5},
+            {"sharpe": 1.0},
         )
 
         d = val.to_dict()
@@ -952,9 +949,7 @@ class TestFullWorkflow:
             {"sharpe_ratio": 1.0, "total_return": 0.10},
             hyp.metric_definitions,
         )
-        assert val.overall_status in (
-            ValidationStatus.PASSED, ValidationStatus.FAILED
-        )
+        assert val.overall_status in (ValidationStatus.PASSED, ValidationStatus.FAILED)
 
         # 5. Update hypothesis based on validation
         if val.overall_status == ValidationStatus.PASSED:
@@ -988,7 +983,7 @@ class TestFullWorkflow:
             hypothesis_id=hyp.id,
             title="Momentum Strategy Report",
             summary=f"Tested momentum vs buy-and-hold. "
-                    f"Hypothesis {'accepted' if learning.hypothesis_accepted else 'rejected'}.",
+            f"Hypothesis {'accepted' if learning.hypothesis_accepted else 'rejected'}.",
             run_ids=[run.id],
             best_run_id=run.id,
             metrics_summary=dict(result.metrics),
@@ -1010,6 +1005,7 @@ class TestFullWorkflow:
 
     def test_full_workflow_determinism(self):
         """Test that the full workflow is deterministic."""
+
         # Run workflow twice with same inputs
         def run_workflow():
             hyp = QuantHypothesis(
@@ -1148,9 +1144,13 @@ class TestRepositoryPersistence:
         """Test repository count with experiment objects."""
         repo = MemoryRepository()
         assert repo.count() == 0
-        repo.save(QuantHypothesis(
-            research_question="Q", null_hypothesis="H0", alternative_hypothesis="H1",
-        ))
+        repo.save(
+            QuantHypothesis(
+                research_question="Q",
+                null_hypothesis="H0",
+                alternative_hypothesis="H1",
+            )
+        )
         assert repo.count() == 1
         repo.save(Experiment(hypothesis_id="hyp1", name="Test"))
         assert repo.count() == 2
@@ -1224,19 +1224,27 @@ class TestDeterminism:
     def test_learning_determinism(self):
         """Test LearningRecord determinism."""
         l1 = LearningRecord(
-            experiment_id="exp1", validation_id="val1", hypothesis_id="hyp1",
+            experiment_id="exp1",
+            validation_id="val1",
+            hypothesis_id="hyp1",
         )
         l2 = LearningRecord(
-            experiment_id="exp1", validation_id="val1", hypothesis_id="hyp1",
+            experiment_id="exp1",
+            validation_id="val1",
+            hypothesis_id="hyp1",
         )
         assert l1.id == l2.id
 
     def test_report_determinism(self):
         """Test ExperimentReport determinism."""
         r1 = ExperimentReport(
-            experiment_id="exp1", hypothesis_id="hyp1", title="Report",
+            experiment_id="exp1",
+            hypothesis_id="hyp1",
+            title="Report",
         )
         r2 = ExperimentReport(
-            experiment_id="exp1", hypothesis_id="hyp1", title="Report",
+            experiment_id="exp1",
+            hypothesis_id="hyp1",
+            title="Report",
         )
         assert r1.id == r2.id

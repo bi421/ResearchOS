@@ -16,16 +16,17 @@ invalid inputs (the canonical implementation raises ValueError).
 
 from __future__ import annotations
 
-
 from macro_intelligence.statistics.correlation import (
     pearson_correlation as _canonical_pearson,
-    spearman_correlation as _canonical_spearman,
 )
-from macro_intelligence.statistics.distributions import (
-    p_value_from_correlation as _canonical_p_value,
+from macro_intelligence.statistics.correlation import (
+    spearman_correlation as _canonical_spearman,
 )
 from macro_intelligence.statistics.descriptive import (
     std as _canonical_std,
+)
+from macro_intelligence.statistics.distributions import (
+    p_value_from_correlation as _canonical_p_value,
 )
 
 
@@ -60,12 +61,12 @@ def spearman_correlation(x: list[float], y: list[float]) -> float | None:
 def classify_relationship(correlation: float) -> tuple[str, str]:
     """
     Classify relationship type and strength based on correlation coefficient.
-    
+
     Returns:
         (relationship_type, relationship_strength)
     """
     abs_corr = abs(correlation)
-    
+
     # Type
     if correlation > 0.05:
         rel_type = "positive"
@@ -73,7 +74,7 @@ def classify_relationship(correlation: float) -> tuple[str, str]:
         rel_type = "negative"
     else:
         rel_type = "neutral"
-    
+
     # Strength
     if abs_corr >= 0.8:
         strength = "very_strong"
@@ -85,7 +86,7 @@ def classify_relationship(correlation: float) -> tuple[str, str]:
         strength = "weak"
     else:
         strength = "negligible"
-    
+
     return rel_type, strength
 
 
@@ -96,7 +97,7 @@ def compute_rolling_correlation(
 ) -> tuple[list[float], list[float], float]:
     """
     Compute rolling correlation with the given window size.
-    
+
     Returns:
         (correlations, timestamps, stability)
         where stability is the standard deviation of correlations.
@@ -104,23 +105,23 @@ def compute_rolling_correlation(
     n = len(x)
     if n < window or window < 2:
         return [], [], 0.0
-    
+
     correlations = []
     timestamps = list(range(window, n + 1))  # Use index positions as timestamps
-    
+
     for i in range(window - 1, n):
-        seg_x = x[i - window + 1: i + 1]
-        seg_y = y[i - window + 1: i + 1]
+        seg_x = x[i - window + 1 : i + 1]
+        seg_y = y[i - window + 1 : i + 1]
         corr = pearson_correlation(seg_x, seg_y)
         if corr is not None:
             correlations.append(corr)
-    
+
     if not correlations:
         return [], [], 0.0
-    
+
     # Compute stability (std dev of correlations) — canonical Stats layer.
     stability = _canonical_std(correlations, sample=False)
-    
+
     return correlations, timestamps, stability
 
 

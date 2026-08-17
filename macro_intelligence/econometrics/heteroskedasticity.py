@@ -7,14 +7,15 @@ Canonical owner of the Breusch-Pagan heteroskedasticity test.
 
 MIL-ECM-011: Econometrics owns Breusch-Pagan.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional
 
+from macro_intelligence.econometrics.matrix import matmul, solve, transpose
+from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.distributions import t_distribution_p_value
 from macro_intelligence.statistics.provenance import StatisticalProvenance
-from macro_intelligence.econometrics.matrix import transpose, matmul, solve
-from macro_intelligence.econometrics.models import TestResult
 
 BREUSCH_PAGAN_VERSION = "ecm/breusch_pagan/v1"
 
@@ -80,7 +81,7 @@ def breusch_pagan(
 
     # Approximate p-value via chi-square (approx with t-distribution tail).
     k = len(X[0]) - 1
-    p_value = t_distribution_p_value(lm_stat ** 0.5, n - k)
+    p_value = t_distribution_p_value(lm_stat**0.5, n - k)
     is_significant = p_value < 0.05
 
     params = {"n_observations": n, "n_predictors": k}

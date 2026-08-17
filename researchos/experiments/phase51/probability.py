@@ -130,7 +130,11 @@ class EmpiricalProbabilityEstimator:
             lo, width, hi = _bins_for_feature(col, self.n_bins)
             self._boundaries[idx] = (lo, width, hi)
             # hist[cls] is a list over bins of counts
-            table: Dict[int, List[int]] = {1: [0] * self.n_bins, 0: [0] * self.n_bins, -1: [0] * self.n_bins}
+            table: Dict[int, List[int]] = {
+                1: [0] * self.n_bins,
+                0: [0] * self.n_bins,
+                -1: [0] * self.n_bins,
+            }
             for row, label in zip(features, labels):
                 value = row[idx] if idx < len(row) else None
                 b = _bin_index(value, lo, width, self.n_bins)

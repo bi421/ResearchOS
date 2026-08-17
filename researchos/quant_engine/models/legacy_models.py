@@ -120,7 +120,9 @@ class SimulationRequest:
         return cls(
             dataset_reference=data["dataset_reference"],
             dataset_version=data.get("dataset_version", "1.0.0"),
-            calculation_version=CalculationVersion(data.get("calculation_version", "CALCULATION_V1")),
+            calculation_version=CalculationVersion(
+                data.get("calculation_version", "CALCULATION_V1")
+            ),
             start_time=data.get("start_time", ""),
             end_time=data.get("end_time", ""),
             parameters=dict(data.get("parameters", {})),
@@ -133,20 +135,24 @@ class SimulationRequest:
 # Backtesting Execution Models
 # ──────────────────────────────────────────────
 
+
 class OrderSide(str, Enum):
     """Side of an order or position."""
+
     BUY = "BUY"
     SELL = "SELL"
 
 
 class OrderType(str, Enum):
     """Type of order."""
+
     MARKET = "MARKET"
     LIMIT = "LIMIT"
 
 
 class OrderStatus(str, Enum):
     """Lifecycle status of an order."""
+
     PENDING = "PENDING"
     FILLED = "FILLED"
     CANCELLED = "CANCELLED"
@@ -166,6 +172,7 @@ class Signal:
         confidence: Signal confidence in [0.0, 1.0].
         metadata: Optional signal metadata.
     """
+
     bar_index: int
     timestamp: str
     side: OrderSide
@@ -209,6 +216,7 @@ class Order:
         bar_index: Bar index when the order was created.
         timestamp: ISO 8601 timestamp.
     """
+
     signal_index: int
     side: OrderSide
     order_type: OrderType
@@ -260,6 +268,7 @@ class OrderFill:
         bar_index: Bar index when the fill occurred.
         timestamp: ISO 8601 timestamp.
     """
+
     order: Order
     fill_price: float
     fill_quantity: float
@@ -310,6 +319,7 @@ class Position:
         bar_index: Bar index of this snapshot.
         timestamp: ISO 8601 timestamp.
     """
+
     symbol: str
     side: OrderSide
     quantity: float
@@ -364,6 +374,7 @@ class Trade:
         entry_bar_index: Bar index of entry.
         exit_bar_index: Bar index of exit.
     """
+
     entry_fill: OrderFill
     exit_fill: OrderFill
     pnl: float = 0.0
@@ -501,7 +512,9 @@ class SimulationResult:
             simulation_id=data["simulation_id"],
             dataset_reference=data.get("dataset_reference", ""),
             dataset_version=data.get("dataset_version", "1.0.0"),
-            calculation_version=CalculationVersion(data.get("calculation_version", "CALCULATION_V1")),
+            calculation_version=CalculationVersion(
+                data.get("calculation_version", "CALCULATION_V1")
+            ),
             parameters=dict(data.get("parameters", {})),
             start_time=data.get("start_time", ""),
             end_time=data.get("end_time", ""),

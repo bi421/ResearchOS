@@ -235,9 +235,7 @@ class TestComparatorCertification:
     def test_rolling_mean_passes_numerical_comparator(self, cpp):
         data = make_series(512)
         comparator = NumericalComparator()
-        result = comparator.compare(
-            rolling_mean(data, 21), cpp.rolling_mean(data, 21)
-        )
+        result = comparator.compare(rolling_mean(data, 21), cpp.rolling_mean(data, 21))
         assert result.passed
 
     def test_rolling_volatility_passes_numerical_comparator(self, cpp):
@@ -266,7 +264,14 @@ class TestArchitectureBoundary:
 
     def test_no_signal_or_trading_surface(self, cpp):
         # The adapter exposes no trading/broker/signal surface.
-        for banned in ("place_order", "execute_trade", "generate_signal", "broker",
-                       "connect_broker", "train", "fit", "predict"):
+        for banned in (
+            "place_order",
+            "execute_trade",
+            "generate_signal",
+            "broker",
+            "connect_broker",
+            "train",
+            "fit",
+            "predict",
+        ):
             assert not hasattr(cpp, banned), f"unexpected trading/ML surface {banned}"
-

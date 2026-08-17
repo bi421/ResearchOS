@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional
 
 class RetrievalSource(str, Enum):
     """The origin of a retrieval hit."""
+
     EVIDENCE_GRAPH = "evidence_graph"
     MARKET_MEMORY = "market_memory"
     KNOWLEDGE_BASE = "knowledge_base"
@@ -46,8 +47,7 @@ class RetrievalSource(str, Enum):
         normalized = str(value).lower().strip()
         if normalized not in mapping:
             raise ValueError(
-                f"Unknown retrieval source {value!r}. "
-                f"Valid options: {[s.value for s in cls]}"
+                f"Unknown retrieval source {value!r}. Valid options: {[s.value for s in cls]}"
             )
         return mapping[normalized]
 
@@ -65,6 +65,7 @@ class RetrievalQuery:
         timestamp: When the query was issued.
         context_tags: Optional tags for query context.
     """
+
     query_id: str
     text: str
     source_filter: Optional[List[RetrievalSource]] = None
@@ -83,8 +84,9 @@ class RetrievalQuery:
         object.__setattr__(self, "query_id", self.query_id.strip())
         object.__setattr__(self, "text", self.text.strip())
         object.__setattr__(
-            self, "context_tags",
-            tuple(sorted(set(t.strip() for t in self.context_tags if t.strip())))
+            self,
+            "context_tags",
+            tuple(sorted(set(t.strip() for t in self.context_tags if t.strip()))),
         )
         if self.source_filter is not None:
             object.__setattr__(self, "source_filter", tuple(self.source_filter))
@@ -105,14 +107,14 @@ class RetrievalQuery:
         return cls(
             query_id=str(data["query_id"]),
             text=str(data.get("text", "")),
-            source_filter=[
-                RetrievalSource.from_string(s)
-                for s in data.get("source_filter", [])
-            ] if data.get("source_filter") else None,
+            source_filter=[RetrievalSource.from_string(s) for s in data.get("source_filter", [])]
+            if data.get("source_filter")
+            else None,
             max_hits=int(data.get("max_hits", 10)),
             min_score=float(data.get("min_score", 0.0)),
             timestamp=datetime.fromisoformat(data["timestamp"])
-                if isinstance(data.get("timestamp"), str) else data.get("timestamp", datetime.now(timezone.utc)),
+            if isinstance(data.get("timestamp"), str)
+            else data.get("timestamp", datetime.now(timezone.utc)),
             context_tags=tuple(data.get("context_tags", [])),
         )
 
@@ -130,6 +132,7 @@ class RetrievalHit:
         snippet: Human-readable excerpt from the object.
         metadata: Additional metadata about the hit.
     """
+
     hit_id: str
     object_id: str
     object_type: str
@@ -147,8 +150,9 @@ class RetrievalHit:
         object.__setattr__(self, "object_id", self.object_id.strip())
         object.__setattr__(self, "snippet", self.snippet.strip() if self.snippet else "")
         object.__setattr__(
-            self, "metadata",
-            MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
+            self,
+            "metadata",
+            MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({}),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -187,6 +191,7 @@ class RetrievalResult:
         sources_queried: Which sources were searched.
         explanation: Human-readable explanation of the retrieval.
     """
+
     query_id: str
     hits: tuple[RetrievalHit, ...]
     total_hits: int
@@ -203,7 +208,9 @@ class RetrievalResult:
                 if self.hits[i].score < self.hits[i + 1].score:
                     raise ValueError("hits must be sorted by score descending")
         object.__setattr__(self, "query_id", self.query_id.strip())
-        object.__setattr__(self, "explanation", self.explanation.strip() if self.explanation else "")
+        object.__setattr__(
+            self, "explanation", self.explanation.strip() if self.explanation else ""
+        )
         object.__setattr__(self, "sources_queried", tuple(sorted(set(self.sources_queried))))
         object.__setattr__(self, "hits", tuple(self.hits))
         object.__setattr__(self, "total_hits", max(0, int(self.total_hits)))
@@ -222,9 +229,7 @@ class RetrievalResult:
     def from_dict(cls, data: Dict[str, Any]) -> "RetrievalResult":
         return cls(
             query_id=str(data["query_id"]),
-            hits=tuple(
-                RetrievalHit.from_dict(h) for h in data.get("hits", [])
-            ),
+            hits=tuple(RetrievalHit.from_dict(h) for h in data.get("hits", [])),
             total_hits=int(data.get("total_hits", 0)),
             query_time_ms=float(data.get("query_time_ms", 0.0)),
             sources_queried=tuple(data.get("sources_queried", [])),
@@ -260,6 +265,7 @@ class RetrievalContext:
         session_start: When the session started.
         relevance_threshold: Minimum score to consider a hit relevant.
     """
+
     session_id: str
     queries: tuple[str, ...]
     all_hits: tuple[RetrievalHit, ...]
@@ -271,10 +277,9 @@ class RetrievalContext:
             raise ValueError("session_id must be non-empty")
         object.__setattr__(self, "session_id", self.session_id.strip())
         object.__setattr__(self, "queries", tuple(sorted(set(self.queries))))
-        object.__setattr__(self, "all_hits", tuple(sorted(
-            self.all_hits,
-            key=lambda h: (-h.score, h.hit_id)
-        )))
+        object.__setattr__(
+            self, "all_hits", tuple(sorted(self.all_hits, key=lambda h: (-h.score, h.hit_id)))
+        )
         object.__setattr__(self, "session_start", self.session_start)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -291,11 +296,10 @@ class RetrievalContext:
         return cls(
             session_id=str(data["session_id"]),
             queries=tuple(data.get("queries", [])),
-            all_hits=tuple(
-                RetrievalHit.from_dict(h) for h in data.get("all_hits", [])
-            ),
+            all_hits=tuple(RetrievalHit.from_dict(h) for h in data.get("all_hits", [])),
             session_start=datetime.fromisoformat(data["session_start"])
-                if isinstance(data.get("session_start"), str) else data.get("session_start", datetime.now(timezone.utc)),
+            if isinstance(data.get("session_start"), str)
+            else data.get("session_start", datetime.now(timezone.utc)),
             relevance_threshold=float(data.get("relevance_threshold", 0.3)),
         )
 

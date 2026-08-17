@@ -243,8 +243,14 @@ class TestBoundaryPreserved:
         exp = _make_experiment()
         # 252-bar OHLCV-style contract (list of dicts) — sufficient samples.
         contract = [
-            {"timestamp": "2020-01-01T00:00:00+00:00", "open": 100.0,
-             "high": 101.0, "low": 99.0, "close": 100.0, "volume": 1000 + i}
+            {
+                "timestamp": "2020-01-01T00:00:00+00:00",
+                "open": 100.0,
+                "high": 101.0,
+                "low": 99.0,
+                "close": 100.0,
+                "volume": 1000 + i,
+            }
             for i in range(252)
         ]
         runner.run(exp, contract)
@@ -254,7 +260,9 @@ class TestBoundaryPreserved:
 
     def test_backend_kwarg_still_supported(self):
         class RecordingBackend(PythonQuantBackend):
-            def run_simulation(self, request, dataset, calculation_version=CalculationVersion.CALCULATION_V1):
+            def run_simulation(
+                self, request, dataset, calculation_version=CalculationVersion.CALCULATION_V1
+            ):
                 return super().run_simulation(request, dataset, calculation_version)
 
         runner = BaseExperimentRunner(backend=RecordingBackend())

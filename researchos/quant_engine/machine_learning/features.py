@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Dict, List, Optional
-import math
-
 
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
 
 def _rolling_apply(values: List[Optional[float]], period: int, fn) -> List[Optional[float]]:
     """Apply fn to each trailing window of `period` values. None while the
@@ -15,7 +15,7 @@ def _rolling_apply(values: List[Optional[float]], period: int, fn) -> List[Optio
     n = len(values)
     out: List[Optional[float]] = [None] * n
     for i in range(period - 1, n):
-        window = values[i - period + 1:i + 1]
+        window = values[i - period + 1 : i + 1]
         if any(v is None for v in window):
             continue
         out[i] = fn(window)
@@ -34,6 +34,7 @@ def _pstd(xs: List[float]) -> float:
 # ---------------------------------------------------------------------------
 # returns
 # ---------------------------------------------------------------------------
+
 
 def returns(prices) -> List[Optional[float]]:
     prices = list(prices)
@@ -69,6 +70,7 @@ def returns_feature(prices) -> List[float]:
 # rolling stats
 # ---------------------------------------------------------------------------
 
+
 def rolling_mean(prices, period: int) -> List[Optional[float]]:
     prices = list(prices)
     return _rolling_apply(prices, period, _mean)
@@ -87,6 +89,7 @@ def rolling_volatility(prices, period: int) -> List[Optional[float]]:
 # ---------------------------------------------------------------------------
 # price / momentum features
 # ---------------------------------------------------------------------------
+
 
 def momentum(prices, period: int) -> List[Optional[float]]:
     prices = list(prices)
@@ -131,6 +134,7 @@ def price_feature(prices) -> List[float]:
 # classic technical indicators
 # ---------------------------------------------------------------------------
 
+
 def rsi_feature(prices, period: int = 14) -> List[Optional[float]]:
     prices = list(prices)
     n = len(prices)
@@ -143,8 +147,8 @@ def rsi_feature(prices, period: int = 14) -> List[Optional[float]]:
 
     out: List[Optional[float]] = [None] * n
     for i in range(period, n):
-        g_window = gains[i - period + 1:i + 1]
-        l_window = losses[i - period + 1:i + 1]
+        g_window = gains[i - period + 1 : i + 1]
+        l_window = losses[i - period + 1 : i + 1]
         if any(v is None for v in g_window) or any(v is None for v in l_window):
             continue
         avg_gain = _mean(g_window)
@@ -172,10 +176,7 @@ def sma_feature(prices, period: int = 14) -> List[float]:
     prices = list(prices)
     if len(prices) < period:
         return []
-    return [
-        sum(prices[i - period + 1:i + 1]) / period
-        for i in range(period - 1, len(prices))
-    ]
+    return [sum(prices[i - period + 1 : i + 1]) / period for i in range(period - 1, len(prices))]
 
 
 def macd_feature(prices, fast: int = 12, slow: int = 26, signal: int = 9) -> Dict[str, List[float]]:
@@ -205,7 +206,9 @@ def atr_feature(high, low, close, period: int = 14) -> List[Optional[float]]:
     return _rolling_apply(tr, period, _mean)
 
 
-def bollinger_feature(prices, period: int = 20, std_factor: float = 2.0) -> Dict[str, List[Optional[float]]]:
+def bollinger_feature(
+    prices, period: int = 20, std_factor: float = 2.0
+) -> Dict[str, List[Optional[float]]]:
     prices = list(prices)
     mid = rolling_mean(prices, period)
     std = rolling_std(prices, period)
@@ -228,13 +231,15 @@ def bollinger_feature(prices, period: int = 20, std_factor: float = 2.0) -> Dict
     }
 
 
-def stochastic_feature(high, low, close, period: int = 14, smooth: int = 3) -> Dict[str, List[Optional[float]]]:
+def stochastic_feature(
+    high, low, close, period: int = 14, smooth: int = 3
+) -> Dict[str, List[Optional[float]]]:
     high, low, close = list(high), list(low), list(close)
     n = len(close)
     k: List[Optional[float]] = [None] * n
     for i in range(period - 1, n):
-        hh = max(high[i - period + 1:i + 1])
-        ll = min(low[i - period + 1:i + 1])
+        hh = max(high[i - period + 1 : i + 1])
+        ll = min(low[i - period + 1 : i + 1])
         rng = hh - ll
         k[i] = 100.0 * (close[i] - ll) / rng if rng != 0 else 0.0
     d = _rolling_apply(k, smooth, _mean)
@@ -250,7 +255,7 @@ def cci_feature(high, low, close, period: int = 20) -> List[Optional[float]]:
     for i in range(period - 1, n):
         if sma_tp[i] is None:
             continue
-        window = tp[i - period + 1:i + 1]
+        window = tp[i - period + 1 : i + 1]
         mean_dev = _mean([abs(x - sma_tp[i]) for x in window])
         out[i] = (tp[i] - sma_tp[i]) / (0.015 * mean_dev) if mean_dev != 0 else 0.0
     return out
@@ -272,8 +277,8 @@ def mfi_feature(high, low, close, volume, period: int = 14) -> List[Optional[flo
 
     out: List[Optional[float]] = [None] * n
     for i in range(period, n):
-        pos_sum = sum(pos_flow[i - period + 1:i + 1])
-        neg_sum = sum(neg_flow[i - period + 1:i + 1])
+        pos_sum = sum(pos_flow[i - period + 1 : i + 1])
+        neg_sum = sum(neg_flow[i - period + 1 : i + 1])
         if neg_sum == 0:
             out[i] = 100.0
         else:
@@ -303,7 +308,7 @@ def volatility_feature(prices, period: int = 14) -> List[float]:
         return []
     result = []
     for i in range(period - 1, len(rets)):
-        window = rets[i - period + 1:i + 1]
+        window = rets[i - period + 1 : i + 1]
         mean = sum(window) / period
         variance = sum((x - mean) ** 2 for x in window) / period
         result.append(math.sqrt(variance))
@@ -314,12 +319,15 @@ def volatility_feature(prices, period: int = 14) -> List[float]:
 # volatility features
 # ---------------------------------------------------------------------------
 
+
 def historical_volatility(prices, period: int = 20) -> List[Optional[float]]:
     lr = log_returns(prices)
     return _rolling_apply(lr, period, _pstd)
 
 
-def volatility_ratio(prices, short_period: int = 10, long_period: int = 30) -> List[Optional[float]]:
+def volatility_ratio(
+    prices, short_period: int = 10, long_period: int = 30
+) -> List[Optional[float]]:
     short_vol = rolling_volatility(prices, short_period)
     long_vol = rolling_volatility(prices, long_period)
     n = len(short_vol)
@@ -339,7 +347,7 @@ def volatility_percentile(prices, period: int = 20, lookback: int = 60) -> List[
         if vol[i] is None:
             continue
         start = max(0, i - lookback + 1)
-        window = [v for v in vol[start:i + 1] if v is not None]
+        window = [v for v in vol[start : i + 1] if v is not None]
         if not window:
             continue
         rank = sum(1 for v in window if v <= vol[i])
@@ -352,7 +360,7 @@ def rolling_drawdown(prices, period: int = 20) -> List[Optional[float]]:
     n = len(prices)
     out: List[Optional[float]] = [None] * n
     for i in range(period - 1, n):
-        window = prices[i - period + 1:i + 1]
+        window = prices[i - period + 1 : i + 1]
         peak = max(window)
         out[i] = (prices[i] - peak) / peak if peak != 0 else 0.0
     return out
@@ -361,6 +369,7 @@ def rolling_drawdown(prices, period: int = 20) -> List[Optional[float]]:
 # ---------------------------------------------------------------------------
 # market regime features
 # ---------------------------------------------------------------------------
+
 
 def trend_state(prices, short_period: int = 20, long_period: int = 50) -> List[Optional[float]]:
     short_ma = rolling_mean(prices, short_period)
@@ -379,7 +388,9 @@ def trend_state(prices, short_period: int = 20, long_period: int = 50) -> List[O
     return out
 
 
-def volatility_regime(prices, short_period: int = 20, long_period: int = 60) -> List[Optional[float]]:
+def volatility_regime(
+    prices, short_period: int = 20, long_period: int = 60
+) -> List[Optional[float]]:
     short_vol = historical_volatility(prices, short_period)
     long_vol = historical_volatility(prices, long_period)
     n = len(prices)
@@ -409,6 +420,7 @@ def momentum_regime(prices, period: int = 14) -> List[Optional[float]]:
 # ---------------------------------------------------------------------------
 # feature builder
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class FeatureSet:
@@ -466,9 +478,7 @@ class FeatureBuilder:
 
         for i in range(n):
             row = [columns[name][i] for name in feature_names]
-            if drop_na and any(
-                v is None or (isinstance(v, float) and math.isnan(v)) for v in row
-            ):
+            if drop_na and any(v is None or (isinstance(v, float) and math.isnan(v)) for v in row):
                 continue
             rows.append(row)
             if labels_out is not None:

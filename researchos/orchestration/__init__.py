@@ -19,12 +19,12 @@ Public API:
 
 from .contracts import (
     ORCHESTRATION_VERSION,
+    EvidenceEdgeDescriptor,
+    EvidenceNodeDescriptor,
     OrchestrationError,
+    PipelineReport,
     PipelineStage,
     PipelineStatus,
-    EvidenceNodeDescriptor,
-    EvidenceEdgeDescriptor,
-    PipelineReport,
 )
 from .engine import ResearchOrchestrator
 

@@ -6,8 +6,8 @@ leakage protection and serializable reports.
 """
 
 from .contracts import (
-    FoldResult,
     VALIDATION_VERSION,
+    FoldResult,
     ValidationError,
     ValidationResult,
 )
@@ -41,4 +41,3 @@ __all__ = [
     "precision",
     "recall",
 ]
-

@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from researchos.memory.engine import MarketMemoryEngine
 from researchos.objects.market_memory import (
     LiquidityEvent,
     MarketEvent,
@@ -27,7 +28,6 @@ from researchos.objects.market_memory import (
     VolatilityState,
 )
 from researchos.repository.memory import MemoryRepository
-from researchos.memory.engine import MarketMemoryEngine
 
 
 def ts(year=2024, month=1, day=1, hour=0, minute=0):
@@ -38,6 +38,7 @@ def ts(year=2024, month=1, day=1, hour=0, minute=0):
 # ===========================================================================
 # Market Structure Tests
 # ===========================================================================
+
 
 class TestMarketStructure:
     def test_create_bos(self):
@@ -88,9 +89,16 @@ class TestMarketStructure:
         assert ms.lifecycle.current_stage.value == "Verified"
 
     def test_serialization_round_trip(self):
-        ms = MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0),
-                             direction="bullish", price_level=1.1050,
-                             notes="Strong breakout", ontology_tags=["trend", "momentum"])
+        ms = MarketStructure(
+            "BOS",
+            "EURUSD",
+            "H1",
+            ts(2024, 6, 1, 8, 0),
+            direction="bullish",
+            price_level=1.1050,
+            notes="Strong breakout",
+            ontology_tags=["trend", "momentum"],
+        )
         d = ms.to_dict()
         ms2 = MarketStructure.from_dict(d)
         assert ms2.id == ms.id
@@ -127,6 +135,7 @@ class TestMarketStructure:
 # Liquidity Event Tests
 # ===========================================================================
 
+
 class TestLiquidityEvent:
     def test_create_sweep(self):
         le = LiquidityEvent(
@@ -157,9 +166,15 @@ class TestLiquidityEvent:
         assert le.lifecycle.current_stage.value == "Resolved"
 
     def test_serialization_round_trip(self):
-        le = LiquidityEvent("StopRun", "GBPUSD", "M15", ts(2024, 6, 1, 10, 0),
-                            direction="bullish", price_level=1.2650,
-                            swept_levels=[1.2630, 1.2620])
+        le = LiquidityEvent(
+            "StopRun",
+            "GBPUSD",
+            "M15",
+            ts(2024, 6, 1, 10, 0),
+            direction="bullish",
+            price_level=1.2650,
+            swept_levels=[1.2630, 1.2620],
+        )
         d = le.to_dict()
         le2 = LiquidityEvent.from_dict(d)
         assert le2.id == le.id
@@ -175,6 +190,7 @@ class TestLiquidityEvent:
 # ===========================================================================
 # Market Session Tests
 # ===========================================================================
+
 
 class TestMarketSession:
     def test_create_london_session(self):
@@ -200,17 +216,28 @@ class TestMarketSession:
         assert ms.body == pytest.approx(0.0060, rel=1e-9)
 
     def test_deterministic_id(self):
-        ms1 = MarketSession("London", "EURUSD", "2024-06-01",
-                            ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
-        ms2 = MarketSession("London", "EURUSD", "2024-06-01",
-                            ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
+        ms1 = MarketSession(
+            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
+        )
+        ms2 = MarketSession(
+            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
+        )
         assert ms1.id == ms2.id
 
     def test_serialization_round_trip(self):
-        ms = MarketSession("NewYork", "GBPUSD", "2024-06-01",
-                           ts(2024, 6, 1, 13, 0), ts(2024, 6, 1, 22, 0),
-                           open=1.2700, high=1.2750, low=1.2680, close=1.2730,
-                           direction="bullish", volume_ratio=0.9)
+        ms = MarketSession(
+            "NewYork",
+            "GBPUSD",
+            "2024-06-01",
+            ts(2024, 6, 1, 13, 0),
+            ts(2024, 6, 1, 22, 0),
+            open=1.2700,
+            high=1.2750,
+            low=1.2680,
+            close=1.2730,
+            direction="bullish",
+            volume_ratio=0.9,
+        )
         d = ms.to_dict()
         ms2 = MarketSession.from_dict(d)
         assert ms2.id == ms.id
@@ -222,6 +249,7 @@ class TestMarketSession:
 # ===========================================================================
 # Volatility State Tests
 # ===========================================================================
+
 
 class TestVolatilityState:
     def test_create(self):
@@ -246,9 +274,15 @@ class TestVolatilityState:
         assert vs1.id == vs2.id
 
     def test_serialization_round_trip(self):
-        vs = VolatilityState("EURUSD", "H1", ts(2024, 6, 1, 12, 0),
-                             atr_value=0.0015, atr_percentile=0.9,
-                             volatility_regime="Extreme", expanding=True)
+        vs = VolatilityState(
+            "EURUSD",
+            "H1",
+            ts(2024, 6, 1, 12, 0),
+            atr_value=0.0015,
+            atr_percentile=0.9,
+            volatility_regime="Extreme",
+            expanding=True,
+        )
         d = vs.to_dict()
         vs2 = VolatilityState.from_dict(d)
         assert vs2.id == vs.id
@@ -260,6 +294,7 @@ class TestVolatilityState:
 # ===========================================================================
 # News Reference Tests
 # ===========================================================================
+
 
 class TestNewsReference:
     def test_create(self):
@@ -284,9 +319,15 @@ class TestNewsReference:
         assert nr1.id == nr2.id
 
     def test_serialization_round_trip(self):
-        nr = NewsReference("CPI data release", "Bloomberg", ts(2024, 6, 1, 12, 0),
-                           impact_score=0.7, sentiment="positive",
-                           category="Economic", summary="CPI beat expectations")
+        nr = NewsReference(
+            "CPI data release",
+            "Bloomberg",
+            ts(2024, 6, 1, 12, 0),
+            impact_score=0.7,
+            sentiment="positive",
+            category="Economic",
+            summary="CPI beat expectations",
+        )
         d = nr.to_dict()
         nr2 = NewsReference.from_dict(d)
         assert nr2.id == nr.id
@@ -297,6 +338,7 @@ class TestNewsReference:
 # ===========================================================================
 # Market Outcome Tests
 # ===========================================================================
+
 
 class TestMarketOutcome:
     def test_create(self):
@@ -320,9 +362,16 @@ class TestMarketOutcome:
         assert mo1.id == mo2.id
 
     def test_serialization_round_trip(self):
-        mo = MarketOutcome("e1", "BOS", "EURUSD", ts(2024, 6, 1, 16, 0),
-                           outcome_type="Failure", actual_move=-0.0020,
-                           max_adverse=0.0030, duration_minutes=120)
+        mo = MarketOutcome(
+            "e1",
+            "BOS",
+            "EURUSD",
+            ts(2024, 6, 1, 16, 0),
+            outcome_type="Failure",
+            actual_move=-0.0020,
+            max_adverse=0.0030,
+            duration_minutes=120,
+        )
         d = mo.to_dict()
         mo2 = MarketOutcome.from_dict(d)
         assert mo2.id == mo.id
@@ -334,6 +383,7 @@ class TestMarketOutcome:
 # MarketMemoryEngine Tests
 # ===========================================================================
 
+
 class TestMarketMemoryEngine:
     def setup_method(self):
         self.repo = MemoryRepository()
@@ -341,8 +391,12 @@ class TestMarketMemoryEngine:
 
     def test_record_structure_break(self):
         ms = self.engine.record_structure_break(
-            "BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0),
-            direction="bullish", price_level=1.1050,
+            "BOS",
+            "EURUSD",
+            "H1",
+            ts(2024, 6, 1, 8, 0),
+            direction="bullish",
+            price_level=1.1050,
         )
         assert isinstance(ms, MarketStructure)
         assert ms.asset == "EURUSD"
@@ -362,8 +416,12 @@ class TestMarketMemoryEngine:
 
     def test_record_liquidity_event(self):
         le = self.engine.record_liquidity_event(
-            "Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30),
-            direction="bearish", price_level=1.1020,
+            "Sweep",
+            "EURUSD",
+            "M15",
+            ts(2024, 6, 1, 9, 30),
+            direction="bearish",
+            price_level=1.1020,
             swept_levels=[1.1030, 1.1040],
         )
         assert isinstance(le, LiquidityEvent)
@@ -376,36 +434,55 @@ class TestMarketMemoryEngine:
 
     def test_record_session(self):
         ms = self.engine.record_session(
-            "London", "EURUSD", "2024-06-01",
-            ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0),
-            open=1.1000, high=1.1080, low=1.0980, close=1.1060,
-            direction="bullish", volume_ratio=1.2,
+            "London",
+            "EURUSD",
+            "2024-06-01",
+            ts(2024, 6, 1, 7, 0),
+            ts(2024, 6, 1, 16, 0),
+            open=1.1000,
+            high=1.1080,
+            low=1.0980,
+            close=1.1060,
+            direction="bullish",
+            volume_ratio=1.2,
         )
         assert isinstance(ms, MarketSession)
         assert ms.range == pytest.approx(0.0100, rel=1e-9)
 
     def test_record_volatility_state(self):
         vs = self.engine.record_volatility_state(
-            "EURUSD", "H1", ts(2024, 6, 1, 12, 0),
-            atr_value=0.0015, atr_percentile=0.85,
-            volatility_regime="High", expanding=True,
+            "EURUSD",
+            "H1",
+            ts(2024, 6, 1, 12, 0),
+            atr_value=0.0015,
+            atr_percentile=0.85,
+            volatility_regime="High",
+            expanding=True,
         )
         assert isinstance(vs, VolatilityState)
         assert vs.volatility_regime == "High"
 
     def test_record_news(self):
         nr = self.engine.record_news(
-            "Fed holds rates steady", "Reuters", ts(2024, 6, 1, 14, 0),
-            impact_score=0.8, sentiment="neutral",
-            affected_assets=["EURUSD"], category="CentralBank",
+            "Fed holds rates steady",
+            "Reuters",
+            ts(2024, 6, 1, 14, 0),
+            impact_score=0.8,
+            sentiment="neutral",
+            affected_assets=["EURUSD"],
+            category="CentralBank",
         )
         assert isinstance(nr, NewsReference)
         assert nr.impact_score == 0.8
 
     def test_record_outcome(self):
         mo = self.engine.record_outcome(
-            "event_123", "BOS", "EURUSD", ts(2024, 6, 1, 16, 0),
-            outcome_type="Success", actual_move=0.0050,
+            "event_123",
+            "BOS",
+            "EURUSD",
+            ts(2024, 6, 1, 16, 0),
+            outcome_type="Success",
+            actual_move=0.0050,
         )
         assert isinstance(mo, MarketOutcome)
         assert mo.outcome_type == "Success"
@@ -415,20 +492,31 @@ class TestMarketMemoryEngine:
 # Query Method Tests
 # ===========================================================================
 
+
 class TestMarketMemoryEngineQueries:
     def setup_method(self):
         self.repo = MemoryRepository()
         self.engine = MarketMemoryEngine(self.repo)
         # Seed with test data
-        self.engine.record_structure_break("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.1050)
-        self.engine.record_structure_break("CHOCH", "EURUSD", "H1", ts(2024, 6, 1, 12, 0), price_level=1.1080)
-        self.engine.record_liquidity_event("Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30), price_level=1.1020)
-        self.engine.record_session("London", "EURUSD", "2024-06-01",
-                                    ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
-        self.engine.record_session("NewYork", "EURUSD", "2024-06-01",
-                                    ts(2024, 6, 1, 13, 0), ts(2024, 6, 1, 22, 0))
+        self.engine.record_structure_break(
+            "BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.1050
+        )
+        self.engine.record_structure_break(
+            "CHOCH", "EURUSD", "H1", ts(2024, 6, 1, 12, 0), price_level=1.1080
+        )
+        self.engine.record_liquidity_event(
+            "Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30), price_level=1.1020
+        )
+        self.engine.record_session(
+            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
+        )
+        self.engine.record_session(
+            "NewYork", "EURUSD", "2024-06-01", ts(2024, 6, 1, 13, 0), ts(2024, 6, 1, 22, 0)
+        )
         self.engine.record_volatility_state("EURUSD", "H1", ts(2024, 6, 1, 12, 0), atr_value=0.0015)
-        self.engine.record_structure_break("BOS", "GBPUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.2700)
+        self.engine.record_structure_break(
+            "BOS", "GBPUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.2700
+        )
 
     def test_get_events_by_asset(self):
         eurusd_events = self.engine.get_events_by_asset("EURUSD")
@@ -498,18 +586,25 @@ class TestMarketMemoryEngineQueries:
 # OBJECT_REGISTRY Integration Tests
 # ===========================================================================
 
+
 class TestObjectRegistryIntegration:
     def test_all_types_in_registry(self):
         from researchos.storage.repository import OBJECT_REGISTRY
+
         expected = {
-            "MarketStructure", "LiquidityEvent", "MarketSession",
-            "VolatilityState", "NewsReference", "MarketOutcome",
+            "MarketStructure",
+            "LiquidityEvent",
+            "MarketSession",
+            "VolatilityState",
+            "NewsReference",
+            "MarketOutcome",
         }
         for name in expected:
             assert name in OBJECT_REGISTRY, f"{name} missing from OBJECT_REGISTRY"
 
     def test_load_from_sqlite_round_trip(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "test_market_memory.db")
         repo = ResearchRepository(db_path)
         try:
@@ -521,11 +616,12 @@ class TestObjectRegistryIntegration:
             assert loaded.structure_type == "BOS"
             assert loaded.price_level == 1.1050
         finally:
-            if hasattr(repo, '_conn') and repo._conn:
+            if hasattr(repo, "_conn") and repo._conn:
                 repo._conn.close()
 
     def test_hash_preserved_through_sqlite(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "test_hash_preserved.db")
         repo = ResearchRepository(db_path)
         try:
@@ -535,27 +631,31 @@ class TestObjectRegistryIntegration:
             loaded = repo.load_object(ms.id)
             assert loaded.hash == h1
         finally:
-            if hasattr(repo, '_conn') and repo._conn:
+            if hasattr(repo, "_conn") and repo._conn:
                 repo._conn.close()
 
     def test_load_by_type_sqlite(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "test_load_by_type.db")
         repo = ResearchRepository(db_path)
         try:
             for i in range(3):
-                ms = MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, i + 1, 8, 0), price_level=1.10 + i * 0.01)
+                ms = MarketStructure(
+                    "BOS", "EURUSD", "H1", ts(2024, 6, i + 1, 8, 0), price_level=1.10 + i * 0.01
+                )
                 repo.save(ms)
             loaded = repo.load_objects_by_type("MarketStructure")
             assert len(loaded) == 3
         finally:
-            if hasattr(repo, '_conn') and repo._conn:
+            if hasattr(repo, "_conn") and repo._conn:
                 repo._conn.close()
 
 
 # ===========================================================================
 # Edge Case Tests
 # ===========================================================================
+
 
 class TestEdgeCases:
     def test_market_structure_empty_lists(self):
@@ -567,8 +667,9 @@ class TestEdgeCases:
         assert le.swept_levels == []
 
     def test_session_zero_values(self):
-        ms = MarketSession("London", "EURUSD", "2024-06-01",
-                           ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
+        ms = MarketSession(
+            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
+        )
         assert ms.open == 0.0
         assert ms.range == 0.0
 
@@ -581,8 +682,9 @@ class TestEdgeCases:
         assert mo.outcome_type == "Pending"
 
     def test_metadata_preserved_round_trip(self):
-        me = MarketEvent("Custom", "EURUSD", "H1", ts(2024, 6, 1, 8, 0),
-                         metadata={"key1": "value1", "key2": 42})
+        me = MarketEvent(
+            "Custom", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), metadata={"key1": "value1", "key2": 42}
+        )
         d = me.to_dict()
         me2 = MarketEvent.from_dict(d)
         assert me2.metadata["key1"] == "value1"
@@ -592,8 +694,9 @@ class TestEdgeCases:
         objects = [
             MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0)),
             LiquidityEvent("Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30)),
-            MarketSession("London", "EURUSD", "2024-06-01",
-                          ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)),
+            MarketSession(
+                "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
+            ),
             VolatilityState("EURUSD", "H1", ts(2024, 6, 1, 12, 0)),
             NewsReference("Title", "Source", ts(2024, 6, 1, 14, 0)),
             MarketOutcome("e1", "BOS", "EURUSD", ts(2024, 6, 1, 16, 0)),
@@ -605,8 +708,9 @@ class TestEdgeCases:
 
     def test_all_objects_support_find_by_tag(self):
         repo = MemoryRepository()
-        ms = MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0),
-                             ontology_tags=["trend", "momentum"])
+        ms = MarketStructure(
+            "BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), ontology_tags=["trend", "momentum"]
+        )
         repo.save(ms)
         found = repo.find_by_tag("trend")
         assert len(found) == 1

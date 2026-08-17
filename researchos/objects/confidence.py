@@ -15,7 +15,6 @@ from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 
-
 # Confidence source weights (Article XVI, Section 6.1)
 CONF_EVIDENCE_STRENGTH = 0.30
 CONF_COHERENCE = 0.25
@@ -113,11 +112,11 @@ class Confidence(BaseObject):
                 Recency × 0.10
         """
         value = (
-            self.evidence_strength * CONF_EVIDENCE_STRENGTH +
-            self.coherence * CONF_COHERENCE +
-            self.historical_precedent * CONF_HISTORICAL_PRECEDENT +
-            self.model_uncertainty * CONF_MODEL_UNCERTAINTY +
-            self.recency * CONF_RECENCY
+            self.evidence_strength * CONF_EVIDENCE_STRENGTH
+            + self.coherence * CONF_COHERENCE
+            + self.historical_precedent * CONF_HISTORICAL_PRECEDENT
+            + self.model_uncertainty * CONF_MODEL_UNCERTAINTY
+            + self.recency * CONF_RECENCY
         )
         return min(1.0, max(0.0, value))
 
@@ -173,24 +172,26 @@ class Confidence(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "target_id": self.target_id,
-            "target_type": self.target_type,
-            "value": self.value,
-            "calibrated_value": self.calibrated_value,
-            "lower_bound": self.lower_bound,
-            "upper_bound": self.upper_bound,
-            "standard_error": self.standard_error,
-            "evidence_strength": self.evidence_strength,
-            "coherence": self.coherence,
-            "historical_precedent": self.historical_precedent,
-            "model_uncertainty": self.model_uncertainty,
-            "recency": self.recency,
-            "penalties": self.penalties,
-            "boosters": self.boosters,
-            "calibration_bin": self.calibration_bin,
-            "calibration_adjustment": self.calibration_adjustment,
-        })
+        base.update(
+            {
+                "target_id": self.target_id,
+                "target_type": self.target_type,
+                "value": self.value,
+                "calibrated_value": self.calibrated_value,
+                "lower_bound": self.lower_bound,
+                "upper_bound": self.upper_bound,
+                "standard_error": self.standard_error,
+                "evidence_strength": self.evidence_strength,
+                "coherence": self.coherence,
+                "historical_precedent": self.historical_precedent,
+                "model_uncertainty": self.model_uncertainty,
+                "recency": self.recency,
+                "penalties": self.penalties,
+                "boosters": self.boosters,
+                "calibration_bin": self.calibration_bin,
+                "calibration_adjustment": self.calibration_adjustment,
+            }
+        )
         return base
 
     @classmethod
@@ -268,10 +269,12 @@ class ConfidenceReport(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "confidence_ids": self.confidence_ids,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "confidence_ids": self.confidence_ids,
+            }
+        )
         return base
 
     @classmethod

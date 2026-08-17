@@ -64,7 +64,9 @@ def _require_v1(calculation_version: CalculationVersion) -> None:
 def has_cpp_engine() -> bool:
     """Return True if the compiled C++ quant engine module is importable."""
     try:
-        from cpp_quant_engine.cpp_quant_backend import CppQuantBackend  # type: ignore[import-not-found]  # noqa: F401
+        from cpp_quant_engine.cpp_quant_backend import (
+            CppQuantBackend,  # type: ignore[import-not-found]  # noqa: F401
+        )
 
         return True
     except (ImportError, AttributeError, OSError):
@@ -74,7 +76,9 @@ def has_cpp_engine() -> bool:
 def get_cpp_engine_version() -> Optional[str]:
     """Return the C++ engine version string, or None if unavailable."""
     try:
-        from cpp_quant_engine.cpp_quant_backend import CppQuantBackend  # type: ignore[import-not-found]
+        from cpp_quant_engine.cpp_quant_backend import (
+            CppQuantBackend,  # type: ignore[import-not-found]
+        )
 
         return str(CppQuantBackend().get_version())
     except (ImportError, AttributeError, OSError):
@@ -95,13 +99,14 @@ class CppQuantAdapter(QuantComputationInterface):
         self._fallback = None
 
         try:
-            from cpp_quant_engine.cpp_quant_backend import CppQuantBackend  # type: ignore[import-not-found]
+            from cpp_quant_engine.cpp_quant_backend import (
+                CppQuantBackend,  # type: ignore[import-not-found]
+            )
 
             self._cpp_backend = CppQuantBackend()
         except (ImportError, AttributeError, OSError) as exc:
             warnings.warn(
-                f"C++ Quant Engine not available ({exc}). "
-                "Falling back to PythonQuantBackend.",
+                f"C++ Quant Engine not available ({exc}). Falling back to PythonQuantBackend.",
                 stacklevel=2,
             )
             from researchos.quant_engine.backend import PythonQuantBackend
@@ -175,9 +180,7 @@ class CppQuantAdapter(QuantComputationInterface):
         if "max_drawdown" in out:
             out["max_drawdown"] = round(out["max_drawdown"], 8)
         if "max_drawdown" in out and "mean_return" in out and out["max_drawdown"] != 0.0:
-            out["calmar_ratio"] = (
-                out["mean_return"] * _PERIODS_PER_YEAR / abs(out["max_drawdown"])
-            )
+            out["calmar_ratio"] = out["mean_return"] * _PERIODS_PER_YEAR / abs(out["max_drawdown"])
         return out
 
     @staticmethod
@@ -202,9 +205,7 @@ class CppQuantAdapter(QuantComputationInterface):
         _require_v1(calculation_version)
 
         if len(prices) < 2:
-            raise ValueError(
-                f"Need at least 2 prices to calculate returns, got {len(prices)}"
-            )
+            raise ValueError(f"Need at least 2 prices to calculate returns, got {len(prices)}")
         if return_type not in ("absolute", "percentage", "log"):
             raise ValueError(
                 f"Unrecognized return_type '{return_type}'. "
@@ -243,9 +244,7 @@ class CppQuantAdapter(QuantComputationInterface):
         _require_v1(calculation_version)
 
         if len(equity_curve) < 2:
-            raise ValueError(
-                f"Need at least 2 equity values, got {len(equity_curve)}"
-            )
+            raise ValueError(f"Need at least 2 equity values, got {len(equity_curve)}")
 
         return self._normalize_drawdown(
             dict(self._call(self._backend.calculate_drawdown, equity_curve))
@@ -281,13 +280,9 @@ class CppQuantAdapter(QuantComputationInterface):
         if not returns:
             raise ValueError("Cannot compute statistics on empty dataset")
         if len(returns) < 2:
-            raise ValueError(
-                f"Insufficient samples: need at least 2, got {len(returns)}"
-            )
+            raise ValueError(f"Insufficient samples: need at least 2, got {len(returns)}")
         if len(equity_curve) < 2:
-            raise ValueError(
-                f"Need at least 2 equity values, got {len(equity_curve)}"
-            )
+            raise ValueError(f"Need at least 2 equity values, got {len(equity_curve)}")
 
         raw = dict(
             self._call(
@@ -408,9 +403,7 @@ class CppQuantAdapter(QuantComputationInterface):
             raise ValueError("window size exceeds data length")
         if ddof < 0 or ddof >= window:
             raise ValueError("ddof must be in [0, window)")
-        return list(
-            self._call(self._backend.rolling_volatility_series_ext, data, window, ddof)
-        )
+        return list(self._call(self._backend.rolling_volatility_series_ext, data, window, ddof))
 
     def rolling_variance_series(
         self,
@@ -426,9 +419,7 @@ class CppQuantAdapter(QuantComputationInterface):
             raise ValueError("window size exceeds data length")
         if ddof < 0 or ddof >= window:
             raise ValueError("ddof must be in [0, window)")
-        return list(
-            self._call(self._backend.rolling_variance_ext, data, window, ddof)
-        )
+        return list(self._call(self._backend.rolling_variance_ext, data, window, ddof))
 
     # ── Simulation ───────────────────────────────────────────────────────────
 
@@ -441,9 +432,7 @@ class CppQuantAdapter(QuantComputationInterface):
         _require_v1(calculation_version)
 
         if len(prices) < 2:
-            raise ValueError(
-                f"Need at least 2 prices for simulation, got {len(prices)}"
-            )
+            raise ValueError(f"Need at least 2 prices for simulation, got {len(prices)}")
 
         # Provenance from the ResearchOS request (not the C++ hashes).
         input_hash = request.compute_input_hash()
@@ -455,9 +444,7 @@ class CppQuantAdapter(QuantComputationInterface):
         # Numerical work in C++. Composed from the shim's primitives (the
         # monolithic legacy run_simulation is not used: it is dramatically
         # slower on large series because it builds its own full result hash).
-        returns = list(
-            self._call(self._backend.calculate_returns, prices, "percentage")
-        )
+        returns = list(self._call(self._backend.calculate_returns, prices, "percentage"))
         equity_curve = self._build_equity_curve(returns, initial_capital)
         metrics = self._normalize_metrics(
             dict(
@@ -500,22 +487,24 @@ class CppQuantAdapter(QuantComputationInterface):
         for r in returns:
             equity.append(equity[-1] * (1.0 + r))
         return equity
+
+
 def create_cpp_router():
     """
     Create a backend router with C++ backend registered.
 
     Compatibility factory for integration tests and external callers.
     """
-    from .router import BackendRouter
     from .backend import PythonQuantBackend
+    from .router import BackendRouter
 
-    router = BackendRouter(
-        reference_backend=PythonQuantBackend()
-    )
+    router = BackendRouter(reference_backend=PythonQuantBackend())
 
     register_cpp_backend(router)
 
     return router
+
+
 def register_cpp_backend(router=None, force=False):
     """
     Register C++ quant backend into BackendRouter.

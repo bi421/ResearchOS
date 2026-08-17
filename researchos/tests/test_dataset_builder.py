@@ -432,9 +432,7 @@ class TestCustomLabels(unittest.TestCase):
         close = close_up()
         high, low, cl, vol = ohlcv(close)
         with self.assertRaises(ValueError):
-            DatasetBuilder(cl, high, low, vol).build_custom(
-                [1.0] * len(close), label_name=""
-            )
+            DatasetBuilder(cl, high, low, vol).build_custom([1.0] * len(close), label_name="")
 
     def test_custom_with_none_removes_rows(self):
         close = close_up()
@@ -600,7 +598,9 @@ class TestValidation(unittest.TestCase):
             validate_shapes(ds)
 
     def test_validate_shapes_labels_mismatch(self):
-        ds = _mk(features=((1.0,),), labels=(1.0, 2.0), sample_count=1, feature_count=1, names=("a",))
+        ds = _mk(
+            features=((1.0,),), labels=(1.0, 2.0), sample_count=1, feature_count=1, names=("a",)
+        )
         with self.assertRaises(ValueError):
             validate_shapes(ds)
 
@@ -962,4 +962,3 @@ class TestMetadata(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

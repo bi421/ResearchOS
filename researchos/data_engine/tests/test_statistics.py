@@ -16,10 +16,10 @@ import pytest
 
 from researchos.data_engine import (
     Candle,
+    DatasetStatistics,
     HistoricalDataset,
     Quote,
     Tick,
-    DatasetStatistics,
     compute_dataset_statistics,
 )
 
@@ -31,14 +31,20 @@ def _candle(hour, symbol="XAU/USD", spread=None, volume=1000.0):
         symbol=symbol,
         timeframe="1h",
         timestamp=BASE + timedelta(hours=hour),
-        open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-        volume=volume, spread=spread,
+        open=2000.0,
+        high=2010.0,
+        low=1995.0,
+        close=2005.0,
+        volume=volume,
+        spread=spread,
     )
 
 
 def _dataset(candles):
     ds = HistoricalDataset(
-        symbol="XAU/USD", timeframe="1h", data_type="candle",
+        symbol="XAU/USD",
+        timeframe="1h",
+        data_type="candle",
         records=candles,
     )
     return ds
@@ -178,8 +184,14 @@ class TestDatasetStatisticsCoverage:
 class TestDatasetStatisticsRecordTypes:
     def test_tick_dataset_no_interval(self):
         ticks = [
-            Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i),
-                 price=2000.0, volume=1.0, bid=1999.0, ask=2001.0)
+            Tick(
+                symbol="XAU/USD",
+                timestamp=BASE + timedelta(seconds=i),
+                price=2000.0,
+                volume=1.0,
+                bid=1999.0,
+                ask=2001.0,
+            )
             for i in range(5)
         ]
         ds = HistoricalDataset(symbol="XAU/USD", timeframe="tick", records=ticks)
@@ -192,8 +204,12 @@ class TestDatasetStatisticsRecordTypes:
 
     def test_quote_dataset_spread(self):
         quotes = [
-            Quote(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i),
-                  bid=2000.0 + i, ask=2001.0 + i)
+            Quote(
+                symbol="XAU/USD",
+                timestamp=BASE + timedelta(seconds=i),
+                bid=2000.0 + i,
+                ask=2001.0 + i,
+            )
             for i in range(4)
         ]
         ds = HistoricalDataset(symbol="XAU/USD", timeframe="tick", records=quotes)
@@ -203,8 +219,7 @@ class TestDatasetStatisticsRecordTypes:
 
     def test_tick_average_volume(self):
         ticks = [
-            Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i),
-                 price=2000.0, volume=2.0)
+            Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i), price=2000.0, volume=2.0)
             for i in range(3)
         ]
         ds = HistoricalDataset(symbol="XAU/USD", timeframe="tick", records=ticks)

@@ -6,7 +6,21 @@ from datetime import datetime, timezone
 
 import pytest
 
-from researchos.objects.process import AuditEntry
+from researchos.macro.engine import (
+    ALL_DRIVERS,
+    DRIVER_CENTRAL_BANK,
+    DRIVER_DXY,
+    DRIVER_FED,
+    DRIVER_GROWTH,
+    DRIVER_INFLATION,
+    DRIVER_LABOR,
+    DRIVER_PHYSICAL,
+    DRIVER_POSITIONING,
+    DRIVER_REAL_YIELD,
+    DRIVER_SAFE_HAVEN,
+    DRIVER_WEIGHTS,
+    MacroAnalysisEngine,
+)
 from researchos.objects.macro import (
     CentralBankDemand,
     DollarStrengthSnapshot,
@@ -23,21 +37,7 @@ from researchos.objects.macro import (
     RealYieldSnapshot,
     SafeHavenAssessment,
 )
-from researchos.macro.engine import (
-    ALL_DRIVERS,
-    DRIVER_WEIGHTS,
-    DRIVER_CENTRAL_BANK,
-    DRIVER_DXY,
-    DRIVER_FED,
-    DRIVER_GROWTH,
-    DRIVER_INFLATION,
-    DRIVER_LABOR,
-    DRIVER_PHYSICAL,
-    DRIVER_POSITIONING,
-    DRIVER_REAL_YIELD,
-    DRIVER_SAFE_HAVEN,
-    MacroAnalysisEngine,
-)
+from researchos.objects.process import AuditEntry
 from researchos.repository.memory import MemoryRepository
 
 
@@ -48,6 +48,7 @@ def ts(year=2024, month=1, day=1):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def repo():
@@ -63,13 +64,19 @@ def engine(repo):
 # PHASE 1 — Object Serialization Round-Trips
 # ===========================================================================
 
+
 class TestObjectSerialization:
     """Verify to_dict/from_dict round-trip for all 13 macro types."""
 
     def test_real_yield_snapshot_round_trip(self):
-        obj = RealYieldSnapshot(ten_year_yield=4.5, five_year_yield=4.2,
-                                 inflation_expectations=2.5, tips_yield=1.8,
-                                 score=35.0, confidence=0.8)
+        obj = RealYieldSnapshot(
+            ten_year_yield=4.5,
+            five_year_yield=4.2,
+            inflation_expectations=2.5,
+            tips_yield=1.8,
+            score=35.0,
+            confidence=0.8,
+        )
         d = obj.to_dict()
         obj2 = RealYieldSnapshot.from_dict(d)
         assert obj.id == obj2.id
@@ -78,8 +85,7 @@ class TestObjectSerialization:
         assert obj.expected_gold_impact == obj2.expected_gold_impact
 
     def test_dollar_strength_snapshot_round_trip(self):
-        obj = DollarStrengthSnapshot(dxy=104.5, dxy_trend="Rising",
-                                      score=40.0, confidence=0.7)
+        obj = DollarStrengthSnapshot(dxy=104.5, dxy_trend="Rising", score=40.0, confidence=0.7)
         d = obj.to_dict()
         obj2 = DollarStrengthSnapshot.from_dict(d)
         assert obj.id == obj2.id
@@ -87,8 +93,7 @@ class TestObjectSerialization:
         assert obj.score == obj2.score
 
     def test_fed_policy_assessment_round_trip(self):
-        obj = FedPolicyAssessment(policy_classification="Dovish",
-                                   rate_change_bps=-25, score=75.0)
+        obj = FedPolicyAssessment(policy_classification="Dovish", rate_change_bps=-25, score=75.0)
         d = obj.to_dict()
         obj2 = FedPolicyAssessment.from_dict(d)
         assert obj.id == obj2.id
@@ -110,40 +115,46 @@ class TestObjectSerialization:
         assert obj.economic_strength == obj2.economic_strength
 
     def test_economic_growth_assessment_round_trip(self):
-        obj = EconomicGrowthAssessment(gdp=2.1, ism_manufacturing=48.5,
-                                        score=60.0)
+        obj = EconomicGrowthAssessment(gdp=2.1, ism_manufacturing=48.5, score=60.0)
         d = obj.to_dict()
         obj2 = EconomicGrowthAssessment.from_dict(d)
         assert obj.id == obj2.id
         assert obj.growth_phase == obj2.growth_phase
 
     def test_safe_haven_assessment_round_trip(self):
-        obj = SafeHavenAssessment(risk_aversion_score=75, safe_haven_demand="Elevated",
-                                   active_conflicts=["Ukraine"], score=72.0)
+        obj = SafeHavenAssessment(
+            risk_aversion_score=75,
+            safe_haven_demand="Elevated",
+            active_conflicts=["Ukraine"],
+            score=72.0,
+        )
         d = obj.to_dict()
         obj2 = SafeHavenAssessment.from_dict(d)
         assert obj.id == obj2.id
         assert obj.active_conflicts == ["Ukraine"]
 
     def test_central_bank_demand_round_trip(self):
-        obj = CentralBankDemand(monthly_purchases=50, annual_purchases=800,
-                                 demand_trend="Accelerating", score=78.0)
+        obj = CentralBankDemand(
+            monthly_purchases=50, annual_purchases=800, demand_trend="Accelerating", score=78.0
+        )
         d = obj.to_dict()
         obj2 = CentralBankDemand.from_dict(d)
         assert obj.id == obj2.id
         assert obj.monthly_purchases == obj2.monthly_purchases
 
     def test_physical_demand_snapshot_round_trip(self):
-        obj = PhysicalDemandSnapshot(comex_inventories=800, etf_flows_monthly=25,
-                                      indian_demand="Strong", score=68.0)
+        obj = PhysicalDemandSnapshot(
+            comex_inventories=800, etf_flows_monthly=25, indian_demand="Strong", score=68.0
+        )
         d = obj.to_dict()
         obj2 = PhysicalDemandSnapshot.from_dict(d)
         assert obj.id == obj2.id
         assert obj.indian_demand == obj2.indian_demand
 
     def test_positioning_assessment_round_trip(self):
-        obj = PositioningAssessment(managed_money_long=250000, managed_money_short=50000,
-                                     score=45.0)
+        obj = PositioningAssessment(
+            managed_money_long=250000, managed_money_short=50000, score=45.0
+        )
         d = obj.to_dict()
         obj2 = PositioningAssessment.from_dict(d)
         assert obj.id == obj2.id
@@ -151,8 +162,11 @@ class TestObjectSerialization:
         assert obj2.net_positioning == 200000
 
     def test_macro_score_round_trip(self):
-        obj = MacroScore(aggregate_score=65.5, dominant_driver=DRIVER_FED,
-                          component_scores={DRIVER_FED: 75.0, DRIVER_DXY: 55.0})
+        obj = MacroScore(
+            aggregate_score=65.5,
+            dominant_driver=DRIVER_FED,
+            component_scores={DRIVER_FED: 75.0, DRIVER_DXY: 55.0},
+        )
         d = obj.to_dict()
         obj2 = MacroScore.from_dict(d)
         assert obj.id == obj2.id
@@ -160,8 +174,12 @@ class TestObjectSerialization:
         assert obj.dominant_driver == obj2.dominant_driver
 
     def test_macro_probability_round_trip(self):
-        obj = MacroProbability(probability_long=0.55, probability_short=0.15,
-                                probability_range=0.30, dominant_bias="Long")
+        obj = MacroProbability(
+            probability_long=0.55,
+            probability_short=0.15,
+            probability_range=0.30,
+            dominant_bias="Long",
+        )
         d = obj.to_dict()
         obj2 = MacroProbability.from_dict(d)
         assert obj.id == obj2.id
@@ -169,16 +187,21 @@ class TestObjectSerialization:
         assert obj.dominant_bias == obj2.dominant_bias
 
     def test_macro_regime_round_trip(self):
-        obj = MacroRegime(regime_name="Risk_Off", primary_driver=DRIVER_SAFE_HAVEN,
-                           stability="Stable", score=72.0)
+        obj = MacroRegime(
+            regime_name="Risk_Off", primary_driver=DRIVER_SAFE_HAVEN, stability="Stable", score=72.0
+        )
         d = obj.to_dict()
         obj2 = MacroRegime.from_dict(d)
         assert obj.id == obj2.id
         assert obj.regime_name == obj2.regime_name
 
     def test_macro_report_round_trip(self):
-        obj = MacroReport(title="Test Report", regime="Risk_Off",
-                           suggested_bias="Long", expected_volatility="Elevated")
+        obj = MacroReport(
+            title="Test Report",
+            regime="Risk_Off",
+            suggested_bias="Long",
+            expected_volatility="Elevated",
+        )
         d = obj.to_dict()
         obj2 = MacroReport.from_dict(d)
         assert obj.id == obj2.id
@@ -212,6 +235,7 @@ class TestObjectSerialization:
 # ===========================================================================
 # PHASE 2 — Determinism & Hash Consistency
 # ===========================================================================
+
 
 class TestDeterminism:
     """Same inputs produce same IDs and hashes."""
@@ -258,29 +282,42 @@ class TestDeterminism:
 # Helper data loaders (module-level for reuse across test classes)
 # ===========================================================================
 
+
 def _load_bullish_drivers(engine):
     engine.assess_real_yields(3.0, 3.0, 3.5, -0.8)
     engine.assess_dollar(92.0, "Falling", "Bearish")
-    engine.assess_fed_policy(policy_classification="Dovish", rate_change_bps=-25, hawkishness_score=30)
+    engine.assess_fed_policy(
+        policy_classification="Dovish", rate_change_bps=-25, hawkishness_score=30
+    )
     engine.assess_inflation(4.5, 4.0)
     engine.assess_labor_market(nfp=80, unemployment_rate=5.2)
     engine.assess_economic_growth(gdp=0.8, ism_manufacturing=46, ism_services=48)
     engine.assess_safe_haven(70, "Elevated", ["Conflict"], "Elevated")
-    engine.assess_central_bank_demand(monthly_purchases=60, annual_purchases=900, demand_trend="Accelerating")
-    engine.assess_physical_demand(comex_inventories=700, etf_flows_monthly=25, indian_demand="Strong", chinese_demand="Strong")
+    engine.assess_central_bank_demand(
+        monthly_purchases=60, annual_purchases=900, demand_trend="Accelerating"
+    )
+    engine.assess_physical_demand(
+        comex_inventories=700, etf_flows_monthly=25, indian_demand="Strong", chinese_demand="Strong"
+    )
     engine.assess_positioning(managed_money_long=50000, managed_money_short=180000)
 
 
 def _load_bearish_drivers(engine):
     engine.assess_real_yields(5.5, 4.5, 2.0, 2.5)
     engine.assess_dollar(108.0, "Rising", "Bullish")
-    engine.assess_fed_policy(policy_classification="Hawkish", rate_change_bps=25, hawkishness_score=70)
+    engine.assess_fed_policy(
+        policy_classification="Hawkish", rate_change_bps=25, hawkishness_score=70
+    )
     engine.assess_inflation(2.0, 2.0)
     engine.assess_labor_market(nfp=350, unemployment_rate=3.2)
     engine.assess_economic_growth(gdp=3.5, ism_manufacturing=58, ism_services=56)
     engine.assess_safe_haven(30, "Subdued", [], "Low")
-    engine.assess_central_bank_demand(monthly_purchases=5, annual_purchases=50, demand_trend="Declining")
-    engine.assess_physical_demand(comex_inventories=900, etf_flows_monthly=-15, indian_demand="Weak", chinese_demand="Weak")
+    engine.assess_central_bank_demand(
+        monthly_purchases=5, annual_purchases=50, demand_trend="Declining"
+    )
+    engine.assess_physical_demand(
+        comex_inventories=900, etf_flows_monthly=-15, indian_demand="Weak", chinese_demand="Weak"
+    )
     engine.assess_positioning(managed_money_long=250000, managed_money_short=30000)
 
 
@@ -292,8 +329,15 @@ def _load_mixed_drivers(engine):
     engine.assess_labor_market(nfp=200, unemployment_rate=3.8)
     engine.assess_economic_growth(gdp=2.5, ism_manufacturing=52, ism_services=50)
     engine.assess_safe_haven(50, "Normal", [], "Normal")
-    engine.assess_central_bank_demand(monthly_purchases=30, annual_purchases=500, demand_trend="Stable")
-    engine.assess_physical_demand(comex_inventories=800, etf_flows_monthly=10, indian_demand="Moderate", chinese_demand="Moderate")
+    engine.assess_central_bank_demand(
+        monthly_purchases=30, annual_purchases=500, demand_trend="Stable"
+    )
+    engine.assess_physical_demand(
+        comex_inventories=800,
+        etf_flows_monthly=10,
+        indian_demand="Moderate",
+        chinese_demand="Moderate",
+    )
     engine.assess_positioning(managed_money_long=150000, managed_money_short=100000)
 
 
@@ -301,14 +345,17 @@ def _load_mixed_drivers(engine):
 # PHASE 3 — Engine Driver Assessments
 # ===========================================================================
 
+
 class TestDriverAssessments:
     """Each of the 10 macro drivers produces correct assessments."""
 
     def test_real_yields_bullish(self, engine):
         """Low/falling real yields = bullish for gold."""
         result = engine.assess_real_yields(
-            ten_year_yield=3.8, five_year_yield=3.7,
-            inflation_expectations=2.2, tips_yield=-0.5,
+            ten_year_yield=3.8,
+            five_year_yield=3.7,
+            inflation_expectations=2.2,
+            tips_yield=-0.5,
         )
         assert result.score > 60
         assert result.expected_gold_impact in ("Bullish", "Strongly_Bullish")
@@ -317,8 +364,10 @@ class TestDriverAssessments:
     def test_real_yields_bearish(self, engine):
         """High/rising real yields = bearish for gold."""
         result = engine.assess_real_yields(
-            ten_year_yield=5.5, five_year_yield=4.5,
-            inflation_expectations=2.0, tips_yield=2.0,
+            ten_year_yield=5.5,
+            five_year_yield=4.5,
+            inflation_expectations=2.0,
+            tips_yield=2.0,
         )
         assert result.score < 40
         assert result.expected_gold_impact in ("Bearish", "Strongly_Bearish")
@@ -327,8 +376,10 @@ class TestDriverAssessments:
     def test_real_yields_extreme(self, engine):
         """Extreme negative real yields = strongly bullish."""
         result = engine.assess_real_yields(
-            ten_year_yield=3.0, five_year_yield=3.0,
-            inflation_expectations=3.0, tips_yield=-1.5,
+            ten_year_yield=3.0,
+            five_year_yield=3.0,
+            inflation_expectations=3.0,
+            tips_yield=-1.5,
         )
         assert result.score >= 80
         assert result.expected_gold_impact == "Strongly_Bullish"
@@ -336,44 +387,43 @@ class TestDriverAssessments:
 
     def test_dollar_weak_bullish(self, engine):
         """Weak dollar = bullish for gold."""
-        result = engine.assess_dollar(dxy=94.0, dxy_trend="Falling",
-                                       dxy_momentum="Bearish")
+        result = engine.assess_dollar(dxy=94.0, dxy_trend="Falling", dxy_momentum="Bearish")
         assert result.score > 60
 
     def test_dollar_strong_bearish(self, engine):
         """Strong dollar = bearish for gold."""
-        result = engine.assess_dollar(dxy=108.0, dxy_trend="Rising",
-                                       dxy_momentum="Bullish")
+        result = engine.assess_dollar(dxy=108.0, dxy_trend="Rising", dxy_momentum="Bullish")
         assert result.score < 40
 
     def test_dollar_breakout_down(self, engine):
         """Dollar breakout down = most bullish."""
-        result = engine.assess_dollar(dxy=96.0, dxy_trend="Breakout_Down",
-                                       dxy_momentum="Strong_Bearish")
+        result = engine.assess_dollar(
+            dxy=96.0, dxy_trend="Breakout_Down", dxy_momentum="Strong_Bearish"
+        )
         assert result.score > 70
         assert result.confidence >= 0.8
 
     def test_fed_dovish_bullish(self, engine):
         """Dovish Fed = bullish for gold."""
         result = engine.assess_fed_policy(
-            policy_classification="Dovish", rate_change_bps=-25,
-            hawkishness_score=30.0)
+            policy_classification="Dovish", rate_change_bps=-25, hawkishness_score=30.0
+        )
         assert result.score > 60
         assert result.gold_pressure == "Bullish"
 
     def test_fed_hawkish_bearish(self, engine):
         """Hawkish Fed = bearish for gold."""
         result = engine.assess_fed_policy(
-            policy_classification="Hawkish", rate_change_bps=25,
-            hawkishness_score=70.0)
+            policy_classification="Hawkish", rate_change_bps=25, hawkishness_score=70.0
+        )
         assert result.score < 40
         assert result.gold_pressure == "Bearish"
 
     def test_fed_extreme_dovish(self, engine):
         """Extremely dovish = highest score."""
         result = engine.assess_fed_policy(
-            policy_classification="Extremely_Dovish", rate_change_bps=-50,
-            hawkishness_score=15.0)
+            policy_classification="Extremely_Dovish", rate_change_bps=-50, hawkishness_score=15.0
+        )
         assert result.score >= 80
         assert result.confidence >= 0.8
 
@@ -405,90 +455,97 @@ class TestDriverAssessments:
 
     def test_labor_strong_bearish(self, engine):
         """Strong labor market = bearish for gold."""
-        result = engine.assess_labor_market(nfp=350, unemployment_rate=3.4,
-                                             wage_growth=4.5)
+        result = engine.assess_labor_market(nfp=350, unemployment_rate=3.4, wage_growth=4.5)
         assert result.score < 35
         assert result.economic_strength == "Very_Strong"
 
     def test_growth_weak_bullish(self, engine):
         """Weak growth = bullish for gold."""
-        result = engine.assess_economic_growth(gdp=0.5, ism_manufacturing=46,
-                                                ism_services=48)
+        result = engine.assess_economic_growth(gdp=0.5, ism_manufacturing=46, ism_services=48)
         assert result.score > 60
         assert result.recession_risk in ("Elevated", "High")
 
     def test_growth_boom_bearish(self, engine):
         """Strong growth = neutral to bearish for gold."""
-        result = engine.assess_economic_growth(gdp=3.5, ism_manufacturing=58,
-                                                ism_services=56)
+        result = engine.assess_economic_growth(gdp=3.5, ism_manufacturing=58, ism_services=56)
         assert result.score < 35
         assert result.growth_phase == "Boom"
 
     def test_safe_haven_elevated(self, engine):
         """Elevated safe haven demand = bullish."""
         result = engine.assess_safe_haven(
-            risk_aversion_score=75, safe_haven_demand="Elevated",
-            active_conflicts=["Ukraine", "Gaza"], financial_stress="Elevated",
-            vix_equivalent=22.0)
+            risk_aversion_score=75,
+            safe_haven_demand="Elevated",
+            active_conflicts=["Ukraine", "Gaza"],
+            financial_stress="Elevated",
+            vix_equivalent=22.0,
+        )
         assert result.score > 60
 
     def test_safe_haven_crisis(self, engine):
         """Crisis conditions = very bullish."""
         result = engine.assess_safe_haven(
-            risk_aversion_score=90, safe_haven_demand="Extreme",
-            active_conflicts=["War", "Conflict", "Crisis"], financial_stress="Crisis",
-            vix_equivalent=35.0)
+            risk_aversion_score=90,
+            safe_haven_demand="Extreme",
+            active_conflicts=["War", "Conflict", "Crisis"],
+            financial_stress="Crisis",
+            vix_equivalent=35.0,
+        )
         assert result.score >= 75
         assert result.confidence >= 0.8
 
     def test_central_bank_high_demand(self, engine):
         """Strong central bank buying = bullish."""
         result = engine.assess_central_bank_demand(
-            monthly_purchases=60, annual_purchases=900,
-            demand_trend="Accelerating")
+            monthly_purchases=60, annual_purchases=900, demand_trend="Accelerating"
+        )
         assert result.score > 70
 
     def test_central_bank_low_demand(self, engine):
         """Minimal central bank buying = neutral."""
         result = engine.assess_central_bank_demand(
-            monthly_purchases=5, annual_purchases=50,
-            demand_trend="Declining")
+            monthly_purchases=5, annual_purchases=50, demand_trend="Declining"
+        )
         assert result.score < 40
 
     def test_physical_demand_strong(self, engine):
         """Strong physical demand = bullish."""
         result = engine.assess_physical_demand(
-            comex_inventories=700, etf_flows_monthly=30,
-            indian_demand="Strong", chinese_demand="Strong",
-            seasonality="Positive")
+            comex_inventories=700,
+            etf_flows_monthly=30,
+            indian_demand="Strong",
+            chinese_demand="Strong",
+            seasonality="Positive",
+        )
         assert result.score > 60
 
     def test_physical_demand_weak(self, engine):
         """Weak physical demand = bearish."""
         result = engine.assess_physical_demand(
-            comex_inventories=900, etf_flows_monthly=-20,
-            indian_demand="Weak", chinese_demand="Weak",
-            seasonality="Negative", supply_pressure="Abundant")
+            comex_inventories=900,
+            etf_flows_monthly=-20,
+            indian_demand="Weak",
+            chinese_demand="Weak",
+            seasonality="Negative",
+            supply_pressure="Abundant",
+        )
         assert result.score < 45
 
     def test_positioning_bullish_contrarian(self, engine):
         """Extreme short positioning = contrarian bullish."""
-        result = engine.assess_positioning(
-            managed_money_long=40000, managed_money_short=200000)
+        result = engine.assess_positioning(managed_money_long=40000, managed_money_short=200000)
         assert result.score > 60
         assert result.crowded_side == "Extreme_Short"
 
     def test_positioning_bearish_contrarian(self, engine):
         """Extreme long positioning = contrarian bearish."""
-        result = engine.assess_positioning(
-            managed_money_long=250000, managed_money_short=30000)
+        result = engine.assess_positioning(managed_money_long=250000, managed_money_short=30000)
         assert result.score < 40
         assert result.crowded_side == "Extreme_Long"
 
     def test_positioning_neutral(self, engine):
         """Neutral positioning = neutral score."""
-        result = engine.assess_positioning(
-            managed_money_long=100000, managed_money_short=90000)
+        result = engine.assess_positioning(managed_money_long=100000, managed_money_short=90000)
         assert result.score == 50.0
         assert result.crowded_side == "Neutral"
 
@@ -507,9 +564,15 @@ class TestDriverAssessments:
 
         all_objs = repo.get_all()
         driver_types = {
-            RealYieldSnapshot, DollarStrengthSnapshot, FedPolicyAssessment,
-            InflationAssessment, LaborMarketAssessment, EconomicGrowthAssessment,
-            SafeHavenAssessment, CentralBankDemand, PhysicalDemandSnapshot,
+            RealYieldSnapshot,
+            DollarStrengthSnapshot,
+            FedPolicyAssessment,
+            InflationAssessment,
+            LaborMarketAssessment,
+            EconomicGrowthAssessment,
+            SafeHavenAssessment,
+            CentralBankDemand,
+            PhysicalDemandSnapshot,
             PositioningAssessment,
         }
         found_types = {type(o) for o in all_objs}
@@ -520,6 +583,7 @@ class TestDriverAssessments:
 # ===========================================================================
 # PHASE 4 — Aggregate Scoring
 # ===========================================================================
+
 
 class TestMacroScore:
     """Weighted aggregate macro scoring."""
@@ -581,6 +645,7 @@ class TestMacroScore:
 # ===========================================================================
 # PHASE 5 — Probability Engine
 # ===========================================================================
+
 
 class TestProbabilities:
     """Probability distribution computation."""
@@ -650,6 +715,7 @@ class TestProbabilities:
 # PHASE 6 — Regime Classification
 # ===========================================================================
 
+
 class TestRegimeClassification:
     """Macro regime classification."""
 
@@ -663,8 +729,13 @@ class TestRegimeClassification:
 
     def test_regime_risk_off(self, engine):
         """High score with safe haven dominant = Risk_Off."""
-        engine.assess_safe_haven(risk_aversion_score=85, safe_haven_demand="Elevated",
-                                  active_conflicts=["War"], financial_stress="Crisis", vix_equivalent=30)
+        engine.assess_safe_haven(
+            risk_aversion_score=85,
+            safe_haven_demand="Elevated",
+            active_conflicts=["War"],
+            financial_stress="Crisis",
+            vix_equivalent=30,
+        )
         engine.assess_real_yields(3.0, 3.0, 3.0, 1.0)
         engine.assess_dollar(102.0, "Ranging")
         engine.assess_fed_policy(policy_classification="Neutral")
@@ -705,6 +776,7 @@ class TestRegimeClassification:
 # ===========================================================================
 # PHASE 7 — Report Generation
 # ===========================================================================
+
 
 class TestReportGeneration:
     """Institutional report generation."""
@@ -755,8 +827,7 @@ class TestReportGeneration:
         score = engine.compute_macro_score()
         regime = engine.classify_regime(score)
         prob = engine.compute_probabilities(score, regime)
-        levels = {"support_1": 2300, "support_2": 2250,
-                   "resistance_1": 2400, "resistance_2": 2450}
+        levels = {"support_1": 2300, "support_2": 2250, "resistance_1": 2400, "resistance_2": 2450}
         report = engine.generate_report(score, prob, regime, key_levels=levels)
         assert report.key_levels == levels
 
@@ -793,26 +864,43 @@ class TestReportGeneration:
 # PHASE 8 — Full Analysis Integration
 # ===========================================================================
 
+
 class TestFullAnalysis:
     """End-to-end full_analysis integration."""
 
     BULLISH_DATA = {
         "real_yield_data": {
-            "ten_year_yield": 3.0, "five_year_yield": 3.0,
-            "inflation_expectations": 3.5, "tips_yield": -0.8,
+            "ten_year_yield": 3.0,
+            "five_year_yield": 3.0,
+            "inflation_expectations": 3.5,
+            "tips_yield": -0.8,
         },
         "dollar_data": {"dxy": 92.0, "dxy_trend": "Falling", "dxy_momentum": "Bearish"},
-        "fed_data": {"policy_classification": "Dovish", "rate_change_bps": -25,
-                      "hawkishness_score": 30},
+        "fed_data": {
+            "policy_classification": "Dovish",
+            "rate_change_bps": -25,
+            "hawkishness_score": 30,
+        },
         "inflation_data": {"cpi": 4.5, "core_cpi": 4.0},
         "labor_data": {"nfp": 80, "unemployment_rate": 5.2},
         "growth_data": {"gdp": 0.8, "ism_manufacturing": 46, "ism_services": 48},
-        "safe_haven_data": {"risk_aversion_score": 70, "safe_haven_demand": "Elevated",
-                             "active_conflicts": ["Conflict"], "financial_stress": "Elevated"},
-        "cb_data": {"monthly_purchases": 60, "annual_purchases": 900,
-                     "demand_trend": "Accelerating"},
-        "physical_data": {"comex_inventories": 700, "etf_flows_monthly": 25,
-                           "indian_demand": "Strong", "chinese_demand": "Strong"},
+        "safe_haven_data": {
+            "risk_aversion_score": 70,
+            "safe_haven_demand": "Elevated",
+            "active_conflicts": ["Conflict"],
+            "financial_stress": "Elevated",
+        },
+        "cb_data": {
+            "monthly_purchases": 60,
+            "annual_purchases": 900,
+            "demand_trend": "Accelerating",
+        },
+        "physical_data": {
+            "comex_inventories": 700,
+            "etf_flows_monthly": 25,
+            "indian_demand": "Strong",
+            "chinese_demand": "Strong",
+        },
         "positioning_data": {"managed_money_long": 50000, "managed_money_short": 180000},
     }
 
@@ -839,8 +927,9 @@ class TestFullAnalysis:
 
     def test_full_analysis_with_ontology_tags(self, engine):
         """Ontology tags propagate through full analysis."""
-        report = engine.full_analysis(**self.BULLISH_DATA,
-                                       ontology_tags=["gold", "macro", "xauusd"])
+        report = engine.full_analysis(
+            **self.BULLISH_DATA, ontology_tags=["gold", "macro", "xauusd"]
+        )
         assert "gold" in report.ontology_tags
 
     def test_full_analysis_with_key_levels(self, engine):
@@ -864,6 +953,7 @@ class TestFullAnalysis:
 # ===========================================================================
 # PHASE 9 — Edge Cases & Error Handling
 # ===========================================================================
+
 
 class TestEdgeCases:
     """Boundary conditions and edge cases."""
@@ -909,8 +999,7 @@ class TestEdgeCases:
     def test_audit_entries_created(self, engine, repo):
         """Each driver assessment creates audit entries."""
         _load_bullish_drivers(engine)
-        audits = [o for o in repo.get_all()
-                  if isinstance(o, AuditEntry)]
+        audits = [o for o in repo.get_all() if isinstance(o, AuditEntry)]
         assert len(audits) >= 10  # At least 10 audit entries for 10 drivers
 
     def test_idempotent_save(self):
@@ -937,9 +1026,16 @@ class TestEdgeCases:
         """ALL_DRIVERS contains exactly 10 entries."""
         assert len(ALL_DRIVERS) == 10
         expected = {
-            DRIVER_REAL_YIELD, DRIVER_DXY, DRIVER_FED, DRIVER_INFLATION,
-            DRIVER_LABOR, DRIVER_GROWTH, DRIVER_SAFE_HAVEN,
-            DRIVER_CENTRAL_BANK, DRIVER_PHYSICAL, DRIVER_POSITIONING,
+            DRIVER_REAL_YIELD,
+            DRIVER_DXY,
+            DRIVER_FED,
+            DRIVER_INFLATION,
+            DRIVER_LABOR,
+            DRIVER_GROWTH,
+            DRIVER_SAFE_HAVEN,
+            DRIVER_CENTRAL_BANK,
+            DRIVER_PHYSICAL,
+            DRIVER_POSITIONING,
         }
         assert set(ALL_DRIVERS) == expected
 

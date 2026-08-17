@@ -18,29 +18,29 @@ Architecture invariants:
 
 from __future__ import annotations
 
-from macro_intelligence.regime.classification.taxonomy import (
-    MacroRegime,
-    LiquidityRegime,
-    RiskRegime,
-    MonetaryRegime,
-    MACRO_REGIME_PRIORITY,
-    LIQUIDITY_REGIME_PRIORITY,
-    RISK_REGIME_PRIORITY,
-    MONETARY_REGIME_PRIORITY,
-)
+from macro_intelligence.regime.classification.classifier import RegimeClassifier
 from macro_intelligence.regime.classification.models import (
-    ClassificationRule,
     ClassificationEvidence,
+    ClassificationRule,
     RegimeClassification,
 )
-from macro_intelligence.regime.classification.classifier import RegimeClassifier
 from macro_intelligence.regime.classification.rules import (
-    RULES_VERSION,
     ALL_RULES,
     GROWTH_INFLATION_RULES,
     LIQUIDITY_RULES,
-    RISK_RULES,
     MONETARY_RULES,
+    RISK_RULES,
+    RULES_VERSION,
+)
+from macro_intelligence.regime.classification.taxonomy import (
+    LIQUIDITY_REGIME_PRIORITY,
+    MACRO_REGIME_PRIORITY,
+    MONETARY_REGIME_PRIORITY,
+    RISK_REGIME_PRIORITY,
+    LiquidityRegime,
+    MacroRegime,
+    MonetaryRegime,
+    RiskRegime,
 )
 
 __all__ = [

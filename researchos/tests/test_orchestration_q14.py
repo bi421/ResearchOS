@@ -23,12 +23,12 @@ import unittest
 
 from researchos.orchestration import (
     ORCHESTRATION_VERSION,
+    EvidenceEdgeDescriptor,
+    EvidenceNodeDescriptor,
     OrchestrationError,
     PipelineReport,
     PipelineStage,
     PipelineStatus,
-    EvidenceEdgeDescriptor,
-    EvidenceNodeDescriptor,
     ResearchOrchestrator,
 )
 from researchos.orchestration.engine import (
@@ -107,9 +107,7 @@ class TestPublicAPI(unittest.TestCase):
             self.assertTrue(cls.__dataclass_params__.frozen, cls.__name__)
 
     def test_orchestrator_exposes_expected_methods(self):
-        methods = {
-            m for m in dir(ResearchOrchestrator) if not m.startswith("_")
-        }
+        methods = {m for m in dir(ResearchOrchestrator) if not m.startswith("_")}
         self.assertIn("build_dataset", methods)
         self.assertIn("validate", methods)
         self.assertIn("train", methods)
@@ -122,13 +120,23 @@ class TestDeterministicHelpers(unittest.TestCase):
     def test_pipeline_id_deterministic(self):
         kw = _pipeline_kwargs()
         id1 = _make_pipeline_id(
-            kw["close"], kw["high"], kw["low"], kw["volume"],
-            kw["model_id"], kw["train_size"], kw["validation_size"],
+            kw["close"],
+            kw["high"],
+            kw["low"],
+            kw["volume"],
+            kw["model_id"],
+            kw["train_size"],
+            kw["validation_size"],
             kw["step_size"],
         )
         id2 = _make_pipeline_id(
-            kw["close"], kw["high"], kw["low"], kw["volume"],
-            kw["model_id"], kw["train_size"], kw["validation_size"],
+            kw["close"],
+            kw["high"],
+            kw["low"],
+            kw["volume"],
+            kw["model_id"],
+            kw["train_size"],
+            kw["validation_size"],
             kw["step_size"],
         )
         self.assertEqual(id1, id2)
@@ -148,19 +156,31 @@ class TestDeterministicHelpers(unittest.TestCase):
     def test_dataset_hash_deterministic_and_content_sensitive(self):
         close, high, low, volume = _make_ohlcv(120)
         ds1 = ResearchOrchestrator().build_dataset(
-            close, high, low, volume,
-            label_horizon=1, label_type="binary",
+            close,
+            high,
+            low,
+            volume,
+            label_horizon=1,
+            label_type="binary",
         )
         ds2 = ResearchOrchestrator().build_dataset(
-            close, high, low, volume,
-            label_horizon=1, label_type="binary",
+            close,
+            high,
+            low,
+            volume,
+            label_horizon=1,
+            label_type="binary",
         )
         self.assertEqual(_dataset_hash(ds1), _dataset_hash(ds2))
         # A perturbed dataset produces a different hash.
         close3 = [c + 0.001 for c in close]
         ds3 = ResearchOrchestrator().build_dataset(
-            close3, high, low, volume,
-            label_horizon=1, label_type="binary",
+            close3,
+            high,
+            low,
+            volume,
+            label_horizon=1,
+            label_type="binary",
         )
         self.assertNotEqual(_dataset_hash(ds1), _dataset_hash(ds3))
 
@@ -171,8 +191,12 @@ class TestStepMethods(unittest.TestCase):
     def test_build_dataset_returns_research_dataset(self):
         close, high, low, volume = _make_ohlcv(200)
         ds = ResearchOrchestrator().build_dataset(
-            close, high, low, volume,
-            label_horizon=1, label_type="binary",
+            close,
+            high,
+            low,
+            volume,
+            label_horizon=1,
+            label_type="binary",
         )
         self.assertIsInstance(ds, ResearchDataset)
         self.assertGreater(ds.sample_count, 0)
@@ -183,11 +207,18 @@ class TestStepMethods(unittest.TestCase):
         close, high, low, volume = _make_ohlcv(300)
         orch = ResearchOrchestrator()
         ds = orch.build_dataset(
-            close, high, low, volume,
-            label_horizon=1, label_type="binary",
+            close,
+            high,
+            low,
+            volume,
+            label_horizon=1,
+            label_type="binary",
         )
         vr = orch.validate(
-            ds, train_size=80, validation_size=20, step_size=20,
+            ds,
+            train_size=80,
+            validation_size=20,
+            step_size=20,
         )
         self.assertIsInstance(vr, ValidationResult)
         self.assertGreater(vr.fold_count, 0)
@@ -196,8 +227,12 @@ class TestStepMethods(unittest.TestCase):
         close, high, low, volume = _make_ohlcv(300)
         orch = ResearchOrchestrator()
         ds = orch.build_dataset(
-            close, high, low, volume,
-            label_horizon=1, label_type="binary",
+            close,
+            high,
+            low,
+            volume,
+            label_horizon=1,
+            label_type="binary",
         )
         tr = orch.train(
             ds,
@@ -214,8 +249,12 @@ class TestStepMethods(unittest.TestCase):
         close, high, low, volume = _make_ohlcv(100)
         with self.assertRaises(OrchestrationError):
             ResearchOrchestrator().build_dataset(
-                close, high, low, volume,
-                label_horizon=1, label_type="bogus",
+                close,
+                high,
+                low,
+                volume,
+                label_horizon=1,
+                label_type="bogus",
             )
 
 
@@ -348,9 +387,7 @@ class TestPurityGuards(unittest.TestCase):
             self.assertNotIn(forbidden, src)
 
     def test_stdlib_only_imports(self):
-        engine_src = open(
-            os.path.join(_ORCH_DIR, "engine.py"), encoding="utf-8"
-        ).read()
+        engine_src = open(os.path.join(_ORCH_DIR, "engine.py"), encoding="utf-8").read()
         compile(engine_src, "engine.py", "exec")
         # Compilation succeeds (already proven), and the import section only
         # references the project package plus the stdlib.
@@ -361,13 +398,12 @@ class TestPurityGuards(unittest.TestCase):
         self.assertNotIn("import sklearn", engine_src)
 
     def test_no_singleton_or_global_mutable_state(self):
-        engine_src = open(
-            os.path.join(_ORCH_DIR, "engine.py"), encoding="utf-8"
-        ).read()
+        engine_src = open(os.path.join(_ORCH_DIR, "engine.py"), encoding="utf-8").read()
         # Use a multi-line docstring check: the engine __init__ docstring
         # mentions "no global state" but we want to ensure no actual
         # Python-level 'global ' keyword statement exists.
         import ast
+
         tree = ast.parse(engine_src)
         for node in ast.walk(tree):
             if isinstance(node, ast.Global):
@@ -381,9 +417,7 @@ class TestPurityGuards(unittest.TestCase):
                     if alias.name == "random" or alias.name.startswith("random."):
                         self.fail(f"engine.py imports random module: {alias.name}")
             if isinstance(node, ast.ImportFrom):
-                if node.module and (
-                    node.module == "random" or node.module.startswith("random.")
-                ):
+                if node.module and (node.module == "random" or node.module.startswith("random.")):
                     self.fail(f"engine.py imports from random module: {node.module}")
 
     def test_dependency_injection_only(self):

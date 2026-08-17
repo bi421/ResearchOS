@@ -47,9 +47,7 @@ def _as_immutable_mapping(value: Any) -> MappingProxyType:
     """Normalise a metadata value to an immutable mapping."""
     if isinstance(value, Mapping):
         return MappingProxyType(dict(value))
-    raise InvalidPipelineRecordError(
-        f"metadata must be a mapping, got {type(value).__name__}"
-    )
+    raise InvalidPipelineRecordError(f"metadata must be a mapping, got {type(value).__name__}")
 
 
 def _validate_identifier(value: Any, name: str) -> str:
@@ -130,9 +128,7 @@ class PipelineRecord:
                 pipeline_id=str(data["pipeline_id"]),
                 report=PipelineReport.from_dict(report_data),
                 stored_at=str(data.get("stored_at", "")),
-                version=str(
-                    data.get("version", PIPELINE_REPOSITORY_VERSION)
-                ),
+                version=str(data.get("version", PIPELINE_REPOSITORY_VERSION)),
                 metadata=dict(data.get("metadata", {})),
             )
         except KeyError as exc:
@@ -140,9 +136,7 @@ class PipelineRecord:
         except PipelineRepositoryError:
             raise
         except (TypeError, ValueError) as exc:
-            raise InvalidPipelineRecordError(
-                f"invalid pipeline record: {exc}"
-            ) from None
+            raise InvalidPipelineRecordError(f"invalid pipeline record: {exc}") from None
 
 
 __all__ = [
@@ -152,4 +146,3 @@ __all__ = [
     "PipelineRecord",
     "PipelineRepositoryError",
 ]
-

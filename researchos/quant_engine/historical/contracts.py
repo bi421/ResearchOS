@@ -121,4 +121,3 @@ class FeatureExtraction:
 
     def to_dict(self) -> Dict[str, Any]:
         return dict(sorted(self.features.items()))
-

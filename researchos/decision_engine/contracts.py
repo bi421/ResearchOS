@@ -84,7 +84,7 @@ class DecisionVersion(str, Enum):
 
 
 @dataclass
-class EvidenceItem:
+class DecisionEvidenceItem:
     """
     A single piece of evidence collected from any source module.
 
@@ -123,7 +123,7 @@ class EvidenceItem:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvidenceItem":
+    def from_dict(cls, data: Dict[str, Any]) -> "DecisionEvidenceItem":
         return cls(
             source=EvidenceSource(data["source"]),
             source_id=data["source_id"],
@@ -134,6 +134,14 @@ class EvidenceItem:
             description=data.get("description", ""),
             supporting_ids=list(data.get("supporting_ids", [])),
         )
+
+
+# Deprecated compatibility alias — canonical name is ``DecisionEvidenceItem``
+# (renamed 2026-08-17 to end the collision with
+# ``researchos.reasoning_engine.contracts.EvidenceItem``; the schemas are
+# different bounded contexts and are NOT unified — see
+# docs/architecture/OWNERSHIP.md).
+EvidenceItem = DecisionEvidenceItem
 
 
 @dataclass

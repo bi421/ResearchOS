@@ -60,7 +60,9 @@ class MarketMemoryIntegrator:
             return self.context.research_cycle_adapter(cycle_id, memory_report_id)
         return {"status": "standalone", "note": "No research cycle adapter configured"}
 
-    def connect_to_reasoning_chain(self, chain_id: str, match_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def connect_to_reasoning_chain(
+        self, chain_id: str, match_results: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Connect match results to a reasoning chain.
 

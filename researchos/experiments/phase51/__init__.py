@@ -19,29 +19,29 @@ required outcome when real XAUUSD data is not supplied; it is never an
 interpretation of model success or failure.
 """
 
-from .contracts import (
-    PHASE51_VERSION,
-    HASH_ALGORITHM,
-    Outcome,
-    BaselineResult,
-    ModelResult,
-    CostResult,
-    CalibrationResult,
-    SignificanceResult,
-    ValidationFlags,
-    Phase51Result,
-)
 from .baseline import (
-    majority_class_from_train,
     baseline_always_predict,
     evaluate_baseline,
+    majority_class_from_train,
 )
-from .probability import EmpiricalProbabilityEstimator, FEATURE_NAMES
 from .calibration import evaluate_calibration
-from .statistics import evaluate_significance, confidence_interval_diff
+from .contracts import (
+    HASH_ALGORITHM,
+    PHASE51_VERSION,
+    BaselineResult,
+    CalibrationResult,
+    CostResult,
+    ModelResult,
+    Outcome,
+    Phase51Result,
+    SignificanceResult,
+    ValidationFlags,
+)
 from .cost import apply_costs
-from .self_validation import aggregate_outcome
 from .experiment import Phase51Config, run_phase51
+from .probability import FEATURE_NAMES, EmpiricalProbabilityEstimator
+from .self_validation import aggregate_outcome
+from .statistics import confidence_interval_diff, evaluate_significance
 
 __all__ = [
     # Contracts

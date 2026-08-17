@@ -29,8 +29,7 @@ from researchos.evidence.envelope import (
     compute_artifact_hash,
 )
 from researchos.evidence.repository import EvidenceRepository
-from researchos.storage.repository import ResearchRepository, SCHEMA_VERSION
-
+from researchos.storage.repository import SCHEMA_VERSION, ResearchRepository
 
 # =============================================================================
 # EvidenceEnvelope
@@ -64,12 +63,8 @@ class TestEvidenceEnvelope:
     def test_parent_order_does_not_change_lineage_hash(self):
         p1 = build_envelope("Dataset", {"x": 1}, version="v")
         p2 = build_envelope("Dataset", {"x": 2}, version="v")
-        a = build_envelope(
-            "Feature", {"y": 3}, parent_hashes=[p1.artifact_hash, p2.artifact_hash]
-        )
-        b = build_envelope(
-            "Feature", {"y": 3}, parent_hashes=[p2.artifact_hash, p1.artifact_hash]
-        )
+        a = build_envelope("Feature", {"y": 3}, parent_hashes=[p1.artifact_hash, p2.artifact_hash])
+        b = build_envelope("Feature", {"y": 3}, parent_hashes=[p2.artifact_hash, p1.artifact_hash])
         assert a.lineage_hash == b.lineage_hash
 
     def test_verify_accepts_valid_envelope(self):
@@ -132,9 +127,7 @@ class TestEvidenceEnvelope:
             payload=e.payload,
             version=e.version,
             parent_hashes=[],
-            lineage_hash=deterministic_hash(
-                {"payload": e.payload, "parent_hashes": sorted([])}
-            ),
+            lineage_hash=deterministic_hash({"payload": e.payload, "parent_hashes": sorted([])}),
         )
         # New-scheme verify must reject the legacy hash...
         assert legacy.verify() is False
@@ -345,9 +338,7 @@ class TestEvidenceRepository:
     def test_round_trip_maintains_parent_hashes(self):
         ev = self._make_repo()
         p = build_envelope("Dataset", {"x": 1}, version="v")
-        c = build_envelope(
-            "Feature", {"y": 2}, version="v", parent_hashes=[p.artifact_hash]
-        )
+        c = build_envelope("Feature", {"y": 2}, version="v", parent_hashes=[p.artifact_hash])
         ev.append_artifact(p)
         ev.append_artifact(c)
         fetched = ev.get_artifact(c.artifact_hash)

@@ -13,15 +13,15 @@ import random
 import pytest
 
 from researchos.experiments.phase51 import (
+    EmpiricalProbabilityEstimator,
+    Outcome,
+    Phase51Config,
+    apply_costs,
     baseline_always_predict,
     evaluate_baseline,
-    apply_costs,
     evaluate_calibration,
     evaluate_significance,
-    EmpiricalProbabilityEstimator,
-    Phase51Config,
     run_phase51,
-    Outcome,
 )
 
 
@@ -38,6 +38,7 @@ def _synthetic_ohlcv(n: int = 3000, seed: int = 42):
 
 
 # ── determinism ────────────────────────────────────────────────────────
+
 
 def test_run_phase51_deterministic_hash():
     close, high, low, volume = _synthetic_ohlcv()
@@ -58,6 +59,7 @@ def test_run_phase51_blocked_when_insufficient_data():
 
 # ── baseline ───────────────────────────────────────────────────────────
 
+
 def test_baseline_uses_train_only():
     train = [1, 1, 1, 1, 0, 0, 0, 0, -1, -1]  # majority 1
     val = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -74,6 +76,7 @@ def test_baseline_accuracy_equals_frequency_when_val_has_majority():
 
 
 # ── probability estimator ──────────────────────────────────────────────
+
 
 def test_estimator_deterministic():
     feats = [[0.0, 1.0], [0.0, 1.0], [0.0, 1.0], [1.0, 0.0], [1.0, 0.0]]
@@ -96,13 +99,17 @@ def test_estimator_lookahead_fit_only():
 
 # ── cost ───────────────────────────────────────────────────────────────
 
+
 def test_cost_degrades_accuracy_with_large_spread():
     preds = [1, 1, 1, 1, 1]
     actuals = [1, 1, 1, 1, 1]
     close = [2000.0] * 5
     # Huge spread in price units overwhelms the threshold.
     res = apply_costs(
-        preds, actuals, close, threshold=0.001,
+        preds,
+        actuals,
+        close,
+        threshold=0.001,
         spread_spec="fixed:10.0",  # $10 spread on $2000 gold
         slippage_spec="fixed:0.0",
         commission_spec="fixed:0.0",
@@ -117,7 +124,10 @@ def test_cost_zero_spread_no_degredation():
     actuals = [1, 1, 1, 1, 1]
     close = [2000.0] * 5
     res = apply_costs(
-        preds, actuals, close, threshold=0.001,
+        preds,
+        actuals,
+        close,
+        threshold=0.001,
         spread_spec="fixed:0.0",
         slippage_spec="fixed:0.0",
         commission_spec="fixed:0.0",
@@ -127,6 +137,7 @@ def test_cost_zero_spread_no_degredation():
 
 
 # ── calibration ────────────────────────────────────────────────────────
+
 
 def test_calibration_reliability_table():
     probs = [{1: 0.9, 0: 0.05, -1: 0.05}, {1: 0.9, 0: 0.05, -1: 0.05}]
@@ -139,6 +150,7 @@ def test_calibration_reliability_table():
 
 # ── significance ───────────────────────────────────────────────────────
 
+
 def test_significance_model_better_than_baseline():
     model_pred = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     base_pred = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -150,6 +162,7 @@ def test_significance_model_better_than_baseline():
 
 
 # ── self-validation outcome ────────────────────────────────────────────
+
 
 def test_outcome_pass_when_model_wins_net_and_significant():
     from researchos.experiments.phase51.self_validation import aggregate_outcome

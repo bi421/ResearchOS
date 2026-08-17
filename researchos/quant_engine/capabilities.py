@@ -70,15 +70,11 @@ class BackendCapabilities:
 
     def __post_init__(self) -> None:
         if not isinstance(self.backend_name, str) or not self.backend_name.strip():
-            raise BackendCapabilitiesError(
-                "backend_name must be a non-empty string"
-            )
+            raise BackendCapabilitiesError("backend_name must be a non-empty string")
         if not isinstance(self.version, str) or not self.version.strip():
             raise BackendCapabilitiesError("version must be a non-empty string")
         if not isinstance(self.supported_operations, (tuple, list)):
-            raise BackendCapabilitiesError(
-                "supported_operations must be a sequence of strings"
-            )
+            raise BackendCapabilitiesError("supported_operations must be a sequence of strings")
         operations = tuple(str(op) for op in self.supported_operations)
         object.__setattr__(self, "supported_operations", operations)
 

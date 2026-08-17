@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "researchos"
-version = "1.0.0"
+version = "1.0.1"
 description = "Institutional-grade market research platform — deterministic, explainable, scientific"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -63,8 +63,14 @@ include = ["researchos*"]
 
 [tool.pytest.ini_options]
 # Mirrors the CI suite (.github/workflows/test-python.yml):
-#   pytest researchos/tests/ tests/unit/
-testpaths = ["researchos/tests", "tests/unit"]
+#   pytest researchos/tests/ tests/unit/ + package-local test roots
+testpaths = [
+    "researchos/tests",
+    "tests/unit",
+    "researchos/data_engine/tests",
+    "researchos/market_memory/tests",
+    "researchos/experiments/phase51/tests",
+]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

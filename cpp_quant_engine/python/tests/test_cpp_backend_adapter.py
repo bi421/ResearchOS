@@ -236,9 +236,10 @@ class TestCppQuantAdapterMetrics:
         equity = [100000.0]
         for r in rets:
             equity.append(equity[-1] * (1.0 + r))
-        assert adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"] == python_backend.calculate_metrics(
-            rets, equity, 0.0
-        )["max_drawdown"]
+        assert (
+            adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
+            == python_backend.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
+        )
         assert isinstance(adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"], float)
 
     def test_calmar_consistent_with_rounded_drawdown(self, adapter, prices):
@@ -337,7 +338,9 @@ class TestCppQuantAdapterSimulation:
         assert py_result.input_hash == cpp_result.input_hash
         assert py_result.simulation_id == cpp_result.simulation_id
         for key in py_result.metrics:
-            assert cpp_result.metrics[key] == pytest.approx(py_result.metrics[key], rel=1e-9, abs=1e-12)
+            assert cpp_result.metrics[key] == pytest.approx(
+                py_result.metrics[key], rel=1e-9, abs=1e-12
+            )
 
     def test_custom_parameters(self, adapter, python_backend, prices):
         request = make_request(initial_capital=50000.0, risk_free_rate=0.05)

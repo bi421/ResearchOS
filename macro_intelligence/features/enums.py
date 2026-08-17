@@ -10,7 +10,7 @@ from enum import Enum
 class FeatureCategory(str, Enum):
     """
     Feature category enumeration.
-    
+
     Categories:
     - TREND: Trend-based features
     - SURPRISE: Surprise-based features
@@ -21,6 +21,7 @@ class FeatureCategory(str, Enum):
     - DOLLAR: Dollar features
     - LIQUIDITY: Liquidity features
     """
+
     TREND = "trend"
     SURPRISE = "surprise"
     YIELD = "yield"
@@ -29,11 +30,11 @@ class FeatureCategory(str, Enum):
     RISK = "risk"
     DOLLAR = "dollar"
     LIQUIDITY = "liquidity"
-    
+
     def is_macro_feature(self) -> bool:
         """Check if this is a macro feature."""
         return True
-    
+
     def get_description(self) -> str:
         """Get human-readable description."""
         descriptions = {
@@ -52,7 +53,7 @@ class FeatureCategory(str, Enum):
 class FeatureType(str, Enum):
     """
     Feature type enumeration.
-    
+
     Types:
     - SCALAR: Single value
     - VECTOR: Multiple values
@@ -61,13 +62,14 @@ class FeatureType(str, Enum):
     - PERCENTILE: Percentile rank
     - ZSCORE: Z-score标准化
     """
+
     SCALAR = "scalar"
     VECTOR = "vector"
     RATIO = "ratio"
     SPREAD = "spread"
     PERCENTILE = "percentile"
     ZSCORE = "zscore"
-    
+
     def is_univariate(self) -> bool:
         """Check if feature is univariate."""
         return self in (
@@ -75,7 +77,7 @@ class FeatureType(str, Enum):
             FeatureType.PERCENTILE,
             FeatureType.ZSCORE,
         )
-    
+
     def is_bivariate(self) -> bool:
         """Check if feature is bivariate."""
         return self in (
@@ -87,7 +89,7 @@ class FeatureType(str, Enum):
 class FeatureState(str, Enum):
     """
     Feature state enumeration.
-    
+
     States:
     - CALCULATING: Feature is being calculated
     - READY: Feature is ready for use
@@ -95,12 +97,13 @@ class FeatureState(str, Enum):
     - ERROR: Feature calculation failed
     - DEPRECATED: Feature is deprecated
     """
+
     CALCULATING = "calculating"
     READY = "ready"
     STALE = "stale"
     ERROR = "error"
     DEPRECATED = "deprecated"
-    
+
     def is_terminal(self) -> bool:
         """Check if this is a terminal state."""
         return self in (
@@ -108,7 +111,7 @@ class FeatureState(str, Enum):
             FeatureState.ERROR,
             FeatureState.DEPRECATED,
         )
-    
+
     def is_computable(self) -> bool:
         """Check if feature can be calculated."""
         return self in (
@@ -121,7 +124,7 @@ class FeatureState(str, Enum):
 class CalculationMethod(str, Enum):
     """
     Calculation method enumeration.
-    
+
     Methods:
     - ROLLING: Rolling window calculation
     - EXPONENTIAL: Exponential weighting
@@ -129,12 +132,13 @@ class CalculationMethod(str, Enum):
     - POINT: Point-in-time calculation
     - DERIVATIVE: Derivative-based calculation
     """
+
     ROLLING = "rolling"
     EXPONENTIAL = "exponential"
     CUMULATIVE = "cumulative"
     POINT = "point"
     DERIVATIVE = "derivative"
-    
+
     def requires_history(self) -> bool:
         """Check if method requires historical data."""
         return self in (
@@ -148,7 +152,7 @@ class CalculationMethod(str, Enum):
 class ValidationRule(str, Enum):
     """
     Validation rule enumeration.
-    
+
     Rules:
     - NO_NAN: No NaN values
     - NO_INF: No infinite values
@@ -157,6 +161,7 @@ class ValidationRule(str, Enum):
     - MONOTONIC: Monotonic sequence
     - SMOOTH: Smooth transitions
     """
+
     NO_NAN = "no_nan"
     NO_INF = "no_inf"
     FINITE = "finite"
@@ -168,12 +173,13 @@ class ValidationRule(str, Enum):
 class FeatureVersionCompatibility(str, Enum):
     """
     Feature version compatibility.
-    
+
     Compatibility:
     - FORWARD: Forward compatible
     - BACKWARD: Backward compatible
     - BREAKING: Breaking change
     """
+
     FORWARD = "forward"
     BACKWARD = "backward"
     BREAKING = "breaking"

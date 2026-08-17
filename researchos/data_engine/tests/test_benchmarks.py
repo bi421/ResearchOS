@@ -40,9 +40,7 @@ def _write_candle_csv(path: str, count: int, timeframe_seconds: int = 60) -> str
         f.write("timestamp,open,high,low,close,volume\n")
         for i in range(count):
             ts = BASE + timedelta(seconds=i * timeframe_seconds)
-            f.write(
-                f"{ts.isoformat()},2000.0,2010.0,1995.0,2005.0,1000.0\n"
-            )
+            f.write(f"{ts.isoformat()},2000.0,2010.0,1995.0,2005.0,1000.0\n")
     return path
 
 
@@ -69,8 +67,11 @@ def _measure_stages(count: int, timeframe: str) -> dict:
         results["validate"] = time.perf_counter() - t0
 
         dataset = HistoricalDataset(
-            symbol="XAU/USD", timeframe=timeframe, data_type="candle",
-            records=candles, source="bench",
+            symbol="XAU/USD",
+            timeframe=timeframe,
+            data_type="candle",
+            records=candles,
+            source="bench",
         )
         t0 = time.perf_counter()
         dataset.mark_ready()

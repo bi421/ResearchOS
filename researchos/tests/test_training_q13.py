@@ -57,7 +57,6 @@ from researchos.quant_engine.training import (
     validate_dataset,
 )
 
-
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
@@ -223,9 +222,7 @@ class TestModelContract(unittest.TestCase):
 
     def test_content_hash_different_parameters(self):
         a = _make_contract()
-        b = _make_contract(
-            parameters={"weights": [0.1, 0.2, 0.7]}
-        )
+        b = _make_contract(parameters={"weights": [0.1, 0.2, 0.7]})
         self.assertNotEqual(a.content_hash(), b.content_hash())
 
     def test_content_hash_length(self):
@@ -242,67 +239,86 @@ class TestModelContract(unittest.TestCase):
 
     def test_invalid_version_not_semver(self):
         with self.assertRaises(InvalidModelError):
-            _make_contract().from_dict({
-                "model_id": "ok",
-                "name": "x",
-                "version": "bad",
-                "model_type": "rule_based",
-                "feature_names": ["a"],
-                "label_name": "y",
-                "parameters": {},
-                "metadata": {},
-                "created_at": "now",
-                "training_hash": "h",
-            })
+            _make_contract().from_dict(
+                {
+                    "model_id": "ok",
+                    "name": "x",
+                    "version": "bad",
+                    "model_type": "rule_based",
+                    "feature_names": ["a"],
+                    "label_name": "y",
+                    "parameters": {},
+                    "metadata": {},
+                    "created_at": "now",
+                    "training_hash": "h",
+                }
+            )
 
     def test_invalid_name_empty(self):
         with self.assertRaises(InvalidModelError):
             ModelContract(
-                model_id="ok", name="", version="1.0.0",
+                model_id="ok",
+                name="",
+                version="1.0.0",
                 model_type=ModelType.RULE_BASED,
-                feature_names=("a",), label_name="y",
+                feature_names=("a",),
+                label_name="y",
             )
 
     def test_invalid_label_name_empty(self):
         with self.assertRaises(InvalidModelError):
             ModelContract(
-                model_id="ok", name="x", version="1.0.0",
+                model_id="ok",
+                name="x",
+                version="1.0.0",
                 model_type=ModelType.RULE_BASED,
-                feature_names=("a",), label_name="",
+                feature_names=("a",),
+                label_name="",
             )
 
     def test_invalid_model_type_not_enum(self):
         with self.assertRaises(InvalidModelError):
             ModelContract(
-                model_id="ok", name="x", version="1.0.0",
+                model_id="ok",
+                name="x",
+                version="1.0.0",
                 model_type="invalid",  # type: ignore[arg-type]
-                feature_names=("a",), label_name="y",
+                feature_names=("a",),
+                label_name="y",
             )
 
     def test_feature_names_empty_string(self):
         with self.assertRaises(InvalidModelError):
             ModelContract(
-                model_id="ok", name="x", version="1.0.0",
+                model_id="ok",
+                name="x",
+                version="1.0.0",
                 model_type=ModelType.RULE_BASED,
-                feature_names=("",), label_name="y",
+                feature_names=("",),
+                label_name="y",
             )
 
     def test_parameters_mappingproxy(self):
         c = _make_contract()
         from collections.abc import Mapping
+
         self.assertIsInstance(c.parameters, Mapping)
 
     def test_metadata_mappingproxy(self):
         c = _make_contract()
         from collections.abc import Mapping
+
         self.assertIsInstance(c.metadata, Mapping)
 
     def test_metadata_immutable_after_construction(self):
         md = {"author": "test"}
         c = ModelContract(
-            model_id="ok", name="x", version="1.0.0",
+            model_id="ok",
+            name="x",
+            version="1.0.0",
             model_type=ModelType.RULE_BASED,
-            feature_names=("a",), label_name="y",
+            feature_names=("a",),
+            label_name="y",
             metadata=md,
         )
         with self.assertRaises(TypeError):
@@ -321,9 +337,7 @@ class TestModelContract(unittest.TestCase):
         self.assertEqual(ModelType.FEATURE_WEIGHT.value, "feature_weight")
 
     def test_model_type_from_value(self):
-        self.assertEqual(
-            ModelType.from_value("rule_based"), ModelType.RULE_BASED
-        )
+        self.assertEqual(ModelType.from_value("rule_based"), ModelType.RULE_BASED)
 
     def test_model_type_from_value_invalid(self):
         with self.assertRaises(ValueError):
@@ -331,9 +345,12 @@ class TestModelContract(unittest.TestCase):
 
     def test_feature_names_normalized_to_tuple(self):
         c = ModelContract(
-            model_id="ok", name="x", version="1.0.0",
+            model_id="ok",
+            name="x",
+            version="1.0.0",
             model_type=ModelType.RULE_BASED,
-            feature_names=["a", "b"], label_name="y",
+            feature_names=["a", "b"],
+            label_name="y",
         )
         self.assertIsInstance(c.feature_names, tuple)
 
@@ -341,25 +358,34 @@ class TestModelContract(unittest.TestCase):
         c = _make_contract()
         d = c.to_dict()
         expected_keys = {
-            "model_id", "name", "version", "model_type",
-            "feature_names", "label_name", "parameters",
-            "metadata", "created_at", "training_hash",
+            "model_id",
+            "name",
+            "version",
+            "model_type",
+            "feature_names",
+            "label_name",
+            "parameters",
+            "metadata",
+            "created_at",
+            "training_hash",
         }
         self.assertEqual(set(d.keys()), expected_keys)
 
     def test_from_dict_with_missing_optional_fields(self):
-        c = ModelContract.from_dict({
-            "model_id": "m1",
-            "name": "x",
-            "version": "1.0.0",
-            "model_type": "rule_based",
-            "feature_names": ["a"],
-            "label_name": "y",
-            "parameters": {},
-            "metadata": {},
-            "created_at": "",
-            "training_hash": "",
-        })
+        c = ModelContract.from_dict(
+            {
+                "model_id": "m1",
+                "name": "x",
+                "version": "1.0.0",
+                "model_type": "rule_based",
+                "feature_names": ["a"],
+                "label_name": "y",
+                "parameters": {},
+                "metadata": {},
+                "created_at": "",
+                "training_hash": "",
+            }
+        )
         self.assertEqual(c.model_id, "m1")
 
     def test_serialization_deterministic(self):
@@ -590,14 +616,10 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(rmse([], []), 0.0)
 
     def test_directional_accuracy(self):
-        self.assertEqual(
-            directional_accuracy([1, -1, 0], [1, -1, 0]), 1.0
-        )
+        self.assertEqual(directional_accuracy([1, -1, 0], [1, -1, 0]), 1.0)
 
     def test_directional_accuracy_opposite(self):
-        self.assertEqual(
-            directional_accuracy([1, -1], [-1, 1]), 0.0
-        )
+        self.assertEqual(directional_accuracy([1, -1], [-1, 1]), 0.0)
 
     def test_directional_accuracy_empty(self):
         self.assertEqual(directional_accuracy([], []), 0.0)
@@ -623,14 +645,10 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(d["accuracy"], 0.0)
 
     def test_accuracy_float_precision(self):
-        self.assertAlmostEqual(
-            accuracy([1.0, 0.0], [1.0, 0.0]), 1.0
-        )
+        self.assertAlmostEqual(accuracy([1.0, 0.0], [1.0, 0.0]), 1.0)
 
     def test_precision_with_custom_positive(self):
-        self.assertEqual(
-            precision([1, 0, 1], [1, 1, 0], positive=1.0), 0.5
-        )
+        self.assertEqual(precision([1, 0, 1], [1, 1, 0], positive=1.0), 0.5)
 
     def test_metrics_all_deterministic(self):
         y_true = [1.0, 0.0, 1.0, 0.0, 1.0]
@@ -664,24 +682,30 @@ class TestTrainer(unittest.TestCase):
 
     def test_train_rule_based(self):
         config = TrainConfig(
-            model_id="rule_model", name="Rule",
-            model_type=ModelType.RULE_BASED, label_name="target",
+            model_id="rule_model",
+            name="Rule",
+            model_type=ModelType.RULE_BASED,
+            label_name="target",
         )
         result = self.trainer.train(self.dataset, config)
         self.assertEqual(result.model.model_type, ModelType.RULE_BASED)
 
     def test_train_linear_formula(self):
         config = TrainConfig(
-            model_id="linear_model", name="Linear",
-            model_type=ModelType.LINEAR_FORMULA, label_name="target",
+            model_id="linear_model",
+            name="Linear",
+            model_type=ModelType.LINEAR_FORMULA,
+            label_name="target",
         )
         result = self.trainer.train(self.dataset, config)
         self.assertEqual(result.model.model_type, ModelType.LINEAR_FORMULA)
 
     def test_train_threshold(self):
         config = TrainConfig(
-            model_id="thresh_model", name="Threshold",
-            model_type=ModelType.THRESHOLD, label_name="target",
+            model_id="thresh_model",
+            name="Threshold",
+            model_type=ModelType.THRESHOLD,
+            label_name="target",
         )
         result = self.trainer.train(self.dataset, config)
         self.assertEqual(result.model.model_type, ModelType.THRESHOLD)
@@ -704,15 +728,11 @@ class TestTrainer(unittest.TestCase):
 
     def test_train_sets_feature_names(self):
         result = self.trainer.train(self.dataset, self.config)
-        self.assertEqual(
-            result.model.feature_names, self.dataset.feature_names
-        )
+        self.assertEqual(result.model.feature_names, self.dataset.feature_names)
 
     def test_train_sets_training_hash(self):
         result = self.trainer.train(self.dataset, self.config)
-        self.assertEqual(
-            result.model.training_hash, result.dataset_hash
-        )
+        self.assertEqual(result.model.training_hash, result.dataset_hash)
 
     def test_train_sets_metadata(self):
         result = self.trainer.train(self.dataset, self.config)
@@ -749,7 +769,8 @@ class TestTrainer(unittest.TestCase):
     def test_predict_invalid_dataset(self):
         with self.assertRaises(InvalidDatasetError):
             self.trainer.predict(
-                _make_contract(), "not a dataset"  # type: ignore[arg-type]
+                _make_contract(),
+                "not a dataset",  # type: ignore[arg-type]
             )
 
     def test_train_invalid_config_type(self):
@@ -839,36 +860,24 @@ class TestTrainer(unittest.TestCase):
             self.trainer.train(ds, self.config)
 
     def test_convenience_train_feature_weight(self):
-        result = self.trainer.train_feature_weight(
-            self.dataset, "fw_model"
-        )
+        result = self.trainer.train_feature_weight(self.dataset, "fw_model")
         self.assertEqual(result.model.model_type, ModelType.FEATURE_WEIGHT)
 
     def test_convenience_train_rule_based(self):
-        result = self.trainer.train_rule_based(
-            self.dataset, "rule_model"
-        )
+        result = self.trainer.train_rule_based(self.dataset, "rule_model")
         self.assertEqual(result.model.model_type, ModelType.RULE_BASED)
 
     def test_convenience_train_linear_formula(self):
-        result = self.trainer.train_linear_formula(
-            self.dataset, "linear_model"
-        )
+        result = self.trainer.train_linear_formula(self.dataset, "linear_model")
         self.assertEqual(result.model.model_type, ModelType.LINEAR_FORMULA)
 
     def test_convenience_train_threshold(self):
-        result = self.trainer.train_threshold(
-            self.dataset, "thresh_model"
-        )
+        result = self.trainer.train_threshold(self.dataset, "thresh_model")
         self.assertEqual(result.model.model_type, ModelType.THRESHOLD)
 
     def test_convenience_determinism(self):
-        r1 = self.trainer.train_feature_weight(
-            self.dataset, "fw_model"
-        )
-        r2 = self.trainer.train_feature_weight(
-            self.dataset, "fw_model"
-        )
+        r1 = self.trainer.train_feature_weight(self.dataset, "fw_model")
+        r2 = self.trainer.train_feature_weight(self.dataset, "fw_model")
         self.assertEqual(r1.content_hash(), r2.content_hash())
 
     def test_dataset_hash_deterministic(self):
@@ -888,8 +897,10 @@ class TestTrainer(unittest.TestCase):
     def test_large_dataset(self):
         large = _make_dataset(1000, 10)
         config = TrainConfig(
-            model_id="large", name="Large",
-            model_type=ModelType.FEATURE_WEIGHT, label_name="target",
+            model_id="large",
+            name="Large",
+            model_type=ModelType.FEATURE_WEIGHT,
+            label_name="target",
         )
         result = self.trainer.train(large, config)
         self.assertEqual(result.n_samples, 1000)
@@ -898,8 +909,10 @@ class TestTrainer(unittest.TestCase):
     def test_large_dataset_determinism(self):
         large = _make_dataset(1000, 10)
         config = TrainConfig(
-            model_id="large", name="Large",
-            model_type=ModelType.FEATURE_WEIGHT, label_name="target",
+            model_id="large",
+            name="Large",
+            model_type=ModelType.FEATURE_WEIGHT,
+            label_name="target",
         )
         r1 = self.trainer.train(large, config)
         r2 = self.trainer.train(large, config)
@@ -916,13 +929,15 @@ class TestTrainer(unittest.TestCase):
     def test_train_config_invalid_type(self):
         with self.assertRaises(InvalidModelError):
             TrainConfig(
-                model_id="ok", name="x",
+                model_id="ok",
+                name="x",
                 model_type="invalid",  # type: ignore[arg-type]
             )
 
     def test_train_config_parameters_frozen(self):
         cfg = TrainConfig(
-            model_id="ok", name="x",
+            model_id="ok",
+            name="x",
             parameters={"a": 1},
         )
         with self.assertRaises(TypeError):
@@ -930,7 +945,8 @@ class TestTrainer(unittest.TestCase):
 
     def test_train_config_metadata_frozen(self):
         cfg = TrainConfig(
-            model_id="ok", name="x",
+            model_id="ok",
+            name="x",
             metadata={"a": 1},
         )
         with self.assertRaises(TypeError):
@@ -1083,9 +1099,7 @@ class TestTrainingRepository(unittest.TestCase):
         self.repo.save(_make_result("zebra"))
         self.repo.save(_make_result("alpha"))
         self.repo.save(_make_result("middle"))
-        self.assertEqual(
-            self.repo.list_results(), self.repo.list_results()
-        )
+        self.assertEqual(self.repo.list_results(), self.repo.list_results())
 
     def test_rejects_non_result(self):
         with self.assertRaises(TypeError):
@@ -1110,9 +1124,7 @@ class TestTrainingRepository(unittest.TestCase):
         self.repo.save(_make_result("a"))
         self.repo.save(_make_result("b"))
         r2 = TrainingRepository.from_dict(self.repo.to_dict())
-        self.assertEqual(
-            self.repo.list_results(), r2.list_results()
-        )
+        self.assertEqual(self.repo.list_results(), r2.list_results())
 
     def test_to_dict_version(self):
         self.repo.save(self.result)
@@ -1124,12 +1136,8 @@ class TestTrainingRepository(unittest.TestCase):
         self.assertEqual(r.count(), 0)
 
     def test_error_hierarchy(self):
-        self.assertTrue(
-            issubclass(DuplicateModelError, TrainingRepositoryError)
-        )
-        self.assertTrue(
-            issubclass(TrainingResultNotFoundError, TrainingRepositoryError)
-        )
+        self.assertTrue(issubclass(DuplicateModelError, TrainingRepositoryError))
+        self.assertTrue(issubclass(TrainingResultNotFoundError, TrainingRepositoryError))
 
     def test_remove_nonexistent_after_clear(self):
         self.repo.save(self.result)
@@ -1222,10 +1230,15 @@ class TestPublicAPI(unittest.TestCase):
     def test_import_star(self):
         # Verify that the public API is surface-stable
         from researchos.quant_engine.training import (
-            ModelContract, ModelType, TrainingResult,
-            Trainer, TrainingRepository,
-            accuracy, precision,
+            ModelContract,
+            ModelType,
+            Trainer,
+            TrainingRepository,
+            TrainingResult,
+            accuracy,
+            precision,
         )
+
         self.assertIsNotNone(ModelContract)
         self.assertIsNotNone(ModelType)
         self.assertIsNotNone(TrainingResult)
@@ -1236,6 +1249,7 @@ class TestPublicAPI(unittest.TestCase):
 
     def test_trainer_is_importable(self):
         from researchos.quant_engine.training import Trainer
+
         self.assertTrue(callable(Trainer))
 
     def test_model_type_enum_members(self):
@@ -1276,8 +1290,10 @@ class TestEdgeCases(unittest.TestCase):
         )
         trainer = Trainer()
         config = TrainConfig(
-            model_id="single", name="Single",
-            model_type=ModelType.FEATURE_WEIGHT, label_name="target",
+            model_id="single",
+            name="Single",
+            model_type=ModelType.FEATURE_WEIGHT,
+            label_name="target",
         )
         result = trainer.train(ds, config)
         self.assertEqual(result.n_samples, 1)
@@ -1296,8 +1312,10 @@ class TestEdgeCases(unittest.TestCase):
         )
         trainer = Trainer()
         config = TrainConfig(
-            model_id="balanced", name="Balanced",
-            model_type=ModelType.FEATURE_WEIGHT, label_name="target",
+            model_id="balanced",
+            name="Balanced",
+            model_type=ModelType.FEATURE_WEIGHT,
+            label_name="target",
         )
         result = trainer.train(ds, config)
         self.assertEqual(result.n_samples, 2)
@@ -1315,8 +1333,10 @@ class TestEdgeCases(unittest.TestCase):
         )
         trainer = Trainer()
         config = TrainConfig(
-            model_id="same_class", name="Same",
-            model_type=ModelType.FEATURE_WEIGHT, label_name="target",
+            model_id="same_class",
+            name="Same",
+            model_type=ModelType.FEATURE_WEIGHT,
+            label_name="target",
         )
         # Should not raise -- deterministic even with single class
         result = trainer.train(ds, config)

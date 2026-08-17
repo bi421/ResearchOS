@@ -12,36 +12,36 @@ from typing import Any
 
 from macro_intelligence.regime.classification.taxonomy import MacroRegime
 from macro_intelligence.regime.transition.models import (
-    TransitionHistoryEntry,
     RegimeTransition,
+    TransitionHistoryEntry,
 )
 
 
 class TransitionHistory:
     """
     Immutable history of regime transitions.
-    
+
     Append-only log with deterministic ordering.
     """
-    
+
     def __init__(self):
         self._entries: list[TransitionHistoryEntry] = []
         self._version = "trans-hist/v4.0.0"
-    
+
     @property
     def version(self) -> str:
         return self._version
-    
+
     @property
     def entries(self) -> list[TransitionHistoryEntry]:
         """Get all history entries (read-only)."""
         return list(self._entries)
-    
+
     @property
     def count(self) -> int:
         """Get the number of recorded transitions."""
         return len(self._entries)
-    
+
     def add_transition(
         self,
         transition: RegimeTransition,
@@ -49,11 +49,11 @@ class TransitionHistory:
     ) -> TransitionHistoryEntry:
         """
         Add a transition to the history.
-        
+
         Args:
             transition: The detected transition
             outcome: Current outcome status ("pending", "confirmed", "reversed")
-            
+
         Returns:
             The history entry created
         """
@@ -69,7 +69,7 @@ class TransitionHistory:
         )
         self._entries.append(entry)
         return entry
-    
+
     def update_outcome(
         self,
         transition_id: str,
@@ -78,7 +78,7 @@ class TransitionHistory:
     ) -> bool:
         """
         Update the outcome of a recorded transition.
-        
+
         Returns True if found and updated, False otherwise.
         """
         for i, entry in enumerate(self._entries):
@@ -98,7 +98,7 @@ class TransitionHistory:
                 self._entries[i] = new_entry
                 return True
         return False
-    
+
     def get_transitions(
         self,
         from_regime: MacroRegime | None = None,
@@ -108,18 +108,18 @@ class TransitionHistory:
     ) -> list[TransitionHistoryEntry]:
         """
         Get transitions with optional filtering.
-        
+
         Args:
             from_regime: Filter by source regime
             to_regime: Filter by target regime
             transition_type: Filter by transition type
             outcome: Filter by outcome
-            
+
         Returns:
             Filtered list of history entries
         """
         results = self._entries
-        
+
         if from_regime is not None:
             results = [e for e in results if e.previous_regime == from_regime]
         if to_regime is not None:
@@ -128,28 +128,28 @@ class TransitionHistory:
             results = [e for e in results if e.transition_type == transition_type]
         if outcome is not None:
             results = [e for e in results if e.outcome == outcome]
-        
+
         return list(results)
-    
+
     def get_last_transition(self) -> TransitionHistoryEntry | None:
         """Get the most recent transition."""
         if not self._entries:
             return None
         return self._entries[-1]
-    
+
     def get_transitions_since(
         self,
         since_datetime: datetime,
-   ) -> list[TransitionHistoryEntry]:
+    ) -> list[TransitionHistoryEntry]:
         """Get transitions detected after a given datetime."""
         return [e for e in self._entries if e.detected_at >= since_datetime]
-    
+
     def get_transition_counts(
         self,
-   ) -> dict[str, dict[str, int]]:
+    ) -> dict[str, dict[str, int]]:
         """
         Get transition frequency counts.
-        
+
         Returns:
             Dict mapping (from_regime, to_regime) to count
         """
@@ -163,7 +163,7 @@ class TransitionHistory:
                 counts[from_key][to_key] = 0
             counts[from_key][to_key] += 1
         return counts
-    
+
     def get_regime_appearances(self) -> dict[str, int]:
         """Get how many times each regime has appeared as a target."""
         counts: dict[str, int] = {}
@@ -171,14 +171,14 @@ class TransitionHistory:
             key = entry.current_regime.value
             counts[key] = counts.get(key, 0) + 1
         return counts
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize history."""
         return {
             "version": self._version,
             "entries": [e.to_dict() for e in self._entries],
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TransitionHistory:
         """Deserialize history."""
@@ -187,15 +187,16 @@ class TransitionHistory:
             entry = TransitionHistoryEntry.from_dict(entry_data)
             history._entries.append(entry)
         return history
-    
+
     def compute_hash(self) -> str:
         """Deterministic hash of the entire history."""
         import hashlib
         import json
+
         hash_data = {
             "version": self._version,
             "entry_count": len(self._entries),
             "entries": [e.compute_hash() for e in self._entries],
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

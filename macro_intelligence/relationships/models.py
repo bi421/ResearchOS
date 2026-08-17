@@ -14,12 +14,12 @@ from typing import Any, Optional
 
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 
-
 ALGORITHM_VERSION = "rel-eng/v5.0.0"
 
 
 class RelationshipType(Enum):
     """Types of statistical relationships."""
+
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
@@ -28,6 +28,7 @@ class RelationshipType(Enum):
 
 class RelationshipStrength(Enum):
     """Strength of a statistical relationship."""
+
     VERY_STRONG = "very_strong"
     STRONG = "strong"
     MODERATE = "moderate"
@@ -37,6 +38,7 @@ class RelationshipStrength(Enum):
 
 class LagType(Enum):
     """Types of lag relationships."""
+
     LEADING = "leading"
     LAGGING = "lagging"
     SIMULTANEOUS = "simultaneous"
@@ -45,6 +47,7 @@ class LagType(Enum):
 
 class BreakType(Enum):
     """Types of structural breaks."""
+
     STRENGTH_CHANGE = "strength_change"
     DIRECTION_CHANGE = "direction_change"
     SIGNIFICANCE_LOSS = "significance_loss"
@@ -54,6 +57,7 @@ class BreakType(Enum):
 @dataclass(frozen=True)
 class CorrelationResult:
     """Result of a correlation analysis between two series."""
+
     series_a: str
     series_b: str
     correlation: float
@@ -100,7 +104,9 @@ class CorrelationResult:
             sample_size=data.get("sample_size", 0),
             method=data.get("method", "pearson"),
             relationship_type=data.get("relationship_type", RelationshipType.NEUTRAL.value),
-            relationship_strength=data.get("relationship_strength", RelationshipStrength.NEGLIGIBLE.value),
+            relationship_strength=data.get(
+                "relationship_strength", RelationshipStrength.NEGLIGIBLE.value
+            ),
             observation_start=data.get("observation_start", ""),
             observation_end=data.get("observation_end", ""),
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
@@ -110,28 +116,34 @@ class CorrelationResult:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> CorrelationResult:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
             "correlation": self.correlation,
             "method": self.method,
         }
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
 class RollingCorrelationResult:
     """Rolling correlation result for a time window."""
+
     series_a: str
     series_b: str
     window_size: int
@@ -174,18 +186,22 @@ class RollingCorrelationResult:
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
             "window_size": self.window_size,
             "stability": self.stability,
         }
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
 class LagRelationship:
     """Lag relationship between two series."""
+
     series_a: str
     series_b: str
     optimal_lag: int  # Positive = a leads b, Negative = b leads a
@@ -231,18 +247,22 @@ class LagRelationship:
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
             "optimal_lag": self.optimal_lag,
             "lag_correlation": self.lag_correlation,
         }
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
 class RegimeRelationship:
     """Relationship between two series conditioned on regime."""
+
     series_a: str
     series_b: str
     regime: str
@@ -285,18 +305,22 @@ class RegimeRelationship:
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
             "regime": self.regime,
             "correlation": self.correlation,
         }
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
 class StructuralBreak:
     """Detected structural break in a relationship."""
+
     series_a: str
     series_b: str
     break_point: str  # ISO datetime
@@ -342,18 +366,22 @@ class StructuralBreak:
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
             "break_point": self.break_point,
             "break_type": self.break_type,
         }
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
 class RelationshipResult:
     """Complete relationship analysis result for a pair of series."""
+
     series_a: str
     series_b: str
     overall_correlation: CorrelationResult | None = None
@@ -390,10 +418,24 @@ class RelationshipResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RelationshipResult:
-        overall = CorrelationResult.from_dict(data["overall_correlation"]) if data.get("overall_correlation") else None
-        rolling = RollingCorrelationResult.from_dict(data["rolling_correlation"]) if data.get("rolling_correlation") else None
-        lag = LagRelationship.from_dict(data["lag_relationship"]) if data.get("lag_relationship") else None
-        regime_rels = [RegimeRelationship.from_dict(r) for r in data.get("regime_relationships", [])]
+        overall = (
+            CorrelationResult.from_dict(data["overall_correlation"])
+            if data.get("overall_correlation")
+            else None
+        )
+        rolling = (
+            RollingCorrelationResult.from_dict(data["rolling_correlation"])
+            if data.get("rolling_correlation")
+            else None
+        )
+        lag = (
+            LagRelationship.from_dict(data["lag_relationship"])
+            if data.get("lag_relationship")
+            else None
+        )
+        regime_rels = [
+            RegimeRelationship.from_dict(r) for r in data.get("regime_relationships", [])
+        ]
         breaks = [StructuralBreak.from_dict(b) for b in data.get("structural_breaks", [])]
         prov = None
         if data.get("provenance"):
@@ -414,21 +456,28 @@ class RelationshipResult:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> RelationshipResult:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         h = {
             "series_a": self.series_a,
             "series_b": self.series_b,
             "algorithm_version": self.algorithm_version,
-            "overall_corr_hash": self.overall_correlation.compute_hash() if self.overall_correlation else None,
+            "overall_corr_hash": self.overall_correlation.compute_hash()
+            if self.overall_correlation
+            else None,
             "lag_hash": self.lag_relationship.compute_hash() if self.lag_relationship else None,
         }
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()

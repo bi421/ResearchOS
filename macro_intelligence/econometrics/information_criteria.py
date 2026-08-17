@@ -7,14 +7,14 @@ Canonical owner of information criteria: AIC and BIC.
 
 MIL-ECM-014: Econometrics owns AIC/BIC.
 """
+
 from __future__ import annotations
 
+from math import log
 from typing import List, Optional
 
-from math import log
-
-from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.models import InformationCriteria
+from macro_intelligence.statistics.provenance import StatisticalProvenance
 
 AIC_VERSION = "ecm/aic/v1"
 BIC_VERSION = "ecm/bic/v1"

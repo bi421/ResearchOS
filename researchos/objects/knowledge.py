@@ -101,16 +101,18 @@ class Knowledge(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "type": self.type,
-            "subject": self.subject,
-            "predicate": self.predicate,
-            "object": self.object,
-            "confidence": self.confidence,
-            "evidence_count": self.evidence_count,
-            "source_references": self.source_references,
-            "knowledge_trace": self.knowledge_trace,
-        })
+        base.update(
+            {
+                "type": self.type,
+                "subject": self.subject,
+                "predicate": self.predicate,
+                "object": self.object,
+                "confidence": self.confidence,
+                "evidence_count": self.evidence_count,
+                "source_references": self.source_references,
+                "knowledge_trace": self.knowledge_trace,
+            }
+        )
         return base
 
     @classmethod
@@ -210,18 +212,20 @@ class Pattern(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "type": self.type,
-            "description": self.description,
-            "trigger_conditions": self.trigger_conditions,
-            "outcome": self.outcome,
-            "historical_accuracy": self.historical_accuracy,
-            "sample_size": self.sample_size,
-            "confidence_interval": self.confidence_interval,
-            "supporting_evidence": self.supporting_evidence,
-            "contradicting_evidence": self.contradicting_evidence,
-            "pattern_trace": self.pattern_trace,
-        })
+        base.update(
+            {
+                "type": self.type,
+                "description": self.description,
+                "trigger_conditions": self.trigger_conditions,
+                "outcome": self.outcome,
+                "historical_accuracy": self.historical_accuracy,
+                "sample_size": self.sample_size,
+                "confidence_interval": self.confidence_interval,
+                "supporting_evidence": self.supporting_evidence,
+                "contradicting_evidence": self.contradicting_evidence,
+                "pattern_trace": self.pattern_trace,
+            }
+        )
         return base
 
     @classmethod
@@ -313,16 +317,18 @@ class Lesson(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "type": self.type,
-            "description": self.description,
-            "recommendation": self.recommendation,
-            "severity": self.severity,
-            "frequency": self.frequency,
-            "affected_articles": self.affected_articles,
-            "supporting_evidence": self.supporting_evidence,
-            "lesson_trace": self.lesson_trace,
-        })
+        base.update(
+            {
+                "type": self.type,
+                "description": self.description,
+                "recommendation": self.recommendation,
+                "severity": self.severity,
+                "frequency": self.frequency,
+                "affected_articles": self.affected_articles,
+                "supporting_evidence": self.supporting_evidence,
+                "lesson_trace": self.lesson_trace,
+            }
+        )
         return base
 
     @classmethod

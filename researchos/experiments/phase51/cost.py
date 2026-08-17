@@ -91,9 +91,7 @@ def apply_costs(
         spread_spec / slippage_spec / commission_spec: cost specs.
         cost_applied: Whether to apply the cost model (validation flag).
     """
-    spread, slip, comm = spread_points_per_bar(
-        close, spread_spec, slippage_spec, commission_spec
-    )
+    spread, slip, comm = spread_points_per_bar(close, spread_spec, slippage_spec, commission_spec)
     round_trip = spread + slip + 2.0 * comm
 
     gross_correct = sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a))

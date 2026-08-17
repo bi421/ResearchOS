@@ -105,18 +105,20 @@ class Trade(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "symbol": self.symbol,
-            "timestamp": self.timestamp.isoformat(),
-            "price": self.price,
-            "volume": self.volume,
-            "side": self.side,
-            "exchange": self.exchange,
-            "conditions": self.conditions,
-            "trade_id": self.trade_id,
-            "is_block_trade": self.is_block_trade,
-            "notional": self.notional,
-        })
+        base.update(
+            {
+                "symbol": self.symbol,
+                "timestamp": self.timestamp.isoformat(),
+                "price": self.price,
+                "volume": self.volume,
+                "side": self.side,
+                "exchange": self.exchange,
+                "conditions": self.conditions,
+                "trade_id": self.trade_id,
+                "is_block_trade": self.is_block_trade,
+                "notional": self.notional,
+            }
+        )
         return base
 
     @classmethod
@@ -138,4 +140,3 @@ class Trade(BaseObject):
             f"Trade({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, "
             f"P={self.price:.4f} V={self.volume:.0f} {self.side})"
         )
-

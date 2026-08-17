@@ -62,7 +62,9 @@ def classify_transition_type(
     avg_strength = sum(signal_strengths) / len(signal_strengths)
     max(signal_strengths)
     min(signal_strengths)
-    strength_variance = sum((s - avg_strength) ** 2 for s in signal_strengths) / len(signal_strengths)
+    strength_variance = sum((s - avg_strength) ** 2 for s in signal_strengths) / len(
+        signal_strengths
+    )
 
     # STABLE: no significant signals
     if confidence < _CONFIDENCE_LOW and avg_strength < 0.3:
@@ -222,6 +224,7 @@ DEFAULT_TRANSITION_PROBS: dict[str, dict[str, float]] = {
 def get_default_transition_probs() -> dict[str, dict[str, float]]:
     """Return a deep copy of the default transition probability matrix."""
     import copy
+
     return copy.deepcopy(DEFAULT_TRANSITION_PROBS)
 
 
@@ -254,6 +257,7 @@ def update_transition_probs(
         Updated probability matrix
     """
     import copy
+
     updated = copy.deepcopy(current_probs)
 
     # Count transitions

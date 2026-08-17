@@ -66,9 +66,7 @@ def dataset_hash(dataset: ResearchDataset) -> str:
         "labels": list(dataset.labels),
         "label_name": dataset.label_name,
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
-        "utf-8"
-    )
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -91,17 +89,11 @@ def validate_dataset(dataset: ResearchDataset) -> None:
             )
         for j, v in enumerate(row):
             if v is None or not isinstance(v, (int, float)):
-                raise InvalidDatasetError(
-                    f"feature row {i} column {j} is not a number"
-                )
+                raise InvalidDatasetError(f"feature row {i} column {j} is not a number")
             if isinstance(v, float) and not math.isfinite(v):
-                raise InvalidDatasetError(
-                    f"feature row {i} column {j} is not finite"
-                )
+                raise InvalidDatasetError(f"feature row {i} column {j} is not finite")
     if len(features) != len(labels):
-        raise InvalidDatasetError(
-            f"feature count {len(features)} != label count {len(labels)}"
-        )
+        raise InvalidDatasetError(f"feature count {len(features)} != label count {len(labels)}")
     for i, y in enumerate(labels):
         if y is None or not isinstance(y, (int, float)):
             raise InvalidDatasetError(f"label {i} is not a number")
@@ -247,9 +239,7 @@ class Trainer:
         parameters = dict(model.parameters)
         return [predictor(row, parameters) for row in dataset.features]
 
-    def _derive_parameters(
-        self, dataset: ResearchDataset, model_type: ModelType
-    ) -> Dict[str, Any]:
+    def _derive_parameters(self, dataset: ResearchDataset, model_type: ModelType) -> Dict[str, Any]:
         features = dataset.features
         labels = dataset.labels
         if model_type == ModelType.FEATURE_WEIGHT:
@@ -257,15 +247,11 @@ class Trainer:
             return {"weights": weights, "operator": "positive"}
         if model_type == ModelType.LINEAR_FORMULA:
             weights = _feature_weights(features, labels)
-            scores = [
-                sum(w * float(x) for w, x in zip(weights, row)) for row in features
-            ]
+            scores = [sum(w * float(x) for w, x in zip(weights, row)) for row in features]
             bias = -sum(scores) / len(scores)
             return {"weights": weights, "bias": bias, "operator": "positive"}
         if model_type == ModelType.THRESHOLD:
-            index, diff, pos_mean, neg_mean = _best_separating_feature(
-                features, labels
-            )
+            index, diff, pos_mean, neg_mean = _best_separating_feature(features, labels)
             threshold = (pos_mean + neg_mean) / 2.0
             direction = 1 if diff >= 0 else -1
             return {
@@ -275,9 +261,7 @@ class Trainer:
                 "direction": direction,
             }
         if model_type == ModelType.RULE_BASED:
-            index, diff, pos_mean, neg_mean = _best_separating_feature(
-                features, labels
-            )
+            index, diff, pos_mean, neg_mean = _best_separating_feature(features, labels)
             threshold = (pos_mean + neg_mean) / 2.0
             operator = "gt" if diff >= 0 else "lt"
             return {
@@ -295,9 +279,7 @@ class Trainer:
     def train_rule_based(self, dataset, model_id, name="Rule Based", **kwargs):
         return self.train(
             dataset,
-            TrainConfig(
-                model_id=model_id, name=name, model_type=ModelType.RULE_BASED, **kwargs
-            ),
+            TrainConfig(model_id=model_id, name=name, model_type=ModelType.RULE_BASED, **kwargs),
         )
 
     def train_linear_formula(self, dataset, model_id, name="Linear Formula", **kwargs):
@@ -314,9 +296,7 @@ class Trainer:
     def train_threshold(self, dataset, model_id, name="Threshold", **kwargs):
         return self.train(
             dataset,
-            TrainConfig(
-                model_id=model_id, name=name, model_type=ModelType.THRESHOLD, **kwargs
-            ),
+            TrainConfig(model_id=model_id, name=name, model_type=ModelType.THRESHOLD, **kwargs),
         )
 
     def train_feature_weight(self, dataset, model_id, name="Feature Weight", **kwargs):
@@ -332,4 +312,3 @@ class Trainer:
 
 
 __all__ = ["TrainConfig", "Trainer", "dataset_hash", "validate_dataset"]
-

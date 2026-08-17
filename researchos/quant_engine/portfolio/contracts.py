@@ -146,10 +146,12 @@ class EfficientFrontierResult:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "frontier_points": [p.to_dict() for p in self.frontier_points],
-            "min_variance_portfolio": self.min_variance_portfolio.to_dict() if self.min_variance_portfolio else None,
-            "max_sharpe_portfolio": self.max_sharpe_portfolio.to_dict() if self.max_sharpe_portfolio else None,
+            "min_variance_portfolio": self.min_variance_portfolio.to_dict()
+            if self.min_variance_portfolio
+            else None,
+            "max_sharpe_portfolio": self.max_sharpe_portfolio.to_dict()
+            if self.max_sharpe_portfolio
+            else None,
             "covariance_matrix": self.covariance_matrix,
             "expected_returns": self.expected_returns,
         }
-
-

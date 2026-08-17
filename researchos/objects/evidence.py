@@ -17,8 +17,7 @@ from typing import List, Optional
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import parse_timestamp, utc_now, days_between, format_timestamp
-
+from researchos.core.timestamp import days_between, format_timestamp, parse_timestamp, utc_now
 
 # Evidence quality factors (Article XVI, Section 2.2)
 SOURCE_RELIABILITY_WEIGHT = 0.20
@@ -132,12 +131,12 @@ class Evidence(BaseObject):
                   Consensus × Structural_Importance × Quality_Factor
         """
         quality = (
-            self.source_reliability *
-            self.recency *
-            self.relevance *
-            self.consensus *
-            self.structural_importance *
-            self.quality_factor
+            self.source_reliability
+            * self.recency
+            * self.relevance
+            * self.consensus
+            * self.structural_importance
+            * self.quality_factor
         )
         return min(1.0, max(0.0, quality))
 
@@ -216,28 +215,30 @@ class Evidence(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "observation_id": self.observation_id,
-            "hypothesis_id": self.hypothesis_id,
-            "interpretation": self.interpretation,
-            "direction": self.direction,
-            "quality": self.quality,
-            "confidence": self.confidence,
-            "weight": self.weight(self.created_at),
-            "tier": self.tier,
-            "age_days": self.age_days(self.created_at),
-            "aging_multiplier": self.aging_multiplier(self.created_at),
-            "observation_timestamp": format_timestamp(self.observation_timestamp),
-            "dependencies": self.dependencies,
-            "conflicts": self.conflicts,
-            "source_reliability": self.source_reliability,
-            "recency": self.recency,
-            "relevance": self.relevance,
-            "consensus": self.consensus,
-            "structural_importance": self.structural_importance,
-            "quality_factor": self.quality_factor,
-            "uncertainty": self.uncertainty,
-        })
+        base.update(
+            {
+                "observation_id": self.observation_id,
+                "hypothesis_id": self.hypothesis_id,
+                "interpretation": self.interpretation,
+                "direction": self.direction,
+                "quality": self.quality,
+                "confidence": self.confidence,
+                "weight": self.weight(self.created_at),
+                "tier": self.tier,
+                "age_days": self.age_days(self.created_at),
+                "aging_multiplier": self.aging_multiplier(self.created_at),
+                "observation_timestamp": format_timestamp(self.observation_timestamp),
+                "dependencies": self.dependencies,
+                "conflicts": self.conflicts,
+                "source_reliability": self.source_reliability,
+                "recency": self.recency,
+                "relevance": self.relevance,
+                "consensus": self.consensus,
+                "structural_importance": self.structural_importance,
+                "quality_factor": self.quality_factor,
+                "uncertainty": self.uncertainty,
+            }
+        )
         return base
 
     @classmethod
@@ -255,7 +256,11 @@ class Evidence(BaseObject):
         obj.quality_factor = data.get("quality_factor", 1.0)
         obj.uncertainty = data.get("uncertainty", 0.0)
         obj.tier = data.get("tier", "Primary")
-        obj.observation_timestamp = parse_timestamp(data["observation_timestamp"]) if data.get("observation_timestamp") else None
+        obj.observation_timestamp = (
+            parse_timestamp(data["observation_timestamp"])
+            if data.get("observation_timestamp")
+            else None
+        )
         obj.dependencies = list(data.get("dependencies", []))
         obj.conflicts = list(data.get("conflicts", []))
         obj.quality = data.get("quality", obj._compute_quality())
@@ -290,9 +295,7 @@ class EvidenceRegistry(BaseObject):
         return sum(e.weight(reference_time) for e in self.evidence)
 
     def supporting_weight(self, reference_time: Optional[datetime] = None) -> float:
-        return sum(
-            e.weight(reference_time) for e in self.evidence if e.direction == "Supporting"
-        )
+        return sum(e.weight(reference_time) for e in self.evidence if e.direction == "Supporting")
 
     def contradicting_weight(self, reference_time: Optional[datetime] = None) -> float:
         return sum(
@@ -310,10 +313,12 @@ class EvidenceRegistry(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "evidence_ids": self._get_evidence_ids(),
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "evidence_ids": self._get_evidence_ids(),
+            }
+        )
         return base
 
     def _get_evidence_ids(self) -> List[str]:

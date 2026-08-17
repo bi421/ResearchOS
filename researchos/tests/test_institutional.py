@@ -25,23 +25,23 @@ import pytest
 
 from researchos.core.identity import deterministic_hash
 from researchos.core.lifecycle import LifecycleStage
-from researchos.objects.observation import Observation, MarketState, MacroState
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.interpretation import Interpretation, Narrative
-from researchos.objects.hypothesis import Hypothesis, HypothesisSet
-from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.cognitive import Bias, CognitiveAssessment, LearningRecord
 from researchos.objects.confidence import Confidence, ConfidenceReport
 from researchos.objects.contradiction import Contradiction, ContradictionReport
-from researchos.objects.research import Research, ResearchReport, ResearchQuestion
-from researchos.objects.validation import Validation, FailureAnalysis
-from researchos.objects.knowledge import Knowledge, Pattern, Lesson
-from researchos.objects.cognitive import Bias, LearningRecord, CognitiveAssessment
-from researchos.objects.process import AuditEntry, ResearchCycle, ReasoningChain
-
+from researchos.objects.evidence import Evidence, EvidenceRegistry
+from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+from researchos.objects.interpretation import Interpretation, Narrative
+from researchos.objects.knowledge import Knowledge, Lesson, Pattern
+from researchos.objects.observation import MacroState, MarketState, Observation
+from researchos.objects.process import AuditEntry, ReasoningChain, ResearchCycle
+from researchos.objects.research import Research, ResearchQuestion, ResearchReport
+from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.validation import FailureAnalysis, Validation
 
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def ts(year=2024, month=1, day=1):
     return datetime(year, month, day, tzinfo=timezone.utc)
@@ -51,14 +51,26 @@ def ts(year=2024, month=1, day=1):
 # 1. Concurrent writers
 # ===========================================================================
 
+
 class TestConcurrentWriters:
     """Verify SQLite handles concurrent write contention correctly."""
 
     @staticmethod
-    def _writer(repo, thread_id: int, entries: list, start_event: threading.Event, done_event: threading.Event):
+    def _writer(
+        repo,
+        thread_id: int,
+        entries: list,
+        start_event: threading.Event,
+        done_event: threading.Event,
+    ):
         start_event.wait()
         for i in range(5):
-            e = AuditEntry(actor="writer", action=f"WRITE_{thread_id}_{i}", object_id=f"obj_{thread_id}_{i}", object_type="Test")
+            e = AuditEntry(
+                actor="writer",
+                action=f"WRITE_{thread_id}_{i}",
+                object_id=f"obj_{thread_id}_{i}",
+                object_type="Test",
+            )
             try:
                 repo.save_audit_entry(e)
                 entries.append(e.id)
@@ -68,6 +80,7 @@ class TestConcurrentWriters:
 
     def test_concurrent_writes_dont_cause_data_loss(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(str(tmp_path / "concurrent.db"))
 
         start = threading.Event()
@@ -100,17 +113,20 @@ class TestConcurrentWriters:
 # 2. Crash recovery
 # ===========================================================================
 
+
 class TestCrashRecovery:
     """Simulate mid-transaction crash and verify recovery."""
 
     def test_integrity_check_on_clean_db(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(str(tmp_path / "integrity.db"))
         result = repo._check_integrity()
         assert result == "ok"
 
     def test_wal_persistence_after_crash(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "crash.db")
         repo = ResearchRepository(db_path)
 
@@ -131,6 +147,7 @@ class TestCrashRecovery:
 # ===========================================================================
 # 3. Schema migration
 # ===========================================================================
+
 
 class TestSchemaMigration:
     """Verify old databases are migrated to the current schema."""
@@ -161,6 +178,7 @@ class TestSchemaMigration:
         conn.close()
 
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(db_path)
 
         # Verify migration added the columns
@@ -196,6 +214,7 @@ class TestSchemaMigration:
         conn.close()
 
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(db_path)
 
         e = AuditEntry(actor="sys", action="MIGRATE_TEST", object_id="o1", object_type="T")
@@ -213,7 +232,10 @@ OBJECT_SAMPLES: list[tuple[str, Any]] = [
     ("MacroState", MacroState(timestamp=ts(), geography="US", inflation=3.0, growth=2.5)),
     ("Evidence", Evidence(observation_id="o1", hypothesis_id="h1", interpretation="test")),
     ("EvidenceRegistry", EvidenceRegistry(research_id="r1")),
-    ("Interpretation", Interpretation(evidence_ids=["e1"], rule_applied="rule1", context="ctx", conclusion="conc")),
+    (
+        "Interpretation",
+        Interpretation(evidence_ids=["e1"], rule_applied="rule1", context="ctx", conclusion="conc"),
+    ),
     ("Narrative", Narrative(research_id="r1", thesis="story")),
     ("Hypothesis", Hypothesis(research_id="r1", type="Primary", statement="test")),
     ("HypothesisSet", HypothesisSet(research_id="r1")),
@@ -228,7 +250,10 @@ OBJECT_SAMPLES: list[tuple[str, Any]] = [
     ("ResearchReport", ResearchReport(research_id="r1", title="R")),
     ("Validation", Validation(research_id="r1", research_report_id="rr1")),
     ("FailureAnalysis", FailureAnalysis(validation_id="v1", research_id="r1")),
-    ("Knowledge", Knowledge(type="Relationship_Strength", subject="CPI", predicate="impacts", object="Fed")),
+    (
+        "Knowledge",
+        Knowledge(type="Relationship_Strength", subject="CPI", predicate="impacts", object="Fed"),
+    ),
     ("Pattern", Pattern(type="Regime_Transition", description="pattern desc")),
     ("Lesson", Lesson(type="Data", description="lesson desc")),
     ("Bias", Bias(type="Confirmation", trader_id="t1")),
@@ -241,12 +266,64 @@ OBJECT_SAMPLES: list[tuple[str, Any]] = [
 
 NON_DEFAULT_SAMPLES: list[tuple[str, Any]] = [
     ("Observation", Observation(source="FX:USDJPY", timestamp=ts(2025, 6, 15), value=150.25)),
-    ("Evidence", Evidence(observation_id="o_custom", hypothesis_id="h_custom", interpretation="custom interp")),
-    ("Scenario", Scenario(hypothesis_id="h_cust", type="Bear", label="Crash", thesis="Market down", probability=0.3, calibrated_probability=0.28, expected_return=-0.15, volatility=0.35, regime="Crisis")),
-    ("Contradiction", Contradiction(research_id="r_cust", type="External", description="custom conflict")),
-    ("AuditEntry", AuditEntry(actor="trader-1", action="CUSTOM_ACTION", object_id="obj_cust", object_type="Custom", reasoning_chain_id="chain-999", ontology_tags=["high-priority", "reviewed"])),
-    ("Knowledge", Knowledge(type="Custom", subject="SUBJ", predicate="relates_to", object="OBJ", confidence=0.95, evidence_count=10, source_references=["r1", "r2"], knowledge_trace="manual")),
-    ("Research", Research(question="Complex question?", time_horizon="Quarterly", asset="BTC", methodology_version="2.0.0", ontology_tags=["crypto"])),
+    (
+        "Evidence",
+        Evidence(
+            observation_id="o_custom", hypothesis_id="h_custom", interpretation="custom interp"
+        ),
+    ),
+    (
+        "Scenario",
+        Scenario(
+            hypothesis_id="h_cust",
+            type="Bear",
+            label="Crash",
+            thesis="Market down",
+            probability=0.3,
+            calibrated_probability=0.28,
+            expected_return=-0.15,
+            volatility=0.35,
+            regime="Crisis",
+        ),
+    ),
+    (
+        "Contradiction",
+        Contradiction(research_id="r_cust", type="External", description="custom conflict"),
+    ),
+    (
+        "AuditEntry",
+        AuditEntry(
+            actor="trader-1",
+            action="CUSTOM_ACTION",
+            object_id="obj_cust",
+            object_type="Custom",
+            reasoning_chain_id="chain-999",
+            ontology_tags=["high-priority", "reviewed"],
+        ),
+    ),
+    (
+        "Knowledge",
+        Knowledge(
+            type="Custom",
+            subject="SUBJ",
+            predicate="relates_to",
+            object="OBJ",
+            confidence=0.95,
+            evidence_count=10,
+            source_references=["r1", "r2"],
+            knowledge_trace="manual",
+        ),
+    ),
+    (
+        "Research",
+        Research(
+            question="Complex question?",
+            time_horizon="Quarterly",
+            asset="BTC",
+            methodology_version="2.0.0",
+            ontology_tags=["crypto"],
+        ),
+    ),
 ]
 
 
@@ -282,17 +359,21 @@ class TestPropertyBasedSerialization:
 # 5. Long audit chain performance
 # ===========================================================================
 
+
 class TestLongAuditChain:
     """Verify chain integrity and performance with 100k+ entries."""
 
     def test_1k_entries_chain_integrity(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "long_chain.db")
         repo = ResearchRepository(db_path)
 
         n = 1000
         for i in range(n):
-            e = AuditEntry(actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest")
+            e = AuditEntry(
+                actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest"
+            )
             repo.save_audit_entry(e)
 
         assert repo.verify_audit_chain()
@@ -301,12 +382,15 @@ class TestLongAuditChain:
 
     def test_10k_chain_verify_speed(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "speed_chain.db")
         repo = ResearchRepository(db_path)
 
         n = 10_000
         for i in range(n):
-            e = AuditEntry(actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest")
+            e = AuditEntry(
+                actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest"
+            )
             repo.save_audit_entry(e)
 
         start = time.monotonic()
@@ -319,11 +403,13 @@ class TestLongAuditChain:
 # 6. Tamper detection
 # ===========================================================================
 
+
 class TestTamperDetection:
     """Verify detect_tampering() catches various attack types."""
 
     def _make_repo_with_entries(self, tmp_path, n=5):
         from researchos.storage.repository import ResearchRepository
+
         db_path = str(tmp_path / "tamper.db")
         repo = ResearchRepository(db_path)
         for i in range(n):
@@ -376,6 +462,7 @@ class TestTamperDetection:
 # 7. Cross-process deterministic hashing
 # ===========================================================================
 
+
 class TestDeterministicHashing:
     """Verify deterministic_hash produces identical output across dict orderings."""
 
@@ -397,8 +484,9 @@ class TestDeterministicHashing:
         """AuditEntry's _to_hashable_dict uses sorted(ontology_tags)."""
         from researchos.objects.process import AuditEntry
 
-        e = AuditEntry(actor="sys", action="TEST", object_id="o1", object_type="T",
-                       ontology_tags=["z", "a"])
+        e = AuditEntry(
+            actor="sys", action="TEST", object_id="o1", object_type="T", ontology_tags=["z", "a"]
+        )
         h = e._to_hashable_dict()
         assert h["ontology_tags"] == sorted(h["ontology_tags"])
 
@@ -422,6 +510,7 @@ class TestDeterministicHashing:
 # ===========================================================================
 # 8. Lifecycle reconstruction
 # ===========================================================================
+
 
 class TestLifecycleReconstruction:
     """Verify lifecycle transitions survive from_dict round-trip."""
@@ -467,11 +556,13 @@ class TestLifecycleReconstruction:
 # 9. Dual-storage consistency
 # ===========================================================================
 
+
 class TestDualStorageConsistency:
     """Verify objects table and audit_logs table stay in sync for AuditEntry."""
 
     def test_save_audit_entry_writes_to_both_tables(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(str(tmp_path / "dual.db"))
 
         e = AuditEntry(actor="sys", action="TEST", object_id="o1", object_type="T")
@@ -484,11 +575,14 @@ class TestDualStorageConsistency:
         assert cursor.fetchone()[0] == 1
 
         # Check objects table
-        cursor.execute("SELECT COUNT(*) FROM objects WHERE id = ? AND object_type = 'AuditEntry'", (e.id,))
+        cursor.execute(
+            "SELECT COUNT(*) FROM objects WHERE id = ? AND object_type = 'AuditEntry'", (e.id,)
+        )
         assert cursor.fetchone()[0] == 1
 
     def test_dual_storage_consistency_check(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(str(tmp_path / "dual_check.db"))
 
         for i in range(5):
@@ -499,6 +593,7 @@ class TestDualStorageConsistency:
 
     def test_detect_orphan_in_objects(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(str(tmp_path / "orphan_obj.db"))
 
         e = AuditEntry(actor="sys", action="TEST", object_id="o1", object_type="T")
@@ -514,6 +609,7 @@ class TestDualStorageConsistency:
 
     def test_detect_orphan_in_audit_logs(self, tmp_path):
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(str(tmp_path / "orphan_audit.db"))
 
         e = AuditEntry(actor="sys", action="TEST", object_id="o1", object_type="T")

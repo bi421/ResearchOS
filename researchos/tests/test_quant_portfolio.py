@@ -9,6 +9,7 @@ Unit tests for Portfolio Analytics missing components:
 """
 
 import pytest
+
 from researchos.quant_engine.portfolio.analytics import (
     covariance_matrix,
     efficient_frontier,

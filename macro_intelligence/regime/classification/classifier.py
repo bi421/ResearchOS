@@ -10,38 +10,38 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from macro_intelligence.statistics.provenance import content_hash
-from macro_intelligence.regime.classification.taxonomy import (
-    MacroRegime,
-)
 from macro_intelligence.regime.classification.models import (
-    ClassificationRule,
     ClassificationEvidence,
+    ClassificationRule,
     RegimeClassification,
 )
 from macro_intelligence.regime.classification.rules import (
-    RULES_VERSION,
     ALL_RULES,
+    RULES_VERSION,
+)
+from macro_intelligence.regime.classification.taxonomy import (
+    MacroRegime,
 )
 from macro_intelligence.regime.detection.models import RegimeAssessment
+from macro_intelligence.statistics.provenance import content_hash
 
 
 class RegimeClassifier:
     """
     Deterministic regime classification engine.
-    
+
     Transforms RegimeAssessment outputs into unified
     MacroRegime classifications using rule-based logic.
     """
-    
+
     def __init__(self):
         self._version = RULES_VERSION
         self._rules = ALL_RULES
-    
+
     @property
     def version(self) -> str:
         return self._version
-    
+
     def classify_growth_inflation(
         self,
         inflation_signal: str,
@@ -51,7 +51,7 @@ class RegimeClassifier:
     ) -> tuple[str, float, str]:
         """
         Classify growth/inflation regime.
-        
+
         Returns:
             (regime, confidence, explanation)
         """
@@ -61,14 +61,12 @@ class RegimeClassifier:
                 confidence = round((inflation_confidence + growth_confidence) / 2, 2)
                 # Minimum confidence floor
                 confidence = max(confidence, 0.5)
-                explanation = self._build_gi_explanation(
-                    inflation_signal, growth_signal, rule
-                )
+                explanation = self._build_gi_explanation(inflation_signal, growth_signal, rule)
                 return rule.result_regime, confidence, explanation
-        
+
         # Default: stable/slowdown
         return "disinflation", 0.5, "Default classification: no matching rules"
-    
+
     def classify_liquidity(
         self,
         liquidity_signal: str,
@@ -76,16 +74,16 @@ class RegimeClassifier:
     ) -> tuple[str, float, str]:
         """
         Classify liquidity regime.
-        
+
         Returns:
             (regime, confidence, explanation)
         """
         for rule in self._rules["liquidity"]:
             if rule.matches({"liquidity": liquidity_signal}):
                 return rule.result_regime, liquidity_confidence, rule.description
-        
+
         return "liquidity_neutral", 0.5, "Default liquidity: neutral"
-    
+
     def classify_risk(
         self,
         risk_signal: str,
@@ -93,16 +91,16 @@ class RegimeClassifier:
     ) -> tuple[str, float, str]:
         """
         Classify risk regime.
-        
+
         Returns:
             (regime, confidence, explanation)
         """
         for rule in self._rules["risk"]:
             if rule.matches({"risk": risk_signal}):
                 return rule.result_regime, risk_confidence, rule.description
-        
+
         return "risk_off", 0.5, "Default risk: risk_off"
-    
+
     def classify_monetary(
         self,
         monetary_signal: str,
@@ -110,16 +108,16 @@ class RegimeClassifier:
     ) -> tuple[str, float, str]:
         """
         Classify monetary regime.
-        
+
         Returns:
             (regime, confidence, explanation)
         """
         for rule in self._rules["monetary"]:
             if rule.matches({"monetary": monetary_signal}):
                 return rule.result_regime, monetary_confidence, rule.description
-        
+
         return "fed_neutral", 0.5, "Default monetary: neutral"
-    
+
     def classify_macro_regime(
         self,
         assessment: RegimeAssessment,
@@ -127,11 +125,11 @@ class RegimeClassifier:
     ) -> RegimeClassification:
         """
         Full macro regime classification from a RegimeAssessment.
-        
+
         Args:
             assessment: RegimeAssessment from detection engine
             classification_id: Optional custom ID (auto-generated if None)
-            
+
         Returns:
             RegimeClassification with all signals
         """
@@ -142,30 +140,30 @@ class RegimeClassifier:
             assessment.inflation_signal.confidence,
             assessment.growth_signal.confidence,
         )
-        
+
         liq_regime, liq_confidence, liq_explanation = self.classify_liquidity(
             assessment.liquidity_signal.signal,
             assessment.liquidity_signal.confidence,
         )
-        
+
         risk_regime, risk_confidence, risk_explanation = self.classify_risk(
             assessment.risk_signal.signal,
             assessment.risk_signal.confidence,
         )
-        
+
         mon_regime, mon_confidence, mon_explanation = self.classify_monetary(
             assessment.monetary_signal.signal,
             assessment.monetary_signal.confidence,
         )
-        
+
         emp_regime, emp_confidence, emp_explanation = self.classify_employment(
             assessment.employment_signal.signal,
             assessment.employment_signal.confidence,
         )
-        
+
         # Determine primary regime from GI classification
         primary_regime = self._map_macro_regime(gi_regime)
-        
+
         # Build secondary regimes
         secondary_regimes = {
             "liquidity": liq_regime,
@@ -173,13 +171,14 @@ class RegimeClassifier:
             "monetary": mon_regime,
             "employment": emp_regime,
         }
-        
+
         # Compute overall confidence
         overall_confidence = round(
-            (gi_confidence + liq_confidence + risk_confidence + mon_confidence + emp_confidence) / 5,
+            (gi_confidence + liq_confidence + risk_confidence + mon_confidence + emp_confidence)
+            / 5,
             2,
         )
-        
+
         confidence_breakdown = {
             "growth_inflation": gi_confidence,
             "liquidity": liq_confidence,
@@ -187,10 +186,12 @@ class RegimeClassifier:
             "monetary": mon_confidence,
             "employment": emp_confidence,
         }
-        
+
         # Build evidence
         evidence = ClassificationEvidence(
-            matching_rule_id="GI-" + gi_regime.upper()[:3] if gi_regime != "disinflation" else "GI-005",
+            matching_rule_id="GI-" + gi_regime.upper()[:3]
+            if gi_regime != "disinflation"
+            else "GI-005",
             matching_rule_version=RULES_VERSION,
             signal_evidence={
                 "inflation": assessment.inflation_signal.signal,
@@ -210,14 +211,21 @@ class RegimeClassifier:
                 "employment": assessment.employment_signal.algorithm_version,
             },
         )
-        
+
         # Generate explanation
         explanation = self._generate_full_explanation(
-            gi_regime, liq_regime, risk_regime, mon_regime, emp_regime,
-            gi_explanation, liq_explanation, risk_explanation,
-            mon_explanation, emp_explanation,
+            gi_regime,
+            liq_regime,
+            risk_regime,
+            mon_regime,
+            emp_regime,
+            gi_explanation,
+            liq_explanation,
+            risk_explanation,
+            mon_explanation,
+            emp_explanation,
         )
-        
+
         # Generate classification ID if not provided.
         # Content-derived deterministic ID: identical scientific inputs
         # produce an identical classification_id (no wall-clock time).
@@ -232,7 +240,7 @@ class RegimeClassifier:
                     "confidence": overall_confidence,
                 }
             )
-        
+
         return RegimeClassification(
             classification_id=classification_id,
             algorithm_version=self._version,
@@ -245,7 +253,7 @@ class RegimeClassifier:
             rule_applied=gi_regime,
             explanation=explanation,
         )
-    
+
     def classify_employment(
         self,
         employment_signal: str,
@@ -260,7 +268,7 @@ class RegimeClassifier:
         }
         regime = employment_map.get(employment_signal, "employment_normal")
         return regime, employment_confidence, f"Employment: {employment_signal}"
-    
+
     def _map_macro_regime(self, gi_regime: str) -> MacroRegime:
         """Map growth/inflation regime to MacroRegime enum."""
         mapping = {
@@ -272,7 +280,7 @@ class RegimeClassifier:
             "recession": MacroRegime.RECESSION,
         }
         return mapping.get(gi_regime, MacroRegime.DISINFLATION)
-    
+
     def _build_gi_explanation(
         self,
         inflation: str,
@@ -281,7 +289,7 @@ class RegimeClassifier:
     ) -> str:
         """Build explanation for growth/inflation classification."""
         return f"{rule.description}. Inflation: {inflation}, Growth: {growth}"
-    
+
     def _generate_full_explanation(
         self,
         gi_regime: str,
@@ -306,7 +314,7 @@ class RegimeClassifier:
         if emp_regime not in ("employment_normal", "employment_strong"):
             parts.append(emp_explanation)
         return "; ".join(parts)
-    
+
     def get_rule_by_id(self, rule_id: str) -> ClassificationRule | None:
         """Get a specific rule by ID."""
         for category, rules in self._rules.items():
@@ -314,11 +322,11 @@ class RegimeClassifier:
                 if rule.rule_id == rule_id:
                     return rule
         return None
-    
+
     def get_all_rules(self) -> list[ClassificationRule]:
         """Get all classification rules."""
         return [rule for rules in self._rules.values() for rule in rules]
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Return classifier metadata."""
         return {

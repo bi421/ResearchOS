@@ -26,8 +26,8 @@ from researchos.intelligence import (
     EvidenceEdge,
     EvidenceError,
     EvidenceGraph,
+    EvidenceGraphStore,
     EvidenceNode,
-    EvidenceRepository,
     InvalidEdgeError,
     NodeAlreadyExistsError,
     NodeNotFoundError,
@@ -36,8 +36,12 @@ from researchos.intelligence import (
 )
 
 
-def make_node(node_id: str = "dataset_1", node_type: NodeType = NodeType.DATASET,
-              reference_id: str = "ref_dataset_1", **kwargs) -> EvidenceNode:
+def make_node(
+    node_id: str = "dataset_1",
+    node_type: NodeType = NodeType.DATASET,
+    reference_id: str = "ref_dataset_1",
+    **kwargs,
+) -> EvidenceNode:
     return EvidenceNode(
         node_id=node_id,
         node_type=node_type,
@@ -46,10 +50,13 @@ def make_node(node_id: str = "dataset_1", node_type: NodeType = NodeType.DATASET
     )
 
 
-def make_edge(edge_id: str = "edge_1", source_id: str = "dataset_1",
-              target_id: str = "model_1",
-              relationship: Relationship = Relationship.USED_BY,
-              **kwargs) -> EvidenceEdge:
+def make_edge(
+    edge_id: str = "edge_1",
+    source_id: str = "dataset_1",
+    target_id: str = "model_1",
+    relationship: Relationship = Relationship.USED_BY,
+    **kwargs,
+) -> EvidenceEdge:
     return EvidenceEdge(
         edge_id=edge_id,
         source_id=source_id,
@@ -66,16 +73,20 @@ def make_graph():
     graph.add_node(make_node("validation_1", NodeType.VALIDATION, "ref_validation_1"))
     graph.add_node(make_node("experiment_1", NodeType.EXPERIMENT, "ref_experiment_1"))
     graph.add_edge(make_edge("e_ds_model", "dataset_1", "model_1"))
-    graph.add_edge(make_edge("e_model_exp", "model_1", "experiment_1",
-                             Relationship.VALIDATED_BY))
+    graph.add_edge(make_edge("e_model_exp", "model_1", "experiment_1", Relationship.VALIDATED_BY))
     return graph
 
 
 class TestNodeType(unittest.TestCase):
     def test_has_all_required_members(self):
         expected = {
-            "DATASET", "FEATURE_SET", "LABEL_SET", "MODEL",
-            "VALIDATION", "EXPERIMENT", "RESULT",
+            "DATASET",
+            "FEATURE_SET",
+            "LABEL_SET",
+            "MODEL",
+            "VALIDATION",
+            "EXPERIMENT",
+            "RESULT",
         }
         self.assertEqual({m.name for m in NodeType}, expected)
 
@@ -122,7 +133,11 @@ class TestNodeType(unittest.TestCase):
 class TestRelationship(unittest.TestCase):
     def test_has_all_required_members(self):
         expected = {
-            "USED_BY", "GENERATED_FROM", "VALIDATED_BY", "PRODUCED", "DEPENDS_ON",
+            "USED_BY",
+            "GENERATED_FROM",
+            "VALIDATED_BY",
+            "PRODUCED",
+            "DEPENDS_ON",
         }
         self.assertEqual({m.name for m in Relationship}, expected)
 
@@ -135,12 +150,10 @@ class TestRelationship(unittest.TestCase):
         self.assertIs(Relationship.from_string("USED_BY"), Relationship.USED_BY)
 
     def test_from_string_generated_from(self):
-        self.assertIs(Relationship.from_string("generated_from"),
-                      Relationship.GENERATED_FROM)
+        self.assertIs(Relationship.from_string("generated_from"), Relationship.GENERATED_FROM)
 
     def test_from_string_validated_by(self):
-        self.assertIs(Relationship.from_string("validated_by"),
-                      Relationship.VALIDATED_BY)
+        self.assertIs(Relationship.from_string("validated_by"), Relationship.VALIDATED_BY)
 
     def test_from_string_produced(self):
         self.assertIs(Relationship.from_string("produced"), Relationship.PRODUCED)
@@ -243,6 +256,7 @@ class TestEvidenceNodeImmutability(unittest.TestCase):
 
     def test_metadata_is_mapping_proxy(self):
         from types import MappingProxyType
+
         node = make_node(metadata={"a": 1})
         self.assertIsInstance(node.metadata, MappingProxyType)
 
@@ -319,9 +333,7 @@ class TestEvidenceNodeSerialization(unittest.TestCase):
             EvidenceNode.from_dict({"node_type": "dataset"})
 
     def test_from_dict_reconstructs_type(self):
-        node = EvidenceNode.from_dict(
-            {"node_id": "x", "node_type": "MODEL", "reference_id": "r"}
-        )
+        node = EvidenceNode.from_dict({"node_id": "x", "node_type": "MODEL", "reference_id": "r"})
         self.assertIs(node.node_type, NodeType.MODEL)
 
     def test_serialization_deterministic(self):
@@ -370,9 +382,7 @@ class TestEvidenceEdgeCreation(unittest.TestCase):
         self.assertEqual(make_edge(), make_edge())
 
     def test_equality_different_relationship(self):
-        self.assertNotEqual(
-            make_edge(), make_edge(relationship=Relationship.PRODUCED)
-        )
+        self.assertNotEqual(make_edge(), make_edge(relationship=Relationship.PRODUCED))
 
 
 class TestEvidenceEdgeValidation(unittest.TestCase):
@@ -459,14 +469,12 @@ class TestEvidenceEdgeSerialization(unittest.TestCase):
         data = make_edge().to_dict()
         self.assertEqual(
             set(data.keys()),
-            {"edge_id", "source_id", "target_id", "relationship", "metadata",
-             "created_at"},
+            {"edge_id", "source_id", "target_id", "relationship", "metadata", "created_at"},
         )
 
     def test_from_dict_reconstructs_relationship(self):
         edge = EvidenceEdge.from_dict(
-            {"edge_id": "e", "source_id": "a", "target_id": "b",
-             "relationship": "VALIDATED_BY"}
+            {"edge_id": "e", "source_id": "a", "target_id": "b", "relationship": "VALIDATED_BY"}
         )
         self.assertIs(edge.relationship, Relationship.VALIDATED_BY)
 
@@ -625,8 +633,7 @@ class TestEvidenceGraphGetEdges(unittest.TestCase):
         graph.add_node(make_node("a"))
         for i in range(5):
             graph.add_node(make_node(f"b{i}"))
-            graph.add_edge(make_edge(f"e{i}", "a", f"b{i}",
-                                     Relationship.PRODUCED))
+            graph.add_edge(make_edge(f"e{i}", "a", f"b{i}", Relationship.PRODUCED))
         ids = [e.edge_id for e in graph.get_edges("a")]
         self.assertEqual(ids, sorted(ids))
 
@@ -657,8 +664,9 @@ class TestEvidenceGraphNeighbors(unittest.TestCase):
         for i in range(5):
             graph.add_node(make_node(f"leaf{i}"))
             graph.add_edge(make_edge(f"e{i}", "hub", f"leaf{i}"))
-        self.assertEqual(graph.neighbors("hub"),
-                         tuple(sorted(["leaf0", "leaf1", "leaf2", "leaf3", "leaf4"])))
+        self.assertEqual(
+            graph.neighbors("hub"), tuple(sorted(["leaf0", "leaf1", "leaf2", "leaf3", "leaf4"]))
+        )
 
     def test_neighbors_isolated_node_empty(self):
         graph = EvidenceGraph()
@@ -795,8 +803,7 @@ class TestEvidenceGraphCounts(unittest.TestCase):
         graph.add_node(make_node("a"))
         for i in range(10):
             graph.add_node(make_node(f"b{i}"))
-            graph.add_edge(make_edge(f"e{i}", "a", f"b{i}",
-                                     Relationship.PRODUCED))
+            graph.add_edge(make_edge(f"e{i}", "a", f"b{i}", Relationship.PRODUCED))
         self.assertEqual(graph.count_edges(), 10)
 
     def test_counts_match_after_clear(self):
@@ -827,8 +834,7 @@ class TestEvidenceGraphDeterminism(unittest.TestCase):
         graph.add_node(make_node("a"))
         for i in (1, 2, 3):
             graph.add_node(make_node(f"b{i}"))
-            graph.add_edge(make_edge(f"e{i}", "a", f"b{i}",
-                                     Relationship.PRODUCED))
+            graph.add_edge(make_edge(f"e{i}", "a", f"b{i}", Relationship.PRODUCED))
         ids = [e["edge_id"] for e in graph.to_dict()["edges"]]
         self.assertEqual(ids, ["e1", "e2", "e3"])
 
@@ -970,69 +976,69 @@ class TestEvidenceGraphSerialization(unittest.TestCase):
         self.assertEqual(restored.get_node("a").metadata["symbol"], "XAUUSD")
 
 
-class TestEvidenceRepositorySerialize(unittest.TestCase):
+class TestEvidenceGraphStoreSerialize(unittest.TestCase):
     def test_serialize_returns_json_string(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         text = repo.serialize(make_graph())
         self.assertIsInstance(text, str)
         json.loads(text)
 
     def test_serialize_contains_version(self):
-        payload = json.loads(EvidenceRepository().serialize(make_graph()))
+        payload = json.loads(EvidenceGraphStore().serialize(make_graph()))
         self.assertEqual(payload["version"], EVIDENCE_GRAPH_VERSION)
 
     def test_serialize_contains_graph(self):
-        payload = json.loads(EvidenceRepository().serialize(make_graph()))
+        payload = json.loads(EvidenceGraphStore().serialize(make_graph()))
         self.assertEqual(len(payload["graph"]["nodes"]), 4)
 
     def test_serialize_non_graph_raises(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         with self.assertRaises(TypeError):
             repo.serialize("not-a-graph")  # type: ignore[arg-type]
 
     def test_serialize_empty_graph(self):
-        payload = json.loads(EvidenceRepository().serialize(EvidenceGraph()))
+        payload = json.loads(EvidenceGraphStore().serialize(EvidenceGraph()))
         self.assertEqual(payload["graph"], {"nodes": [], "edges": []})
 
     def test_serialize_deterministic(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         self.assertEqual(repo.serialize(make_graph()), repo.serialize(make_graph()))
 
 
-class TestEvidenceRepositoryDeserialize(unittest.TestCase):
+class TestEvidenceGraphStoreDeserialize(unittest.TestCase):
     def test_deserialize_roundtrip(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         graph = make_graph()
         restored = repo.deserialize(repo.serialize(graph))
         self.assertEqual(restored.to_dict(), graph.to_dict())
 
     def test_deserialize_preserves_edges(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         restored = repo.deserialize(repo.serialize(make_graph()))
         self.assertEqual(restored.count_edges(), 2)
 
     def test_deserialize_invalid_json_raises(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         with self.assertRaises(EvidenceError):
             repo.deserialize("{not json")
 
     def test_deserialize_missing_graph_section_raises(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         with self.assertRaises(EvidenceError):
             repo.deserialize(json.dumps({"version": "1.0.0"}))
 
     def test_deserialize_bad_version_type_raises(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         with self.assertRaises(EvidenceError):
             repo.deserialize(json.dumps({"version": 1, "graph": {}}))
 
     def test_deserialize_bad_graph_raises(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         with self.assertRaises(EvidenceError):
             repo.deserialize(json.dumps({"version": "1.0.0", "graph": "nope"}))
 
     def test_deserialize_empty_graph(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         restored = repo.deserialize(repo.serialize(EvidenceGraph()))
         self.assertEqual(restored.count_nodes(), 0)
 
@@ -1044,16 +1050,16 @@ class TestEvidenceRepositoryDeserialize(unittest.TestCase):
                 "edges": [make_edge("e", "dataset_1", "missing").to_dict()],
             },
         }
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         with self.assertRaises(EvidenceError):
             repo.deserialize(json.dumps(payload))
 
 
-class TestEvidenceRepositorySaveLoad(unittest.TestCase):
+class TestEvidenceGraphStoreSaveLoad(unittest.TestCase):
     def test_save_load_roundtrip(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "graph.json")
-            repo = EvidenceRepository(path)
+            repo = EvidenceGraphStore(path)
             graph = make_graph()
             repo.save(graph)
             loaded = repo.load()
@@ -1062,32 +1068,32 @@ class TestEvidenceRepositorySaveLoad(unittest.TestCase):
     def test_save_returns_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "graph.json")
-            result = EvidenceRepository(path).save(make_graph())
+            result = EvidenceGraphStore(path).save(make_graph())
             self.assertEqual(result, path)
 
     def test_load_missing_file_raises(self):
         with tempfile.TemporaryDirectory() as tmp:
-            repo = EvidenceRepository(os.path.join(tmp, "missing.json"))
+            repo = EvidenceGraphStore(os.path.join(tmp, "missing.json"))
             with self.assertRaises(FileNotFoundError):
                 repo.load()
 
     def test_save_explicit_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "explicit.json")
-            EvidenceRepository().save(make_graph(), path=path)
+            EvidenceGraphStore().save(make_graph(), path=path)
             self.assertTrue(os.path.exists(path))
 
     def test_load_explicit_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "explicit.json")
-            EvidenceRepository().save(make_graph(), path=path)
-            loaded = EvidenceRepository().load(path=path)
+            EvidenceGraphStore().save(make_graph(), path=path)
+            loaded = EvidenceGraphStore().load(path=path)
             self.assertEqual(loaded.count_nodes(), 4)
 
     def test_save_written_file_is_json(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "graph.json")
-            EvidenceRepository(path).save(make_graph())
+            EvidenceGraphStore(path).save(make_graph())
             with open(path, "r", encoding="utf-8") as handle:
                 json.load(handle)
 
@@ -1096,24 +1102,23 @@ class TestEvidenceRepositorySaveLoad(unittest.TestCase):
             path = os.path.join(tmp, "graph.json")
             graph = EvidenceGraph()
             graph.add_node(make_node("a", metadata={"k": "v"}))
-            repo = EvidenceRepository(path)
+            repo = EvidenceGraphStore(path)
             repo.save(graph)
             self.assertEqual(repo.load().get_node("a").metadata["k"], "v")
 
 
-class TestEvidenceRepositoryDeterminism(unittest.TestCase):
+class TestEvidenceGraphStoreDeterminism(unittest.TestCase):
     def test_save_identical_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             p1 = os.path.join(tmp, "a.json")
             p2 = os.path.join(tmp, "b.json")
-            EvidenceRepository(p1).save(make_graph())
-            EvidenceRepository(p2).save(make_graph())
-            with open(p1, "r", encoding="utf-8") as f1, \
-                    open(p2, "r", encoding="utf-8") as f2:
+            EvidenceGraphStore(p1).save(make_graph())
+            EvidenceGraphStore(p2).save(make_graph())
+            with open(p1, "r", encoding="utf-8") as f1, open(p2, "r", encoding="utf-8") as f2:
                 self.assertEqual(f1.read(), f2.read())
 
     def test_serialize_deserialize_repeatable(self):
-        repo = EvidenceRepository()
+        repo = EvidenceGraphStore()
         graph = make_graph()
         restored = repo.deserialize(repo.serialize(graph))
         self.assertEqual(restored.to_dict(), graph.to_dict())

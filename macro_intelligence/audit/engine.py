@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Optional
-from macro_intelligence.audit.log import AuditLog, AuditEntry, IntegrityCheck
+
+from macro_intelligence.audit.log import AuditEntry, AuditLog, IntegrityCheck
 from macro_intelligence.revision.enums import IntegrityLevel
-from macro_intelligence.revision.record import RevisionRecord, RevisionChain
+from macro_intelligence.revision.record import RevisionChain, RevisionRecord
 
 
 @dataclass(frozen=True)
@@ -19,27 +20,28 @@ class AuditResult:
     """
     Result of an audit operation.
     """
+
     audit_id: str
     timestamp: datetime
     object_type: str
     object_id: str
-    
+
     # Results
     passed: bool
     checks_performed: int
     checks_passed: int
     checks_failed: int
-    
+
     # Revision tracking
     revision_id: Optional[str] = None
-    
+
     # Details
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    
+
     # Generated
     version: str = "audit/engine/v1"
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -56,7 +58,7 @@ class AuditResult:
             "warnings": self.warnings,
             "version": self.version,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AuditResult:
         """Deserialize from dictionary."""
@@ -79,17 +81,17 @@ class AuditResult:
 class AuditEngine:
     """
     Engine for performing audits on macro objects.
-    
+
     Provides:
     - Historical reconstruction
     - Lineage tracing
     - Integrity verification
     - Audit log management
     """
-    
+
     def __init__(self):
         self.audit_log = AuditLog(log_id="AUDIT_LOG_001")
-    
+
     def audit_revision(
         self,
         revision: RevisionRecord,
@@ -97,7 +99,7 @@ class AuditEngine:
     ) -> AuditResult:
         """
         Audit a revision record.
-        
+
         Checks:
         - Revision ID format
         - Object ID format
@@ -109,14 +111,14 @@ class AuditEngine:
         warnings = []
         checks_performed = 0
         checks_passed = 0
-        
+
         # Check 1: Revision ID format
         checks_performed += 1
         if revision.revision_id.startswith("REV_"):
             checks_passed += 1
         else:
             errors.append("Invalid revision_id format")
-        
+
         # Check 2: Object ID format
         checks_performed += 1
         valid_prefixes = ("SER_", "EV_", "EVNT_", "KN_")
@@ -124,21 +126,21 @@ class AuditEngine:
             checks_passed += 1
         else:
             errors.append("Invalid object_id format")
-        
+
         # Check 3: Timestamp ordering
         checks_performed += 1
         if revision.effective_from <= revision.created_at:
             checks_passed += 1
         else:
             errors.append("effective_from cannot be after created_at")
-        
+
         # Check 4: No circular lineage
         checks_performed += 1
         if revision.parent_revision_id != revision.revision_id:
             checks_passed += 1
         else:
             errors.append("Circular lineage detected")
-        
+
         # Check 5: Provenance completeness
         checks_performed += 1
         if revision.provenance:
@@ -150,9 +152,9 @@ class AuditEngine:
         else:
             warnings.append("No provenance chain attached")
             checks_passed += 1  # Provenance is optional
-        
+
         passed = len(errors) == 0
-        
+
         result = AuditResult(
             audit_id=f"AUDIT_{revision.revision_id}",
             timestamp=datetime.now(timezone.utc),
@@ -166,12 +168,12 @@ class AuditEngine:
             errors=errors,
             warnings=warnings,
         )
-        
+
         # Log the audit
         entry = AuditEntry(
             audit_id=f"AUDIT_LOG_{revision.revision_id}",
             timestamp=result.timestamp,
-            action=type('obj', (object,), {'value': 'audit'})(),
+            action=type("obj", (object,), {"value": "audit"})(),
             object_type=revision.object_type,
             object_id=revision.object_id,
             revision_id=revision.revision_id,
@@ -180,9 +182,9 @@ class AuditEngine:
             success=passed,
         )
         self.audit_log = self.audit_log.add_entry(entry)
-        
+
         return result
-    
+
     def audit_revision_chain(
         self,
         chain: RevisionChain,
@@ -190,7 +192,7 @@ class AuditEngine:
     ) -> AuditResult:
         """
         Audit a complete revision chain.
-        
+
         Checks:
         - Revision continuity
         - No missing revisions
@@ -202,14 +204,14 @@ class AuditEngine:
         warnings = []
         checks_performed = 0
         checks_passed = 0
-        
+
         # Check 1: Chain has at least one revision
         checks_performed += 1
         if len(chain.revisions) >= 1:
             checks_passed += 1
         else:
             errors.append("Revision chain is empty")
-        
+
         # Check 2: Revisions are numbered sequentially
         checks_performed += 1
         revision_numbers = [r.revision_number for r in chain.revisions]
@@ -217,14 +219,14 @@ class AuditEngine:
             checks_passed += 1
         else:
             errors.append("Revision numbers are not sequential")
-        
+
         # Check 3: No duplicate revisions
         checks_performed += 1
         if len(revision_numbers) == len(set(revision_numbers)):
             checks_passed += 1
         else:
             errors.append("Duplicate revision numbers detected")
-        
+
         # Check 4: No circular references
         checks_performed += 1
         try:
@@ -232,7 +234,7 @@ class AuditEngine:
             checks_passed += 1
         except ValueError as e:
             errors.append(str(e))
-        
+
         # Check 5: Lineage is complete
         checks_performed += 1
         lineage_valid = True
@@ -240,18 +242,17 @@ class AuditEngine:
             if rev.parent_revision_id:
                 # Parent should exist
                 parent_exists = any(
-                    r.revision_id == rev.parent_revision_id
-                    for r in chain.revisions
+                    r.revision_id == rev.parent_revision_id for r in chain.revisions
                 )
                 if not parent_exists:
                     lineage_valid = False
                     errors.append(f"Missing parent revision: {rev.parent_revision_id}")
-        
+
         if lineage_valid:
             checks_passed += 1
-        
+
         passed = len(errors) == 0
-        
+
         result = AuditResult(
             audit_id=f"AUDIT_CHAIN_{chain.object_id}",
             timestamp=datetime.now(timezone.utc),
@@ -264,9 +265,9 @@ class AuditEngine:
             errors=errors,
             warnings=warnings,
         )
-        
+
         return result
-    
+
     def reconstruct_history(
         self,
         chain: RevisionChain,
@@ -274,7 +275,7 @@ class AuditEngine:
     ) -> Optional[RevisionRecord]:
         """
         Reconstruct historical state at a specific revision.
-        
+
         MIL-AUDIT-001: Historical reconstruction must be deterministic.
         """
         revision = chain.get_revision(target_revision_number)
@@ -283,7 +284,7 @@ class AuditEngine:
             entry = AuditEntry(
                 audit_id=f"AUDIT_RECONSTRUCT_{chain.object_id}_{target_revision_number}",
                 timestamp=datetime.now(timezone.utc),
-                action=type('obj', (object,), {'value': 'reconstruct'})(),
+                action=type("obj", (object,), {"value": "reconstruct"})(),
                 object_type=chain.object_type,
                 object_id=chain.object_id,
                 revision_id=str(target_revision_number),
@@ -292,9 +293,9 @@ class AuditEngine:
                 success=True,
             )
             self.audit_log = self.audit_log.add_entry(entry)
-        
+
         return revision
-    
+
     def verify_integrity(
         self,
         chain: RevisionChain,
@@ -308,7 +309,7 @@ class AuditEngine:
         checks_failed = []
         error_details = []
         warnings = []
-        
+
         # Basic integrity checks
         checks_performed.append("revision_count")
         if len(chain.revisions) >= 1:
@@ -316,7 +317,7 @@ class AuditEngine:
         else:
             checks_failed.append("revision_count")
             error_details.append("Empty revision chain")
-        
+
         checks_performed.append("sequential_numbers")
         revision_numbers = [r.revision_number for r in chain.revisions]
         if revision_numbers == list(range(1, len(revision_numbers) + 1)):
@@ -324,14 +325,14 @@ class AuditEngine:
         else:
             checks_failed.append("sequential_numbers")
             error_details.append("Non-sequential revision numbers")
-        
+
         checks_performed.append("no_duplicates")
         if len(revision_numbers) == len(set(revision_numbers)):
             checks_passed.append("no_duplicates")
         else:
             checks_failed.append("no_duplicates")
             error_details.append("Duplicate revision numbers")
-        
+
         checks_performed.append("no_cycles")
         try:
             chain._verify_no_cycles()
@@ -339,9 +340,9 @@ class AuditEngine:
         except ValueError:
             checks_failed.append("no_cycles")
             error_details.append("Circular reference detected")
-        
+
         passed = len(checks_failed) == 0
-        
+
         check = IntegrityCheck(
             check_id=f"CHECK_{chain.object_id}",
             timestamp=datetime.now(timezone.utc),
@@ -355,12 +356,12 @@ class AuditEngine:
             error_details=error_details,
             warnings=warnings,
         )
-        
+
         # Log the check
         entry = AuditEntry(
             audit_id=f"AUDIT_CHECK_{chain.object_id}",
             timestamp=check.timestamp,
-            action=type('obj', (object,), {'value': 'verify'})(),
+            action=type("obj", (object,), {"value": "verify"})(),
             object_type=chain.object_type,
             object_id=chain.object_id,
             actor="audit_engine",
@@ -368,5 +369,5 @@ class AuditEngine:
             success=passed,
         )
         self.audit_log = self.audit_log.add_entry(entry)
-        
+
         return check

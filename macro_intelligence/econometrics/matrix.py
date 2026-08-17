@@ -17,6 +17,7 @@ no wall-clock dependence.
 
 MIL-ECM-003: Matrix operations are deterministic and pure.
 """
+
 from __future__ import annotations
 
 from typing import List
@@ -49,9 +50,7 @@ def matmul(a: Matrix, b: Matrix) -> Matrix:
     n = len(a[0])
     p = len(b[0])
     if len(b) != n:
-        raise ValueError(
-            f"Incompatible dimensions for matmul: {len(a)}x{n} and {len(b)}x{p}"
-        )
+        raise ValueError(f"Incompatible dimensions for matmul: {len(a)}x{n} and {len(b)}x{p}")
     bt = transpose(b)
     result = []
     for i in range(m):

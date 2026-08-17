@@ -13,6 +13,7 @@ in any hash.
 MIL-ECM-001: Every econometric result is immutable and deterministic.
 MIL-ECM-002: Provenance attaches to every result via StatisticalProvenance.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -64,6 +65,7 @@ class RegressionResult:
         provenance: Institution-wide provenance envelope.
         result_hash: Deterministic SHA-256 over the result content.
     """
+
     coefficients: List[float]
     r_squared: float
     adjusted_r_squared: float
@@ -171,9 +173,7 @@ class RegressionResult:
             "converged": self.converged,
             "iterations": self.iterations,
             "n_coefficients": len(self.coefficients),
-            "n_significant_pvalues": sum(
-                1 for p in self.p_values if p is not None and p < 0.05
-            ),
+            "n_significant_pvalues": sum(1 for p in self.p_values if p is not None and p < 0.05),
             "is_deterministic": True,
             "provenance": self.provenance.to_dict(),
             "result_hash": self.result_hash,
@@ -195,6 +195,7 @@ class TestResult:
         provenance: Institution-wide provenance envelope.
         result_hash: Deterministic SHA-256 over the result content.
     """
+
     test_name: str
     statistic: float
     p_value: Optional[float]
@@ -267,6 +268,7 @@ class ResidualDiagnostics:
         provenance: Institution-wide provenance envelope.
         result_hash: Deterministic SHA-256 over the result content.
     """
+
     mean: float
     std: float
     skewness: float
@@ -347,6 +349,7 @@ class IntervalResult:
         provenance: Institution-wide provenance envelope.
         result_hash: Deterministic SHA-256 over the result content.
     """
+
     level: float
     lower: float
     upper: float
@@ -407,6 +410,7 @@ class InformationCriteria:
         provenance: Institution-wide provenance envelope.
         result_hash: Deterministic SHA-256 over the result content.
     """
+
     aic: float
     bic: float
     log_likelihood: float
@@ -465,6 +469,7 @@ class ModelDiagnostics:
         provenance: Institution-wide provenance envelope.
         result_hash: Deterministic SHA-256 over the result content.
     """
+
     regression: Optional[RegressionResult]
     residual: ResidualDiagnostics
     information_criteria: Optional[InformationCriteria]
@@ -476,7 +481,9 @@ class ModelDiagnostics:
             content = {
                 "regression": self.regression.to_dict() if self.regression else None,
                 "residual": self.residual.to_dict(),
-                "information_criteria": self.information_criteria.to_dict() if self.information_criteria else None,
+                "information_criteria": self.information_criteria.to_dict()
+                if self.information_criteria
+                else None,
                 "provenance": self.provenance.to_dict(),
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
@@ -486,7 +493,9 @@ class ModelDiagnostics:
         return {
             "regression": self.regression.to_dict() if self.regression else None,
             "residual": self.residual.to_dict(),
-            "information_criteria": self.information_criteria.to_dict() if self.information_criteria else None,
+            "information_criteria": self.information_criteria.to_dict()
+            if self.information_criteria
+            else None,
             "provenance": self.provenance.to_dict(),
             "result_hash": self.result_hash,
         }

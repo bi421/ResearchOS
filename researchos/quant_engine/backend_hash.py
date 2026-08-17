@@ -84,9 +84,7 @@ def canonicalize(value: Any) -> Any:
 def compute_input_hash(inputs: Any) -> str:
     """Deterministic SHA-256 digest of an operation's input payload."""
     payload = canonicalize({"inputs": inputs})
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
 
 def compute_backend_result_hash(

@@ -102,20 +102,14 @@ class TestPerformanceStat:
 class TestCertifiedPerformanceProfile:
     def test_estimate_unknown_is_none(self):
         profile = CertifiedPerformanceProfile()
-        assert (
-            profile.estimate_ms("BackendA", "calculate_returns", DatasetSizeClass.SMALL)
-            is None
-        )
+        assert profile.estimate_ms("BackendA", "calculate_returns", DatasetSizeClass.SMALL) is None
 
     def test_add_and_estimate(self):
         profile = CertifiedPerformanceProfile()
         stat = PerformanceStat(mean_ms=1.0)
         updated = profile.add("BackendA", "calculate_returns", DatasetSizeClass.SMALL, stat)
         assert profile.estimate_ms("BackendA", "calculate_returns", DatasetSizeClass.SMALL) is None
-        assert (
-            updated.estimate_ms("BackendA", "calculate_returns", DatasetSizeClass.SMALL)
-            == 1.0
-        )
+        assert updated.estimate_ms("BackendA", "calculate_returns", DatasetSizeClass.SMALL) == 1.0
 
     def test_immutable_add_returns_new_profile(self):
         profile = CertifiedPerformanceProfile()
@@ -125,10 +119,10 @@ class TestCertifiedPerformanceProfile:
         assert profile.measured() == 0
 
     def test_faster_than(self):
-        profile = CertifiedPerformanceProfile().add(
-            "Fast", "op", DatasetSizeClass.LARGE, PerformanceStat(5.0)
-        ).add(
-            "Slow", "op", DatasetSizeClass.LARGE, PerformanceStat(50.0)
+        profile = (
+            CertifiedPerformanceProfile()
+            .add("Fast", "op", DatasetSizeClass.LARGE, PerformanceStat(5.0))
+            .add("Slow", "op", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         )
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is True
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Slow", "Fast") is False
@@ -137,25 +131,20 @@ class TestCertifiedPerformanceProfile:
         profile = CertifiedPerformanceProfile().add(
             "Fast", "op", DatasetSizeClass.SMALL, PerformanceStat(5.0)
         )
-        assert (
-            profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is False
-        )
+        assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is False
 
     def test_roundtrip(self):
-        profile = CertifiedPerformanceProfile().add(
-            "A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(2.5)
-        ).add(
-            "B", "run_simulation", DatasetSizeClass.LARGE, PerformanceStat(50.0)
+        profile = (
+            CertifiedPerformanceProfile()
+            .add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(2.5))
+            .add("B", "run_simulation", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         )
         restored = CertifiedPerformanceProfile.from_dict(profile.to_dict())
         assert restored.version == profile.version
         assert restored.source == profile.source
         assert restored.thresholds == profile.thresholds
         assert restored.measured() == profile.measured()
-        assert (
-            restored.estimate_ms("A", "calculate_returns", DatasetSizeClass.SMALL)
-            == 2.5
-        )
+        assert restored.estimate_ms("A", "calculate_returns", DatasetSizeClass.SMALL) == 2.5
 
     def test_from_benchmark(self):
         rows = [
@@ -193,9 +182,7 @@ class TestCertifiedPerformanceProfile:
                 error_code="ok",
             )
         )
-        profile = CertifiedPerformanceProfile(
-            version="1.0.0", source="benchmark"
-        ).add(
+        profile = CertifiedPerformanceProfile(version="1.0.0", source="benchmark").add(
             "A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(4.0, count=2)
         )
         new_profile = profile.recalibrate(history)
@@ -224,10 +211,10 @@ class TestBackendScheduler:
         assert decision.profile_version == ""
 
     def test_profile_selects_fastest(self):
-        profile = CertifiedPerformanceProfile().add(
-            "Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)
-        ).add(
-            "Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0)
+        profile = (
+            CertifiedPerformanceProfile()
+            .add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0))
+            .add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         )
         scheduler = BackendScheduler(profile=profile)
         decision = scheduler.decide(
@@ -273,10 +260,10 @@ class TestBackendScheduler:
         assert restored == decision
 
     def test_deterministic_decision(self):
-        profile = CertifiedPerformanceProfile().add(
-            "A", "op", DatasetSizeClass.MEDIUM, PerformanceStat(1.0)
-        ).add(
-            "B", "op", DatasetSizeClass.MEDIUM, PerformanceStat(2.0)
+        profile = (
+            CertifiedPerformanceProfile()
+            .add("A", "op", DatasetSizeClass.MEDIUM, PerformanceStat(1.0))
+            .add("B", "op", DatasetSizeClass.MEDIUM, PerformanceStat(2.0))
         )
         scheduler = BackendScheduler(profile=profile)
         inputs = {"prices": [1.0] * 5_000}
@@ -289,12 +276,8 @@ class TestBackendScheduler:
 class TestExecutionHistory:
     def test_record_and_summary(self):
         history = ExecutionHistory()
-        history.record(
-            ExecutionRecord("op1", "A", "small", 1.0, "passed", "ok")
-        )
-        history.record(
-            ExecutionRecord("op1", "B", "small", 2.0, "passed", "ok", fallback_count=1)
-        )
+        history.record(ExecutionRecord("op1", "A", "small", 1.0, "passed", "ok"))
+        history.record(ExecutionRecord("op1", "B", "small", 2.0, "passed", "ok", fallback_count=1))
         summary = history.summary()
         assert summary["total_executions"] == 2
         assert summary["total_fallbacks"] == 1

@@ -36,9 +36,7 @@ class DatasetBuilder:
         self.low = list(low)
         self.volume = list(volume)
         n = len(self.close)
-        if not (
-            len(self.high) == n and len(self.low) == n and len(self.volume) == n
-        ):
+        if not (len(self.high) == n and len(self.low) == n and len(self.volume) == n):
             raise ValueError("close, high, low and volume must have equal length")
 
     # ------------------------------------------------------------------
@@ -63,8 +61,7 @@ class DatasetBuilder:
         n = len(rows)
         if len(label_values) != n:
             raise ValueError(
-                f"label length {len(label_values)} does not match "
-                f"feature row count {n}"
+                f"label length {len(label_values)} does not match feature row count {n}"
             )
 
         aligned_features: List[Tuple[float, ...]] = []
@@ -158,4 +155,3 @@ class DatasetBuilder:
 
 
 __all__ = ["DatasetBuilder"]
-

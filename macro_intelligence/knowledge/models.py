@@ -26,7 +26,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-
 # =============================================================================
 # Algorithm version
 # =============================================================================
@@ -121,17 +120,20 @@ class KnowledgeProvenance:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> KnowledgeProvenance:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         """Deterministic hash for provenance."""
         import hashlib
         import json
+
         hash_data = {
             "evidence_ids": sorted(self.evidence_ids),
             "feature_vector_ids": sorted(self.feature_vector_ids),
@@ -141,8 +143,8 @@ class KnowledgeProvenance:
             "algorithm_version": self.algorithm_version,
             "rules_version": self.rules_version,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     def is_complete(self) -> bool:
         """
@@ -252,11 +254,13 @@ class KnowledgeObject:
     def to_json(self) -> str:
         """Serialize to JSON with deterministic ordering."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> KnowledgeObject:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
@@ -270,6 +274,7 @@ class KnowledgeObject:
         """
         import hashlib
         import json
+
         hash_data = {
             "knowledge_type": self.knowledge_type.value,
             "statement": self.statement,
@@ -281,8 +286,8 @@ class KnowledgeObject:
             "algorithm_version": self.algorithm_version,
             "provenance_hash": self.provenance.compute_hash(),
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     def validate(self) -> tuple[bool, list[str]]:
         """Validate the knowledge object."""
@@ -344,9 +349,7 @@ class MacroContext:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> MacroContext:
-        knowledge = tuple(
-            KnowledgeObject.from_dict(k) for k in data.get("knowledge_objects", [])
-        )
+        knowledge = tuple(KnowledgeObject.from_dict(k) for k in data.get("knowledge_objects", []))
         return cls(
             context_id=data["context_id"],
             regime_context=data.get("regime_context", ""),
@@ -359,11 +362,13 @@ class MacroContext:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> MacroContext:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
@@ -374,13 +379,12 @@ class MacroContext:
         """
         import hashlib
         import json
+
         hash_data = {
             "context_id": self.context_id,
             "regime_context": self.regime_context,
-            "knowledge_hashes": sorted(
-                k.compute_hash() for k in self.knowledge_objects
-            ),
+            "knowledge_hashes": sorted(k.compute_hash() for k in self.knowledge_objects),
             "algorithm_version": self.algorithm_version,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

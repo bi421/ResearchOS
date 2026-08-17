@@ -96,9 +96,7 @@ def _validate_version(version: str) -> None:
     if not isinstance(version, str) or not version:
         raise InvalidModelError("version must be a non-empty string")
     if _VERSION_PATTERN.fullmatch(version) is None:
-        raise InvalidModelError(
-            "version must follow the semantic form 'major.minor.patch'"
-        )
+        raise InvalidModelError("version must follow the semantic form 'major.minor.patch'")
 
 
 @dataclass(frozen=True)
@@ -140,9 +138,7 @@ class ModelContract:
         object.__setattr__(self, "feature_names", tuple(self.feature_names))
         for name in self.feature_names:
             if not isinstance(name, str) or not name.strip():
-                raise InvalidModelError(
-                    "feature_names must contain only non-empty strings"
-                )
+                raise InvalidModelError("feature_names must contain only non-empty strings")
         if not isinstance(self.label_name, str) or not self.label_name.strip():
             raise InvalidModelError("label_name must be a non-empty string")
         object.__setattr__(
@@ -229,4 +225,3 @@ __all__ = [
     "ModelType",
     "TrainingError",
 ]
-

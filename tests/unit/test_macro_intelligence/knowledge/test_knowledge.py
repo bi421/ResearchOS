@@ -22,8 +22,9 @@ Minimum tests required:
 - regression guards
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 UTC = timezone.utc
 
@@ -139,6 +140,7 @@ class TestMILKNOW001Immutable:
     def test_dataclass_is_frozen_validation(self):
         """All knowledge models are frozen dataclasses (dataclasses.is_dataclass)."""
         from dataclasses import is_dataclass
+
         from macro_intelligence.knowledge.models import (
             KnowledgeObject,
             KnowledgeProvenance,
@@ -277,23 +279,23 @@ class TestMILKNOW004Deterministic:
         from macro_intelligence.knowledge.pattern import PatternDetector
 
         d1 = PatternDetector().detect_all(
-            persistence_periods=12, regime_confidence=0.85,
-            continuation_probability=0.7, regime_name="inflationary_growth",
+            persistence_periods=12,
+            regime_confidence=0.85,
+            continuation_probability=0.7,
+            regime_name="inflationary_growth",
         )
         d2 = PatternDetector().detect_all(
-            persistence_periods=12, regime_confidence=0.85,
-            continuation_probability=0.7, regime_name="inflationary_growth",
+            persistence_periods=12,
+            regime_confidence=0.85,
+            continuation_probability=0.7,
+            regime_name="inflationary_growth",
         )
         assert [f.statement for f in d1] == [f.statement for f in d2]
 
     def test_created_timestamp_not_in_hash(self):
         """Runtime timestamps do not affect deterministic hash."""
-        obj1 = _make_knowledge_object(
-            created_timestamp=datetime(2026, 8, 3, tzinfo=UTC)
-        )
-        obj2 = _make_knowledge_object(
-            created_timestamp=datetime(2026, 9, 3, tzinfo=UTC)
-        )
+        obj1 = _make_knowledge_object(created_timestamp=datetime(2026, 8, 3, tzinfo=UTC))
+        obj2 = _make_knowledge_object(created_timestamp=datetime(2026, 9, 3, tzinfo=UTC))
         assert obj1.compute_hash() == obj2.compute_hash()
 
 
@@ -368,12 +370,8 @@ class TestMILKNOW006NoMutation:
         assert len(objects) > 0
         for obj in objects:
             assert set(obj.provenance.evidence_ids) == set(inputs.evidence_ids)
-            assert set(obj.provenance.feature_vector_ids) == set(
-                inputs.feature_vector_ids
-            )
-            assert set(obj.provenance.relationship_ids) == set(
-                inputs.relationship_ids
-            )
+            assert set(obj.provenance.feature_vector_ids) == set(inputs.feature_vector_ids)
+            assert set(obj.provenance.relationship_ids) == set(inputs.relationship_ids)
 
 
 # =============================================================================
@@ -499,8 +497,8 @@ class TestPatternDetection:
 
     def test_regime_persistence_pattern(self):
         """Regime persistence beyond thresholds yields REGIME_PERSISTENCE."""
-        from macro_intelligence.knowledge.pattern import PatternDetector
         from macro_intelligence.knowledge.models import KnowledgeType
+        from macro_intelligence.knowledge.pattern import PatternDetector
 
         finding = PatternDetector().detect_regime_persistence(
             persistence_periods=12,
@@ -513,8 +511,8 @@ class TestPatternDetection:
 
     def test_regime_transition_pattern(self):
         """Detected transition with high confidence yields REGIME_TRANSITION."""
-        from macro_intelligence.knowledge.pattern import PatternDetector
         from macro_intelligence.knowledge.models import KnowledgeType
+        from macro_intelligence.knowledge.pattern import PatternDetector
 
         finding = PatternDetector().detect_regime_transition(
             transition_detected=True,
@@ -527,8 +525,8 @@ class TestPatternDetection:
 
     def test_persistent_relationship_pattern(self):
         """Stable strong correlation yields PERSISTENT_RELATIONSHIP."""
-        from macro_intelligence.knowledge.pattern import PatternDetector
         from macro_intelligence.knowledge.models import KnowledgeType
+        from macro_intelligence.knowledge.pattern import PatternDetector
 
         finding = PatternDetector().detect_persistent_relationship(
             rolling_stability=0.05,
@@ -542,23 +540,21 @@ class TestPatternDetection:
 
     def test_correlation_break_pattern(self):
         """Structural break yields CORRELATION_BREAK."""
-        from macro_intelligence.knowledge.pattern import PatternDetector
         from macro_intelligence.knowledge.models import KnowledgeType
+        from macro_intelligence.knowledge.pattern import PatternDetector
 
         class _Break:
             confidence = 0.8
             break_type = "strength_change"
 
-        finding = PatternDetector().detect_correlation_break(
-            [_Break()], "CPI_YOY", "US10Y"
-        )
+        finding = PatternDetector().detect_correlation_break([_Break()], "CPI_YOY", "US10Y")
         assert finding is not None
         assert finding.pattern_type == KnowledgeType.CORRELATION_BREAK
 
     def test_anomaly_pattern(self):
         """High z-score feature yields ANOMALY."""
-        from macro_intelligence.knowledge.pattern import PatternDetector
         from macro_intelligence.knowledge.models import KnowledgeType
+        from macro_intelligence.knowledge.pattern import PatternDetector
 
         finding = PatternDetector().detect_anomaly(
             {"FEAT_CPI_Z": {"z_score": 3.2, "quality_score": 0.9}}
@@ -659,13 +655,7 @@ class TestConfidenceCalculation:
             regime_confidence=0.85,
             historical_consistency=0.75,
         )
-        expected = (
-            0.30 * 0.9
-            + 0.20 * 0.8
-            + 0.20 * 0.85
-            + 0.20 * 0.85
-            + 0.10 * 0.75
-        )
+        expected = 0.30 * 0.9 + 0.20 * 0.8 + 0.20 * 0.85 + 0.20 * 0.85 + 0.10 * 0.75
         conf = ConfidenceCalculator().compute(comps)
         assert conf == pytest.approx(round(expected, 4), abs=1e-4)
 
@@ -676,9 +666,7 @@ class TestConfidenceCalculation:
             ConfidenceComponents,
         )
 
-        conf = ConfidenceCalculator().compute(
-            ConfidenceComponents(evidence_quality=1.0)
-        )
+        conf = ConfidenceCalculator().compute(ConfidenceComponents(evidence_quality=1.0))
         assert conf == pytest.approx(0.30, abs=1e-4)
 
     def test_output_range(self):
@@ -717,9 +705,7 @@ class TestContextBuilding:
         from macro_intelligence.knowledge.models import MacroContext
 
         objects = [_make_knowledge_object()]
-        context = MacroContextBuilder().build(
-            objects, regime_context="inflationary_growth"
-        )
+        context = MacroContextBuilder().build(objects, regime_context="inflationary_growth")
         assert isinstance(context, MacroContext)
         assert len(context.knowledge_objects) == 1
         assert context.regime_context == "inflationary_growth"
@@ -729,12 +715,8 @@ class TestContextBuilding:
         from macro_intelligence.knowledge.context import MacroContextBuilder
 
         objects = [_make_knowledge_object()]
-        c1 = MacroContextBuilder().build(
-            objects, regime_context="inflationary_growth"
-        )
-        c2 = MacroContextBuilder().build(
-            objects, regime_context="inflationary_growth"
-        )
+        c1 = MacroContextBuilder().build(objects, regime_context="inflationary_growth")
+        c2 = MacroContextBuilder().build(objects, regime_context="inflationary_growth")
         assert c1.compute_hash() == c2.compute_hash()
 
     def test_context_no_mutation(self):
@@ -743,10 +725,7 @@ class TestContextBuilding:
 
         obj = _make_knowledge_object()
         MacroContextBuilder().build([obj], regime_context="inflationary_growth")
-        assert (
-            obj.statement
-            == "Inflation persistence regime detected with high confidence."
-        )
+        assert obj.statement == "Inflation persistence regime detected with high confidence."
 
     def test_context_sorted_deterministic(self):
         """Knowledge objects are deterministically ordered in the context."""
@@ -850,15 +829,9 @@ class TestProvenanceCompleteness:
 
         objects = KnowledgeGenerator().generate(_full_inputs())
         for obj in objects:
-            assert set(obj.supporting_evidence) == set(
-                obj.provenance.evidence_ids
-            )
-            assert set(obj.supporting_features) == set(
-                obj.provenance.feature_vector_ids
-            )
-            assert set(obj.supporting_relationships) == set(
-                obj.provenance.relationship_ids
-            )
+            assert set(obj.supporting_evidence) == set(obj.provenance.evidence_ids)
+            assert set(obj.supporting_features) == set(obj.provenance.feature_vector_ids)
+            assert set(obj.supporting_relationships) == set(obj.provenance.relationship_ids)
 
 
 # =============================================================================
@@ -893,13 +866,20 @@ class TestRegressionGuards:
         assert len(RULES) == 8
         # Each rule id KNOW-001..KNOW-008
         assert {r.rule_id for r in RULES.values()} == {
-            "KNOW-001", "KNOW-002", "KNOW-003", "KNOW-004",
-            "KNOW-005", "KNOW-006", "KNOW-007", "KNOW-008",
+            "KNOW-001",
+            "KNOW-002",
+            "KNOW-003",
+            "KNOW-004",
+            "KNOW-005",
+            "KNOW-006",
+            "KNOW-007",
+            "KNOW-008",
         }
 
     def test_no_v1_dependency(self):
         """Knowledge layer has no dependency on ResearchOS V1 core."""
         import inspect
+
         import macro_intelligence.knowledge.generator as gen
 
         source = inspect.getsource(gen)
@@ -910,6 +890,7 @@ class TestRegressionGuards:
     def test_no_ml_no_llm(self):
         """Knowledge layer has no ML or LLM dependency."""
         import inspect
+
         import macro_intelligence.knowledge.pattern as pat
 
         source = inspect.getsource(pat)

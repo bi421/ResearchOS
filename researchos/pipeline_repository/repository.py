@@ -21,8 +21,7 @@ import json
 import os
 from typing import Iterator, Mapping, Optional, Tuple
 
-from researchos.orchestration.contracts import PipelineReport
-from researchos.orchestration.contracts import PipelineStatus
+from researchos.orchestration.contracts import PipelineReport, PipelineStatus
 
 from .contracts import (
     PIPELINE_REPOSITORY_VERSION,
@@ -47,10 +46,7 @@ def _report_id(report: PipelineReport) -> str:
     orchestration-generated ids still deduplicate deterministically.
     """
     if not isinstance(report, PipelineReport):
-        raise InvalidPipelineRecordError(
-            "expected a PipelineReport, got "
-            f"{type(report).__name__}"
-        )
+        raise InvalidPipelineRecordError(f"expected a PipelineReport, got {type(report).__name__}")
     canonical = _canonical_json(report.to_dict())
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -137,11 +133,7 @@ class PipelineRepository:
         """
         records = list(self._records.values())
         if status is not None:
-            records = [
-                r
-                for r in records
-                if r.report.status == PipelineStatus(status)
-            ]
+            records = [r for r in records if r.report.status == PipelineStatus(status)]
         records.sort(key=lambda r: r.pipeline_id)
         if limit is not None:
             records = records[: max(0, int(limit))]
@@ -182,10 +174,7 @@ class PipelineRepository:
 
     def to_mapping(self) -> dict:
         """Return a deterministic mapping of pipeline_id -> record dict."""
-        return {
-            pid: self._records[pid].to_dict()
-            for pid in sorted(self._records)
-        }
+        return {pid: self._records[pid].to_dict() for pid in sorted(self._records)}
 
     # ------------------------------------------------------------------
     # serialization
@@ -195,10 +184,7 @@ class PipelineRepository:
         """Return a deterministic, JSON-compatible repository mapping."""
         return {
             "version": self.VERSION,
-            "records": {
-                pid: self._records[pid].to_dict()
-                for pid in sorted(self._records)
-            },
+            "records": {pid: self._records[pid].to_dict() for pid in sorted(self._records)},
         }
 
     @classmethod
@@ -216,14 +202,11 @@ class PipelineRepository:
             raise InvalidPipelineRecordError("'records' must be a mapping")
         for pid, record_data in records.items():
             if not isinstance(record_data, Mapping):
-                raise InvalidPipelineRecordError(
-                    f"record {pid!r} must be a mapping"
-                )
+                raise InvalidPipelineRecordError(f"record {pid!r} must be a mapping")
             record = PipelineRecord.from_dict(record_data)
             if record.pipeline_id != pid:
                 raise InvalidPipelineRecordError(
-                    f"record key {pid!r} does not match pipeline_id "
-                    f"{record.pipeline_id!r}"
+                    f"record key {pid!r} does not match pipeline_id {record.pipeline_id!r}"
                 )
             repo._records[record.pipeline_id] = record
         return repo
@@ -245,9 +228,7 @@ class PipelineRepository:
         try:
             data = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise InvalidPipelineRecordError(
-                f"invalid JSON: {exc}"
-            ) from None
+            raise InvalidPipelineRecordError(f"invalid JSON: {exc}") from None
         return cls.from_dict(data)
 
     # ------------------------------------------------------------------
@@ -297,4 +278,3 @@ __all__ = [
     "PipelineRepository",
     "_report_id",
 ]
-

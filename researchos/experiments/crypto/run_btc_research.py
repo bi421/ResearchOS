@@ -1,4 +1,4 @@
-﻿"""
+"""
 BTC/USDT Research Template - Active Development
 
 This is the new research frontier. This script serves as a template

@@ -35,7 +35,6 @@ from researchos.intelligence import (
     SessionRetriever,
 )
 
-
 # ═══════════════════════════════════════════════════════════════════
 # Helpers
 # ═══════════════════════════════════════════════════════════════════
@@ -94,9 +93,33 @@ def make_result(
 def build_indexed_graph() -> tuple[Dict[str, Dict[str, Any]], DeterministicRetriever]:
     """Build an EvidenceGraph and return its node index + retriever."""
     graph = EvidenceGraph()
-    graph.add_node(EvidenceNode("n1", NodeType.DATASET, "ref1", {"text": "bullish trend reversal", "tags": ["trend", "reversal"]}, "2024-01-01"))
-    graph.add_node(EvidenceNode("n2", NodeType.EXPERIMENT, "ref2", {"text": "bearish momentum strategy", "tags": ["momentum"]}, "2024-06-01"))
-    graph.add_node(EvidenceNode("n3", NodeType.RESULT, "ref3", {"text": "bullish pattern confirmed", "tags": ["confirmed", "bullish"]}, "2024-12-01"))
+    graph.add_node(
+        EvidenceNode(
+            "n1",
+            NodeType.DATASET,
+            "ref1",
+            {"text": "bullish trend reversal", "tags": ["trend", "reversal"]},
+            "2024-01-01",
+        )
+    )
+    graph.add_node(
+        EvidenceNode(
+            "n2",
+            NodeType.EXPERIMENT,
+            "ref2",
+            {"text": "bearish momentum strategy", "tags": ["momentum"]},
+            "2024-06-01",
+        )
+    )
+    graph.add_node(
+        EvidenceNode(
+            "n3",
+            NodeType.RESULT,
+            "ref3",
+            {"text": "bullish pattern confirmed", "tags": ["confirmed", "bullish"]},
+            "2024-12-01",
+        )
+    )
     index = {n.node_id: n.to_dict() for n in graph.nodes()}
     return index, DeterministicRetriever(node_index=index)
 
@@ -124,7 +147,9 @@ class TestRetrievalSource(unittest.TestCase):
         self.assertIs(RetrievalSource.from_string("knowledge_base"), RetrievalSource.KNOWLEDGE_BASE)
 
     def test_from_string_experiment_result(self):
-        self.assertIs(RetrievalSource.from_string("experiment_result"), RetrievalSource.EXPERIMENT_RESULT)
+        self.assertIs(
+            RetrievalSource.from_string("experiment_result"), RetrievalSource.EXPERIMENT_RESULT
+        )
 
     def test_from_string_unknown_raises(self):
         with self.assertRaises(ValueError):
@@ -187,8 +212,7 @@ class TestRetrievalQueryConstruction(unittest.TestCase):
 
     def test_source_filter_set(self):
         q = RetrievalQuery(
-            query_id="q", text="test",
-            source_filter=[RetrievalSource.EVIDENCE_GRAPH]
+            query_id="q", text="test", source_filter=[RetrievalSource.EVIDENCE_GRAPH]
         )
         self.assertEqual(q.source_filter, (RetrievalSource.EVIDENCE_GRAPH,))
 
@@ -245,18 +269,36 @@ class TestRetrievalHitConstruction(unittest.TestCase):
 
     def test_empty_hit_id_raises(self):
         with self.assertRaises(ValueError):
-            RetrievalHit(hit_id="", object_id="o", object_type="t",
-                         source=RetrievalSource.EVIDENCE_GRAPH, score=0.5, snippet="s")
+            RetrievalHit(
+                hit_id="",
+                object_id="o",
+                object_type="t",
+                source=RetrievalSource.EVIDENCE_GRAPH,
+                score=0.5,
+                snippet="s",
+            )
 
     def test_score_below_zero_raises(self):
         with self.assertRaises(ValueError):
-            RetrievalHit(hit_id="h", object_id="o", object_type="t",
-                         source=RetrievalSource.EVIDENCE_GRAPH, score=-0.1, snippet="s")
+            RetrievalHit(
+                hit_id="h",
+                object_id="o",
+                object_type="t",
+                source=RetrievalSource.EVIDENCE_GRAPH,
+                score=-0.1,
+                snippet="s",
+            )
 
     def test_score_above_one_raises(self):
         with self.assertRaises(ValueError):
-            RetrievalHit(hit_id="h", object_id="o", object_type="t",
-                         source=RetrievalSource.EVIDENCE_GRAPH, score=1.1, snippet="s")
+            RetrievalHit(
+                hit_id="h",
+                object_id="o",
+                object_type="t",
+                source=RetrievalSource.EVIDENCE_GRAPH,
+                score=1.1,
+                snippet="s",
+            )
 
     def test_snippet_stripped(self):
         h = make_hit(snippet="  test  ")
@@ -386,18 +428,22 @@ class TestRetrievalContext(unittest.TestCase):
 
     def test_empty_session_id_raises(self):
         with self.assertRaises(ValueError):
-            RetrievalContext(session_id="", queries=(), all_hits=(),
-                             session_start=datetime.now(timezone.utc))
+            RetrievalContext(
+                session_id="", queries=(), all_hits=(), session_start=datetime.now(timezone.utc)
+            )
 
     def test_hits_sorted_by_score(self):
         hits = (make_hit("h2", score=0.5), make_hit("h1", score=0.9))
-        ctx = RetrievalContext(session_id="s", queries=(), all_hits=hits,
-                                session_start=datetime.now(timezone.utc))
+        ctx = RetrievalContext(
+            session_id="s", queries=(), all_hits=hits, session_start=datetime.now(timezone.utc)
+        )
         self.assertEqual(ctx.all_hits[0].hit_id, "h1")
 
     def test_to_dict_roundtrip(self):
         ctx = RetrievalContext(
-            session_id="s1", queries=("q1",), all_hits=(),
+            session_id="s1",
+            queries=("q1",),
+            all_hits=(),
             session_start=datetime.now(timezone.utc),
         )
         restored = RetrievalContext.from_dict(ctx.to_dict())
@@ -498,10 +544,7 @@ class TestRetrieverBasicRetrieval(unittest.TestCase):
 
     def test_retrieve_source_filter(self):
         index, retriever = build_indexed_graph()
-        q = make_query(
-            text="bullish",
-            source_filter=[RetrievalSource.EVIDENCE_GRAPH]
-        )
+        q = make_query(text="bullish", source_filter=[RetrievalSource.EVIDENCE_GRAPH])
         result = retriever.retrieve(q)
         for h in result.hits:
             self.assertEqual(h.source, RetrievalSource.EVIDENCE_GRAPH)
@@ -570,9 +613,9 @@ class TestRetrieverIndexManagement(unittest.TestCase):
 
     def test_update_knowledge_index(self):
         retriever = DeterministicRetriever()
-        retriever.update_index(knowledge={
-            "k1": {"type": "Knowledge", "text": "test", "source": "knowledge_base"}
-        })
+        retriever.update_index(
+            knowledge={"k1": {"type": "Knowledge", "text": "test", "source": "knowledge_base"}}
+        )
         self.assertEqual(retriever.knowledge_count, 1)
 
 
@@ -605,10 +648,16 @@ class TestRetrieverScoring(unittest.TestCase):
 
     def test_all_sources_searched_by_default(self):
         index, retriever = build_indexed_graph()
-        retriever.update_index(knowledge={
-            "k1": {"type": "Test", "text": "knowledge base match",
-                    "source": "knowledge_base", "created_at": "2024-01-01"}
-        })
+        retriever.update_index(
+            knowledge={
+                "k1": {
+                    "type": "Test",
+                    "text": "knowledge base match",
+                    "source": "knowledge_base",
+                    "created_at": "2024-01-01",
+                }
+            }
+        )
         q = make_query(text="knowledge base match")
         result = retriever.retrieve(q)
         # Should search all sources by default
@@ -684,7 +733,9 @@ class TestFrozenImmutability(unittest.TestCase):
 
     def test_context_is_frozen(self):
         ctx = RetrievalContext(
-            session_id="s", queries=(), all_hits=(),
+            session_id="s",
+            queries=(),
+            all_hits=(),
             session_start=datetime.now(timezone.utc),
         )
         with self.assertRaises(Exception):
@@ -699,14 +750,30 @@ class TestFrozenImmutability(unittest.TestCase):
 class TestGraphRetrieverIntegration(unittest.TestCase):
     def test_full_pipeline(self):
         graph = EvidenceGraph()
-        graph.add_node(EvidenceNode("n1", NodeType.DATASET, "ref1",
-                                     {"text": "XAUUSD bullish engulfing pattern detected",
-                                      "tags": ["pattern", "bullish"]},
-                                     "2024-01-15"))
-        graph.add_node(EvidenceNode("n2", NodeType.EXPERIMENT, "ref2",
-                                     {"text": "Bearish momentum strategy backtest results",
-                                      "tags": ["bearish", "momentum"]},
-                                     "2024-06-20"))
+        graph.add_node(
+            EvidenceNode(
+                "n1",
+                NodeType.DATASET,
+                "ref1",
+                {
+                    "text": "XAUUSD bullish engulfing pattern detected",
+                    "tags": ["pattern", "bullish"],
+                },
+                "2024-01-15",
+            )
+        )
+        graph.add_node(
+            EvidenceNode(
+                "n2",
+                NodeType.EXPERIMENT,
+                "ref2",
+                {
+                    "text": "Bearish momentum strategy backtest results",
+                    "tags": ["bearish", "momentum"],
+                },
+                "2024-06-20",
+            )
+        )
         graph.add_edge(EvidenceEdge("e1", "n1", "n2", Relationship.VALIDATED_BY))
 
         index = {n.node_id: n.to_dict() for n in graph.nodes()}
@@ -721,9 +788,15 @@ class TestGraphRetrieverIntegration(unittest.TestCase):
 
     def test_integration_deterministic(self):
         graph = EvidenceGraph()
-        graph.add_node(EvidenceNode("n1", NodeType.RESULT, "ref1",
-                                     {"text": "Winning strategy bullish trend"},
-                                     "2024-03-01"))
+        graph.add_node(
+            EvidenceNode(
+                "n1",
+                NodeType.RESULT,
+                "ref1",
+                {"text": "Winning strategy bullish trend"},
+                "2024-03-01",
+            )
+        )
         index = {n.node_id: n.to_dict() for n in graph.nodes()}
         retriever = DeterministicRetriever(node_index=index)
 
@@ -762,11 +835,16 @@ class TestEdgeCases(unittest.TestCase):
         self.assertIn("No results", r.summary())
 
     def test_retriever_with_large_index(self):
-        index = {f"n{i}": {
-            "node_id": f"n{i}", "node_type": "dataset",
-            "reference_id": f"ref{i}", "metadata": {"text": f"content {i}"},
-            "created_at": "2024-01-01"
-        } for i in range(100)}
+        index = {
+            f"n{i}": {
+                "node_id": f"n{i}",
+                "node_type": "dataset",
+                "reference_id": f"ref{i}",
+                "metadata": {"text": f"content {i}"},
+                "created_at": "2024-01-01",
+            }
+            for i in range(100)
+        }
         retriever = DeterministicRetriever(node_index=index)
         result = retriever.retrieve(make_query(text="content"))
         self.assertGreaterEqual(result.total_hits, 0)
@@ -799,9 +877,7 @@ class TestSnippetGeneration(unittest.TestCase):
 
     def test_snippet_from_metadata(self):
         retriever = DeterministicRetriever()
-        snippet = retriever._make_snippet({
-            "type": "Test", "metadata": {"text": "hello world"}
-        })
+        snippet = retriever._make_snippet({"type": "Test", "metadata": {"text": "hello world"}})
         self.assertEqual(snippet, "hello world")
 
 

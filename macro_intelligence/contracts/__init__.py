@@ -3,49 +3,48 @@ ResearchOS Macro Intelligence Layer - Contracts Package
 """
 
 from macro_intelligence.contracts.enums import (
-    ErrorType,
-    HealthStatus,
-    Severity,
-    FrequencyEnum,
-    SeriesType,
-    EventCategory,
-    ImportanceLevel,
     AlertType,
-    QuarantineStatus,
-    PatternType,
-    InflationRegime,
+    ErrorType,
+    EventCategory,
+    FrequencyEnum,
     GrowthRegime,
+    HealthStatus,
+    ImportanceLevel,
+    InflationRegime,
     MonetaryRegime,
+    PatternType,
+    QuarantineStatus,
     RiskRegime,
-)
-
-from macro_intelligence.contracts.series import NormalizedSeries
-from macro_intelligence.contracts.evidence import (
-    EvidenceObject,
-    RevisionRef,
-    Transformation,
-    CheckResult,
-    ProvenanceChain,
+    SeriesType,
+    Severity,
 )
 from macro_intelligence.contracts.event import MacroEvent, MarketRelevance
-from macro_intelligence.contracts.reaction import (
-    MarketReaction,
-    WindowSpec,
-    ReactionMetrics,
-    StatisticalSupport,
+from macro_intelligence.contracts.evidence import (
+    CheckResult,
+    EvidenceObject,
+    ProvenanceChain,
+    RevisionRef,
+    Transformation,
 )
 from macro_intelligence.contracts.knowledge import (
     KnowledgeObject,
     Pattern,
     StatisticalAnalysis,
 )
+from macro_intelligence.contracts.reaction import (
+    MarketReaction,
+    ReactionMetrics,
+    StatisticalSupport,
+    WindowSpec,
+)
 from macro_intelligence.contracts.registry import (
-    SUPPORTED_SERIES,
     SERIES_RANGES,
+    SUPPORTED_SERIES,
+    get_all_series_ids,
     get_series_metadata,
     is_supported_series,
-    get_all_series_ids,
 )
+from macro_intelligence.contracts.series import NormalizedSeries
 
 __all__ = [
     # Enums

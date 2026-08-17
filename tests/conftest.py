@@ -2,10 +2,10 @@
 ResearchOS Macro Intelligence Layer - Test Configuration
 """
 
-import pytest
-from pathlib import Path
 from datetime import date, datetime, timezone
+from pathlib import Path
 
+import pytest
 
 # UTC timezone for all tests
 UTC = timezone.utc
@@ -53,6 +53,7 @@ def sample_date() -> date:
 def sample_provenance():
     """Sample provenance chain."""
     from macro_intelligence.contracts.evidence import ProvenanceChain
+
     return ProvenanceChain(
         original_source="FRED",
         ingestion_pipeline=["adapter", "validator"],

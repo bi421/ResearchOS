@@ -9,24 +9,25 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import List, Optional, Dict, Any
-from math import sqrt, exp, lgamma, log
+from math import exp, lgamma, log, sqrt
+from typing import Any, Dict, List, Optional
+
 from macro_intelligence.statistics.descriptive import (
+    kurtosis,
     mean,
-    std,
     percentile,
     skewness,
-    kurtosis,
+    std,
 )
 
 
 def empirical_distribution(values: List[float]) -> Dict[str, Any]:
     """
     Calculate empirical distribution statistics.
-    
+
     Args:
         values: List of numeric values
-        
+
     Returns:
         Dictionary with empirical distribution metrics
     """
@@ -41,7 +42,7 @@ def empirical_distribution(values: List[float]) -> Dict[str, Any]:
             "kurtosis": None,
             "percentiles": {},
         }
-    
+
     return {
         "count": len(values),
         "min": min(values),
@@ -66,22 +67,22 @@ def quantiles(
 ) -> Dict[float, float]:
     """
     Calculate quantiles.
-    
+
     Args:
         values: List of numeric values
         probabilities: List of probability values (0-1)
-        
+
     Returns:
         Dictionary mapping probability to quantile value
     """
     if probabilities is None:
         probabilities = [0.1, 0.25, 0.5, 0.75, 0.9]
-    
+
     result = {}
     for p in probabilities:
         percentile_value = percentile(values, p * 100)
         result[p] = percentile_value
-    
+
     return result
 
 
@@ -90,46 +91,46 @@ def distribution_analysis(
 ) -> Dict[str, Any]:
     """
     Complete distribution analysis.
-    
+
     Args:
         values: List of numeric values
-        
+
     Returns:
         Dictionary with complete distribution metrics
     """
     if not values:
         return {"error": "Empty values"}
-    
+
     n = len(values)
-    
+
     # Basic statistics
     m = mean(values)
     s = std(values)
-    
+
     # Skewness and kurtosis
     skew = skewness(values) if n >= 3 else None
     kurt = kurtosis(values) if n >= 4 else None
-    
+
     # Normality tests (simple)
     is_normal = False
     if skew is not None and kurt is not None:
         # Simple normality check
         if abs(skew) < 1 and abs(kurt) < 3:
             is_normal = True
-    
+
     # Fit to normal distribution
     normal_params = {
         "mu": m,
         "sigma": s,
     }
-    
+
     # Calculate empirical CDF at key points
     sorted_values = sorted(values)
     cdf_points = {}
     for i, p in enumerate([0.1, 0.25, 0.5, 0.75, 0.9]):
         idx = int(p * n)
         cdf_points[p] = sorted_values[min(idx, n - 1)]
-    
+
     return {
         "count": n,
         "mean": m,
@@ -155,32 +156,32 @@ def z_score_from_distribution(
 ) -> float:
     """
     Calculate z-score from distribution parameters.
-    
+
     Args:
         value: Value to standardize
         distribution_params: Dictionary with 'mu' and 'sigma'
-        
+
     Returns:
         Z-score
     """
     mu = distribution_params.get("mu", 0)
     sigma = distribution_params.get("sigma", 1)
-    
+
     if sigma == 0:
         return 0.0
-    
+
     return (value - mu) / sigma
 
 
 def probability_from_z_score(z: float) -> float:
     """
     Approximate cumulative probability from z-score.
-    
+
     Uses the error function approximation.
-    
+
     Args:
         z: Z-score
-        
+
     Returns:
         Cumulative probability (0 to 1)
     """
@@ -192,10 +193,10 @@ def probability_from_z_score(z: float) -> float:
 def _erf(x: float) -> float:
     """
     Approximate error function.
-    
+
     Args:
         x: Input value
-        
+
     Returns:
         Error function value
     """
@@ -206,13 +207,13 @@ def _erf(x: float) -> float:
     a4 = -1.453152027
     a5 = 1.061405429
     p = 0.3275911
-    
+
     sign = 1 if x >= 0 else -1
     x = abs(x)
-    
+
     t = 1.0 / (1.0 + p * x)
     y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * exp(-x * x)
-    
+
     return sign * y
 
 
@@ -300,7 +301,7 @@ def p_value_from_correlation(correlation: float, n: int) -> Optional[float]:
     if n < 3 or abs(correlation) >= 1.0:
         return None
 
-    r2 = correlation ** 2
+    r2 = correlation**2
     t_stat = abs(correlation) * ((n - 2) / (1 - r2)) ** 0.5
     df = n - 2
 

@@ -87,9 +87,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
     ) -> List[float]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
-        return PythonQuantBackend().calculate_returns(
-            prices, return_type, calculation_version
-        )
+        return PythonQuantBackend().calculate_returns(prices, return_type, calculation_version)
 
     def calculate_volatility(
         self,
@@ -99,9 +97,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
     ) -> float:
         from researchos.quant_engine.backend import PythonQuantBackend
 
-        return PythonQuantBackend().calculate_volatility(
-            returns, method, calculation_version
-        )
+        return PythonQuantBackend().calculate_volatility(returns, method, calculation_version)
 
     def calculate_drawdown(
         self,
@@ -110,9 +106,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
     ) -> Dict[str, Any]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
-        return PythonQuantBackend().calculate_drawdown(
-            equity_curve, calculation_version
-        )
+        return PythonQuantBackend().calculate_drawdown(equity_curve, calculation_version)
 
     def calculate_statistics(
         self,
@@ -153,15 +147,11 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
     ) -> Dict[str, Any]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
-        return PythonQuantBackend().calculate_performance_analytics(
-            returns, calculation_version
-        )
+        return PythonQuantBackend().calculate_performance_analytics(returns, calculation_version)
 
     # ── Research analytical ops (delegate to existing deterministic submodules) ──
 
-    def research_technical(
-        self, bars: Any, specs: Sequence[Any], **params: Any
-    ) -> ResearchResult:
+    def research_technical(self, bars: Any, specs: Sequence[Any], **params: Any) -> ResearchResult:
         from researchos.quant_engine.technical.engine import TechnicalAnalysisEngine
 
         engine = TechnicalAnalysisEngine()
@@ -481,9 +471,7 @@ class ResearchEngine:
         benchmark_returns: Optional[Sequence[float]] = None,
         **params: Any,
     ) -> ResearchResult:
-        return self._backend.research_portfolio_metrics(
-            portfolio, benchmark_returns, **params
-        )
+        return self._backend.research_portfolio_metrics(portfolio, benchmark_returns, **params)
 
     def historical(self, returns: Sequence[float], metric: str, **params: Any) -> ResearchResult:
         return self._backend.research_historical(returns, metric, **params)

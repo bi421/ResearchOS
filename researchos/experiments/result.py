@@ -21,7 +21,7 @@ from types import MappingProxyType
 from typing import Any, Dict, List, Mapping, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
 from researchos.experiments.contracts import (
@@ -180,22 +180,24 @@ class ExperimentRun(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "experiment_id": self.experiment_id,
-            "run_number": self.run_number,
-            "dataset_config": self.dataset_config.to_dict(),
-            "simulation_config": self.simulation_config.to_dict(),
-            "parameters": dict(self.parameters),
-            "result_id": self.result_id,
-            "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "duration_seconds": self.duration_seconds,
-            "status": self.status.value,
-            "run_hash": self.run_hash,
-            "result_hash": self.result_hash,
-            "trace": self.trace,
-            "tags": self.tags,
-        })
+        base.update(
+            {
+                "experiment_id": self.experiment_id,
+                "run_number": self.run_number,
+                "dataset_config": self.dataset_config.to_dict(),
+                "simulation_config": self.simulation_config.to_dict(),
+                "parameters": dict(self.parameters),
+                "result_id": self.result_id,
+                "started_at": self.started_at.isoformat() if self.started_at else None,
+                "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+                "duration_seconds": self.duration_seconds,
+                "status": self.status.value,
+                "run_hash": self.run_hash,
+                "result_hash": self.result_hash,
+                "trace": self.trace,
+                "tags": self.tags,
+            }
+        )
         return base
 
     @classmethod
@@ -203,16 +205,14 @@ class ExperimentRun(BaseObject):
         obj = super().from_dict(data)
         obj.experiment_id = data["experiment_id"]
         obj.run_number = int(data.get("run_number", 1))
-        obj.dataset_config = DatasetConfig.from_dict(
-            data.get("dataset_config", {"source": ""})
-        )
-        obj.simulation_config = SimulationConfig.from_dict(
-            data.get("simulation_config", {})
-        )
+        obj.dataset_config = DatasetConfig.from_dict(data.get("dataset_config", {"source": ""}))
+        obj.simulation_config = SimulationConfig.from_dict(data.get("simulation_config", {}))
         obj.parameters = _freeze_mapping(data.get("parameters", {}))
         obj.result_id = data.get("result_id")
         obj.started_at = parse_timestamp(data["started_at"]) if data.get("started_at") else None
-        obj.completed_at = parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
+        obj.completed_at = (
+            parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
+        )
         obj.duration_seconds = float(data.get("duration_seconds", 0.0))
         obj.status = ExperimentStatus(data.get("status", "Draft"))
         obj.run_hash = data.get("run_hash", "")
@@ -350,20 +350,22 @@ class ExperimentResult(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "run_id": self.run_id,
-            "metrics": dict(self.metrics),
-            "statistics": dict(self.statistics),
-            "performance": dict(self.performance),
-            "signals": self.signals,
-            "trades": self.trades,
-            "equity_curve": self.equity_curve,
-            "metadata": dict(self.metadata),
-            "result_hash": self.result_hash,
-            "trace": self.trace,
-            "backend_execution_time_ms": self.backend_execution_time_ms,
-            "backend_execution_timestamp": self.backend_execution_timestamp,
-        })
+        base.update(
+            {
+                "run_id": self.run_id,
+                "metrics": dict(self.metrics),
+                "statistics": dict(self.statistics),
+                "performance": dict(self.performance),
+                "signals": self.signals,
+                "trades": self.trades,
+                "equity_curve": self.equity_curve,
+                "metadata": dict(self.metadata),
+                "result_hash": self.result_hash,
+                "trace": self.trace,
+                "backend_execution_time_ms": self.backend_execution_time_ms,
+                "backend_execution_timestamp": self.backend_execution_timestamp,
+            }
+        )
         return base
 
     @classmethod
@@ -389,8 +391,7 @@ class ExperimentResult(BaseObject):
         canonical = deterministic_hash(obj._to_hashable_dict())
         if stored_hash and stored_hash != canonical:
             raise ValueError(
-                f"ExperimentResult hash mismatch: stored={stored_hash} "
-                f"computed={canonical}"
+                f"ExperimentResult hash mismatch: stored={stored_hash} computed={canonical}"
             )
         if not stored_hash:
             # Legacy payload without a stored hash → recompute deterministically.

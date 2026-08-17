@@ -16,8 +16,8 @@ import pytest
 from researchos.core.base_object import BaseObject
 from researchos.core.lifecycle import Lifecycle, LifecycleStage
 from researchos.objects.evidence import Evidence
-from researchos.objects.research import Research
 from researchos.objects.observation import Observation
+from researchos.objects.research import Research
 
 
 class TestFinalizedImmutability:
@@ -139,16 +139,19 @@ class TestDeterministicIdentity:
 
     def test_generate_id_requires_seed(self):
         from researchos.core.identity import generate_id
+
         with pytest.raises(ValueError, match="requires a deterministic seed"):
             generate_id(None)
 
     def test_generate_id_empty_seed_raises(self):
         from researchos.core.identity import generate_id
+
         with pytest.raises(ValueError, match="requires a deterministic seed"):
             generate_id("")
 
     def test_same_seed_same_id(self):
         from researchos.core.identity import generate_id
+
         id1 = generate_id("test-determinism")
         id2 = generate_id("test-determinism")
         assert id1 == id2
@@ -164,6 +167,7 @@ class TestDeterministicSerialization:
         assert '"hash"' in json_str
         assert '"id"' in json_str
         import json as _json
+
         parsed = _json.loads(json_str)
         assert parsed["object_type"] == "Observation"
 
@@ -185,6 +189,7 @@ class TestDeterministicEvidence:
 
     def test_evidence_weight_deterministic_with_reference_time(self):
         from researchos.objects.evidence import Evidence
+
         ref = datetime(2024, 12, 31, tzinfo=timezone.utc)
         ev = Evidence(
             observation_id="obs1",
@@ -198,6 +203,7 @@ class TestDeterministicEvidence:
 
     def test_evidence_age_days_deterministic_with_reference_time(self):
         from researchos.objects.evidence import Evidence
+
         ref = datetime(2024, 12, 31, tzinfo=timezone.utc)
         ev = Evidence(
             observation_id="obs1",
@@ -212,7 +218,8 @@ class TestDeterministicScenarioNormalization:
     """Test 9: Probability normalization is deterministic with rounding."""
 
     def test_normalize_probabilities_deterministic(self):
-        from researchos.objects.scenario import ScenarioSet, Scenario
+        from researchos.objects.scenario import Scenario, ScenarioSet
+
         s1 = Scenario(
             hypothesis_id="test-hyp",
             type="Base",
@@ -233,7 +240,8 @@ class TestDeterministicScenarioNormalization:
         assert abs(total - 1.0) < 1e-6
 
     def test_normalize_probabilities_same_input_same_output(self):
-        from researchos.objects.scenario import ScenarioSet, Scenario
+        from researchos.objects.scenario import Scenario, ScenarioSet
+
         def make_set():
             ss = ScenarioSet(research_id="test-research")
             ss.add_scenario(Scenario(hypothesis_id="h", type="Base", label="A", probability=0.3))
@@ -241,6 +249,7 @@ class TestDeterministicScenarioNormalization:
             ss.add_scenario(Scenario(hypothesis_id="h", type="Base", label="C", probability=0.3))
             ss.normalize_probabilities(precision=6)
             return tuple(sc.probability for sc in ss.scenarios)
+
         assert make_set() == make_set()
 
 
@@ -248,12 +257,31 @@ class TestDeterministicHypothesisRanking:
     """Test 10: Hypothesis ranking has deterministic tie-breaking."""
 
     def test_get_ranked_tie_break_by_id(self):
-        from researchos.objects.hypothesis import HypothesisSet, Hypothesis
+        from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+
         research_id = "test-research"
         hs = HypothesisSet(research_id=research_id)
         # Same rank_score — tie should break by id deterministically
-        h1 = Hypothesis(research_id=research_id, type="Primary", statement="A", evidence_strength=0.5, coherence=0.5, plausibility=0.5, falsifiability=0.5, id="hyp-a")
-        h2 = Hypothesis(research_id=research_id, type="Primary", statement="B", evidence_strength=0.5, coherence=0.5, plausibility=0.5, falsifiability=0.5, id="hyp-b")
+        h1 = Hypothesis(
+            research_id=research_id,
+            type="Primary",
+            statement="A",
+            evidence_strength=0.5,
+            coherence=0.5,
+            plausibility=0.5,
+            falsifiability=0.5,
+            id="hyp-a",
+        )
+        h2 = Hypothesis(
+            research_id=research_id,
+            type="Primary",
+            statement="B",
+            evidence_strength=0.5,
+            coherence=0.5,
+            plausibility=0.5,
+            falsifiability=0.5,
+            id="hyp-b",
+        )
         hs.add_hypothesis(h1)
         hs.add_hypothesis(h2)
         ranked = hs.get_ranked()

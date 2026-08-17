@@ -19,52 +19,53 @@ Tests cover:
 import json
 import os
 import tempfile
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 
 from researchos.data_engine import (
     Candle,
-    Tick,
-    Quote,
-    Trade,
+    CandleField,
+    CsvLoader,
+    DataQuality,
+    DatasetMetadata,
+    DatasetRepository,
+    DatasetStatus,
+    DatasetValidator,
+    DatasetVersion,
+    DuplicateDetector,
+    GapDetector,
+    HistoricalDataset,
+    HistoricalIterator,
+    LoaderConfig,
+    MissingCandleDetector,
+    MultiSymbolQuery,
     OrderBook,
     OrderBookLevel,
-    HistoricalDataset,
-    DatasetMetadata,
-    CsvLoader,
-    DatasetValidator,
-    GapDetector,
-    MissingCandleDetector,
-    DuplicateDetector,
     OutlierDetector,
-    DatasetRepository,
-    SqliteDatasetRepository,
-    HistoricalIterator,
+    Quote,
     RangeQuery,
-    MultiSymbolQuery,
-    normalize_timestamp,
+    SqliteDatasetRepository,
+    Tick,
+    Timeframe,
+    Trade,
+    ValidationReport,
+    bump_dataset_version,
+    compute_candle_hash,
+    compute_dataset_hash,
+    compute_range_hash,
+    compute_record_hash,
     convert_timezone,
     format_iso,
+    normalize_timestamp,
     parse_iso,
-    compute_dataset_hash,
-    compute_candle_hash,
-    compute_record_hash,
     verify_dataset_integrity,
-    compute_range_hash,
-    DatasetVersion,
-    bump_dataset_version,
-    Timeframe,
-    DataQuality,
-    DatasetStatus,
-    CandleField,
-    LoaderConfig,
-    ValidationReport,
 )
-
 
 # =============================================================================
 # Helper fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def candle() -> Candle:
@@ -139,16 +140,18 @@ def sample_candles() -> list:
     base_time = datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
     candles = []
     for i in range(10):
-        candles.append(Candle(
-            symbol="XAU/USD",
-            timeframe="1h",
-            timestamp=base_time + timedelta(hours=i),
-            open=2000.0 + i,
-            high=2010.0 + i,
-            low=1995.0 + i,
-            close=2005.0 + i,
-            volume=1000.0 + i * 100,
-        ))
+        candles.append(
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base_time + timedelta(hours=i),
+                open=2000.0 + i,
+                high=2010.0 + i,
+                low=1995.0 + i,
+                close=2005.0 + i,
+                volume=1000.0 + i * 100,
+            )
+        )
     return candles
 
 
@@ -168,6 +171,7 @@ def sample_dataset(sample_candles) -> HistoricalDataset:
 # =============================================================================
 # Test: Candle
 # =============================================================================
+
 
 class TestCandle:
     def test_create_candle(self, candle):
@@ -246,7 +250,10 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
             spread=12.0,
         )
         assert c.spread == 12.0
@@ -258,7 +265,10 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
             tick_volume=34000.0,
         )
         assert c.tick_volume == 34000.0
@@ -269,7 +279,10 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
             real_volume=125.5,
         )
         assert c.real_volume == 125.5
@@ -280,8 +293,13 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-            spread=8.0, tick_volume=1000.0, real_volume=200.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            spread=8.0,
+            tick_volume=1000.0,
+            real_volume=200.0,
         )
         assert c.spread == 8.0
         assert c.tick_volume == 1000.0
@@ -292,8 +310,14 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-            volume=1000.0, spread=9.5, tick_volume=5000.0, real_volume=88.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
+            spread=9.5,
+            tick_volume=5000.0,
+            real_volume=88.0,
         )
         c2 = Candle.from_dict(c.to_dict())
         assert c2.spread == 9.5
@@ -317,7 +341,10 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
             volume=1000.0,
         )
         assert candle.hash == c2.hash
@@ -328,14 +355,21 @@ class TestCandleExtendedFields:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-            volume=1000.0, spread=5.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
+            spread=5.0,
         )
         without_spread = Candle(
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
             volume=1000.0,
         )
         assert with_spread.hash != without_spread.hash
@@ -346,9 +380,16 @@ class TestCandleExtendedFields:
                 symbol="XAU/USD",
                 timeframe="1h",
                 timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-                open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-                volume=1000.0, spread=3.0, tick_volume=77.0, real_volume=11.0,
+                open=2000.0,
+                high=2010.0,
+                low=1995.0,
+                close=2005.0,
+                volume=1000.0,
+                spread=3.0,
+                tick_volume=77.0,
+                real_volume=11.0,
             )
+
         assert make().hash == make().hash
 
     def test_old_dataset_compatibility(self, candle):
@@ -361,14 +402,23 @@ class TestCandleExtendedFields:
 
     def test_zero_spread_participates_in_hash(self):
         c_zero = Candle(
-            symbol="XAU/USD", timeframe="1h",
+            symbol="XAU/USD",
+            timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0, spread=0.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            spread=0.0,
         )
         c_none = Candle(
-            symbol="XAU/USD", timeframe="1h",
+            symbol="XAU/USD",
+            timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
         )
         assert c_zero.spread == 0.0
         assert c_none.spread is None
@@ -378,6 +428,7 @@ class TestCandleExtendedFields:
 # =============================================================================
 # Test: Tick
 # =============================================================================
+
 
 class TestTick:
     def test_create_tick(self, tick):
@@ -421,6 +472,7 @@ class TestTick:
 # Test: Quote
 # =============================================================================
 
+
 class TestQuote:
     def test_create_quote(self, quote):
         assert quote.symbol == "XAU/USD"
@@ -442,6 +494,7 @@ class TestQuote:
 # Test: Trade
 # =============================================================================
 
+
 class TestTrade:
     def test_create_trade(self, trade):
         assert trade.symbol == "XAU/USD"
@@ -462,6 +515,7 @@ class TestTrade:
 # =============================================================================
 # Test: OrderBook
 # =============================================================================
+
 
 class TestOrderBook:
     def test_create_orderbook(self, orderbook):
@@ -485,6 +539,7 @@ class TestOrderBook:
 # Test: HistoricalDataset
 # =============================================================================
 
+
 class TestHistoricalDataset:
     def test_create_dataset(self, sample_dataset, sample_candles):
         assert sample_dataset.symbol == "XAU/USD"
@@ -502,7 +557,11 @@ class TestHistoricalDataset:
             symbol="XAU/USD",
             timeframe="1h",
             timestamp=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0, volume=1000.0,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
         )
         ds.add_record(c)
         assert ds.record_count == 1
@@ -510,10 +569,26 @@ class TestHistoricalDataset:
     def test_dataset_sort(self):
         ds = HistoricalDataset(symbol="XAU/USD", timeframe="1h")
         base = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-        c1 = Candle(symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=2),
-                     open=2000.0, high=2010.0, low=1995.0, close=2005.0, volume=1000.0)
-        c2 = Candle(symbol="XAU/USD", timeframe="1h", timestamp=base,
-                     open=2000.0, high=2010.0, low=1995.0, close=2005.0, volume=1000.0)
+        c1 = Candle(
+            symbol="XAU/USD",
+            timeframe="1h",
+            timestamp=base + timedelta(hours=2),
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
+        )
+        c2 = Candle(
+            symbol="XAU/USD",
+            timeframe="1h",
+            timestamp=base,
+            open=2000.0,
+            high=2010.0,
+            low=1995.0,
+            close=2005.0,
+            volume=1000.0,
+        )
         ds.add_records([c1, c2])
         ds.sort()
         assert ds._records[0].timestamp == base
@@ -547,6 +622,7 @@ class TestHistoricalDataset:
 # =============================================================================
 # Test: DatasetMetadata
 # =============================================================================
+
 
 class TestDatasetMetadata:
     def test_create_metadata(self):
@@ -594,6 +670,7 @@ class TestDatasetMetadata:
 # Test: CSV Loader
 # =============================================================================
 
+
 class TestCsvLoader:
     def test_load_candles_from_text(self):
         csv_text = """timestamp,open,high,low,close,volume
@@ -602,7 +679,9 @@ class TestCsvLoader:
 2024-01-01 11:00:00,2010.0,2020.0,2005.0,2015.0,2000.0"""
         loader = CsvLoader()
         candles = loader.load_candles_from_text(
-            csv_text, symbol="XAU/USD", timeframe="1h",
+            csv_text,
+            symbol="XAU/USD",
+            timeframe="1h",
         )
         assert len(candles) == 3
         assert candles[0].symbol == "XAU/USD"
@@ -625,7 +704,10 @@ class TestCsvLoader:
         mapping = CandleField(timestamp="date", open="o", high="h", low="l", close="c", volume="v")
         loader = CsvLoader()
         candles = loader.load_candles_from_text(
-            csv_text, symbol="XAU/USD", timeframe="1h", field_mapping=mapping,
+            csv_text,
+            symbol="XAU/USD",
+            timeframe="1h",
+            field_mapping=mapping,
         )
         assert len(candles) == 1
         assert candles[0].open == 2000.0
@@ -688,6 +770,7 @@ bad,data,here,too,broken,no
 # Test: Validator
 # =============================================================================
 
+
 class TestValidator:
     def test_gap_detection(self, sample_candles):
         detector = GapDetector(tolerance_factor=2.0)
@@ -697,10 +780,26 @@ class TestValidator:
     def test_gap_detection_with_gaps(self):
         base = datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
         candles = [
-            Candle(symbol="XAU/USD", timeframe="1h", timestamp=base,
-                   open=2000.0, high=2010.0, low=1995.0, close=2005.0, volume=1000.0),
-            Candle(symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=5),
-                   open=2010.0, high=2020.0, low=2005.0, close=2015.0, volume=1000.0),
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base,
+                open=2000.0,
+                high=2010.0,
+                low=1995.0,
+                close=2005.0,
+                volume=1000.0,
+            ),
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base + timedelta(hours=5),
+                open=2010.0,
+                high=2020.0,
+                low=2005.0,
+                close=2015.0,
+                volume=1000.0,
+            ),
         ]
         detector = GapDetector(tolerance_factor=2.0)
         gaps = detector.detect(candles, "1h")
@@ -710,10 +809,26 @@ class TestValidator:
     def test_missing_candle_detection(self):
         base = datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
         candles = [
-            Candle(symbol="XAU/USD", timeframe="1h", timestamp=base,
-                   open=2000.0, high=2010.0, low=1995.0, close=2005.0, volume=1000.0),
-            Candle(symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=3),
-                   open=2010.0, high=2020.0, low=2005.0, close=2015.0, volume=1000.0),
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base,
+                open=2000.0,
+                high=2010.0,
+                low=1995.0,
+                close=2005.0,
+                volume=1000.0,
+            ),
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base + timedelta(hours=3),
+                open=2010.0,
+                high=2020.0,
+                low=2005.0,
+                close=2015.0,
+                volume=1000.0,
+            ),
         ]
         detector = MissingCandleDetector()
         missing = detector.detect(candles, "1h")
@@ -731,16 +846,31 @@ class TestValidator:
         base = datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
         candles = []
         for i in range(10):
-            candles.append(Candle(
-                symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=i),
-                open=2000.0, high=2010.0, low=1995.0, close=2000.0 + i * 0.1,
-                volume=1000.0,
-            ))
+            candles.append(
+                Candle(
+                    symbol="XAU/USD",
+                    timeframe="1h",
+                    timestamp=base + timedelta(hours=i),
+                    open=2000.0,
+                    high=2010.0,
+                    low=1995.0,
+                    close=2000.0 + i * 0.1,
+                    volume=1000.0,
+                )
+            )
         # Add an outlier
-        candles.append(Candle(
-            symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=10),
-            open=5000.0, high=5010.0, low=4995.0, close=5005.0, volume=1000.0,
-        ))
+        candles.append(
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base + timedelta(hours=10),
+                open=5000.0,
+                high=5010.0,
+                low=4995.0,
+                close=5005.0,
+                volume=1000.0,
+            )
+        )
         detector = OutlierDetector(z_score_threshold=3.0)
         outliers = detector.detect_price_outliers(candles)
         assert len(outliers) == 1
@@ -749,17 +879,31 @@ class TestValidator:
         base = datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
         candles = []
         for i in range(10):
-            candles.append(Candle(
-                symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=i),
-                open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-                volume=1000.0 + i * 50,
-            ))
+            candles.append(
+                Candle(
+                    symbol="XAU/USD",
+                    timeframe="1h",
+                    timestamp=base + timedelta(hours=i),
+                    open=2000.0,
+                    high=2010.0,
+                    low=1995.0,
+                    close=2005.0,
+                    volume=1000.0 + i * 50,
+                )
+            )
         # Add a volume outlier
-        candles.append(Candle(
-            symbol="XAU/USD", timeframe="1h", timestamp=base + timedelta(hours=10),
-            open=2000.0, high=2010.0, low=1995.0, close=2005.0,
-            volume=100000.0,
-        ))
+        candles.append(
+            Candle(
+                symbol="XAU/USD",
+                timeframe="1h",
+                timestamp=base + timedelta(hours=10),
+                open=2000.0,
+                high=2010.0,
+                low=1995.0,
+                close=2005.0,
+                volume=100000.0,
+            )
+        )
         detector = OutlierDetector()
         outliers = detector.detect_volume_outliers(candles)
         assert len(outliers) == 1
@@ -778,6 +922,7 @@ class TestValidator:
 # =============================================================================
 # Test: Repository
 # =============================================================================
+
 
 class TestDatasetRepository:
     def test_save_and_get(self, sample_dataset):
@@ -858,6 +1003,7 @@ class TestSqliteDatasetRepository:
 # Test: HistoricalIterator
 # =============================================================================
 
+
 class TestHistoricalIterator:
     def test_iterate_all(self, sample_dataset):
         iterator = HistoricalIterator(sample_dataset)
@@ -909,6 +1055,7 @@ class TestHistoricalIterator:
 # =============================================================================
 # Test: RangeQuery
 # =============================================================================
+
 
 class TestRangeQuery:
     def test_range_query(self, sample_dataset):
@@ -972,6 +1119,7 @@ class TestRangeQuery:
 # Test: MultiSymbolQuery
 # =============================================================================
 
+
 class TestMultiSymbolQuery:
     def test_multi_symbol_query(self, sample_candles):
         ds1 = HistoricalDataset(symbol="XAU/USD", timeframe="1h", records=sample_candles)
@@ -1001,6 +1149,7 @@ class TestMultiSymbolQuery:
 # =============================================================================
 # Test: Timezone
 # =============================================================================
+
 
 class TestTimezone:
     def test_utc_preserved(self):
@@ -1035,6 +1184,7 @@ class TestTimezone:
 # Test: Hashing
 # =============================================================================
 
+
 class TestHashing:
     def test_compute_dataset_hash(self, sample_dataset):
         h = compute_dataset_hash(sample_dataset)
@@ -1060,6 +1210,7 @@ class TestHashing:
 # =============================================================================
 # Test: Versioning
 # =============================================================================
+
 
 class TestDatasetVersioning:
     def test_create_version(self):
@@ -1105,6 +1256,7 @@ class TestDatasetVersioning:
 # =============================================================================
 # Test: Contracts
 # =============================================================================
+
 
 class TestTimeframe:
     def test_timeframe_from_string(self):
@@ -1161,6 +1313,7 @@ class TestValidationReport:
 # Test: CandleField and LoaderConfig
 # =============================================================================
 
+
 class TestLoaderConfig:
     def test_default_config(self):
         config = LoaderConfig()
@@ -1187,6 +1340,7 @@ class TestLoaderConfig:
 # =============================================================================
 # Test: DataQuality enum
 # =============================================================================
+
 
 class TestDataQuality:
     def test_quality_values(self):

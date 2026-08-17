@@ -33,7 +33,6 @@ from researchos.quant_engine.machine_learning.dataset_contracts import (
     ResearchDataset,
 )
 
-
 # =============================================================================
 # SimulationConfig round-trip
 # =============================================================================
@@ -307,4 +306,3 @@ class TestAcceptanceCriteria:
         assert dc.source == "legacy"
         assert dc.symbols == []
         assert dc.resolution == "1d"
-

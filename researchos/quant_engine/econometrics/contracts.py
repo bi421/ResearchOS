@@ -183,4 +183,3 @@ class JohansenTestResult:
             "cointegration_rank": self.cointegration_rank,
             "is_cointegrated": self.is_cointegrated,
         }
-

@@ -16,17 +16,17 @@ Design:
 """
 
 from __future__ import annotations
-from researchos.quant_engine.dataset_contracts import extract_prices
 
 from typing import Any, Dict, List
 
+from researchos.core.timestamp import utc_now
+from researchos.quant_engine.dataset_contracts import extract_prices
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
     SimulationResult,
 )
-from researchos.core.timestamp import utc_now
 
 
 class CppQuantBackendWrapper(QuantComputationInterface):
@@ -43,14 +43,16 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
         try:
             from cpp_quant_engine.cpp_quant_backend import CppQuantBackend
+
             self._cpp_backend = CppQuantBackend()
         except ImportError as e:
             import warnings
+
             warnings.warn(
-                f"C++ Quant Engine not available ({e}). "
-                "Falling back to PythonQuantBackend."
+                f"C++ Quant Engine not available ({e}). Falling back to PythonQuantBackend."
             )
             from researchos.quant_engine.backend import PythonQuantBackend
+
             self._fallback = PythonQuantBackend()
 
     @property
@@ -206,9 +208,7 @@ class CppQuantBackendWrapper(QuantComputationInterface):
         prices = extract_prices(dataset)
 
         if len(prices) < 2:
-            raise ValueError(
-                f"Need at least 2 prices for simulation, got {len(prices)}"
-            )
+            raise ValueError(f"Need at least 2 prices for simulation, got {len(prices)}")
 
         # Compute input hash for provenance
         input_hash = request.compute_input_hash()

@@ -122,19 +122,21 @@ class Bias(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "type": self.type,
-            "trader_id": self.trader_id,
-            "decision_id": self.decision_id,
-            "description": self.description,
-            "evidence": self.evidence,
-            "frequency": self.frequency,
-            "trend": self.trend,
-            "first_detected": self.first_detected.isoformat(),
-            "last_detected": self.last_detected.isoformat(),
-            "severity": self.severity,
-            "bias_trace": self.bias_trace,
-        })
+        base.update(
+            {
+                "type": self.type,
+                "trader_id": self.trader_id,
+                "decision_id": self.decision_id,
+                "description": self.description,
+                "evidence": self.evidence,
+                "frequency": self.frequency,
+                "trend": self.trend,
+                "first_detected": self.first_detected.isoformat(),
+                "last_detected": self.last_detected.isoformat(),
+                "severity": self.severity,
+                "bias_trace": self.bias_trace,
+            }
+        )
         return base
 
     @classmethod
@@ -147,8 +149,12 @@ class Bias(BaseObject):
         obj.evidence = list(data.get("evidence", []))
         obj.frequency = data.get("frequency", 0.0)
         obj.trend = data.get("trend", 0.0)
-        obj.first_detected = parse_timestamp(data["first_detected"]) if data.get("first_detected") else None
-        obj.last_detected = parse_timestamp(data["last_detected"]) if data.get("last_detected") else None
+        obj.first_detected = (
+            parse_timestamp(data["first_detected"]) if data.get("first_detected") else None
+        )
+        obj.last_detected = (
+            parse_timestamp(data["last_detected"]) if data.get("last_detected") else None
+        )
         obj.severity = data.get("severity", 0.0)
         obj.bias_trace = data.get("bias_trace", "")
         return obj
@@ -250,17 +256,19 @@ class LearningRecord(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "trader_id": self.trader_id,
-            "dimension": self.dimension,
-            "score": self.score,
-            "baseline_score": self.baseline_score,
-            "progress": self.progress,
-            "trend": self.trend,
-            "trajectory": self.trajectory,
-            "recommendations": self.recommendations,
-            "learning_trace": self.learning_trace,
-        })
+        base.update(
+            {
+                "trader_id": self.trader_id,
+                "dimension": self.dimension,
+                "score": self.score,
+                "baseline_score": self.baseline_score,
+                "progress": self.progress,
+                "trend": self.trend,
+                "trajectory": self.trajectory,
+                "recommendations": self.recommendations,
+                "learning_trace": self.learning_trace,
+            }
+        )
         return base
 
     @classmethod
@@ -391,20 +399,22 @@ class CognitiveAssessment(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "trader_id": self.trader_id,
-            "research_id": self.research_id,
-            "knowledge_score": self.knowledge_score,
-            "reasoning_score": self.reasoning_score,
-            "bias_profile": self.bias_profile,
-            "discipline_score": self.discipline_score,
-            "reflection_score": self.reflection_score,
-            "learning_progress": self.learning_progress,
-            "overall_score": self.overall_score,
-            "feedback": self.feedback,
-            "recommendations": self.recommendations,
-            "assessment_trace": self.assessment_trace,
-        })
+        base.update(
+            {
+                "trader_id": self.trader_id,
+                "research_id": self.research_id,
+                "knowledge_score": self.knowledge_score,
+                "reasoning_score": self.reasoning_score,
+                "bias_profile": self.bias_profile,
+                "discipline_score": self.discipline_score,
+                "reflection_score": self.reflection_score,
+                "learning_progress": self.learning_progress,
+                "overall_score": self.overall_score,
+                "feedback": self.feedback,
+                "recommendations": self.recommendations,
+                "assessment_trace": self.assessment_trace,
+            }
+        )
         return base
 
     @classmethod

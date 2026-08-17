@@ -62,9 +62,9 @@ class OperationComplexity(str, Enum):
     benchmark.
     """
 
-    LIGHT = "light"        # single pass, element-wise (e.g. returns)
+    LIGHT = "light"  # single pass, element-wise (e.g. returns)
     STANDARD = "standard"  # one or two passes over the series
-    HEAVY = "heavy"        # multi-pass / composed aggregate (e.g. simulation)
+    HEAVY = "heavy"  # multi-pass / composed aggregate (e.g. simulation)
 
 
 #: Stable per-operation complexity classification.
@@ -79,7 +79,9 @@ OPERATION_COMPLEXITY: Dict[str, OperationComplexity] = {
 }
 
 
-def classify_size(n: Optional[int], thresholds: Sequence[int] = DEFAULT_SIZE_THRESHOLDS) -> DatasetSizeClass:
+def classify_size(
+    n: Optional[int], thresholds: Sequence[int] = DEFAULT_SIZE_THRESHOLDS
+) -> DatasetSizeClass:
     """Bucket a dataset length into a deterministic size class.
 
     ``None`` (unknown length) maps to SMALL.  ``thresholds`` is an ascending
@@ -197,9 +199,7 @@ class SchedulerDecision:
             "policy_version": self.policy_version,
             "profile_version": self.profile_version,
             "candidates_considered": list(self.candidates_considered),
-            "rejected_reasons": [
-                [name, reason] for name, reason in self.rejected_reasons
-            ],
+            "rejected_reasons": [[name, reason] for name, reason in self.rejected_reasons],
         }
 
     @classmethod
@@ -263,9 +263,7 @@ class CertifiedPerformanceProfile:
         stat = self._stats.get((str(backend), str(operation), size.value))
         return stat.mean_ms if stat is not None else None
 
-    def faster_than(
-        self, operation: str, size: DatasetSizeClass, a: str, b: str
-    ) -> bool:
+    def faster_than(self, operation: str, size: DatasetSizeClass, a: str, b: str) -> bool:
         """True when backend ``a``'s estimate is strictly faster than ``b``'s.
 
         Returns False when either estimate is unmeasured (unknown is never
@@ -334,9 +332,7 @@ class CertifiedPerformanceProfile:
                     last_ms=samples[-1],
                 )
             else:
-                merged[key] = PerformanceStat.from_measurement(
-                    sum(samples) / len(samples)
-                )
+                merged[key] = PerformanceStat.from_measurement(sum(samples) / len(samples))
 
         new_version = version or f"{self.version}.1"
         return CertifiedPerformanceProfile(
@@ -369,9 +365,7 @@ class CertifiedPerformanceProfile:
                 size_class = DatasetSizeClass(size)
             except ValueError:
                 continue
-            measurements[(backend, operation, size_class.value)] = PerformanceStat.from_dict(
-                stat
-            )
+            measurements[(backend, operation, size_class.value)] = PerformanceStat.from_dict(stat)
         return cls(
             measurements=measurements,
             thresholds=data.get("thresholds", DEFAULT_SIZE_THRESHOLDS),
@@ -502,9 +496,7 @@ class ExecutionHistory:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ExecutionHistory":
-        return cls(
-            records=[ExecutionRecord.from_dict(r) for r in data.get("records", [])]
-        )
+        return cls(records=[ExecutionRecord.from_dict(r) for r in data.get("records", [])])
 
 
 class BackendScheduler:
@@ -570,8 +562,8 @@ class BackendScheduler:
             )
 
         size = classify_size(
-            _estimate_dataset_size(inputs), self._profile.thresholds
-            if self._profile is not None else DEFAULT_SIZE_THRESHOLDS
+            _estimate_dataset_size(inputs),
+            self._profile.thresholds if self._profile is not None else DEFAULT_SIZE_THRESHOLDS,
         )
 
         # Without a profile, reproduce first-registered-candidate selection.
@@ -589,8 +581,7 @@ class BackendScheduler:
             )
 
         estimates = [
-            (name, self._profile.estimate_ms(name, operation, size))
-            for name, _ in eligible
+            (name, self._profile.estimate_ms(name, operation, size)) for name, _ in eligible
         ]
         measured = [(name, est) for name, est in estimates if est is not None]
 

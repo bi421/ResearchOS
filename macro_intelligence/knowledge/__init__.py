@@ -21,39 +21,39 @@ Architecture invariants:
 
 from __future__ import annotations
 
-from macro_intelligence.knowledge.models import (
-    ALGORITHM_VERSION,
-    KnowledgeType,
-    KnowledgeProvenance,
-    KnowledgeObject,
-    MacroContext,
+from macro_intelligence.knowledge.confidence import (
+    CONFIDENCE_WEIGHTS,
+    CONFIDENCE_WEIGHTS_VERSION,
+    ConfidenceCalculator,
+    ConfidenceComponents,
 )
-from macro_intelligence.knowledge.rules import (
-    KNOWLEDGE_RULES_VERSION,
-    KnowledgeRule,
-    RULES,
-    get_rule,
-    get_rules_version,
-)
+from macro_intelligence.knowledge.context import MacroContextBuilder
 from macro_intelligence.knowledge.evidence_link import (
     EvidenceLink,
     EvidenceLinker,
 )
-from macro_intelligence.knowledge.pattern import (
-    PatternFinding,
-    PatternDetector,
-)
-from macro_intelligence.knowledge.confidence import (
-    CONFIDENCE_WEIGHTS_VERSION,
-    CONFIDENCE_WEIGHTS,
-    ConfidenceComponents,
-    ConfidenceCalculator,
-)
 from macro_intelligence.knowledge.generator import (
-    KnowledgeInputs,
     KnowledgeGenerator,
+    KnowledgeInputs,
 )
-from macro_intelligence.knowledge.context import MacroContextBuilder
+from macro_intelligence.knowledge.models import (
+    ALGORITHM_VERSION,
+    KnowledgeObject,
+    KnowledgeProvenance,
+    KnowledgeType,
+    MacroContext,
+)
+from macro_intelligence.knowledge.pattern import (
+    PatternDetector,
+    PatternFinding,
+)
+from macro_intelligence.knowledge.rules import (
+    KNOWLEDGE_RULES_VERSION,
+    RULES,
+    KnowledgeRule,
+    get_rule,
+    get_rules_version,
+)
 
 __all__ = [
     # Models

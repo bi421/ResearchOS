@@ -1,5 +1,6 @@
-from pathlib import Path
 import hashlib
+from pathlib import Path
+
 import polars as pl
 
 PROJECT_ROOT = Path("C:/Users/User/Desktop/ResearchOS")
@@ -13,14 +14,14 @@ dfs = []
 for f in csv_files:
     print(f"\nReading {f.name}...")
     rows = []
-    with open(f, 'r', encoding='utf-8', errors='ignore') as fp:
+    with open(f, "r", encoding="utf-8", errors="ignore") as fp:
         for line in fp:
-            line=line.strip()
+            line = line.strip()
             if not line:
                 continue
             # HistData sometimes uses ; sometimes ,
-            line = line.replace(';', ',')
-            parts = [p.strip() for p in line.split(',') if p.strip()!='']
+            line = line.replace(";", ",")
+            parts = [p.strip() for p in line.split(",") if p.strip() != ""]
             if len(parts) == 1:
                 # fallback: space split
                 parts = line.split()
@@ -40,7 +41,7 @@ for f in csv_files:
         print("  -> 0 rows parsed!")
         continue
 
-    df = pl.DataFrame(rows, schema=["ts_raw","open","high","low","close","vol"], orient="row")
+    df = pl.DataFrame(rows, schema=["ts_raw", "open", "high", "low", "close", "vol"], orient="row")
     df = df.with_columns(
         pl.coalesce(
             pl.col("ts_raw").str.strptime(pl.Datetime, "%Y%m%d %H%M%S", strict=False),
@@ -50,12 +51,16 @@ for f in csv_files:
         ).alias("ts_utc")
     )
     df = df.filter(pl.col("ts_utc").is_not_null())
-    df = df.with_columns([
-        pl.col("open").cast(pl.Float64), pl.col("high").cast(pl.Float64),
-        pl.col("low").cast(pl.Float64), pl.col("close").cast(pl.Float64),
-        pl.col("vol").cast(pl.Float64),
-    ])
-    df = df.select(["ts_utc","open","high","low","close","vol"])
+    df = df.with_columns(
+        [
+            pl.col("open").cast(pl.Float64),
+            pl.col("high").cast(pl.Float64),
+            pl.col("low").cast(pl.Float64),
+            pl.col("close").cast(pl.Float64),
+            pl.col("vol").cast(pl.Float64),
+        ]
+    )
+    df = df.select(["ts_utc", "open", "high", "low", "close", "vol"])
     print(f"  -> {df.height} rows: {df['ts_utc'].min()} to {df['ts_utc'].max()}")
     dfs.append(df)
 
@@ -66,7 +71,7 @@ print(f"Range: {full_df['ts_utc'].min()} to {full_df['ts_utc'].max()}")
 
 parquet_path = CURATED_DIR / "xauusd_m1_2023_2025.parquet"
 full_df.write_parquet(parquet_path, compression="zstd")
-print(f"Saved: {parquet_path} ({parquet_path.stat().st_size/1024/1024:.1f} MB)")
+print(f"Saved: {parquet_path} ({parquet_path.stat().st_size / 1024 / 1024:.1f} MB)")
 
 h = hashlib.sha256(parquet_path.read_bytes()).hexdigest()
 print(f"SHA256: {h}")

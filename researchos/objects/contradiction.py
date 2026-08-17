@@ -17,7 +17,6 @@ from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp
 
-
 # Conflict resolution threshold (Article XVI, Section 7.6)
 CONFLICT_RESOLUTION_THRESHOLD = 2.0  # One side must have >= 2x evidence weight
 
@@ -161,17 +160,19 @@ class Contradiction(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "type": self.type,
-            "description": self.description,
-            "sides": self.sides,
-            "severity": self.severity,
-            "resolution": self.resolution,
-            "resolution_method": self.resolution_method,
-            "confidence_impact": self.confidence_impact,
-            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "type": self.type,
+                "description": self.description,
+                "sides": self.sides,
+                "severity": self.severity,
+                "resolution": self.resolution,
+                "resolution_method": self.resolution_method,
+                "confidence_impact": self.confidence_impact,
+                "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+            }
+        )
         return base
 
     @classmethod
@@ -251,10 +252,12 @@ class ContradictionReport(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "contradiction_ids": self.contradiction_ids,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "contradiction_ids": self.contradiction_ids,
+            }
+        )
         return base
 
     @classmethod

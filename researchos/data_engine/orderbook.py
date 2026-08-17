@@ -165,21 +165,23 @@ class OrderBook(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "symbol": self.symbol,
-            "timestamp": self.timestamp.isoformat(),
-            "bids": [b.to_dict() for b in self.bids],
-            "asks": [a.to_dict() for a in self.asks],
-            "exchange": self.exchange,
-            "is_snapshot": self.is_snapshot,
-            "sequence": self.sequence,
-            "best_bid": self.best_bid,
-            "best_ask": self.best_ask,
-            "mid_price": self.mid_price,
-            "spread": self.spread,
-            "total_bid_size": self.total_bid_size,
-            "total_ask_size": self.total_ask_size,
-        })
+        base.update(
+            {
+                "symbol": self.symbol,
+                "timestamp": self.timestamp.isoformat(),
+                "bids": [b.to_dict() for b in self.bids],
+                "asks": [a.to_dict() for a in self.asks],
+                "exchange": self.exchange,
+                "is_snapshot": self.is_snapshot,
+                "sequence": self.sequence,
+                "best_bid": self.best_bid,
+                "best_ask": self.best_ask,
+                "mid_price": self.mid_price,
+                "spread": self.spread,
+                "total_bid_size": self.total_bid_size,
+                "total_ask_size": self.total_ask_size,
+            }
+        )
         return base
 
     @classmethod
@@ -199,4 +201,3 @@ class OrderBook(BaseObject):
             f"OrderBook({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}, "
             f"{len(self.bids)} bids × {len(self.asks)} asks)"
         )
-

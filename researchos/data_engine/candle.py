@@ -130,7 +130,11 @@ class Candle(BaseObject):
         """Volume-weighted average price approximation."""
         if self.volume == 0:
             return self.typical_price
-        return (self.typical_price * self.volume) / self.volume if self.volume > 0 else self.typical_price
+        return (
+            (self.typical_price * self.volume) / self.volume
+            if self.volume > 0
+            else self.typical_price
+        )
 
     def _to_hashable_dict(self) -> Dict[str, Any]:
         content = {
@@ -157,27 +161,29 @@ class Candle(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "symbol": self.symbol,
-            "timeframe": self.timeframe,
-            "timestamp": self.timestamp.isoformat(),
-            "open": self.open,
-            "high": self.high,
-            "low": self.low,
-            "close": self.close,
-            "volume": self.volume,
-            "quote_volume": self.quote_volume,
-            "trades_count": self.trades_count,
-            "spread": self.spread,
-            "tick_volume": self.tick_volume,
-            "real_volume": self.real_volume,
-            "is_complete": self.is_complete,
-            "range": self.range,
-            "body": self.body,
-            "upper_wick": self.upper_wick,
-            "lower_wick": self.lower_wick,
-            "is_bullish": self.is_bullish,
-        })
+        base.update(
+            {
+                "symbol": self.symbol,
+                "timeframe": self.timeframe,
+                "timestamp": self.timestamp.isoformat(),
+                "open": self.open,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+                "volume": self.volume,
+                "quote_volume": self.quote_volume,
+                "trades_count": self.trades_count,
+                "spread": self.spread,
+                "tick_volume": self.tick_volume,
+                "real_volume": self.real_volume,
+                "is_complete": self.is_complete,
+                "range": self.range,
+                "body": self.body,
+                "upper_wick": self.upper_wick,
+                "lower_wick": self.lower_wick,
+                "is_bullish": self.is_bullish,
+            }
+        )
         return base
 
     @classmethod
@@ -209,4 +215,3 @@ class Candle(BaseObject):
             f"O={self.open:.2f} H={self.high:.2f} "
             f"L={self.low:.2f} C={self.close:.2f} V={self.volume:.0f})"
         )
-

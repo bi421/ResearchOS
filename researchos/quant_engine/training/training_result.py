@@ -81,9 +81,7 @@ class TrainingResult:
             "predictions": list(self.predictions),
             "metadata": dict(self.metadata),
         }
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
     def to_dict(self) -> Dict[str, Any]:
@@ -113,4 +111,3 @@ class TrainingResult:
 
 
 __all__ = ["TrainingResult"]
-

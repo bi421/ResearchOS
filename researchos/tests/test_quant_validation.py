@@ -22,9 +22,7 @@ from researchos.quant_engine.validation.walk_forward import WalkForwardValidator
 
 
 def _dataset(sample_count: int = 250, feature_count: int = 3) -> ResearchDataset:
-    features = tuple(
-        tuple(float(i + f) for f in range(feature_count)) for i in range(sample_count)
-    )
+    features = tuple(tuple(float(i + f) for f in range(feature_count)) for i in range(sample_count))
     labels = tuple(float(i % 2) for i in range(sample_count))
     return ResearchDataset(
         feature_names=tuple(f"f{f}" for f in range(feature_count)),
@@ -74,9 +72,7 @@ class TestValidator:
     _VALIDATE_SIZE = 401
 
     def test_validate_returns_result(self):
-        validator = WalkForwardValidator(
-            train_size=100, validation_size=50, step_size=50
-        )
+        validator = WalkForwardValidator(train_size=100, validation_size=50, step_size=50)
         result = validator.validate(_dataset(self._VALIDATE_SIZE))
         assert result.fold_count >= 1
         assert result.train_size == 100
@@ -107,9 +103,7 @@ class TestValidator:
         r1 = validator.validate(ds)
         r2 = validator.validate(ds)
         assert r1.metrics == r2.metrics
-        assert [fr.to_dict() for fr in r1.fold_results] == [
-            fr.to_dict() for fr in r2.fold_results
-        ]
+        assert [fr.to_dict() for fr in r1.fold_results] == [fr.to_dict() for fr in r2.fold_results]
 
     def test_validate_requires_config(self):
         with pytest.raises(ValidationError):

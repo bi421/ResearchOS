@@ -38,16 +38,7 @@ Design Principles:
 Based on Article XVII: Object Model — Quant Engine Layer.
 """
 
-from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.quant_engine.capabilities import (
-    QUANT_OPERATIONS,
-    REFERENCE_BACKEND_NAME,
-    REFERENCE_BACKEND_VERSION,
-    BackendCapabilities,
-    BackendCapabilitiesError,
-    default_capabilities,
-)
 from researchos.quant_engine.backend_hash import (
     HASH_ALGORITHM,
     HASH_VERSION,
@@ -56,11 +47,68 @@ from researchos.quant_engine.backend_hash import (
     compute_input_hash,
     stable_float,
 )
+from researchos.quant_engine.capabilities import (
+    QUANT_OPERATIONS,
+    REFERENCE_BACKEND_NAME,
+    REFERENCE_BACKEND_VERSION,
+    BackendCapabilities,
+    BackendCapabilitiesError,
+    default_capabilities,
+)
+from researchos.quant_engine.interface import QuantComputationInterface
+from researchos.quant_engine.metrics import (
+    calmar_ratio,
+    compute_all_metrics,
+    downside_deviation,
+    max_drawdown,
+    profit_factor_metric,
+    sharpe_ratio,
+    sortino_ratio,
+)
+from researchos.quant_engine.models import (
+    CalculationVersion,
+    SimulationRequest,
+    SimulationResult,
+)
 from researchos.quant_engine.numerical_validation import (
     NumericalComparator,
     NumericalComparisonError,
     NumericalValidationResult,
     ValidationStatus,
+)
+from researchos.quant_engine.performance import (
+    average_loss,
+    average_win,
+    compute_performance_analytics,
+    consistency,
+    distribution_analysis,
+    loss_rate,
+    max_consecutive_losses,
+    max_consecutive_wins,
+    profit_factor,
+    win_loss_ratio,
+    win_rate,
+)
+from researchos.quant_engine.research_cpp_backend import (
+    ResearchCppBackend,
+    has_cpp_research_engine,
+)
+from researchos.quant_engine.research_engine import (
+    PythonResearchBackend,
+    ResearchEngine,
+    research_capabilities,
+)
+from researchos.quant_engine.research_interface import (
+    RESEARCH_OPERATIONS,
+    RESEARCH_SURFACE_VERSION,
+    ResearchComputationInterface,
+    ResearchResult,
+    build_research_result,
+)
+from researchos.quant_engine.research_registry import (
+    create_research_engine,
+    create_research_router,
+    register_research_backend,
 )
 from researchos.quant_engine.router import (
     ERROR_EXECUTION_FAILED,
@@ -76,66 +124,18 @@ from researchos.quant_engine.router import (
     BackendRouterError,
     BackendValidationError,
 )
-from researchos.quant_engine.models import (
-    CalculationVersion,
-    SimulationRequest,
-    SimulationResult,
-)
 from researchos.quant_engine.simulation import HistoricalSimulationEngine
 from researchos.quant_engine.statistics import (
     calculate_returns_from_prices,
     compute_statistics,
+    kurtosis,
     mean,
+    rolling_volatility,
+    skewness,
     standard_deviation,
     variance,
-    skewness,
-    kurtosis,
-    z_score,
-    rolling_volatility,
     volatility_change,
-)
-from researchos.quant_engine.performance import (
-    win_rate,
-    loss_rate,
-    average_win,
-    average_loss,
-    win_loss_ratio,
-    profit_factor,
-    consistency,
-    max_consecutive_wins,
-    max_consecutive_losses,
-    distribution_analysis,
-    compute_performance_analytics,
-)
-from researchos.quant_engine.metrics import (
-    sharpe_ratio,
-    sortino_ratio,
-    calmar_ratio,
-    profit_factor_metric,
-    max_drawdown,
-    downside_deviation,
-    compute_all_metrics,
-)
-from researchos.quant_engine.research_interface import (
-    RESEARCH_OPERATIONS,
-    RESEARCH_SURFACE_VERSION,
-    ResearchResult,
-    ResearchComputationInterface,
-    build_research_result,
-)
-from researchos.quant_engine.research_engine import (
-    PythonResearchBackend,
-    ResearchEngine,
-    research_capabilities,
-)
-from researchos.quant_engine.research_cpp_backend import (
-    ResearchCppBackend,
-    has_cpp_research_engine,
-)
-from researchos.quant_engine.research_registry import (
-    register_research_backend,
-    create_research_router,
-    create_research_engine,
+    z_score,
 )
 
 __all__ = [
@@ -198,7 +198,7 @@ __all__ = [
     "consistency",
     "max_consecutive_wins",
     "max_consecutive_losses",
-"distribution_analysis",
+    "distribution_analysis",
     "compute_performance_analytics",
     # Metrics
     "sharpe_ratio",

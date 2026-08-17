@@ -6,10 +6,10 @@ Covers (per repair spec):
     B. EvidenceAggregator full-context aggregation
     C. Every evidence source collector
     D. EvidenceValidator (valid + invalid canonical items)
-    E. EvidenceItem serialization round-trip
+    E. DecisionEvidenceItem serialization round-trip
     F. EvidenceCollection serialization round-trip
-    G. ProbabilityCalculator with canonical EvidenceItem objects
-    H. compute_evidence_score with canonical EvidenceItem objects
+    G. ProbabilityCalculator with canonical DecisionEvidenceItem objects
+    H. compute_evidence_score with canonical DecisionEvidenceItem objects
     I. No legacy attribute access (static source check)
 """
 
@@ -26,7 +26,7 @@ import researchos.decision_engine.evidence as evidence_module
 import researchos.decision_engine.score as score_module
 from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
-    EvidenceItem,
+    DecisionEvidenceItem,
     EvidenceSource,
     ProbabilityOutcome,
     WeightConfiguration,
@@ -41,7 +41,6 @@ from researchos.decision_engine.probability import (
     ProbabilityValidator,
 )
 from researchos.decision_engine.score import EvidenceScore, compute_evidence_score
-
 
 FIXED_TS = datetime(2025, 1, 15, 14, 30, 0, tzinfo=timezone.utc)
 
@@ -79,8 +78,8 @@ def make_item(
     confidence: float = 0.7,
     description: str = "test evidence",
     supporting_ids=None,
-) -> EvidenceItem:
-    return EvidenceItem(
+) -> DecisionEvidenceItem:
+    return DecisionEvidenceItem(
         source=source,
         source_id=source_id,
         direction=direction,
@@ -103,14 +102,14 @@ def full_collection():
 
 
 class TestCanonicalIdentity:
-    """There must be exactly ONE EvidenceItem / EvidenceSource."""
+    """There must be exactly ONE DecisionEvidenceItem / EvidenceSource."""
 
     def test_evidence_module_reexports_contracts(self):
-        assert evidence_module.EvidenceItem is contracts.EvidenceItem
+        assert evidence_module.DecisionEvidenceItem is contracts.DecisionEvidenceItem
         assert evidence_module.EvidenceSource is contracts.EvidenceSource
 
     def test_score_module_uses_contracts(self):
-        assert score_module.EvidenceItem is contracts.EvidenceItem
+        assert score_module.DecisionEvidenceItem is contracts.DecisionEvidenceItem
         assert score_module.EvidenceSource is contracts.EvidenceSource
 
     def test_no_duplicate_class_definitions_in_decision_engine(self):
@@ -119,10 +118,12 @@ class TestCanonicalIdentity:
         source_defs: list[str] = []
         for py_file in sorted(decision_engine_dir.glob("*.py")):
             source = py_file.read_text(encoding="utf-8")
-            for match in re.finditer(r"^class\s+(EvidenceItem|EvidenceSource)\b", source, re.MULTILINE):
-                target = item_defs if match.group(1) == "EvidenceItem" else source_defs
+            for match in re.finditer(
+                r"^class\s+(DecisionEvidenceItem|EvidenceSource)\b", source, re.MULTILINE
+            ):
+                target = item_defs if match.group(1) == "DecisionEvidenceItem" else source_defs
                 target.append(f"{py_file.name}:{match.group(1)}")
-        assert item_defs == ["contracts.py:EvidenceItem"]
+        assert item_defs == ["contracts.py:DecisionEvidenceItem"]
         assert source_defs == ["contracts.py:EvidenceSource"]
 
 
@@ -135,7 +136,7 @@ class TestEvidenceAggregator:
     def test_aggregate_returns_canonical_items(self, full_collection):
         assert full_collection.total_items == 9
         for item in full_collection.items:
-            assert type(item) is contracts.EvidenceItem
+            assert type(item) is contracts.DecisionEvidenceItem
 
     def test_source_counts_full_context(self, full_collection):
         assert full_collection.get_source_counts() == {
@@ -163,16 +164,18 @@ class TestEvidenceAggregator:
         assert EvidenceValidator().is_valid_collection(full_collection) is True
 
     def test_empty_context_yields_empty_collection(self):
-        collection = EvidenceAggregator().aggregate(make_context(
-            market_regime_id="",
-            macro_state_id="",
-            historical_scenario_ids=[],
-            experiment_result_ids=[],
-            validation_ids=[],
-            research_ids=[],
-            market_memory_report_ids=[],
-            simulation_result_ids=[],
-        ))
+        collection = EvidenceAggregator().aggregate(
+            make_context(
+                market_regime_id="",
+                macro_state_id="",
+                historical_scenario_ids=[],
+                experiment_result_ids=[],
+                validation_ids=[],
+                research_ids=[],
+                market_memory_report_ids=[],
+                simulation_result_ids=[],
+            )
+        )
         assert collection.total_items == 0
         assert EvidenceValidator().is_valid_collection(collection) is True
 
@@ -193,17 +196,19 @@ class TestCollectors:
         ],
     )
     def test_collect_market_memory(self, reference_ids, context_field):
-        context = make_context(**{
-            "historical_scenario_ids": [],
-            "experiment_result_ids": [],
-            "validation_ids": [],
-            "research_ids": [],
-            "market_memory_report_ids": [],
-            "simulation_result_ids": [],
-            "market_regime_id": "",
-            "macro_state_id": "",
-            context_field: reference_ids,
-        })
+        context = make_context(
+            **{
+                "historical_scenario_ids": [],
+                "experiment_result_ids": [],
+                "validation_ids": [],
+                "research_ids": [],
+                "market_memory_report_ids": [],
+                "simulation_result_ids": [],
+                "market_regime_id": "",
+                "macro_state_id": "",
+                context_field: reference_ids,
+            }
+        )
         items = EvidenceAggregator()._collect_market_memory(context)
         assert [i.source_id for i in items] == reference_ids
         for item in items:
@@ -321,7 +326,7 @@ class TestEvidenceValidator:
 
 
 # =============================================================================
-# E. EvidenceItem Serialization
+# E. DecisionEvidenceItem Serialization
 # =============================================================================
 
 
@@ -356,8 +361,8 @@ class TestEvidenceItemSerialization:
             description="macro regime shift",
             supporting_ids=["macro_zz", "regime_zz"],
         )
-        restored = contracts.EvidenceItem.from_dict(item.to_dict())
-        assert type(restored) is contracts.EvidenceItem
+        restored = contracts.DecisionEvidenceItem.from_dict(item.to_dict())
+        assert type(restored) is contracts.DecisionEvidenceItem
         assert restored == item
 
 
@@ -376,7 +381,7 @@ class TestEvidenceCollectionSerialization:
         assert restored.collection_timestamp == full_collection.collection_timestamp
         assert restored.total_items == full_collection.total_items
         for original, item in zip(full_collection.items, restored.items):
-            assert type(item) is contracts.EvidenceItem
+            assert type(item) is contracts.DecisionEvidenceItem
             assert item == original
 
     def test_round_trip_preserves_hash(self, full_collection):
@@ -406,9 +411,15 @@ class TestEvidenceCollectionSerialization:
 class TestProbabilityCalculator:
     def test_directional_probabilities_with_canonical_items(self):
         items = [
-            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
-            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
-            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
+            make_item(
+                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
+            ),
+            make_item(
+                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
+            ),
+            make_item(
+                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
+            ),
         ]
         assessment = ProbabilityCalculator().compute(
             decision_context_id="ctx_1",
@@ -420,7 +431,12 @@ class TestProbabilityCalculator:
         assert assessment.bullish_probability == pytest.approx(0.5)
         assert assessment.bearish_probability == pytest.approx(0.375)
         assert assessment.neutral_probability == pytest.approx(0.125)
-        assert assessment.bullish_probability + assessment.bearish_probability + assessment.neutral_probability == pytest.approx(1.0)
+        assert (
+            assessment.bullish_probability
+            + assessment.bearish_probability
+            + assessment.neutral_probability
+            == pytest.approx(1.0)
+        )
         assert assessment.confidence == pytest.approx(1.6 / 3.0)
         assert assessment.evidence_strength == pytest.approx(0.8 / 3.0)
         assert assessment.sample_size == 3
@@ -430,9 +446,15 @@ class TestProbabilityCalculator:
 
     def test_assessment_passes_probability_validator(self):
         items = [
-            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
-            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
-            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
+            make_item(
+                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
+            ),
+            make_item(
+                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
+            ),
+            make_item(
+                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
+            ),
         ]
         assessment = ProbabilityCalculator().compute(
             decision_context_id="ctx_1",
@@ -443,8 +465,12 @@ class TestProbabilityCalculator:
 
     def test_zero_weight_falls_back_to_uniform(self):
         items = [
-            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5),
-            make_item(source_id="n2", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5),
+            make_item(
+                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5
+            ),
+            make_item(
+                source_id="n2", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5
+            ),
         ]
         assessment = ProbabilityCalculator().compute(
             decision_context_id="ctx_1",
@@ -473,8 +499,20 @@ class TestProbabilityCalculator:
 class TestComputeEvidenceScore:
     def test_directional_aggregation_and_source_scores(self):
         items = [
-            make_item(source_id="m1", direction=ProbabilityOutcome.BULLISH, strength=1.0, weight=1.0, confidence=0.9),
-            make_item(source_id="m2", direction=ProbabilityOutcome.BEARISH, strength=1.0, weight=1.0, confidence=0.8),
+            make_item(
+                source_id="m1",
+                direction=ProbabilityOutcome.BULLISH,
+                strength=1.0,
+                weight=1.0,
+                confidence=0.9,
+            ),
+            make_item(
+                source_id="m2",
+                direction=ProbabilityOutcome.BEARISH,
+                strength=1.0,
+                weight=1.0,
+                confidence=0.8,
+            ),
             make_item(
                 source=EvidenceSource.EXPERIMENT,
                 source_id="e1",
@@ -499,11 +537,17 @@ class TestComputeEvidenceScore:
         assert score.confidence_score == pytest.approx((0.9 + 0.6) / 2.0)
         assert score.uncertainty_score == pytest.approx(0.0)
         assert score.evidence_count == 3
-        assert all(type(i) is contracts.EvidenceItem for i in score.evidence_items)
+        assert all(type(i) is contracts.DecisionEvidenceItem for i in score.evidence_items)
 
     def test_score_is_deterministic(self):
         items = [
-            make_item(source_id="m1", direction=ProbabilityOutcome.BULLISH, strength=1.0, weight=1.0, confidence=0.9),
+            make_item(
+                source_id="m1",
+                direction=ProbabilityOutcome.BULLISH,
+                strength=1.0,
+                weight=1.0,
+                confidence=0.9,
+            ),
             make_item(
                 source=EvidenceSource.VALIDATION,
                 source_id="v1",
@@ -526,9 +570,7 @@ class TestComputeEvidenceScore:
         assert score.total_score == pytest.approx(0.0)
 
     def test_all_sources_score_via_aggregator_pipeline(self, full_collection):
-        score = compute_evidence_score(
-            "ctx_1", full_collection.items, WeightConfiguration()
-        )
+        score = compute_evidence_score("ctx_1", full_collection.items, WeightConfiguration())
         assert score.evidence_count == 9
         assert EvidenceScore.from_dict(score.to_dict()) == score
 
@@ -540,7 +582,7 @@ class TestComputeEvidenceScore:
 
 class TestNoLegacyAttributeAccess:
     """decision_engine evidence/probability/score must not use retired
-    EvidenceItem fields or the wrong direction enum."""
+    DecisionEvidenceItem fields or the wrong direction enum."""
 
     LEGACY_PATTERNS = [
         r"\.reference_id\b",

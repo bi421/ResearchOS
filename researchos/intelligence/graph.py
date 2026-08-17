@@ -116,10 +116,7 @@ class EvidenceGraph:
         """
         if node_id not in self._nodes:
             raise NodeNotFoundError(node_id)
-        return tuple(
-            self._edges[eid]
-            for eid in sorted(self._incident.get(node_id, set()))
-        )
+        return tuple(self._edges[eid] for eid in sorted(self._incident.get(node_id, set())))
 
     def neighbors(self, node_id: str) -> Tuple[str, ...]:
         """Return the ``node_id``s of all nodes connected to ``node_id``.

@@ -1,7 +1,8 @@
-﻿from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from researchos.storage.repository import ResearchRepository
+
 from researchos.pipeline import ResearchPipeline
+from researchos.storage.repository import ResearchRepository
 
 app = FastAPI(title="ResearchOS API", version="1.0.0", description="Research Infrastructure API")
 repo = ResearchRepository()
@@ -21,7 +22,7 @@ def run_cycle(req: CycleRequest):
             "status": "success",
             "research_id": research.id,
             "topic": req.topic,
-            "data": research.to_dict()
+            "data": research.to_dict(),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -38,7 +39,4 @@ def get_cycle(cycle_id: str):
 @app.get("/audit/verify")
 def verify_audit():
     is_valid = repo.verify_audit_chain()
-    return {
-        "audit_chain_valid": is_valid,
-        "status": "SECURE" if is_valid else "COMPROMISED"
-    }
+    return {"audit_chain_valid": is_valid, "status": "SECURE" if is_valid else "COMPROMISED"}

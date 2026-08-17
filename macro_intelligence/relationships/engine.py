@@ -9,27 +9,27 @@ from __future__ import annotations
 
 from typing import Any
 
-from macro_intelligence.relationships.correlation import (
-    pearson_correlation,
-    spearman_correlation,
-    classify_relationship,
-    approximate_p_value,
-)
-from macro_intelligence.relationships.lag_analysis import find_optimal_lag
-from macro_intelligence.relationships.regime_relationship import (
-    compute_all_regime_correlations,
-)
 from macro_intelligence.relationships.break_detection import (
     detect_structural_breaks,
 )
+from macro_intelligence.relationships.correlation import (
+    approximate_p_value,
+    classify_relationship,
+    pearson_correlation,
+    spearman_correlation,
+)
+from macro_intelligence.relationships.lag_analysis import find_optimal_lag
 from macro_intelligence.relationships.models import (
     ALGORITHM_VERSION,
-    RelationshipResult,
     CorrelationResult,
-    RollingCorrelationResult,
     LagRelationship,
     RegimeRelationship,
+    RelationshipResult,
+    RollingCorrelationResult,
     StructuralBreak,
+)
+from macro_intelligence.relationships.regime_relationship import (
+    compute_all_regime_correlations,
 )
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 
@@ -159,8 +159,8 @@ class RelationshipEngine:
             evidence_refs = []
 
         correlations, corr_timestamps, stability = __import__(
-            'macro_intelligence.relationships.correlation',
-            fromlist=['compute_rolling_correlation'],
+            "macro_intelligence.relationships.correlation",
+            fromlist=["compute_rolling_correlation"],
         ).compute_rolling_correlation(series_a, series_b, window_size)
 
         provenance = self._build_provenance(
@@ -298,9 +298,7 @@ class RelationshipEngine:
         if evidence_refs is None:
             evidence_refs = []
 
-        breaks = detect_structural_breaks(
-            series_a, series_b, break_threshold, min_segment_size
-        )
+        breaks = detect_structural_breaks(series_a, series_b, break_threshold, min_segment_size)
 
         provenance = self._build_provenance(
             method="structural_break_detection",
@@ -358,7 +356,10 @@ class RelationshipEngine:
 
         # Overall correlation
         overall = self.analyze_correlation(
-            series_a, series_b, series_a_name, series_b_name,
+            series_a,
+            series_b,
+            series_a_name,
+            series_b_name,
             evidence_refs=evidence_refs,
         )
 
@@ -366,8 +367,11 @@ class RelationshipEngine:
         rolling = None
         if rolling_window is not None and rolling_window >= 2:
             rolling = self.analyze_rolling_correlation(
-                series_a, series_b, rolling_window,
-                series_a_name, series_b_name,
+                series_a,
+                series_b,
+                rolling_window,
+                series_a_name,
+                series_b_name,
                 evidence_refs=evidence_refs,
             )
 
@@ -375,7 +379,10 @@ class RelationshipEngine:
         lag = None
         if len(series_a) >= 4:
             lag = self.analyze_lag(
-                series_a, series_b, series_a_name, series_b_name,
+                series_a,
+                series_b,
+                series_a_name,
+                series_b_name,
                 max_lag=max_lag,
                 evidence_refs=evidence_refs,
             )
@@ -384,8 +391,11 @@ class RelationshipEngine:
         regime_rels = []
         if regime_labels is not None:
             regime_rels = self.analyze_regime_relationship(
-                series_a, series_b, regime_labels,
-                series_a_name, series_b_name,
+                series_a,
+                series_b,
+                regime_labels,
+                series_a_name,
+                series_b_name,
                 evidence_refs=evidence_refs,
             )
 
@@ -393,7 +403,10 @@ class RelationshipEngine:
         breaks = []
         if len(series_a) >= break_threshold * 20:
             breaks = self.detect_breaks(
-                series_a, series_b, series_a_name, series_b_name,
+                series_a,
+                series_b,
+                series_a_name,
+                series_b_name,
                 break_threshold=break_threshold,
                 evidence_refs=evidence_refs,
             )

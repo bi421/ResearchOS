@@ -15,7 +15,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # =============================================================================
 # Rules version
 # =============================================================================
@@ -97,13 +96,14 @@ class KnowledgeRule:
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         hash_data = {
             "rule_id": self.rule_id,
             "rule_version": self.rule_version,
             "parameters": dict(sorted(self.parameters.items())),
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 # =============================================================================

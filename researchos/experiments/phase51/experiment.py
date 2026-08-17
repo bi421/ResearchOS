@@ -38,10 +38,10 @@ from .contracts import (
     ModelResult,
     Phase51Result,
 )
+from .cost import apply_costs
 from .probability import EmpiricalProbabilityEstimator
 from .self_validation import aggregate_outcome
 from .statistics import evaluate_significance
-from .cost import apply_costs
 
 
 @dataclass
@@ -185,17 +185,17 @@ def run_phase51(
     folds = 0
     start = 0
     while start + train_size + val_size <= len(feat):
-        tr_feat = feat[start:start + train_size]
-        tr_lab = labs[start:start + train_size]
+        tr_feat = feat[start : start + train_size]
+        tr_lab = labs[start : start + train_size]
         val_start = start + train_size
-        val_feat = feat[val_start:val_start + val_size]
-        val_lab = labs[val_start:val_start + val_size]
-        val_close = list(close[val_start:val_start + val_size])
+        val_feat = feat[val_start : val_start + val_size]
+        val_lab = labs[val_start : val_start + val_size]
+        val_close = list(close[val_start : val_start + val_size])
 
         # Fit estimator on training ONLY.
-        est = EmpiricalProbabilityEstimator(
-            n_bins=cfg.n_bins, feature_indices=[feat_idx]
-        ).fit(tr_feat, tr_lab)
+        est = EmpiricalProbabilityEstimator(n_bins=cfg.n_bins, feature_indices=[feat_idx]).fit(
+            tr_feat, tr_lab
+        )
 
         # Baseline fit on training ONLY.
         base_pred = baseline_always_predict(tr_lab, val_lab)

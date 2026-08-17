@@ -15,7 +15,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
-from researchos.core.timestamp import utc_now, parse_timestamp
+from researchos.core.timestamp import parse_timestamp, utc_now
 
 
 class LifecycleStage(str, Enum):
@@ -104,9 +104,7 @@ class Lifecycle:
                 terminal state and cannot be mutated.
         """
         if self.current_stage in (LifecycleStage.FINALIZED, LifecycleStage.ARCHIVED):
-            raise RuntimeError(
-                f"Cannot transition from terminal stage {self.current_stage.value}"
-            )
+            raise RuntimeError(f"Cannot transition from terminal stage {self.current_stage.value}")
         self.transitions.append(
             LifecycleTransition(
                 stage=stage,
@@ -127,11 +125,13 @@ class Lifecycle:
         obj = cls.__new__(cls)
         obj.transitions = []
         for t in data.get("transitions", []):
-            obj.transitions.append(LifecycleTransition(
-                stage=LifecycleStage(t["stage"]),
-                timestamp=parse_timestamp(t["timestamp"]),
-                reason=t.get("reason"),
-            ))
+            obj.transitions.append(
+                LifecycleTransition(
+                    stage=LifecycleStage(t["stage"]),
+                    timestamp=parse_timestamp(t["timestamp"]),
+                    reason=t.get("reason"),
+                )
+            )
         return obj
 
     def to_dict(self) -> Dict[str, any]:

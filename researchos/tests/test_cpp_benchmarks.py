@@ -30,9 +30,7 @@ _RUN_PERF = os.environ.get("RESEARCHOS_PERF") == "1"
 
 pytestmark = [
     pytest.mark.skipif(not _RUN_PERF, reason="set RESEARCHOS_PERF=1 to run perf suite"),
-    pytest.mark.skipif(
-        not has_cpp_engine(), reason="compiled C++ quant engine not available"
-    ),
+    pytest.mark.skipif(not has_cpp_engine(), reason="compiled C++ quant engine not available"),
 ]
 
 

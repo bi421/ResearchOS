@@ -109,10 +109,7 @@ class TestBuildDatasetEnvelope:
     def test_changed_metadata_different_artifact_hash(self):
         d1 = _make_dataset(metadata={"source": "yahoo"})
         d2 = _make_dataset(metadata={"source": "google"})
-        assert (
-            build_dataset_envelope(d1).artifact_hash
-            != build_dataset_envelope(d2).artifact_hash
-        )
+        assert build_dataset_envelope(d1).artifact_hash != build_dataset_envelope(d2).artifact_hash
 
     def test_artifact_type_is_dataset(self):
         e = build_dataset_envelope(_make_dataset())
@@ -132,12 +129,8 @@ class TestBuildDatasetEnvelope:
         assert e.verify() is True
 
     def test_parent_order_does_not_change_hash(self):
-        a = build_dataset_envelope(
-            _make_dataset(), parent_hashes=["x", "y"]
-        )
-        b = build_dataset_envelope(
-            _make_dataset(), parent_hashes=["y", "x"]
-        )
+        a = build_dataset_envelope(_make_dataset(), parent_hashes=["x", "y"])
+        b = build_dataset_envelope(_make_dataset(), parent_hashes=["y", "x"])
         assert a.lineage_hash == b.lineage_hash
 
     def test_version_binds_into_identity(self):

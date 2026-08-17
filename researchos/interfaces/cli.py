@@ -1,6 +1,7 @@
-﻿import click
-from researchos.storage.repository import ResearchRepository
+import click
+
 from researchos.pipeline import ResearchPipeline
+from researchos.storage.repository import ResearchRepository
 
 
 @click.group()
@@ -31,6 +32,7 @@ def verify():
         click.secho("[+] Audit chain integrity verified: VALID [OK]", fg="green")
     else:
         click.secho("[X] Audit chain integrity verified: INVALID [FAIL]", fg="red", err=True)
+
 
 if __name__ == "__main__":
     cli()

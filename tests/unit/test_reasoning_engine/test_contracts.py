@@ -2,7 +2,7 @@
 Tests for the Reasoning Engine contracts layer (Phase 4.5.1).
 
 Verifies:
-    1.  Valid EvidenceItem creation
+    1.  Valid ReasoningEvidence creation
     2.  Invalid reliability_score rejected
     3.  Empty id rejected
     4.  Empty source rejected
@@ -22,7 +22,6 @@ from dataclasses import FrozenInstanceError, is_dataclass
 import pytest
 
 from researchos.reasoning_engine.contracts import (
-    EvidenceItem,
     EvidenceType,
     Fact,
     Hypothesis,
@@ -30,16 +29,16 @@ from researchos.reasoning_engine.contracts import (
     InvalidIdentifierError,
     InvalidReliabilityScoreError,
     ReasoningContractError,
+    ReasoningEvidence,
 )
 
-
 # ============================================================================= #
-# EvidenceItem
+# ReasoningEvidence
 # ============================================================================= #
 
 
 class TestEvidenceItem:
-    """Tests for the EvidenceItem contract."""
+    """Tests for the ReasoningEvidence contract."""
 
     def _valid_data(self) -> dict:
         return dict(
@@ -51,8 +50,8 @@ class TestEvidenceItem:
         )
 
     def test_valid_creation(self):
-        """1. Valid EvidenceItem creation."""
-        ev = EvidenceItem(**self._valid_data())
+        """1. Valid ReasoningEvidence creation."""
+        ev = ReasoningEvidence(**self._valid_data())
         assert ev.id == "ev_001"
         assert ev.source == "FRED"
         assert ev.evidence_type == EvidenceType.OBSERVATION
@@ -61,7 +60,7 @@ class TestEvidenceItem:
 
     def test_evidence_type_string_coercion(self):
         """A plain string for evidence_type is coerced into an EvidenceType."""
-        ev = EvidenceItem(
+        ev = ReasoningEvidence(
             id="ev_002",
             source="FRED",
             evidence_type="dataset",
@@ -78,47 +77,45 @@ class TestEvidenceItem:
         """2. Invalid reliability_score rejected."""
         for bad in (-0.01, 1.01, 1.5, -1.0):
             with pytest.raises(InvalidReliabilityScoreError):
-                EvidenceItem(**self._with_override(reliability_score=bad))
+                ReasoningEvidence(**self._with_override(reliability_score=bad))
 
     def test_reliability_score_boundary_values_accepted(self):
         """Boundary scores 0.0 and 1.0 are valid."""
         for boundary in (0.0, 1.0):
-            ev = EvidenceItem(
-                **self._with_override(reliability_score=boundary)
-            )
+            ev = ReasoningEvidence(**self._with_override(reliability_score=boundary))
             assert ev.reliability_score == boundary
 
     def test_empty_id_rejected(self):
         """3. Empty id rejected."""
         with pytest.raises(InvalidIdentifierError):
-            EvidenceItem(**self._with_override(id=""))
+            ReasoningEvidence(**self._with_override(id=""))
 
     def test_whitespace_id_rejected(self):
         with pytest.raises(InvalidIdentifierError):
-            EvidenceItem(**self._with_override(id="   "))
+            ReasoningEvidence(**self._with_override(id="   "))
 
     def test_empty_source_rejected(self):
         """4. Empty source rejected."""
         with pytest.raises(InvalidIdentifierError):
-            EvidenceItem(**self._with_override(source=""))
+            ReasoningEvidence(**self._with_override(source=""))
 
     def test_empty_content_hash_rejected(self):
         """Empty content_hash rejected."""
         with pytest.raises(InvalidIdentifierError):
-            EvidenceItem(**self._with_override(content_hash=""))
+            ReasoningEvidence(**self._with_override(content_hash=""))
 
     def test_invalid_evidence_type_rejected(self):
         with pytest.raises(InvalidEvidenceTypeError):
-            EvidenceItem(**self._with_override(evidence_type="bogus"))
+            ReasoningEvidence(**self._with_override(evidence_type="bogus"))
 
     def test_non_numeric_score_rejected(self):
         with pytest.raises(InvalidReliabilityScoreError):
-            EvidenceItem(**self._with_override(reliability_score="high"))  # type: ignore[arg-type]
+            ReasoningEvidence(**self._with_override(reliability_score="high"))  # type: ignore[arg-type]
 
     def test_to_from_roundtrip(self):
         """to_dict / from_dict round-trips losslessly."""
-        original = EvidenceItem(**self._valid_data())
-        restored = EvidenceItem.from_dict(original.to_dict())
+        original = ReasoningEvidence(**self._valid_data())
+        restored = ReasoningEvidence.from_dict(original.to_dict())
         assert restored == original
 
 
@@ -229,8 +226,8 @@ class TestImmutability:
 
     @pytest.mark.parametrize(
         "cls",
-        [EvidenceItem, Fact, Hypothesis],
-        ids=["EvidenceItem", "Fact", "Hypothesis"],
+        [ReasoningEvidence, Fact, Hypothesis],
+        ids=["ReasoningEvidence", "Fact", "Hypothesis"],
     )
     def test_is_frozen_dataclass(self, cls):
         assert is_dataclass(cls)
@@ -241,7 +238,7 @@ class TestImmutability:
         assert issubclass(InvalidEvidenceTypeError, ReasoningContractError)
 
     def test_evidence_item_frozen(self):
-        ev = EvidenceItem(
+        ev = ReasoningEvidence(
             id="ev",
             source="s",
             evidence_type=EvidenceType.OBSERVATION,

@@ -2,15 +2,14 @@
 ResearchOS Macro Intelligence Layer - Audit Package
 """
 
-from macro_intelligence.audit.log import (
-    AuditLog,
-    AuditEntry,
-    IntegrityCheck,
-)
-
 from macro_intelligence.audit.engine import (
     AuditEngine,
     AuditResult,
+)
+from macro_intelligence.audit.log import (
+    AuditEntry,
+    AuditLog,
+    IntegrityCheck,
 )
 
 __all__ = [

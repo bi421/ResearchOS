@@ -63,7 +63,5 @@ class ReferenceValidator:
         """
         missing = [i for i in ids if not self.exists(i)]
         if missing:
-            raise ValueError(
-                f"{len(missing)} {label}(s) not found in repository: {missing}"
-            )
+            raise ValueError(f"{len(missing)} {label}(s) not found in repository: {missing}")
         return ids

@@ -18,10 +18,10 @@ from __future__ import annotations
 import math
 from typing import List, Optional
 
-
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
 
 def _sanitize(values) -> List[Optional[float]]:
     """Convert inputs to floats; map missing / non-finite values to ``None``."""
@@ -68,6 +68,7 @@ def _check_positive(value, name: str) -> None:
 # future return
 # ---------------------------------------------------------------------------
 
+
 def future_return(close, horizon) -> List[Optional[float]]:
     """Forward-return label.
 
@@ -95,6 +96,7 @@ def future_return(close, horizon) -> List[Optional[float]]:
 # binary direction
 # ---------------------------------------------------------------------------
 
+
 def binary_label(close, horizon) -> List[Optional[int]]:
     """Binary direction label.
 
@@ -115,6 +117,7 @@ def binary_label(close, horizon) -> List[Optional[int]]:
 # ---------------------------------------------------------------------------
 # multi-class direction
 # ---------------------------------------------------------------------------
+
 
 def multiclass_label(close, horizon, threshold) -> List[Optional[int]]:
     """Multi-class direction label.
@@ -142,6 +145,7 @@ def multiclass_label(close, horizon, threshold) -> List[Optional[int]]:
 # regression target
 # ---------------------------------------------------------------------------
 
+
 def regression_target(close, horizon) -> List[Optional[float]]:
     """Regression target — alias of :func:`future_return`."""
     return future_return(close, horizon)
@@ -150,6 +154,7 @@ def regression_target(close, horizon) -> List[Optional[float]]:
 # ---------------------------------------------------------------------------
 # triple barrier
 # ---------------------------------------------------------------------------
+
 
 def triple_barrier(
     close,
@@ -201,6 +206,7 @@ def triple_barrier(
 # volatility adjusted return
 # ---------------------------------------------------------------------------
 
+
 def vol_adjusted_return(
     close,
     rolling_volatility,
@@ -238,4 +244,3 @@ __all__ = [
     "triple_barrier",
     "vol_adjusted_return",
 ]
-

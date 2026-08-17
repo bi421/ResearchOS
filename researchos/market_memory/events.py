@@ -18,9 +18,16 @@ from researchos.core.identity import generate_id
 from researchos.core.timestamp import parse_timestamp
 
 
-class MarketEvent(BaseObject):
+class MacroMarketEvent(BaseObject):
     """
     A discrete event that affects market conditions.
+
+    Renamed from ``MarketEvent`` (2026-08-17) to end the name collision with
+    ``researchos.objects.market_memory.MarketEvent`` (the price-structure
+    event object registered in the storage OBJECT_REGISTRY) — this class
+    models calendar/macro releases instead.  Serialization is unchanged:
+    the legacy ``object_type`` string and ID seed are pinned.
+    See docs/architecture/OWNERSHIP.md.
 
     Attributes:
         event_type: Type of event ("Fed", "CPI", "NFP", "Geopolitical", etc.)
@@ -80,21 +87,26 @@ class MarketEvent(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "event_type": self.event_type,
-            "timestamp": self.timestamp.isoformat(),
-            "asset": self.asset,
-            "description": self.description,
-            "impact": self.impact,
-            "actual_value": self.actual_value,
-            "expected_value": self.expected_value,
-            "previous_value": self.previous_value,
-            "source": self.source,
-        })
+        # Legacy serialization pin — object_type stays "MarketEvent" so that
+        # renamed-class dicts remain byte-identical with stored data.
+        base["object_type"] = "MarketEvent"
+        base.update(
+            {
+                "event_type": self.event_type,
+                "timestamp": self.timestamp.isoformat(),
+                "asset": self.asset,
+                "description": self.description,
+                "impact": self.impact,
+                "actual_value": self.actual_value,
+                "expected_value": self.expected_value,
+                "previous_value": self.previous_value,
+                "source": self.source,
+            }
+        )
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketEvent":
+    def from_dict(cls, data: dict) -> "MacroMarketEvent":
         obj = super().from_dict(data)
         obj.event_type = data["event_type"]
         obj.timestamp = parse_timestamp(data["timestamp"])
@@ -106,3 +118,7 @@ class MarketEvent(BaseObject):
         obj.previous_value = data.get("previous_value", 0.0)
         obj.source = data.get("source", "")
         return obj
+
+
+# Deprecated compatibility alias — canonical name is ``MacroMarketEvent``.
+MarketEvent = MacroMarketEvent

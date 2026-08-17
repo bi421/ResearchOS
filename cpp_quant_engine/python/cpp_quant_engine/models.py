@@ -28,6 +28,7 @@ DEFAULT_CALCULATION_VERSION = "CALCULATION_V1"
 
 # ── Canonical serialization primitives (mirror of src/bridge/bridge.cpp) ──
 
+
 def canonical_float(v: float) -> str:
     return f"{v:.10f}"
 
@@ -82,6 +83,7 @@ def _sha256(s: str) -> str:
 
 # ── Candle ─────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class Candle:
     timestamp: str = ""
@@ -93,15 +95,17 @@ class Candle:
     timeframe: str = "M1"
 
     def to_canonical(self) -> str:
-        return canonical_object({
-            "close": canonical_float(self.close),
-            "high": canonical_float(self.high),
-            "low": canonical_float(self.low),
-            "open": canonical_float(self.open),
-            "timeframe": _q(self.timeframe),
-            "timestamp": _q(self.timestamp),
-            "volume": canonical_float(self.volume),
-        })
+        return canonical_object(
+            {
+                "close": canonical_float(self.close),
+                "high": canonical_float(self.high),
+                "low": canonical_float(self.low),
+                "open": canonical_float(self.open),
+                "timeframe": _q(self.timeframe),
+                "timestamp": _q(self.timestamp),
+                "volume": canonical_float(self.volume),
+            }
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -137,6 +141,7 @@ def _candles_to_dict(candles: List[Candle]) -> List[Dict[str, Any]]:
 
 # ── MarketData ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class MarketDataRequest:
     symbol: str = ""
@@ -145,12 +150,16 @@ class MarketDataRequest:
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
-        return _sha256(canonical_object({
-            "calculation_version": _q(self.calculation_version),
-            "candles": _candles_canonical(self.candles),
-            "symbol": _q(self.symbol),
-            "timeframe": _q(self.timeframe),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "calculation_version": _q(self.calculation_version),
+                    "candles": _candles_canonical(self.candles),
+                    "symbol": _q(self.symbol),
+                    "timeframe": _q(self.timeframe),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -166,9 +175,7 @@ class MarketDataRequest:
             symbol=str(d.get("symbol", "")),
             timeframe=str(d.get("timeframe", "M1")),
             candles=[Candle.from_base_object(c) for c in d.get("candles", [])],
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
         )
 
 
@@ -188,19 +195,23 @@ class MarketDataResult:
     bridge_version: str = ""
 
     def compute_result_hash(self) -> str:
-        return _sha256(canonical_object({
-            "bridge_version": _q(self.bridge_version),
-            "calculation_version": _q(self.calculation_version),
-            "engine_version": _q(self.engine_version),
-            "first_timestamp": _q(self.first_timestamp),
-            "input_hash": _q(self.input_hash),
-            "last_timestamp": _q(self.last_timestamp),
-            "size": canonical_float(float(self.size)),
-            "symbol": _q(self.symbol),
-            "timeframe": _q(self.timeframe),
-            "valid": "true" if self.valid else "false",
-            "validation_message": _q(self.validation_message),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "bridge_version": _q(self.bridge_version),
+                    "calculation_version": _q(self.calculation_version),
+                    "engine_version": _q(self.engine_version),
+                    "first_timestamp": _q(self.first_timestamp),
+                    "input_hash": _q(self.input_hash),
+                    "last_timestamp": _q(self.last_timestamp),
+                    "size": canonical_float(float(self.size)),
+                    "symbol": _q(self.symbol),
+                    "timeframe": _q(self.timeframe),
+                    "valid": "true" if self.valid else "false",
+                    "validation_message": _q(self.validation_message),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -230,9 +241,7 @@ class MarketDataResult:
             validation_message=str(d.get("validation_message", "")),
             input_hash=str(d.get("input_hash", "")),
             result_hash=str(d.get("result_hash", "")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             engine_version=str(d.get("engine_version", "")),
             bridge_version=str(d.get("bridge_version", "")),
         )
@@ -274,16 +283,21 @@ class MarketData:
 
 # ── Statistics ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class StatisticsRequest:
     data: List[float] = field(default_factory=list)
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
-        return _sha256(canonical_object({
-            "calculation_version": _q(self.calculation_version),
-            "data": canonical_float_array(self.data),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "calculation_version": _q(self.calculation_version),
+                    "data": canonical_float_array(self.data),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -295,9 +309,7 @@ class StatisticsRequest:
     def from_base_object(cls, d: Dict[str, Any]) -> "StatisticsRequest":
         return cls(
             data=[float(x) for x in d.get("data", [])],
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
         )
 
 
@@ -323,25 +335,29 @@ class StatisticsResult:
     bridge_version: str = ""
 
     def compute_result_hash(self) -> str:
-        return _sha256(canonical_object({
-            "bridge_version": _q(self.bridge_version),
-            "calculation_version": _q(self.calculation_version),
-            "count": canonical_float(float(self.count)),
-            "engine_version": _q(self.engine_version),
-            "input_hash": _q(self.input_hash),
-            "iqr": canonical_float(self.iqr),
-            "kurtosis": canonical_float(self.kurtosis),
-            "max": canonical_float(self.max),
-            "mean": canonical_float(self.mean),
-            "median": canonical_float(self.median),
-            "min": canonical_float(self.min),
-            "q1": canonical_float(self.q1),
-            "q3": canonical_float(self.q3),
-            "skewness": canonical_float(self.skewness),
-            "stddev": canonical_float(self.stddev),
-            "sum": canonical_float(self.sum),
-            "variance": canonical_float(self.variance),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "bridge_version": _q(self.bridge_version),
+                    "calculation_version": _q(self.calculation_version),
+                    "count": canonical_float(float(self.count)),
+                    "engine_version": _q(self.engine_version),
+                    "input_hash": _q(self.input_hash),
+                    "iqr": canonical_float(self.iqr),
+                    "kurtosis": canonical_float(self.kurtosis),
+                    "max": canonical_float(self.max),
+                    "mean": canonical_float(self.mean),
+                    "median": canonical_float(self.median),
+                    "min": canonical_float(self.min),
+                    "q1": canonical_float(self.q1),
+                    "q3": canonical_float(self.q3),
+                    "skewness": canonical_float(self.skewness),
+                    "stddev": canonical_float(self.stddev),
+                    "sum": canonical_float(self.sum),
+                    "variance": canonical_float(self.variance),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -383,15 +399,14 @@ class StatisticsResult:
             iqr=float(d.get("iqr", 0.0)),
             input_hash=str(d.get("input_hash", "")),
             result_hash=str(d.get("result_hash", "")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             engine_version=str(d.get("engine_version", "")),
             bridge_version=str(d.get("bridge_version", "")),
         )
 
 
 # ── Risk ───────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class RiskRequest:
@@ -401,12 +416,16 @@ class RiskRequest:
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
-        return _sha256(canonical_object({
-            "calculation_version": _q(self.calculation_version),
-            "equity_curve": canonical_float_array(self.equity_curve),
-            "returns": canonical_float_array(self.returns),
-            "risk_free_rate": canonical_float(self.risk_free_rate),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "calculation_version": _q(self.calculation_version),
+                    "equity_curve": canonical_float_array(self.equity_curve),
+                    "returns": canonical_float_array(self.returns),
+                    "risk_free_rate": canonical_float(self.risk_free_rate),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -422,9 +441,7 @@ class RiskRequest:
             returns=[float(x) for x in d.get("returns", [])],
             equity_curve=[float(x) for x in d.get("equity_curve", [])],
             risk_free_rate=float(d.get("risk_free_rate", 0.0)),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
         )
 
 
@@ -447,22 +464,26 @@ class RiskResult:
     bridge_version: str = ""
 
     def compute_result_hash(self) -> str:
-        return _sha256(canonical_object({
-            "bridge_version": _q(self.bridge_version),
-            "calculation_version": _q(self.calculation_version),
-            "cvar_95": canonical_float(self.cvar_95),
-            "cvar_99": canonical_float(self.cvar_99),
-            "engine_version": _q(self.engine_version),
-            "input_hash": _q(self.input_hash),
-            "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
-            "peak_index": canonical_float(float(self.peak_index)),
-            "recovery_index": canonical_float(float(self.recovery_index)),
-            "sharpe_ratio": canonical_float(self.sharpe_ratio),
-            "sortino_ratio": canonical_float(self.sortino_ratio),
-            "trough_index": canonical_float(float(self.trough_index)),
-            "var_95": canonical_float(self.var_95),
-            "var_99": canonical_float(self.var_99),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "bridge_version": _q(self.bridge_version),
+                    "calculation_version": _q(self.calculation_version),
+                    "cvar_95": canonical_float(self.cvar_95),
+                    "cvar_99": canonical_float(self.cvar_99),
+                    "engine_version": _q(self.engine_version),
+                    "input_hash": _q(self.input_hash),
+                    "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
+                    "peak_index": canonical_float(float(self.peak_index)),
+                    "recovery_index": canonical_float(float(self.recovery_index)),
+                    "sharpe_ratio": canonical_float(self.sharpe_ratio),
+                    "sortino_ratio": canonical_float(self.sortino_ratio),
+                    "trough_index": canonical_float(float(self.trough_index)),
+                    "var_95": canonical_float(self.var_95),
+                    "var_99": canonical_float(self.var_99),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -498,15 +519,14 @@ class RiskResult:
             sortino_ratio=float(d.get("sortino_ratio", 0.0)),
             input_hash=str(d.get("input_hash", "")),
             result_hash=str(d.get("result_hash", "")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             engine_version=str(d.get("engine_version", "")),
             bridge_version=str(d.get("bridge_version", "")),
         )
 
 
 # ── Simulation ─────────────────────────────────────────────────────────────
+
 
 @dataclass
 class SimulationRequest:
@@ -521,17 +541,21 @@ class SimulationRequest:
     prices: List[float] = field(default_factory=list)
 
     def compute_input_hash(self) -> str:
-        return _sha256(canonical_object({
-            "calculation_version": _q(self.calculation_version),
-            "dataset_reference": _q(self.dataset_reference),
-            "dataset_version": _q(self.dataset_version),
-            "end_time": _q(self.end_time),
-            "initial_capital": canonical_float(self.initial_capital),
-            "prices": canonical_float_array(self.prices),
-            "risk_free_rate": canonical_float(self.risk_free_rate),
-            "seed": canonical_float(float(self.seed)),
-            "start_time": _q(self.start_time),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "calculation_version": _q(self.calculation_version),
+                    "dataset_reference": _q(self.dataset_reference),
+                    "dataset_version": _q(self.dataset_version),
+                    "end_time": _q(self.end_time),
+                    "initial_capital": canonical_float(self.initial_capital),
+                    "prices": canonical_float_array(self.prices),
+                    "risk_free_rate": canonical_float(self.risk_free_rate),
+                    "seed": canonical_float(float(self.seed)),
+                    "start_time": _q(self.start_time),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -551,9 +575,7 @@ class SimulationRequest:
         return cls(
             dataset_reference=str(d.get("dataset_reference", "")),
             dataset_version=str(d.get("dataset_version", "1.0.0")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             initial_capital=float(d.get("initial_capital", 100_000.0)),
             risk_free_rate=float(d.get("risk_free_rate", 0.0)),
             seed=int(d.get("seed", 42)),
@@ -583,22 +605,26 @@ class SimulationResult:
     bridge_version: str = ""
 
     def compute_result_hash(self) -> str:
-        return _sha256(canonical_object({
-            "bridge_version": _q(self.bridge_version),
-            "calculation_version": _q(self.calculation_version),
-            "dataset_reference": _q(self.dataset_reference),
-            "dataset_version": _q(self.dataset_version),
-            "end_time": _q(self.end_time),
-            "engine_version": _q(self.engine_version),
-            "equity_curve": canonical_float_array(self.equity_curve),
-            "input_hash": _q(self.input_hash),
-            "metrics": canonical_double_map(self.metrics),
-            "performance": canonical_double_map(self.performance),
-            "returns": canonical_float_array(self.returns),
-            "simulation_id": _q(self.simulation_id),
-            "start_time": _q(self.start_time),
-            "statistics": canonical_double_map(self.statistics),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "bridge_version": _q(self.bridge_version),
+                    "calculation_version": _q(self.calculation_version),
+                    "dataset_reference": _q(self.dataset_reference),
+                    "dataset_version": _q(self.dataset_version),
+                    "end_time": _q(self.end_time),
+                    "engine_version": _q(self.engine_version),
+                    "equity_curve": canonical_float_array(self.equity_curve),
+                    "input_hash": _q(self.input_hash),
+                    "metrics": canonical_double_map(self.metrics),
+                    "performance": canonical_double_map(self.performance),
+                    "returns": canonical_float_array(self.returns),
+                    "simulation_id": _q(self.simulation_id),
+                    "start_time": _q(self.start_time),
+                    "statistics": canonical_double_map(self.statistics),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -626,9 +652,7 @@ class SimulationResult:
             simulation_id=str(d.get("simulation_id", "")),
             dataset_reference=str(d.get("dataset_reference", "")),
             dataset_version=str(d.get("dataset_version", "1.0.0")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             start_time=str(d.get("start_time", "")),
             end_time=str(d.get("end_time", "")),
             input_hash=str(d.get("input_hash", "")),
@@ -646,6 +670,7 @@ class SimulationResult:
 
 # ── Backtest ───────────────────────────────────────────────────────────────
 
+
 @dataclass
 class BacktestRequest:
     symbol: str = ""
@@ -659,17 +684,21 @@ class BacktestRequest:
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
-        return _sha256(canonical_object({
-            "allow_short": "true" if self.allow_short else "false",
-            "calculation_version": _q(self.calculation_version),
-            "candles": _candles_canonical(self.candles),
-            "commission_pct": canonical_float(self.commission_pct),
-            "initial_capital": canonical_float(self.initial_capital),
-            "signal_reference": _q(self.signal_reference),
-            "slippage_pct": canonical_float(self.slippage_pct),
-            "symbol": _q(self.symbol),
-            "timeframe": _q(self.timeframe),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "allow_short": "true" if self.allow_short else "false",
+                    "calculation_version": _q(self.calculation_version),
+                    "candles": _candles_canonical(self.candles),
+                    "commission_pct": canonical_float(self.commission_pct),
+                    "initial_capital": canonical_float(self.initial_capital),
+                    "signal_reference": _q(self.signal_reference),
+                    "slippage_pct": canonical_float(self.slippage_pct),
+                    "symbol": _q(self.symbol),
+                    "timeframe": _q(self.timeframe),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -695,9 +724,7 @@ class BacktestRequest:
             slippage_pct=float(d.get("slippage_pct", 0.0005)),
             allow_short=bool(d.get("allow_short", True)),
             signal_reference=str(d.get("signal_reference", "")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
         )
 
 
@@ -718,20 +745,24 @@ class BacktestResult:
     bridge_version: str = ""
 
     def compute_result_hash(self) -> str:
-        return _sha256(canonical_object({
-            "bridge_version": _q(self.bridge_version),
-            "calculation_version": _q(self.calculation_version),
-            "drawdown_curve": canonical_float_array(self.drawdown_curve),
-            "engine_version": _q(self.engine_version),
-            "equity_curve": canonical_float_array(self.equity_curve),
-            "final_equity": canonical_float(self.final_equity),
-            "input_hash": _q(self.input_hash),
-            "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
-            "num_trades": canonical_float(float(self.num_trades)),
-            "signal_reference": _q(self.signal_reference),
-            "total_bars": canonical_float(float(self.total_bars)),
-            "total_return_pct": canonical_float(self.total_return_pct),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "bridge_version": _q(self.bridge_version),
+                    "calculation_version": _q(self.calculation_version),
+                    "drawdown_curve": canonical_float_array(self.drawdown_curve),
+                    "engine_version": _q(self.engine_version),
+                    "equity_curve": canonical_float_array(self.equity_curve),
+                    "final_equity": canonical_float(self.final_equity),
+                    "input_hash": _q(self.input_hash),
+                    "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
+                    "num_trades": canonical_float(float(self.num_trades)),
+                    "signal_reference": _q(self.signal_reference),
+                    "total_bars": canonical_float(float(self.total_bars)),
+                    "total_return_pct": canonical_float(self.total_return_pct),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -763,15 +794,14 @@ class BacktestResult:
             signal_reference=str(d.get("signal_reference", "")),
             input_hash=str(d.get("input_hash", "")),
             result_hash=str(d.get("result_hash", "")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             engine_version=str(d.get("engine_version", "")),
             bridge_version=str(d.get("bridge_version", "")),
         )
 
 
 # ── Performance ────────────────────────────────────────────────────────────
+
 
 @dataclass
 class PerformanceRequest:
@@ -782,13 +812,17 @@ class PerformanceRequest:
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
-        return _sha256(canonical_object({
-            "bars": _candles_canonical(self.bars),
-            "calculation_version": _q(self.calculation_version),
-            "equity_curve": canonical_float_array(self.equity_curve),
-            "initial_capital": canonical_float(self.initial_capital),
-            "trading_days_per_year": canonical_float(self.trading_days_per_year),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "bars": _candles_canonical(self.bars),
+                    "calculation_version": _q(self.calculation_version),
+                    "equity_curve": canonical_float_array(self.equity_curve),
+                    "initial_capital": canonical_float(self.initial_capital),
+                    "trading_days_per_year": canonical_float(self.trading_days_per_year),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -806,9 +840,7 @@ class PerformanceRequest:
             bars=[Candle.from_base_object(c) for c in d.get("bars", [])],
             initial_capital=float(d.get("initial_capital", 100_000.0)),
             trading_days_per_year=float(d.get("trading_days_per_year", 252.0)),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
         )
 
 
@@ -844,35 +876,43 @@ class PerformanceResult:
     bridge_version: str = ""
 
     def compute_result_hash(self) -> str:
-        return _sha256(canonical_object({
-            "annualized_return": canonical_float(self.annualized_return),
-            "annualized_volatility": canonical_float(self.annualized_volatility),
-            "bridge_version": _q(self.bridge_version),
-            "calmar_ratio": canonical_float(self.calmar_ratio),
-            "calculation_version": _q(self.calculation_version),
-            "cvar_95": canonical_float(self.cvar_95),
-            "cvar_99": canonical_float(self.cvar_99),
-            "downside_deviation_annualized": canonical_float(self.downside_deviation_annualized),
-            "engine_version": _q(self.engine_version),
-            "input_hash": _q(self.input_hash),
-            "losing_trades": canonical_float(float(self.losing_trades)),
-            "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
-            "max_drawdown_recovery_bars": canonical_float(float(self.max_drawdown_recovery_bars)),
-            "num_drawdown_periods": canonical_float(float(self.num_drawdown_periods)),
-            "num_monthly_periods": canonical_float(float(self.num_monthly_periods)),
-            "num_yearly_periods": canonical_float(float(self.num_yearly_periods)),
-            "profit_factor": canonical_float(self.profit_factor),
-            "sharpe_ratio": canonical_float(self.sharpe_ratio),
-            "sortino_ratio": canonical_float(self.sortino_ratio),
-            "time_in_drawdown_pct": canonical_float(self.time_in_drawdown_pct),
-            "total_return": canonical_float(self.total_return),
-            "total_return_pct": canonical_float(self.total_return_pct),
-            "total_trades": canonical_float(float(self.total_trades)),
-            "var_95": canonical_float(self.var_95),
-            "var_99": canonical_float(self.var_99),
-            "win_rate": canonical_float(self.win_rate),
-            "winning_trades": canonical_float(float(self.winning_trades)),
-        }))
+        return _sha256(
+            canonical_object(
+                {
+                    "annualized_return": canonical_float(self.annualized_return),
+                    "annualized_volatility": canonical_float(self.annualized_volatility),
+                    "bridge_version": _q(self.bridge_version),
+                    "calmar_ratio": canonical_float(self.calmar_ratio),
+                    "calculation_version": _q(self.calculation_version),
+                    "cvar_95": canonical_float(self.cvar_95),
+                    "cvar_99": canonical_float(self.cvar_99),
+                    "downside_deviation_annualized": canonical_float(
+                        self.downside_deviation_annualized
+                    ),
+                    "engine_version": _q(self.engine_version),
+                    "input_hash": _q(self.input_hash),
+                    "losing_trades": canonical_float(float(self.losing_trades)),
+                    "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
+                    "max_drawdown_recovery_bars": canonical_float(
+                        float(self.max_drawdown_recovery_bars)
+                    ),
+                    "num_drawdown_periods": canonical_float(float(self.num_drawdown_periods)),
+                    "num_monthly_periods": canonical_float(float(self.num_monthly_periods)),
+                    "num_yearly_periods": canonical_float(float(self.num_yearly_periods)),
+                    "profit_factor": canonical_float(self.profit_factor),
+                    "sharpe_ratio": canonical_float(self.sharpe_ratio),
+                    "sortino_ratio": canonical_float(self.sortino_ratio),
+                    "time_in_drawdown_pct": canonical_float(self.time_in_drawdown_pct),
+                    "total_return": canonical_float(self.total_return),
+                    "total_return_pct": canonical_float(self.total_return_pct),
+                    "total_trades": canonical_float(float(self.total_trades)),
+                    "var_95": canonical_float(self.var_95),
+                    "var_99": canonical_float(self.var_99),
+                    "win_rate": canonical_float(self.win_rate),
+                    "winning_trades": canonical_float(float(self.winning_trades)),
+                }
+            )
+        )
 
     def to_base_object(self) -> Dict[str, Any]:
         return {
@@ -934,9 +974,7 @@ class PerformanceResult:
             max_drawdown_recovery_bars=int(d.get("max_drawdown_recovery_bars", 0)),
             input_hash=str(d.get("input_hash", "")),
             result_hash=str(d.get("result_hash", "")),
-            calculation_version=str(
-                d.get("calculation_version", DEFAULT_CALCULATION_VERSION)
-            ),
+            calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
             engine_version=str(d.get("engine_version", "")),
             bridge_version=str(d.get("bridge_version", "")),
         )

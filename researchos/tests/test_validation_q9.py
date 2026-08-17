@@ -13,9 +13,9 @@ import unittest
 from researchos.quant_engine.machine_learning.dataset_builder import DatasetBuilder
 from researchos.quant_engine.machine_learning.dataset_contracts import ResearchDataset
 from researchos.quant_engine.validation import (
+    VALIDATION_VERSION,
     Fold,
     FoldResult,
-    VALIDATION_VERSION,
     ValidationError,
     ValidationResult,
     WalkForwardSplitter,
@@ -29,6 +29,7 @@ from researchos.quant_engine.validation import (
     precision,
     recall,
 )
+
 # ---------------------------------------------------------------------------
 # deterministic data generators
 # ---------------------------------------------------------------------------
@@ -239,12 +240,8 @@ class TestSplitter(unittest.TestCase):
         # Validation windows are contiguous: each new validation window starts
         # exactly one index after the previous window's last index.
         for i in range(1, len(folds)):
-            self.assertEqual(
-                folds[i].validation_start, folds[i - 1].validation_end + 1
-            )
-            self.assertEqual(
-                folds[i].train_start, folds[i - 1].train_start + step
-            )
+            self.assertEqual(folds[i].validation_start, folds[i - 1].validation_end + 1)
+            self.assertEqual(folds[i].train_start, folds[i - 1].train_start + step)
 
     def test_fold_ranges(self):
         folds = WalkForwardSplitter(80, 20, 20).split(239)
@@ -317,9 +314,7 @@ class TestValidatorConstructor(unittest.TestCase):
 class TestValidatorEndToEnd(unittest.TestCase):
     def setUp(self):
         self.dataset = make_dataset(n=300)
-        self.validator = WalkForwardValidator(
-            train_size=80, validation_size=20, step_size=20
-        )
+        self.validator = WalkForwardValidator(train_size=80, validation_size=20, step_size=20)
 
     def test_returns_validation_result(self):
         result = self.validator.validate(self.dataset)
@@ -374,7 +369,15 @@ class TestValidatorEndToEnd(unittest.TestCase):
 
     def test_generate_report_dict(self):
         report = self.validator.generate_report(self.dataset)
-        for key in ("train_size", "validation_size", "test_size", "fold_count", "fold_results", "metrics", "metadata"):
+        for key in (
+            "train_size",
+            "validation_size",
+            "test_size",
+            "fold_count",
+            "fold_results",
+            "metrics",
+            "metadata",
+        ):
             self.assertIn(key, report)
         self.assertIn("feature_count", report["metadata"])
         self.assertIn("feature_names", report["metadata"])
@@ -429,8 +432,8 @@ class TestArchitecture(unittest.TestCase):
         self.assertNotIn("machine_learning.features", joined)
 
     def test_import_orders_no_circular(self):
-        from researchos.quant_engine.validation import WalkForwardValidator as V1
         from researchos.quant_engine.machine_learning import FeatureBuilder
+        from researchos.quant_engine.validation import WalkForwardValidator as V1
 
         self.assertIsNotNone(V1)
         self.assertIsNotNone(FeatureBuilder)
@@ -438,4 +441,3 @@ class TestArchitecture(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

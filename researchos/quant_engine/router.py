@@ -52,11 +52,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.backend_hash import (
     compute_backend_result_hash,
     compute_input_hash,
 )
-from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.capabilities import BackendCapabilities
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.numerical_validation import (
@@ -158,14 +158,10 @@ class BackendExecutionMetadata:
             "error_code": self.error_code,
             "execution_timestamp": self.execution_timestamp,
             "capability_profile": (
-                self.capability_profile.to_dict()
-                if self.capability_profile is not None
-                else None
+                self.capability_profile.to_dict() if self.capability_profile is not None else None
             ),
             "scheduler_decision": (
-                self.scheduler_decision.to_dict()
-                if self.scheduler_decision is not None
-                else None
+                self.scheduler_decision.to_dict() if self.scheduler_decision is not None else None
             ),
             "policy_version": self.policy_version,
             "profile_version": self.profile_version,
@@ -309,7 +305,9 @@ class BackendRouter:
         """The scheduler's current certified performance profile (or None)."""
         return self._scheduler.profile if self._scheduler is not None else None
 
-    def recalibrate_profile(self, version: Optional[str] = None) -> Optional[CertifiedPerformanceProfile]:
+    def recalibrate_profile(
+        self, version: Optional[str] = None
+    ) -> Optional[CertifiedPerformanceProfile]:
         """Fold observed execution history into a NEW versioned profile.
 
         This is the explicit, auditable way historical performance enters
@@ -590,9 +588,7 @@ class BackendRouter:
     ) -> BackendExecutionResult:
         """Record a successful candidate execution."""
         elapsed_ms = (time.perf_counter() - start) * 1000.0
-        result_hash = compute_backend_result_hash(
-            operation, name, version, input_hash, output
-        )
+        result_hash = compute_backend_result_hash(operation, name, version, input_hash, output)
         metadata = self._build_metadata(
             operation=operation,
             backend=name,
@@ -607,8 +603,15 @@ class BackendRouter:
             attempted=attempted,
             fallback_count=fallback_count,
         )
-        self._record(operation, name, elapsed_ms, ValidationStatus.PASSED.value,
-                     ERROR_OK, fallback_count, inputs)
+        self._record(
+            operation,
+            name,
+            elapsed_ms,
+            ValidationStatus.PASSED.value,
+            ERROR_OK,
+            fallback_count,
+            inputs,
+        )
         return BackendExecutionResult(metadata=metadata, output=output)
 
     def _deliberate_reference(
@@ -631,9 +634,7 @@ class BackendRouter:
         name = self._reference_name()
         version = caps.version if caps is not None else "unknown"
         elapsed_ms = (time.perf_counter() - start) * 1000.0
-        result_hash = compute_backend_result_hash(
-            operation, name, version, input_hash, output
-        )
+        result_hash = compute_backend_result_hash(operation, name, version, input_hash, output)
         metadata = self._build_metadata(
             operation=operation,
             backend=name,
@@ -648,8 +649,9 @@ class BackendRouter:
             attempted=[],
             fallback_count=0,
         )
-        self._record(operation, name, elapsed_ms, ValidationStatus.NOT_REQUIRED.value,
-                     ERROR_OK, 0, inputs)
+        self._record(
+            operation, name, elapsed_ms, ValidationStatus.NOT_REQUIRED.value, ERROR_OK, 0, inputs
+        )
         return BackendExecutionResult(metadata=metadata, output=output)
 
     def _fallback(
@@ -688,15 +690,17 @@ class BackendRouter:
         validation_status = ValidationStatus.NOT_REQUIRED.value
         if expected is not None:
             validation_result = self._validate(
-                NumericalComparator(), expected, output, atol=atol, rtol=rtol,
+                NumericalComparator(),
+                expected,
+                output,
+                atol=atol,
+                rtol=rtol,
                 mode=validation,
             )
             validation_status = validation_result.status.value
 
         elapsed_ms = (time.perf_counter() - start) * 1000.0
-        result_hash = compute_backend_result_hash(
-            operation, name, version, input_hash, output
-        )
+        result_hash = compute_backend_result_hash(operation, name, version, input_hash, output)
         metadata = self._build_metadata(
             operation=operation,
             backend=name,
@@ -711,8 +715,9 @@ class BackendRouter:
             attempted=tried_candidates,
             fallback_count=fallback_count,
         )
-        self._record(operation, name, elapsed_ms, validation_status,
-                     last_error, fallback_count, inputs)
+        self._record(
+            operation, name, elapsed_ms, validation_status, last_error, fallback_count, inputs
+        )
         return BackendExecutionResult(metadata=metadata, output=output)
 
     def _build_metadata(

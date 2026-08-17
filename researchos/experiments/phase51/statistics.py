@@ -47,11 +47,7 @@ def _binomial_tail_ge(n: int, k: int, p: float) -> float:
     total = 0.0
     for c in range(k, n + 1):
         log_pmf = (
-            log_fact[n]
-            - log_fact[c]
-            - log_fact[n - c]
-            + c * math.log(p)
-            + (n - c) * math.log1p(-p)
+            log_fact[n] - log_fact[c] - log_fact[n - c] + c * math.log(p) + (n - c) * math.log1p(-p)
         )
         total += math.exp(log_pmf)
     return min(1.0, max(0.0, total))
@@ -64,7 +60,9 @@ def _log_factorials(n: int) -> List[float]:
     return log_fact
 
 
-def _paired_sign_test(model_pred: Sequence[int], base_pred: Sequence[int], actuals: Sequence[float]):
+def _paired_sign_test(
+    model_pred: Sequence[int], base_pred: Sequence[int], actuals: Sequence[float]
+):
     """Deterministic McNemar-style paired sign test of model vs baseline.
 
     Returns (n_discordant, n_model_better, n_baseline_better, p_one_sided).

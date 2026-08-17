@@ -13,7 +13,6 @@ from typing import Any
 
 from macro_intelligence.regime.classification.taxonomy import MacroRegime
 
-
 ALGORITHM_VERSION = "trans-det/v4.0.0"
 
 
@@ -73,9 +72,17 @@ class TransitionSignal:
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"detector_name": self.detector_name, "signal_id": self.signal_id,
-             "signal_type": self.signal_type, "strength": self.strength, "direction": self.direction}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "detector_name": self.detector_name,
+            "signal_id": self.signal_id,
+            "signal_type": self.signal_type,
+            "strength": self.strength,
+            "direction": self.direction,
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -132,23 +139,30 @@ class RegimeTransition:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> RegimeTransition:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"transition_id": self.transition_id,
-             "previous_regime": self.previous_regime.value,
-             "current_regime": self.current_regime.value,
-             "transition_type": self.transition_type,
-             "confidence": self.confidence,
-             "signals": [s.compute_hash() for s in self.signals]}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "transition_id": self.transition_id,
+            "previous_regime": self.previous_regime.value,
+            "current_regime": self.current_regime.value,
+            "transition_type": self.transition_type,
+            "confidence": self.confidence,
+            "signals": [s.compute_hash() for s in self.signals],
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -193,12 +207,17 @@ class TransitionHistoryEntry:
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"transition_id": self.transition_id,
-             "previous_regime": self.previous_regime.value,
-             "current_regime": self.current_regime.value,
-             "transition_type": self.transition_type,
-             "confidence": self.confidence}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "transition_id": self.transition_id,
+            "previous_regime": self.previous_regime.value,
+            "current_regime": self.current_regime.value,
+            "transition_type": self.transition_type,
+            "confidence": self.confidence,
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -224,17 +243,24 @@ class TransitionProbabilityMatrix:
             observation_count=data.get("observation_count", 0),
             transition_counts=data.get("transition_counts", {}),
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
-            last_updated=datetime.fromisoformat(data.get("last_updated", datetime.now(timezone.utc).isoformat())),
+            last_updated=datetime.fromisoformat(
+                data.get("last_updated", datetime.now(timezone.utc).isoformat())
+            ),
             transition_probs=data.get("transition_probs", {}),
         )
 
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"algorithm_version": self.algorithm_version,
-             "transition_probs": self.transition_probs,
-             "observation_count": self.observation_count}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "algorithm_version": self.algorithm_version,
+            "transition_probs": self.transition_probs,
+            "observation_count": self.observation_count,
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -270,10 +296,15 @@ class RegimePersistence:
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"regime": self.regime.value,
-             "persistence_periods": self.persistence_periods,
-             "continuation_probability": self.continuation_probability}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "regime": self.regime.value,
+            "persistence_periods": self.persistence_periods,
+            "continuation_probability": self.continuation_probability,
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -320,22 +351,29 @@ class EarlyWarningSignal:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> EarlyWarningSignal:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"warning_id": self.warning_id,
-             "current_regime": self.current_regime.value,
-             "predicted_regime": self.predicted_regime.value,
-             "confidence": self.confidence,
-             "horizon_periods": self.horizon_periods}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "warning_id": self.warning_id,
+            "current_regime": self.current_regime.value,
+            "predicted_regime": self.predicted_regime.value,
+            "confidence": self.confidence,
+            "horizon_periods": self.horizon_periods,
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -375,10 +413,18 @@ class TransitionAnalysisResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TransitionAnalysisResult:
-        transition = RegimeTransition.from_dict(data["transition"]) if data.get("transition") else None
+        transition = (
+            RegimeTransition.from_dict(data["transition"]) if data.get("transition") else None
+        )
         early_warnings = [EarlyWarningSignal.from_dict(w) for w in data.get("early_warnings", [])]
-        persistence = RegimePersistence.from_dict(data["persistence"]) if data.get("persistence") else None
-        prob_matrix = TransitionProbabilityMatrix.from_dict(data["probability_matrix"]) if data.get("probability_matrix") else None
+        persistence = (
+            RegimePersistence.from_dict(data["persistence"]) if data.get("persistence") else None
+        )
+        prob_matrix = (
+            TransitionProbabilityMatrix.from_dict(data["probability_matrix"])
+            if data.get("probability_matrix")
+            else None
+        )
         prev = MacroRegime(data["previous_regime"]) if data.get("previous_regime") else None
         return cls(
             analysis_id=data["analysis_id"],
@@ -396,19 +442,26 @@ class TransitionAnalysisResult:
 
     def to_json(self) -> str:
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> TransitionAnalysisResult:
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         import hashlib
         import json
-        h = {"analysis_id": self.analysis_id,
-             "current_regime": self.current_regime.value,
-             "previous_regime": self.previous_regime.value if self.previous_regime else None,
-             "transition_detected": self.transition_detected,
-             "transition_id": self.transition.transition_id if self.transition else None}
-        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+        h = {
+            "analysis_id": self.analysis_id,
+            "current_regime": self.current_regime.value,
+            "previous_regime": self.previous_regime.value if self.previous_regime else None,
+            "transition_detected": self.transition_detected,
+            "transition_id": self.transition.transition_id if self.transition else None,
+        }
+        return hashlib.sha256(
+            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()

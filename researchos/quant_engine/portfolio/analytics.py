@@ -27,10 +27,10 @@ from researchos.quant_engine.portfolio.contracts import (
     RiskContribution,
 )
 
-
 # ──────────────────────────────────────────────
 # Basic moments
 # ──────────────────────────────────────────────
+
 
 def mean(values: Sequence[float]) -> float:
     if len(values) == 0:
@@ -151,6 +151,7 @@ def equity_curve_from_returns(returns: Sequence[float], initial: float = 100.0) 
 # Downside measures
 # ──────────────────────────────────────────────
 
+
 def downside_deviation(returns: Sequence[float], target: float = 0.0) -> float:
     n = len(returns)
     if n == 0:
@@ -220,6 +221,7 @@ def omega_ratio(
 # VaR / CVaR / Expected Shortfall
 # ──────────────────────────────────────────────
 
+
 def value_at_risk(returns: Sequence[float], confidence: float = 0.95) -> float:
     """Value-at-Risk as a positive loss amount (historical method)."""
     if len(returns) == 0:
@@ -248,6 +250,7 @@ def expected_shortfall(returns: Sequence[float], confidence: float = 0.95) -> fl
 # ──────────────────────────────────────────────
 # Factor measures
 # ──────────────────────────────────────────────
+
 
 def beta(asset_returns: Sequence[float], market_returns: Sequence[float]) -> float:
     var_m = variance(market_returns)
@@ -299,6 +302,7 @@ def information_ratio(
 # Kelly criterion & allocation
 # ──────────────────────────────────────────────
 
+
 def kelly_fraction(win_probability: float, win_loss_ratio: float) -> float:
     """Kelly fraction f* = p - (1-p)/b."""
     if not (0.0 <= win_probability <= 1.0):
@@ -325,10 +329,7 @@ def risk_contributions(portfolio: Portfolio) -> List[RiskContribution]:
             port_var += w[i] * w[j] * cov[i][j]
     port_vol = math.sqrt(max(port_var, 0.0))
     if port_vol == 0:
-        return [
-            RiskContribution(asset_index=i, weight=w[i])
-            for i in range(n)
-        ]
+        return [RiskContribution(asset_index=i, weight=w[i]) for i in range(n)]
 
     out = []
     for i in range(n):
@@ -385,6 +386,7 @@ def allocate_capital(
 # Drawdown attribution & exposure
 # ──────────────────────────────────────────────
 
+
 def drawdown_attribution(asset_returns: List[List[float]]) -> Dict[str, List[float]]:
     """Per-asset running drawdown series."""
     out = {}
@@ -420,6 +422,7 @@ def exposure_analytics(portfolio: Portfolio) -> Dict[str, float]:
 # ──────────────────────────────────────────────
 # Top-level portfolio metrics
 # ──────────────────────────────────────────────
+
 
 def compute_portfolio_metrics(
     portfolio: Portfolio,
@@ -473,6 +476,7 @@ def compute_portfolio_metrics(
 # Efficient Frontier analytics
 # ──────────────────────────────────────────────
 
+
 def _mat_inv(a: List[List[float]]) -> List[List[float]]:
     """Matrix inversion via Gauss-Jordan elimination."""
     n = len(a)
@@ -503,7 +507,7 @@ def _project_simplex(w: List[float]) -> List[float]:
         cumulative += sorted_w[i]
         if sorted_w[i] + (1.0 - cumulative) / (i + 1) > 0:
             rho = i
-    theta = (1.0 - sum(sorted_w[:rho + 1])) / (rho + 1)
+    theta = (1.0 - sum(sorted_w[: rho + 1])) / (rho + 1)
     return [max(0.0, v + theta) for v in w]
 
 
@@ -533,11 +537,15 @@ def minimum_variance_portfolio(
         weights = [1.0 / n_assets] * n_assets
         lr = 0.01
         for _ in range(500):
-            grad = [2.0 * sum(cov[i][j] * weights[j] for j in range(n_assets)) for i in range(n_assets)]
+            grad = [
+                2.0 * sum(cov[i][j] * weights[j] for j in range(n_assets)) for i in range(n_assets)
+            ]
             weights = [weights[i] - lr * grad[i] for i in range(n_assets)]
             weights = _project_simplex(weights)
 
-    p_var = sum(weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets))
+    p_var = sum(
+        weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets)
+    )
     p_vol = math.sqrt(max(0.0, p_var)) * math.sqrt(periods_per_year)
     p_ret = sum(w * r for w, r in zip(weights, ann_returns))
     sr = (p_ret - risk_free_rate) / p_vol if p_vol > 0 else 0.0
@@ -569,7 +577,9 @@ def maximum_sharpe_portfolio(
 
     if allow_short:
         cov_inv = _mat_inv(cov)
-        unscaled = [sum(cov_inv[i][j] * excess_returns[j] for j in range(n_assets)) for i in range(n_assets)]
+        unscaled = [
+            sum(cov_inv[i][j] * excess_returns[j] for j in range(n_assets)) for i in range(n_assets)
+        ]
         denom = sum(unscaled)
         weights = [v / denom if denom != 0 else 1.0 / n_assets for v in unscaled]
     else:
@@ -578,7 +588,11 @@ def maximum_sharpe_portfolio(
         best_sr = -float("inf")
 
         for _ in range(500):
-            p_var = sum(weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets))
+            p_var = sum(
+                weights[i] * weights[j] * cov[i][j]
+                for i in range(n_assets)
+                for j in range(n_assets)
+            )
             p_vol = math.sqrt(max(1e-12, p_var)) * math.sqrt(periods_per_year)
             p_ret = sum(w * r for w, r in zip(weights, ann_returns))
             sr = (p_ret - risk_free_rate) / p_vol if p_vol > 0 else 0.0
@@ -593,7 +607,11 @@ def maximum_sharpe_portfolio(
                 w_plus = list(weights)
                 w_plus[i] += eps
                 w_plus = _project_simplex(w_plus)
-                var_p = sum(w_plus[a] * w_plus[b] * cov[a][b] for a in range(n_assets) for b in range(n_assets))
+                var_p = sum(
+                    w_plus[a] * w_plus[b] * cov[a][b]
+                    for a in range(n_assets)
+                    for b in range(n_assets)
+                )
                 vol_p = math.sqrt(max(1e-12, var_p)) * math.sqrt(periods_per_year)
                 ret_p = sum(w * r for w, r in zip(w_plus, ann_returns))
                 sr_p = (ret_p - risk_free_rate) / vol_p if vol_p > 0 else 0.0
@@ -604,7 +622,9 @@ def maximum_sharpe_portfolio(
 
         weights = best_weights
 
-    p_var = sum(weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets))
+    p_var = sum(
+        weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets)
+    )
     p_vol = math.sqrt(max(0.0, p_var)) * math.sqrt(periods_per_year)
     p_ret = sum(w * r for w, r in zip(weights, ann_returns))
     sr = (p_ret - risk_free_rate) / p_vol if p_vol > 0 else 0.0
@@ -634,8 +654,12 @@ def efficient_frontier(
     cov = covariance_matrix(asset_returns)
     ann_returns = [_annualise(mean(r), periods_per_year) for r in asset_returns]
 
-    min_var_p = minimum_variance_portfolio(asset_returns, risk_free_rate, periods_per_year, allow_short)
-    max_sharpe_p = maximum_sharpe_portfolio(asset_returns, risk_free_rate, periods_per_year, allow_short)
+    min_var_p = minimum_variance_portfolio(
+        asset_returns, risk_free_rate, periods_per_year, allow_short
+    )
+    max_sharpe_p = maximum_sharpe_portfolio(
+        asset_returns, risk_free_rate, periods_per_year, allow_short
+    )
 
     min_ret = min(ann_returns)
     max_ret = max(ann_returns)
@@ -654,14 +678,17 @@ def efficient_frontier(
             p_ret = sum(w * r for w, r in zip(weights, ann_returns))
             ret_err = p_ret - target_r
             grad = [
-                2.0 * sum(cov[i][j] * weights[j] for j in range(n_assets)) + 5.0 * ret_err * ann_returns[i]
+                2.0 * sum(cov[i][j] * weights[j] for j in range(n_assets))
+                + 5.0 * ret_err * ann_returns[i]
                 for i in range(n_assets)
             ]
             weights = [weights[i] - lr * grad[i] for i in range(n_assets)]
             if not allow_short:
                 weights = _project_simplex(weights)
 
-        p_var = sum(weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets))
+        p_var = sum(
+            weights[i] * weights[j] * cov[i][j] for i in range(n_assets) for j in range(n_assets)
+        )
         p_vol = math.sqrt(max(0.0, p_var)) * math.sqrt(periods_per_year)
         p_ret = sum(w * r for w, r in zip(weights, ann_returns))
         sr = (p_ret - risk_free_rate) / p_vol if p_vol > 0 else 0.0
@@ -682,5 +709,3 @@ def efficient_frontier(
         covariance_matrix=cov,
         expected_returns=ann_returns,
     )
-
-

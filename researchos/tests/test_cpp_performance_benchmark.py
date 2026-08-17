@@ -29,9 +29,7 @@ _RUN_PERF = os.environ.get("RESEARCHOS_PERF") == "1"
 
 pytestmark = [
     pytest.mark.skipif(not _RUN_PERF, reason="set RESEARCHOS_PERF=1 to run perf suite"),
-    pytest.mark.skipif(
-        not has_cpp_engine(), reason="compiled C++ quant engine not available"
-    ),
+    pytest.mark.skipif(not has_cpp_engine(), reason="compiled C++ quant engine not available"),
 ]
 
 
@@ -61,4 +59,3 @@ def test_benchmark_data_helpers_deterministic():
     a = make_series(100)
     b = make_series(100)
     assert a == b
-

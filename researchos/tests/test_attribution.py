@@ -16,29 +16,34 @@ from datetime import datetime, timezone
 
 import pytest
 
+from researchos.engines.attribution import (
+    ATTRIBUTABLE_TYPES,
+    TRAVERSAL_RULES,
+    ResearchAttributionEngine,
+)
 from researchos.objects.attribution import (
     Attribution,
     AttributionGraph,
 )
-from researchos.objects.observation import Observation
 from researchos.objects.evidence import Evidence
-from researchos.objects.interpretation import Interpretation
 from researchos.objects.hypothesis import Hypothesis
-from researchos.objects.scenario import Scenario
-from researchos.objects.research import Research
+from researchos.objects.interpretation import Interpretation
+from researchos.objects.observation import Observation
 from researchos.objects.process import AuditEntry
-from researchos.engines.attribution import ATTRIBUTABLE_TYPES, TRAVERSAL_RULES, ResearchAttributionEngine
+from researchos.objects.research import Research
+from researchos.objects.scenario import Scenario
 from researchos.storage.repository import OBJECT_REGISTRY
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def repo():
     """In-memory repository for testing."""
     from researchos.repository.memory import MemoryRepository
+
     return MemoryRepository()
 
 
@@ -208,6 +213,7 @@ def complete_research_cycle(repo, sample_research):
 
     # Link HypothesisSet to research
     from researchos.objects.hypothesis import HypothesisSet
+
     hs = HypothesisSet(research_id=research.id)
     hs.add_hypothesis(hyp)
     repo.save(hs)
@@ -227,6 +233,7 @@ def complete_research_cycle(repo, sample_research):
 
     # Link ScenarioSet to research
     from researchos.objects.scenario import ScenarioSet
+
     ss = ScenarioSet(research_id=research.id)
     ss.add_scenario(sc)
     repo.save(ss)
@@ -248,6 +255,7 @@ def complete_research_cycle(repo, sample_research):
 # ===================================================================
 # 1. Attribution object
 # ===================================================================
+
 
 class TestAttributionObject:
     def test_create_basic(self):
@@ -439,6 +447,7 @@ class TestAttributionObject:
 # 2. AttributionGraph
 # ===================================================================
 
+
 class TestAttributionGraph:
     def test_create_empty(self):
         graph = AttributionGraph(research_id="res-1")
@@ -476,23 +485,34 @@ class TestAttributionGraph:
 
     def test_counts_by_status(self):
         graph = AttributionGraph(research_id="res-1")
-        graph.add_attribution(Attribution(conclusion_id="c1", conclusion_type="Hypothesis", status="Complete"))
-        graph.add_attribution(Attribution(conclusion_id="c2", conclusion_type="Hypothesis", status="Partial"))
-        graph.add_attribution(Attribution(conclusion_id="c3", conclusion_type="Scenario", status="Broken"))
+        graph.add_attribution(
+            Attribution(conclusion_id="c1", conclusion_type="Hypothesis", status="Complete")
+        )
+        graph.add_attribution(
+            Attribution(conclusion_id="c2", conclusion_type="Hypothesis", status="Partial")
+        )
+        graph.add_attribution(
+            Attribution(conclusion_id="c3", conclusion_type="Scenario", status="Broken")
+        )
         assert graph.complete_count == 1
         assert graph.partial_count == 1
         assert graph.broken_count == 1
 
     def test_average_confidence(self):
         graph = AttributionGraph(research_id="res-1")
-        graph.add_attribution(Attribution(conclusion_id="c1", conclusion_type="Hypothesis", confidence=1.0))
-        graph.add_attribution(Attribution(conclusion_id="c2", conclusion_type="Hypothesis", confidence=0.5))
+        graph.add_attribution(
+            Attribution(conclusion_id="c1", conclusion_type="Hypothesis", confidence=1.0)
+        )
+        graph.add_attribution(
+            Attribution(conclusion_id="c2", conclusion_type="Hypothesis", confidence=0.5)
+        )
         assert graph.average_confidence == 0.75
 
     def test_verify_all(self):
         graph = AttributionGraph(research_id="res-1")
         a1 = Attribution(
-            conclusion_id="c1", conclusion_type="Hypothesis",
+            conclusion_id="c1",
+            conclusion_type="Hypothesis",
             reasoning_object_ids=["r1", "r2"],
         )
         graph.add_attribution(a1)
@@ -522,6 +542,7 @@ class TestAttributionGraph:
 # 3. Engine: chain tracing
 # ===================================================================
 
+
 class TestAttributionEngineTracing:
     def test_trace_observation(self, engine, repo, sample_observation):
         """Observations are the end of the chain — no upstream."""
@@ -530,7 +551,9 @@ class TestAttributionEngineTracing:
         assert result["conclusion_id"] == sample_observation.id
         assert len(result["reasoning_object_ids"]) >= 1
 
-    def test_trace_hypothesis(self, engine, repo, sample_hypothesis, sample_evidence, sample_interpretation):
+    def test_trace_hypothesis(
+        self, engine, repo, sample_hypothesis, sample_evidence, sample_interpretation
+    ):
         result = engine.trace_conclusion(sample_hypothesis.id, "Hypothesis")
         assert result["conclusion_id"] == sample_hypothesis.id
         assert len(result["reasoning_path"]) >= 1
@@ -547,7 +570,9 @@ class TestAttributionEngineTracing:
         ev_ids = engine.get_evidence_chain(sample_hypothesis.id)
         assert sample_evidence.id in ev_ids
 
-    def test_get_observation_chain(self, engine, repo, sample_hypothesis, sample_evidence, sample_observation):
+    def test_get_observation_chain(
+        self, engine, repo, sample_hypothesis, sample_evidence, sample_observation
+    ):
         obs_ids = engine.get_observation_chain(sample_hypothesis.id)
         assert sample_observation.id in obs_ids
 
@@ -562,6 +587,7 @@ class TestAttributionEngineTracing:
 # 4. Engine: attribution creation
 # ===================================================================
 
+
 class TestAttributionEngineCreation:
     def test_create_attribution_for_hypothesis(self, engine, repo, sample_hypothesis):
         attr = engine.create_attribution(sample_hypothesis.id, "Hypothesis")
@@ -573,7 +599,8 @@ class TestAttributionEngineCreation:
 
     def test_create_attribution_with_ontology_tags(self, engine, repo, sample_hypothesis):
         attr = engine.create_attribution(
-            sample_hypothesis.id, "Hypothesis",
+            sample_hypothesis.id,
+            "Hypothesis",
             ontology_tags=["macro", "fed"],
         )
         assert "macro" in attr.ontology_tags
@@ -599,6 +626,7 @@ class TestAttributionEngineCreation:
 # ===================================================================
 # 5. Engine: graph management
 # ===================================================================
+
 
 class TestAttributionEngineGraph:
     def test_create_graph_with_attributions(self, engine, repo, sample_hypothesis, sample_scenario):
@@ -645,6 +673,7 @@ class TestAttributionEngineGraph:
 # 6. Engine: integrity verification
 # ===================================================================
 
+
 class TestAttributionEngineIntegrity:
     def test_verify_valid_attribution(self, engine, repo, sample_hypothesis):
         attr = engine.create_attribution(sample_hypothesis.id, "Hypothesis")
@@ -674,7 +703,8 @@ class TestAttributionEngineIntegrity:
 
     def test_compute_attribution_confidence(self, engine, repo, sample_hypothesis):
         confidence = engine.compute_attribution_confidence(
-            sample_hypothesis.id, "Hypothesis",
+            sample_hypothesis.id,
+            "Hypothesis",
         )
         assert 0.0 <= confidence <= 1.0
 
@@ -683,12 +713,14 @@ class TestAttributionEngineIntegrity:
 # 7. Engine: market memory linking
 # ===================================================================
 
+
 class TestAttributionEngineMemoryLinking:
     def test_link_market_memory(self, engine, repo, sample_hypothesis):
         attr = engine.create_attribution(sample_hypothesis.id, "Hypothesis")
 
         # Create a market memory object to link
         from researchos.objects.market_memory import MarketStructure
+
         ms = MarketStructure(
             structure_type="BOS",
             asset="EURUSD",
@@ -715,7 +747,8 @@ class TestAttributionEngineMemoryLinking:
         attr = engine.create_attribution(sample_hypothesis.id, "Hypothesis")
 
         # Create and link market memory
-        from researchos.objects.market_memory import MarketStructure, MarketOutcome
+        from researchos.objects.market_memory import MarketOutcome, MarketStructure
+
         ms = MarketStructure(
             structure_type="BOS",
             asset="EURUSD",
@@ -757,6 +790,7 @@ class TestAttributionEngineMemoryLinking:
 # ===================================================================
 # 8. Full integration
 # ===================================================================
+
 
 class TestAttributionFullIntegration:
     def test_complete_research_cycle_attribution(self, engine, repo, complete_research_cycle):
@@ -805,6 +839,7 @@ class TestAttributionFullIntegration:
 # ===================================================================
 # 9. Edge cases
 # ===================================================================
+
 
 class TestAttributionEdgeCases:
     def test_empty_reasoning_path(self, engine, repo):

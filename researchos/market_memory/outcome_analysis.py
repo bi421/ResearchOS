@@ -170,7 +170,9 @@ class OutcomeAnalysis:
 
         # Outcome clarity factor
         # Higher when one outcome dominates
-        max_outcome = max(result.positive_outcomes, result.negative_outcomes, result.neutral_outcomes)
+        max_outcome = max(
+            result.positive_outcomes, result.negative_outcomes, result.neutral_outcomes
+        )
         clarity_factor = max_outcome / result.total_examples if result.total_examples > 0 else 0.0
 
         # Effect size factor
@@ -178,10 +180,6 @@ class OutcomeAnalysis:
         effect_factor = min(1.0, abs_price / 5.0)  # 5% = full effect
 
         # Combined score (weighted average)
-        confidence = (
-            0.4 * sample_factor +
-            0.3 * clarity_factor +
-            0.3 * effect_factor
-        )
+        confidence = 0.4 * sample_factor + 0.3 * clarity_factor + 0.3 * effect_factor
 
         return max(0.0, min(1.0, confidence))

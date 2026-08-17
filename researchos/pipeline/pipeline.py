@@ -22,18 +22,18 @@ The pipeline NEVER:
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from researchos.objects.observation import Observation
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.interpretation import Interpretation, Narrative
-from researchos.objects.hypothesis import Hypothesis, HypothesisSet
-from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.cognitive import CognitiveAssessment
 from researchos.objects.confidence import Confidence, ConfidenceReport
 from researchos.objects.contradiction import Contradiction, ContradictionReport
-from researchos.objects.research import Research, ResearchReport
-from researchos.objects.validation import Validation, FailureAnalysis
+from researchos.objects.evidence import Evidence, EvidenceRegistry
+from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+from researchos.objects.interpretation import Interpretation, Narrative
 from researchos.objects.knowledge import Knowledge, Lesson
-from researchos.objects.cognitive import CognitiveAssessment
+from researchos.objects.observation import Observation
 from researchos.objects.process import AuditEntry, ReasoningChain, ResearchCycle
+from researchos.objects.research import Research, ResearchReport
+from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.validation import FailureAnalysis, Validation
 from researchos.pipeline.references import ReferenceValidator
 from researchos.repository.interface import RepositoryInterface
 
@@ -562,7 +562,7 @@ class ResearchPipeline:
         """
         self.validator.require_exists(research_id, "Research")
 
-        for side in (sides or []):
+        for side in sides or []:
             for ev_id in side.get("evidence", []):
                 self.validator.require_exists(ev_id, "Evidence")
 
@@ -782,7 +782,7 @@ class ResearchPipeline:
         """
         Record a knowledge item extracted from research validation.
         """
-        for ref in (source_references or []):
+        for ref in source_references or []:
             self.validator.require_exists(ref, "Research")
 
         knowledge = Knowledge(

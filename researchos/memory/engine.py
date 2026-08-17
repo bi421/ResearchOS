@@ -71,10 +71,14 @@ class MarketMemoryEngine:
             notes=notes,
         )
         self.repo.save(ms)
-        self._audit("STRUCTURE_BREAK", ms.id, f"{structure_type} {direction} on {asset} at {price_level}")
+        self._audit(
+            "STRUCTURE_BREAK", ms.id, f"{structure_type} {direction} on {asset} at {price_level}"
+        )
         return ms
 
-    def confirm_structure_break(self, structure_id: str, confirmation_price: float) -> MarketStructure:
+    def confirm_structure_break(
+        self, structure_id: str, confirmation_price: float
+    ) -> MarketStructure:
         """Confirm a previously recorded structure break."""
         obj = self.repo.get(structure_id)
         if obj is None:
@@ -113,7 +117,9 @@ class MarketMemoryEngine:
             notes=notes,
         )
         self.repo.save(le)
-        self._audit("LIQUIDITY_EVENT", le.id, f"{event_type} {direction} on {asset} at {price_level}")
+        self._audit(
+            "LIQUIDITY_EVENT", le.id, f"{event_type} {direction} on {asset} at {price_level}"
+        )
         return le
 
     def resolve_liquidity_event(self, event_id: str, outcome: str) -> LiquidityEvent:
@@ -332,7 +338,10 @@ class MarketMemoryEngine:
     ) -> List[BaseObject]:
         """Get the most recent market memory objects for an asset."""
         events = self.get_events_by_asset(asset, object_type)
-        events.sort(key=lambda o: getattr(o, "timestamp", datetime(1970, 1, 1, tzinfo=timezone.utc)), reverse=True)
+        events.sort(
+            key=lambda o: getattr(o, "timestamp", datetime(1970, 1, 1, tzinfo=timezone.utc)),
+            reverse=True,
+        )
         return events[:limit]
 
     def get_structures(

@@ -3,8 +3,9 @@ ResearchOS Macro Intelligence Layer - Relationship Engine Tests
 Tests for deterministic historical relationship analysis.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 UTC = timezone.utc
 
@@ -55,6 +56,7 @@ class TestPearsonCorrelation:
     def test_perfect_positive(self):
         """Test perfect positive correlation."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         x, y = _make_perfect_positive(50)
         result = pearson_correlation(x, y)
         assert result is not None
@@ -63,6 +65,7 @@ class TestPearsonCorrelation:
     def test_perfect_negative(self):
         """Test perfect negative correlation."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         x, y = _make_perfect_negative(50)
         result = pearson_correlation(x, y)
         assert result is not None
@@ -71,6 +74,7 @@ class TestPearsonCorrelation:
     def test_no_correlation(self):
         """Test uncorrelated series."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         x, y = _make_no_correlation(50)
         result = pearson_correlation(x, y)
         assert result is not None
@@ -80,26 +84,31 @@ class TestPearsonCorrelation:
     def test_empty_series(self):
         """Test empty series."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         assert pearson_correlation([], []) is None
 
     def test_single_element(self):
         """Test single element series."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         assert pearson_correlation([1.0], [2.0]) is None
 
     def test_different_lengths(self):
         """Test different length series."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         assert pearson_correlation([1.0, 2.0], [1.0]) is None
 
     def test_constant_series(self):
         """Test constant series (zero variance)."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         assert pearson_correlation([1.0, 1.0, 1.0], [1.0, 2.0, 3.0]) is None
 
     def test_deterministic(self):
         """Test determinism."""
         from macro_intelligence.relationships.correlation import pearson_correlation
+
         x, y = _make_perfect_positive(50)
         r1 = pearson_correlation(x, y)
         r2 = pearson_correlation(x, y)
@@ -112,6 +121,7 @@ class TestSpearmanCorrelation:
     def test_perfect_positive(self):
         """Test perfect positive Spearman correlation."""
         from macro_intelligence.relationships.correlation import spearman_correlation
+
         x, y = _make_perfect_positive(50)
         result = spearman_correlation(x, y)
         assert result is not None
@@ -120,6 +130,7 @@ class TestSpearmanCorrelation:
     def test_perfect_negative(self):
         """Test perfect negative Spearman correlation."""
         from macro_intelligence.relationships.correlation import spearman_correlation
+
         x, y = _make_perfect_negative(50)
         result = spearman_correlation(x, y)
         assert result is not None
@@ -128,6 +139,7 @@ class TestSpearmanCorrelation:
     def test_deterministic(self):
         """Test determinism."""
         from macro_intelligence.relationships.correlation import spearman_correlation
+
         x, y = _make_perfect_positive(30)
         r1 = spearman_correlation(x, y)
         r2 = spearman_correlation(x, y)
@@ -140,6 +152,7 @@ class TestClassifyRelationship:
     def test_strong_positive(self):
         """Test strong positive classification."""
         from macro_intelligence.relationships.correlation import classify_relationship
+
         rel_type, strength = classify_relationship(0.85)
         assert rel_type == "positive"
         assert strength == "very_strong"
@@ -147,6 +160,7 @@ class TestClassifyRelationship:
     def test_strong_negative(self):
         """Test strong negative classification."""
         from macro_intelligence.relationships.correlation import classify_relationship
+
         rel_type, strength = classify_relationship(-0.75)
         assert rel_type == "negative"
         assert strength == "strong"
@@ -154,6 +168,7 @@ class TestClassifyRelationship:
     def test_moderate(self):
         """Test moderate classification."""
         from macro_intelligence.relationships.correlation import classify_relationship
+
         rel_type, strength = classify_relationship(0.5)
         assert rel_type == "positive"
         assert strength == "moderate"
@@ -161,6 +176,7 @@ class TestClassifyRelationship:
     def test_weak(self):
         """Test weak classification."""
         from macro_intelligence.relationships.correlation import classify_relationship
+
         rel_type, strength = classify_relationship(0.15)
         assert rel_type == "positive"  # 0.15 > 0.05 threshold
         assert strength == "negligible"  # below 0.2 threshold
@@ -168,6 +184,7 @@ class TestClassifyRelationship:
     def test_very_weak(self):
         """Test very weak classification."""
         from macro_intelligence.relationships.correlation import classify_relationship
+
         rel_type, strength = classify_relationship(0.05)
         assert rel_type == "neutral"
         assert strength == "negligible"
@@ -184,6 +201,7 @@ class TestRollingCorrelation:
     def test_basic_rolling(self):
         """Test basic rolling correlation."""
         from macro_intelligence.relationships.correlation import compute_rolling_correlation
+
         x = [float(i) for i in range(20)]
         y = [float(i) * 2 for i in range(20)]
         corrs, ts, stab = compute_rolling_correlation(x, y, 5)
@@ -192,8 +210,10 @@ class TestRollingCorrelation:
 
     def test_rolling_with_noise(self):
         """Test rolling correlation with noisy data."""
-        from macro_intelligence.relationships.correlation import compute_rolling_correlation
         import random
+
+        from macro_intelligence.relationships.correlation import compute_rolling_correlation
+
         random.seed(42)
         x = [10.0 + i * 0.5 + random.gauss(0, 1) for i in range(50)]
         y = [5.0 + i * 0.3 + random.gauss(0, 1) for i in range(50)]
@@ -204,6 +224,7 @@ class TestRollingCorrelation:
     def test_rolling_deterministic(self):
         """Test rolling correlation determinism."""
         from macro_intelligence.relationships.correlation import compute_rolling_correlation
+
         x = [float(i) for i in range(20)]
         y = [float(i) * 2 for i in range(20)]
         r1 = compute_rolling_correlation(x, y, 5)
@@ -222,6 +243,7 @@ class TestLagAnalysis:
     def test_known_lag(self):
         """Test lag detection with known relationship."""
         from macro_intelligence.relationships.lag_analysis import find_optimal_lag
+
         x, y, true_lag = _make_lagged_series(100, lag=3)
         result = find_optimal_lag(x, y, max_lag=10)
         assert abs(result.optimal_lag) == true_lag
@@ -230,6 +252,7 @@ class TestLagAnalysis:
     def test_no_lag(self):
         """Test with simultaneous series."""
         from macro_intelligence.relationships.lag_analysis import find_optimal_lag
+
         x = [float(i) for i in range(50)]
         y = [float(i) * 2 for i in range(50)]
         result = find_optimal_lag(x, y, max_lag=5)
@@ -238,6 +261,7 @@ class TestLagAnalysis:
     def test_short_series(self):
         """Test with short series."""
         from macro_intelligence.relationships.lag_analysis import find_optimal_lag
+
         x = [1.0, 2.0, 3.0]
         y = [4.0, 5.0, 6.0]
         result = find_optimal_lag(x, y, max_lag=2)
@@ -255,6 +279,7 @@ class TestCorrelationResult:
     def test_create(self):
         """Test creating a CorrelationResult."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         result = CorrelationResult(
             series_a="XAU",
             series_b="DXY",
@@ -268,6 +293,7 @@ class TestCorrelationResult:
     def test_to_dict(self):
         """Test serialization."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         result = CorrelationResult(
             series_a="XAU",
             series_b="DXY",
@@ -280,6 +306,7 @@ class TestCorrelationResult:
     def test_from_dict(self):
         """Test deserialization."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         data = {
             "series_a": "XAU",
             "series_b": "DXY",
@@ -293,6 +320,7 @@ class TestCorrelationResult:
     def test_roundtrip(self):
         """Test JSON roundtrip."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         original = CorrelationResult(
             series_a="XAU",
             series_b="DXY",
@@ -307,6 +335,7 @@ class TestCorrelationResult:
     def test_immutability(self):
         """Test immutability."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         result = CorrelationResult(
             series_a="XAU",
             series_b="DXY",
@@ -318,6 +347,7 @@ class TestCorrelationResult:
     def test_hash_deterministic(self):
         """Test hash determinism."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         r1 = CorrelationResult(series_a="A", series_b="B", correlation=0.5)
         r2 = CorrelationResult(series_a="A", series_b="B", correlation=0.5)
         assert r1.compute_hash() == r2.compute_hash()
@@ -329,6 +359,7 @@ class TestLagRelationship:
     def test_create(self):
         """Test creating a LagRelationship."""
         from macro_intelligence.relationships.models import LagRelationship
+
         lag = LagRelationship(
             series_a="CPI",
             series_b="GOLD",
@@ -342,6 +373,7 @@ class TestLagRelationship:
     def test_immutability(self):
         """Test immutability."""
         from macro_intelligence.relationships.models import LagRelationship
+
         lag = LagRelationship(
             series_a="A",
             series_b="B",
@@ -358,6 +390,7 @@ class TestRegimeRelationship:
     def test_create(self):
         """Test creating a RegimeRelationship."""
         from macro_intelligence.relationships.models import RegimeRelationship
+
         rel = RegimeRelationship(
             series_a="XAU",
             series_b="DXY",
@@ -374,6 +407,7 @@ class TestStructuralBreak:
     def test_create(self):
         """Test creating a StructuralBreak."""
         from macro_intelligence.relationships.models import StructuralBreak
+
         break_point = StructuralBreak(
             series_a="XAU",
             series_b="REAL_YIELD",
@@ -391,6 +425,7 @@ class TestRelationshipResult:
     def test_create(self):
         """Test creating a RelationshipResult."""
         from macro_intelligence.relationships.models import RelationshipResult
+
         result = RelationshipResult(
             series_a="XAU",
             series_b="DXY",
@@ -400,6 +435,7 @@ class TestRelationshipResult:
     def test_to_dict(self):
         """Test serialization."""
         from macro_intelligence.relationships.models import RelationshipResult
+
         result = RelationshipResult(
             series_a="XAU",
             series_b="DXY",
@@ -410,6 +446,7 @@ class TestRelationshipResult:
     def test_roundtrip(self):
         """Test JSON roundtrip."""
         from macro_intelligence.relationships.models import RelationshipResult
+
         original = RelationshipResult(
             series_a="XAU",
             series_b="DXY",
@@ -422,6 +459,7 @@ class TestRelationshipResult:
     def test_immutability(self):
         """Test immutability."""
         from macro_intelligence.relationships.models import RelationshipResult
+
         result = RelationshipResult(series_a="A", series_b="B")
         with pytest.raises(AttributeError):
             result.series_a = "C"
@@ -438,12 +476,14 @@ class TestRelationshipEngine:
     def test_engine_version(self):
         """Test engine version."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         assert engine.version == "rel-eng/v5.0.0"
 
     def test_analyze_correlation(self):
         """Test correlation analysis."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x, y = _make_perfect_positive(50)
         result = engine.analyze_correlation(x, y, "XAU", "DXY")
@@ -453,6 +493,7 @@ class TestRelationshipEngine:
     def test_analyze_rolling_correlation(self):
         """Test rolling correlation analysis."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x = [float(i) for i in range(20)]
         y = [float(i) * 2 for i in range(20)]
@@ -463,6 +504,7 @@ class TestRelationshipEngine:
     def test_analyze_lag(self):
         """Test lag analysis."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x, y, true_lag = _make_lagged_series(100, lag=3)
         result = engine.analyze_lag(x, y, "CPI", "GOLD", max_lag=10)
@@ -472,6 +514,7 @@ class TestRelationshipEngine:
     def test_analyze_regime_relationship(self):
         """Test regime-conditional correlation."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x = [10.0 + i * 0.5 for i in range(60)]
         y = [5.0 - i * 0.3 for i in range(60)]
@@ -484,6 +527,7 @@ class TestRelationshipEngine:
     def test_detect_breaks(self):
         """Test structural break detection."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         # Create series with a clear break at point 50
         x = [float(i) for i in range(100)]
@@ -495,10 +539,14 @@ class TestRelationshipEngine:
     def test_full_analysis(self):
         """Test full relationship analysis."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x, y = _make_perfect_positive(50)
         result = engine.full_analysis(
-            x, y, "XAU", "DXY",
+            x,
+            y,
+            "XAU",
+            "DXY",
             rolling_window=10,
             max_lag=5,
         )
@@ -510,9 +558,10 @@ class TestRelationshipEngine:
     def test_deterministic(self):
         """Test that engine produces deterministic output."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x, y = _make_perfect_positive(50)
-        
+
         results = [engine.analyze_correlation(x, y, "A", "B") for _ in range(10)]
         for r in results[1:]:
             assert r.correlation == results[0].correlation
@@ -530,9 +579,10 @@ class TestMILRelationshipInvariants:
     def test_mil_rel_001_deterministic(self):
         """MIL-REL-001: Same input produces identical relationship output."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x, y = _make_perfect_positive(50)
-        
+
         results = [engine.analyze_correlation(x, y, "A", "B") for _ in range(20)]
         for r in results[1:]:
             assert r.correlation == results[0].correlation
@@ -542,8 +592,9 @@ class TestMILRelationshipInvariants:
     def test_mil_rel_002_immutability(self):
         """MIL-REL-002: Relationship objects are immutable."""
         from macro_intelligence.relationships.models import CorrelationResult
+
         result = CorrelationResult(series_a="A", series_b="B", correlation=0.5)
-        
+
         with pytest.raises(AttributeError):
             result.correlation = 0.9
         with pytest.raises(AttributeError):
@@ -552,38 +603,41 @@ class TestMILRelationshipInvariants:
     def test_mil_rel_003_provenance(self):
         """MIL-REL-003: All relationships preserve provenance."""
         from macro_intelligence.relationships import RelationshipEngine
+
         engine = RelationshipEngine()
         x, y = _make_perfect_positive(50)
-        
+
         result = engine.analyze_correlation(x, y, "A", "B", evidence_refs=["EV_001", "EV_002"])
         assert "EV_001" in result.evidence_refs
         assert "EV_002" in result.evidence_refs
 
     def test_mil_rel_004_versioned(self):
         """MIL-REL-004: Algorithms are versioned."""
-        from macro_intelligence.relationships import RelationshipEngine, ALGORITHM_VERSION
-        
+        from macro_intelligence.relationships import ALGORITHM_VERSION, RelationshipEngine
+
         engine = RelationshipEngine()
         assert engine.version == ALGORITHM_VERSION
         assert ALGORITHM_VERSION == "rel-eng/v5.0.0"
 
     def test_mil_rel_005_no_v1_dependency(self):
         """MIL-REL-005: No dependency on ResearchOS V1."""
-        from macro_intelligence.relationships import engine as eng_module
         import inspect
-        
+
+        from macro_intelligence.relationships import engine as eng_module
+
         source = inspect.getsource(eng_module)
         assert "researchos.core" not in source
         assert "from macro_intelligence" in source
 
     def test_mil_rel_006_deterministic_reconstruction(self):
         """MIL-REL-006: Historical reconstruction is deterministic."""
-        from macro_intelligence.relationships.models import RelationshipResult, CorrelationResult
         from datetime import timezone
-        
+
+        from macro_intelligence.relationships.models import CorrelationResult, RelationshipResult
+
         UTC = timezone.utc
         base_time = datetime(2026, 8, 3, 12, 0, tzinfo=UTC)
-        
+
         r1 = RelationshipResult(
             series_a="XAU",
             series_b="DXY",
@@ -604,5 +658,5 @@ class TestMILRelationshipInvariants:
             ),
             analysis_time=base_time,
         )
-        
+
         assert r1.compute_hash() == r2.compute_hash()

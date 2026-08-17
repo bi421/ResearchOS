@@ -113,12 +113,8 @@ class EvidenceNodeDescriptor:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "node_id", _validate_identifier(self.node_id, "node_id")
-        )
-        object.__setattr__(
-            self, "node_type", _validate_identifier(self.node_type, "node_type")
-        )
+        object.__setattr__(self, "node_id", _validate_identifier(self.node_id, "node_id"))
+        object.__setattr__(self, "node_type", _validate_identifier(self.node_type, "node_type"))
         object.__setattr__(self, "metadata", _as_immutable_mapping(self.metadata))
 
     def __hash__(self) -> int:
@@ -156,15 +152,9 @@ class EvidenceEdgeDescriptor:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "edge_id", _validate_identifier(self.edge_id, "edge_id")
-        )
-        object.__setattr__(
-            self, "source_id", _validate_identifier(self.source_id, "source_id")
-        )
-        object.__setattr__(
-            self, "target_id", _validate_identifier(self.target_id, "target_id")
-        )
+        object.__setattr__(self, "edge_id", _validate_identifier(self.edge_id, "edge_id"))
+        object.__setattr__(self, "source_id", _validate_identifier(self.source_id, "source_id"))
+        object.__setattr__(self, "target_id", _validate_identifier(self.target_id, "target_id"))
         object.__setattr__(
             self,
             "relationship",
@@ -227,9 +217,7 @@ def _validation_result_from_dict(data: Mapping[str, Any]) -> ValidationResult:
         validation_size=int(data["validation_size"]),
         test_size=int(data.get("test_size", 0)),
         fold_count=int(data["fold_count"]),
-        fold_results=tuple(
-            _fold_result_from_dict(fr) for fr in data.get("fold_results", [])
-        ),
+        fold_results=tuple(_fold_result_from_dict(fr) for fr in data.get("fold_results", [])),
         metrics=dict(data.get("metrics", {})),
         metadata=dict(data.get("metadata", {})),
     )
@@ -331,9 +319,7 @@ class PipelineReport:
             "metadata": dict(self.metadata),
             "created_at": self.created_at,
         }
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
     def to_dict(self) -> Dict[str, Any]:
@@ -369,14 +355,8 @@ class PipelineReport:
             validation=_validation_result_from_dict(data["validation"]),
             training=TrainingResult.from_dict(data["training"]),
             model_contract=RegistryModelContract.from_dict(data["model_contract"]),
-            nodes=tuple(
-                EvidenceNodeDescriptor.from_dict(n)
-                for n in data.get("nodes", [])
-            ),
-            edges=tuple(
-                EvidenceEdgeDescriptor.from_dict(e)
-                for e in data.get("edges", [])
-            ),
+            nodes=tuple(EvidenceNodeDescriptor.from_dict(n) for n in data.get("nodes", [])),
+            edges=tuple(EvidenceEdgeDescriptor.from_dict(e) for e in data.get("edges", [])),
             metadata=dict(data.get("metadata", {})),
             created_at=str(data.get("created_at", "")),
         )

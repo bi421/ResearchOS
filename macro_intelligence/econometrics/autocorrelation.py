@@ -10,16 +10,17 @@ pure, stdlib-only.
 
 MIL-ECM-006: Econometrics owns ACF/PACF.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional
 
-from macro_intelligence.statistics.descriptive import mean
-from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.matrix import solve
 from macro_intelligence.econometrics.models import (
     TestResult,
 )
+from macro_intelligence.statistics.descriptive import mean
+from macro_intelligence.statistics.provenance import StatisticalProvenance
 
 ACF_VERSION = "ecm/acf/v1"
 PACF_VERSION = "ecm/pacf/v1"
@@ -65,7 +66,7 @@ def autocorrelation(
         acf.append(cov / var0 if var0 != 0 else 0.0)
 
     # Approximate significance band: 1.96 / sqrt(n).
-    band = 1.96 / (n ** 0.5)
+    band = 1.96 / (n**0.5)
     significant = max_lag > 0 and any(abs(a) > band for a in acf)
 
     params = {"max_lag": max_lag, "n_observations": n}
@@ -135,7 +136,7 @@ def partial_autocorrelation(
         # PACF at this lag = last AR coefficient.
         pacf.append(ar_coeffs[-1] if ar_coeffs else 0.0)
 
-    band = 1.96 / (n ** 0.5)
+    band = 1.96 / (n**0.5)
     significant = any(abs(p) > band for p in pacf)
 
     params = {"max_lag": max_lag, "n_observations": n}

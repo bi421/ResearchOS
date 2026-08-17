@@ -14,7 +14,7 @@ from dataclasses import FrozenInstanceError, is_dataclass
 
 import pytest
 
-from researchos.reasoning_engine.contracts import EvidenceItem, EvidenceType
+from researchos.reasoning_engine.contracts import EvidenceType, ReasoningEvidence
 from researchos.reasoning_engine.evidence import EvidenceRecord
 
 
@@ -24,8 +24,8 @@ def _make_evidence(
     source: str = "historical_dataset",
     id: str = "dataset_xauusd_001",
     evidence_type: EvidenceType = EvidenceType.DATASET,
-) -> EvidenceItem:
-    return EvidenceItem(
+) -> ReasoningEvidence:
+    return ReasoningEvidence(
         id=id,
         source=source,
         evidence_type=evidence_type,
@@ -101,7 +101,7 @@ class TestEvidenceRecordImmutability:
             record.evidence = _make_evidence()  # type: ignore[misc]
 
     def test_errors_tuple_does_not_mutate_through_evidence(self):
-        """The wrapped evidence is the original immutable EvidenceItem."""
+        """The wrapped evidence is the original immutable ReasoningEvidence."""
         ev = _make_evidence()
         record = EvidenceRecord(evidence=ev, validation_errors=())
         assert record.evidence is ev

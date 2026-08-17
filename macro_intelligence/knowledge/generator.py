@@ -27,16 +27,16 @@ import hashlib
 from dataclasses import dataclass, field
 from typing import Any
 
-from macro_intelligence.knowledge.models import (
-    ALGORITHM_VERSION,
-    KnowledgeObject,
-    KnowledgeProvenance,
-)
 from macro_intelligence.knowledge.confidence import (
     ConfidenceCalculator,
     ConfidenceComponents,
 )
 from macro_intelligence.knowledge.evidence_link import EvidenceLinker
+from macro_intelligence.knowledge.models import (
+    ALGORITHM_VERSION,
+    KnowledgeObject,
+    KnowledgeProvenance,
+)
 from macro_intelligence.knowledge.pattern import PatternDetector, PatternFinding
 from macro_intelligence.knowledge.rules import get_rules_version
 
@@ -136,9 +136,7 @@ class KnowledgeGenerator:
             "transition_id": inputs.transition_id,
             "regime_context": inputs.regime_context,
         }
-        canonical = __import__("json").dumps(
-            semantic, sort_keys=True, separators=(",", ":")
-        )
+        canonical = __import__("json").dumps(semantic, sort_keys=True, separators=(",", ":"))
         digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
         return f"KN_{rule_id}_{digest}"
 
@@ -222,10 +220,7 @@ class KnowledgeGenerator:
         confidence = self._build_confidence(inputs)
         provenance = self._build_provenance(inputs)
 
-        objects = [
-            self._to_object(finding, inputs, confidence, provenance)
-            for finding in findings
-        ]
+        objects = [self._to_object(finding, inputs, confidence, provenance) for finding in findings]
 
         # Deterministic ordering by knowledge type value
         return sorted(objects, key=lambda o: o.knowledge_id)

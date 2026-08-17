@@ -23,10 +23,10 @@ from researchos.quant_engine.machine_learning.labels import (
     vol_adjusted_return,
 )
 
-
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
 
 def _up(n: int = 50, start: float = 100.0, step: float = 1.0) -> list:
     """Monotonically increasing price series."""
@@ -479,4 +479,3 @@ class TestLabelStructure(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

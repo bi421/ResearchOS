@@ -8,33 +8,32 @@ Covers:
     - Query retrieval (by asset, date range, tag)
     - Deterministic comparison / similarity
     - Feature computation
-    - MarketEvent creation
+    - MacroMarketEvent creation
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-
+from researchos.core.lifecycle import LifecycleStage
+from researchos.market_memory.events import MacroMarketEvent
+from researchos.market_memory.features import compute_features
 from researchos.market_memory.models import (
     HistoricalScenario,
-    MacroState,
+    MacroContextSnapshot,
     MarketRegime,
     MarketSnapshot,
 )
 from researchos.market_memory.repository import MarketMemoryRepository
-from researchos.market_memory.features import compute_features
 from researchos.market_memory.similarity import (
     compare_snapshots,
     find_similar_snapshots,
 )
-from researchos.market_memory.events import MarketEvent
-from researchos.core.lifecycle import LifecycleStage
-
 
 # =============================================================================
 # Helpers
 # =============================================================================
+
 
 def make_snapshot(
     asset: str = "XAUUSD",
@@ -65,6 +64,7 @@ def make_snapshot(
 # =============================================================================
 # Serialization Tests
 # =============================================================================
+
 
 class TestMarketSnapshotSerialization:
     """Test MarketSnapshot to_dict / from_dict round-trip."""
@@ -142,10 +142,10 @@ class TestMarketRegimeSerialization:
 
 
 class TestMacroStateSerialization:
-    """Test MacroState to_dict / from_dict round-trip."""
+    """Test MacroContextSnapshot to_dict / from_dict round-trip."""
 
     def test_round_trip(self):
-        m = MacroState(
+        m = MacroContextSnapshot(
             timestamp=datetime(2025, 1, 15, tzinfo=timezone.utc),
             geography="US",
             dxy=103.5,
@@ -158,7 +158,7 @@ class TestMacroStateSerialization:
             confidence=0.75,
         )
         d = m.to_dict()
-        m2 = MacroState.from_dict(d)
+        m2 = MacroContextSnapshot.from_dict(d)
         assert m.id == m2.id
         assert m.hash == m2.hash
         assert m.dxy == m2.dxy
@@ -168,8 +168,8 @@ class TestMacroStateSerialization:
 
     def test_deterministic_id(self):
         ts = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        m1 = MacroState(ts, "US", dxy=100.0, cpi=3.0)
-        m2 = MacroState(ts, "US", dxy=100.0, cpi=3.0)
+        m1 = MacroContextSnapshot(ts, "US", dxy=100.0, cpi=3.0)
+        m2 = MacroContextSnapshot(ts, "US", dxy=100.0, cpi=3.0)
         assert m1.id == m2.id
 
 
@@ -205,6 +205,7 @@ class TestHistoricalScenarioSerialization:
 # =============================================================================
 # Repository / Persistence Tests
 # =============================================================================
+
 
 class TestMarketMemoryRepository:
     """Test the MarketMemoryRepository for persistence and queries."""
@@ -254,7 +255,8 @@ class TestMarketMemoryRepository:
 
     def test_save_and_get_regime(self):
         r = MarketRegime(
-            "Trending", "XAUUSD",
+            "Trending",
+            "XAUUSD",
             datetime(2025, 1, 15, tzinfo=timezone.utc),
         )
         self.repo.save_regime(r)
@@ -273,7 +275,7 @@ class TestMarketMemoryRepository:
         assert len(results) == 2
 
     def test_save_and_get_macro_state(self):
-        m = MacroState(
+        m = MacroContextSnapshot(
             datetime(2025, 1, 15, tzinfo=timezone.utc),
         )
         self.repo.save_macro_state(m)
@@ -281,9 +283,9 @@ class TestMarketMemoryRepository:
         assert loaded is not None
 
     def test_get_macro_states_in_range(self):
-        m1 = MacroState(datetime(2025, 1, 10, tzinfo=timezone.utc))
-        m2 = MacroState(datetime(2025, 1, 20, tzinfo=timezone.utc))
-        m3 = MacroState(datetime(2025, 2, 1, tzinfo=timezone.utc))
+        m1 = MacroContextSnapshot(datetime(2025, 1, 10, tzinfo=timezone.utc))
+        m2 = MacroContextSnapshot(datetime(2025, 1, 20, tzinfo=timezone.utc))
+        m3 = MacroContextSnapshot(datetime(2025, 2, 1, tzinfo=timezone.utc))
         self.repo.save_macro_state(m1)
         self.repo.save_macro_state(m2)
         self.repo.save_macro_state(m3)
@@ -320,8 +322,10 @@ class TestMarketMemoryRepository:
 
     def test_count_all(self):
         self.repo.save_snapshot(make_snapshot())
-        self.repo.save_regime(MarketRegime("T", "XAUUSD", datetime(2025, 1, 1, tzinfo=timezone.utc)))
-        self.repo.save_macro_state(MacroState(datetime(2025, 1, 1, tzinfo=timezone.utc)))
+        self.repo.save_regime(
+            MarketRegime("T", "XAUUSD", datetime(2025, 1, 1, tzinfo=timezone.utc))
+        )
+        self.repo.save_macro_state(MacroContextSnapshot(datetime(2025, 1, 1, tzinfo=timezone.utc)))
         self.repo.save_scenario(HistoricalScenario("Test"))
         counts = self.repo.count_all()
         assert counts["snapshots"] == 1
@@ -339,6 +343,7 @@ class TestMarketMemoryRepository:
 # Feature Computation Tests
 # =============================================================================
 
+
 class TestFeatureComputation:
     """Test the compute_features function."""
 
@@ -346,7 +351,10 @@ class TestFeatureComputation:
         s = MarketSnapshot(
             asset="XAUUSD",
             timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            open=100.0, high=105.0, low=99.0, close=104.0,
+            open=100.0,
+            high=105.0,
+            low=99.0,
+            close=104.0,
         )
         f = compute_features(s)
         assert f.is_bullish is True
@@ -361,7 +369,10 @@ class TestFeatureComputation:
         s = MarketSnapshot(
             asset="XAUUSD",
             timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            open=104.0, high=105.0, low=99.0, close=100.0,
+            open=104.0,
+            high=105.0,
+            low=99.0,
+            close=100.0,
         )
         f = compute_features(s)
         assert f.is_bullish is False
@@ -372,7 +383,10 @@ class TestFeatureComputation:
         s = MarketSnapshot(
             asset="XAUUSD",
             timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            open=100.0, high=105.0, low=95.0, close=100.0,
+            open=100.0,
+            high=105.0,
+            low=95.0,
+            close=100.0,
         )
         f = compute_features(s)
         assert f.is_bullish is False
@@ -391,6 +405,7 @@ class TestFeatureComputation:
 # Similarity / Comparison Tests
 # =============================================================================
 
+
 class TestSimilarity:
     """Test the similarity comparison functions."""
 
@@ -401,8 +416,12 @@ class TestSimilarity:
         assert score == 1.0
 
     def test_different_snapshots(self):
-        s1 = make_snapshot(close=2000.0, volatility=0.5, open_val=1990.0, high_val=2010.0, low_val=1988.0)
-        s2 = make_snapshot(close=1950.0, volatility=2.0, open_val=1960.0, high_val=1970.0, low_val=1940.0)
+        s1 = make_snapshot(
+            close=2000.0, volatility=0.5, open_val=1990.0, high_val=2010.0, low_val=1988.0
+        )
+        s2 = make_snapshot(
+            close=1950.0, volatility=2.0, open_val=1960.0, high_val=1970.0, low_val=1940.0
+        )
         score = compare_snapshots(s1, s2)
         assert 0.0 <= score <= 1.0
         assert score < 1.0
@@ -449,14 +468,15 @@ class TestSimilarity:
 
 
 # =============================================================================
-# MarketEvent Tests
+# MacroMarketEvent Tests
 # =============================================================================
 
+
 class TestMarketEvent:
-    """Test the MarketEvent object."""
+    """Test the MacroMarketEvent object."""
 
     def test_create_fed_event(self):
-        e = MarketEvent(
+        e = MacroMarketEvent(
             event_type="Fed",
             timestamp=datetime(2025, 1, 29, tzinfo=timezone.utc),
             asset="XAUUSD",
@@ -471,12 +491,12 @@ class TestMarketEvent:
 
     def test_deterministic_id(self):
         ts = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        e1 = MarketEvent("CPI", ts, description="CPI data")
-        e2 = MarketEvent("CPI", ts, description="CPI data")
+        e1 = MacroMarketEvent("CPI", ts, description="CPI data")
+        e2 = MacroMarketEvent("CPI", ts, description="CPI data")
         assert e1.id == e2.id
 
     def test_round_trip(self):
-        e = MarketEvent(
+        e = MacroMarketEvent(
             event_type="NFP",
             timestamp=datetime(2025, 2, 7, tzinfo=timezone.utc),
             description="Employment report",
@@ -484,20 +504,21 @@ class TestMarketEvent:
             expected_value=185000.0,
         )
         d = e.to_dict()
-        e2 = MarketEvent.from_dict(d)
+        e2 = MacroMarketEvent.from_dict(d)
         assert e.id == e2.id
         assert e.actual_value == e2.actual_value
         assert d["object_type"] == "MarketEvent"
 
     def test_hash_stability(self):
-        e1 = MarketEvent("Fed", datetime(2025, 1, 1, tzinfo=timezone.utc))
-        e2 = MarketEvent("Fed", datetime(2025, 1, 1, tzinfo=timezone.utc))
+        e1 = MacroMarketEvent("Fed", datetime(2025, 1, 1, tzinfo=timezone.utc))
+        e2 = MacroMarketEvent("Fed", datetime(2025, 1, 1, tzinfo=timezone.utc))
         assert e1.hash == e2.hash
 
 
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestIntegration:
     """End-to-end integration tests."""
@@ -511,7 +532,8 @@ class TestIntegration:
 
         # 2. Create a regime
         regime = MarketRegime(
-            "Trending", "XAUUSD",
+            "Trending",
+            "XAUUSD",
             snap.timestamp,
             confidence=0.85,
             snapshot_ids=[snap.id],
@@ -519,7 +541,7 @@ class TestIntegration:
         repo.save_regime(regime)
 
         # 3. Create a macro state
-        macro = MacroState(
+        macro = MacroContextSnapshot(
             snap.timestamp,
             dxy=103.0,
             cpi=3.2,

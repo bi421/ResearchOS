@@ -16,8 +16,9 @@ class BridgeError(RuntimeError):
     code: Optional[int] = None
     name: Optional[str] = None
 
-    def __init__(self, message: str, code: Optional[int] = None,
-                 name: Optional[str] = None) -> None:
+    def __init__(
+        self, message: str, code: Optional[int] = None, name: Optional[str] = None
+    ) -> None:
         if code is not None:
             self.code = code
         if name is not None:
@@ -81,7 +82,8 @@ class InternalError(BridgeError):
 
 
 _ERROR_CLASSES: Dict[int, Type[BridgeError]] = {
-    cls.code: cls for cls in (
+    cls.code: cls
+    for cls in (
         InvalidArgumentError,
         InvalidParameterError,
         InvalidTypeError,
@@ -97,8 +99,7 @@ _ERROR_CLASSES: Dict[int, Type[BridgeError]] = {
 }
 
 
-def error_from_code(code: int, message: str,
-                    name: Optional[str] = None) -> BridgeError:
+def error_from_code(code: int, message: str, name: Optional[str] = None) -> BridgeError:
     """Build the typed bridge error for a stable numeric code."""
     cls = _ERROR_CLASSES.get(code, BridgeError)
     return cls(message, code=code, name=name)

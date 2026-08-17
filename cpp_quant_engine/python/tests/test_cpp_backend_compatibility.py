@@ -110,9 +110,7 @@ class TestSmallParity:
             cpp_result.metrics["max_drawdown"], abs=0.0
         )
         # Both use the ResearchOS 8dp rounding of max_drawdown.
-        assert cpp_result.metrics["max_drawdown"] == round(
-            py_result.metrics["max_drawdown"], 8
-        )
+        assert cpp_result.metrics["max_drawdown"] == round(py_result.metrics["max_drawdown"], 8)
 
     def test_calmar_recomputed_from_rounded_drawdown(self, python_backend, cpp_backend):
         prices = make_prices(_ROLLING_MIN)
@@ -208,7 +206,9 @@ class TestReport:
             def calculate_returns(self, prices, return_type="percentage", calculation_version=_V1):
                 return self._delegate.calculate_returns(prices, return_type, calculation_version)
 
-            def calculate_volatility(self, returns, method="standard_deviation", calculation_version=_V1):
+            def calculate_volatility(
+                self, returns, method="standard_deviation", calculation_version=_V1
+            ):
                 return self._delegate.calculate_volatility(returns, method, calculation_version)
 
             def calculate_drawdown(self, equity_curve, calculation_version=_V1):
@@ -219,7 +219,9 @@ class TestReport:
                 stats["mean"] = stats["mean"] + 1.0
                 return stats
 
-            def calculate_metrics(self, returns, equity_curve, risk_free_rate=0.0, calculation_version=_V1):
+            def calculate_metrics(
+                self, returns, equity_curve, risk_free_rate=0.0, calculation_version=_V1
+            ):
                 metrics = self._delegate.calculate_metrics(
                     returns, equity_curve, risk_free_rate, calculation_version
                 )
@@ -300,7 +302,11 @@ class TestValidationParity:
             cpp_backend.run_simulation(make_request(), [100.0])
 
     def test_empty_returns_raise_both(self, python_backend, cpp_backend):
-        for method in ("calculate_statistics", "calculate_volatility", "calculate_performance_analytics"):
+        for method in (
+            "calculate_statistics",
+            "calculate_volatility",
+            "calculate_performance_analytics",
+        ):
             with pytest.raises(ValueError):
                 getattr(python_backend, method)([])
             with pytest.raises(ValueError):

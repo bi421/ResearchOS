@@ -186,19 +186,27 @@ class ResearchComputationInterface:
         ``technical.contracts.IndicatorSpec``."""
         raise NotImplementedError
 
-    def research_probabilistic_fit(self, samples: Sequence[float], distribution: str, **params: Any) -> ResearchResult:
+    def research_probabilistic_fit(
+        self, samples: Sequence[float], distribution: str, **params: Any
+    ) -> ResearchResult:
         """Fit a probability distribution to samples (deterministic)."""
         raise NotImplementedError
 
-    def research_probabilistic_hypothesis(self, samples: Sequence[float], test: str, **params: Any) -> ResearchResult:
+    def research_probabilistic_hypothesis(
+        self, samples: Sequence[float], test: str, **params: Any
+    ) -> ResearchResult:
         """Run a deterministic hypothesis test."""
         raise NotImplementedError
 
-    def research_portfolio_metrics(self, portfolio: Any, benchmark_returns: Optional[Sequence[float]] = None, **params: Any) -> ResearchResult:
+    def research_portfolio_metrics(
+        self, portfolio: Any, benchmark_returns: Optional[Sequence[float]] = None, **params: Any
+    ) -> ResearchResult:
         """Compute deterministic portfolio analytics."""
         raise NotImplementedError
 
-    def research_historical(self, returns: Sequence[float], metric: str, **params: Any) -> ResearchResult:
+    def research_historical(
+        self, returns: Sequence[float], metric: str, **params: Any
+    ) -> ResearchResult:
         """Compute deterministic historical analytics."""
         raise NotImplementedError
 
@@ -206,7 +214,9 @@ class ResearchComputationInterface:
         """Compute deterministic fundamental/macro analytics."""
         raise NotImplementedError
 
-    def research_econometric_analysis(self, values: Sequence[float], model: str, **params: Any) -> ResearchResult:
+    def research_econometric_analysis(
+        self, values: Sequence[float], model: str, **params: Any
+    ) -> ResearchResult:
         """Run a deterministic econometric analysis."""
         raise NotImplementedError
 

@@ -53,12 +53,8 @@ class TestDeterminism:
         assert make_hash() == make_hash()
 
     def test_float_ordering_irrelevant(self):
-        a = compute_backend_result_hash(
-            "op", "b", "1.0.0", IN, {"x": 1.0, "y": 2.0}
-        )
-        b = compute_backend_result_hash(
-            "op", "b", "1.0.0", IN, {"y": 2.0, "x": 1.0}
-        )
+        a = compute_backend_result_hash("op", "b", "1.0.0", IN, {"x": 1.0, "y": 2.0})
+        b = compute_backend_result_hash("op", "b", "1.0.0", IN, {"y": 2.0, "x": 1.0})
         assert a == b
 
     def test_dict_key_order_irrelevant(self):
@@ -142,9 +138,7 @@ class TestCanonicalize:
 
 class TestInputHash:
     def test_deterministic(self):
-        assert compute_input_hash({"a": [1.0, 2.0]}) == compute_input_hash(
-            {"a": [1.0, 2.0]}
-        )
+        assert compute_input_hash({"a": [1.0, 2.0]}) == compute_input_hash({"a": [1.0, 2.0]})
 
     def test_key_order_irrelevant(self):
         a = compute_input_hash({"a": 1.0, "b": 2.0})

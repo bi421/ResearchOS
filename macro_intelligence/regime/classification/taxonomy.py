@@ -13,9 +13,10 @@ from enum import Enum
 class MacroRegime(Enum):
     """
     Primary macro regime classification.
-    
+
     Derived from Growth x Inflation combinations.
     """
+
     GOLDILOCKS = "goldilocks"
     INFLATIONARY_GROWTH = "inflationary_growth"
     STAGFLATION = "stagflation"
@@ -28,6 +29,7 @@ class LiquidityRegime(Enum):
     """
     Liquidity regime classification.
     """
+
     LIQUIDITY_EXPANSION = "liquidity_expansion"
     LIQUIDITY_NEUTRAL = "liquidity_neutral"
     LIQUIDITY_CONTRACTION = "liquidity_contraction"
@@ -37,6 +39,7 @@ class RiskRegime(Enum):
     """
     Risk regime classification.
     """
+
     RISK_ON = "risk_on"
     RISK_OFF = "risk_off"
     CRISIS = "crisis"
@@ -46,6 +49,7 @@ class MonetaryRegime(Enum):
     """
     Monetary policy regime classification.
     """
+
     FED_HAWKISH = "fed_hawkish"
     FED_NEUTRAL = "fed_neutral"
     FED_DOVISH = "fed_dovish"

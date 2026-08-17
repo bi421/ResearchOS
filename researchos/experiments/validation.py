@@ -137,20 +137,16 @@ class ExperimentValidation(BaseObject):
             self.findings.append(f"All {passed_count}/{total_count} metrics met benchmark")
         elif passed_count >= total_count * 0.5:
             self.overall_status = ValidationStatus.PASSED
-            self.findings.append(
-                f"Majority {passed_count}/{total_count} metrics met benchmark"
-            )
+            self.findings.append(f"Majority {passed_count}/{total_count} metrics met benchmark")
         else:
             self.overall_status = ValidationStatus.FAILED
-            self.findings.append(
-                f"Only {passed_count}/{total_count} metrics met benchmark"
-            )
+            self.findings.append(f"Only {passed_count}/{total_count} metrics met benchmark")
 
         self.confidence = passed_count / max(total_count, 1)
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
             reason=f"Benchmark validation: {self.overall_status.value} "
-                   f"({passed_count}/{total_count} metrics passed)",
+            f"({passed_count}/{total_count} metrics passed)",
         )
 
     def validate_against_targets(
@@ -306,18 +302,20 @@ class ExperimentValidation(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "experiment_id": self.experiment_id,
-            "hypothesis_id": self.hypothesis_id,
-            "run_id": self.run_id,
-            "validation_type": self.validation_type,
-            "criteria": self.criteria,
-            "results": self.results,
-            "overall_status": self.overall_status.value,
-            "confidence": self.confidence,
-            "findings": self.findings,
-            "validation_trace": self.validation_trace,
-        })
+        base.update(
+            {
+                "experiment_id": self.experiment_id,
+                "hypothesis_id": self.hypothesis_id,
+                "run_id": self.run_id,
+                "validation_type": self.validation_type,
+                "criteria": self.criteria,
+                "results": self.results,
+                "overall_status": self.overall_status.value,
+                "confidence": self.confidence,
+                "findings": self.findings,
+                "validation_trace": self.validation_trace,
+            }
+        )
         return base
 
     @classmethod

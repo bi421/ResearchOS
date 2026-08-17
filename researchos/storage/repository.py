@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 import sqlite3
 import threading
@@ -9,29 +9,14 @@ from typing import Any, Dict, List, Optional
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash
 from researchos.core.timestamp import parse_timestamp
-from researchos.repository.interface import RepositoryInterface
-from researchos.objects.observation import Observation, MarketState, MacroState
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.interpretation import Interpretation, Narrative
-from researchos.objects.hypothesis import Hypothesis, HypothesisSet
-from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.attribution import Attribution, AttributionGraph
+from researchos.objects.cognitive import Bias, CognitiveAssessment, LearningRecord
 from researchos.objects.confidence import Confidence, ConfidenceReport
 from researchos.objects.contradiction import Contradiction, ContradictionReport
-from researchos.objects.research import Research, ResearchReport, ResearchQuestion
-from researchos.objects.validation import Validation, FailureAnalysis
-from researchos.objects.knowledge import Knowledge, Pattern, Lesson
-from researchos.objects.cognitive import Bias, LearningRecord, CognitiveAssessment
-from researchos.objects.process import AuditEntry, ResearchCycle, ReasoningChain
-from researchos.objects.market_memory import (
-    MarketEvent,
-    MarketStructure,
-    LiquidityEvent,
-    MarketSession,
-    VolatilityState,
-    NewsReference,
-    MarketOutcome,
-)
-from researchos.objects.attribution import Attribution, AttributionGraph
+from researchos.objects.evidence import Evidence, EvidenceRegistry
+from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+from researchos.objects.interpretation import Interpretation, Narrative
+from researchos.objects.knowledge import Knowledge, Lesson, Pattern
 from researchos.objects.macro import (
     CentralBankDemand,
     DollarStrengthSnapshot,
@@ -48,6 +33,21 @@ from researchos.objects.macro import (
     RealYieldSnapshot,
     SafeHavenAssessment,
 )
+from researchos.objects.market_memory import (
+    LiquidityEvent,
+    MarketEvent,
+    MarketOutcome,
+    MarketSession,
+    MarketStructure,
+    NewsReference,
+    VolatilityState,
+)
+from researchos.objects.observation import MacroState, MarketState, Observation
+from researchos.objects.process import AuditEntry, ReasoningChain, ResearchCycle
+from researchos.objects.research import Research, ResearchQuestion, ResearchReport
+from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.validation import FailureAnalysis, Validation
+from researchos.repository.interface import RepositoryInterface
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class _TransactionContext:
                     last_exc = e
                     self.conn.rollback()
                     self._release_lock()
-                    time.sleep(0.1 * (2 ** attempt))
+                    time.sleep(0.1 * (2**attempt))
                     continue
                 self._release_lock()
                 raise
@@ -156,7 +156,9 @@ class _TransactionContext:
             f"Could not acquire read lock after {MAX_WRITE_RETRIES} retries"
         ) from last_exc
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[object]) -> bool:
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[object]
+    ) -> bool:
         last_exc: Optional[Exception] = None
         try:
             for attempt in range(MAX_WRITE_RETRIES):
@@ -172,7 +174,7 @@ class _TransactionContext:
                         if self.conn is not None:
                             self.conn.rollback()
                         self._release_lock()
-                        time.sleep(0.1 * (2 ** attempt))
+                        time.sleep(0.1 * (2**attempt))
                         self._acquire_lock()
                         continue
                     raise
@@ -266,7 +268,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             logger.warning("Database integrity check failed: %s", result)
         return result
 
-# ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Schema migrations (ordered by target version)
     # ------------------------------------------------------------------
 
@@ -322,7 +324,9 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
     }
 
     def _get_schema_version(self, cursor: sqlite3.Cursor) -> int:
-        cursor.execute("CREATE TABLE IF NOT EXISTS _schema_version (key TEXT PRIMARY KEY, version INTEGER)")
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS _schema_version (key TEXT PRIMARY KEY, version INTEGER)"
+        )
         cursor.execute("SELECT version FROM _schema_version WHERE key = ?", (SCHEMA_VERSION_KEY,))
         row = cursor.fetchone()
         return row[0] if row else 0
@@ -430,9 +434,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         """
         conn = self._get_conn()
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT data FROM objects WHERE id = ?", (object_id,)
-        )
+        cursor.execute("SELECT data FROM objects WHERE id = ?", (object_id,))
         row = cursor.fetchone()
         if row:
             return json.loads(row[0])
@@ -631,9 +633,11 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
                     cycle.id,
                     cycle.created_at.isoformat() if hasattr(cycle, "created_at") else "",
                     getattr(cycle, "research_id", ""),
-                    cycle.lifecycle.current_stage.value if hasattr(cycle, "lifecycle") else "created",
-                    json.dumps(cycle.to_dict(), ensure_ascii=False)
-                )
+                    cycle.lifecycle.current_stage.value
+                    if hasattr(cycle, "lifecycle")
+                    else "created",
+                    json.dumps(cycle.to_dict(), ensure_ascii=False),
+                ),
             )
         # Also save to objects table for load_object/get discoverability
         self.save_object(cycle)
@@ -641,9 +645,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
     def load_cycle(self, cycle_id: str) -> Optional[dict]:
         conn = self._get_conn()
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT data FROM cycles WHERE id = ?", (cycle_id,)
-        )
+        cursor.execute("SELECT data FROM cycles WHERE id = ?", (cycle_id,))
         row = cursor.fetchone()
         if row:
             return json.loads(row[0])
@@ -683,7 +685,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
                     entry_hash,
                     entry.reasoning_chain_id,
                     json.dumps(sorted(entry.ontology_tags), ensure_ascii=False),
-                )
+                ),
             )
 
         # Also save to objects table so audit entries are discoverable via load_by_type
@@ -718,7 +720,20 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         prev_rowid = 0
         expected_prev_hash = "0" * 64
         for row in rows:
-            r_rowid, r_entry_hash, r_prev_hash, r_time, r_actor, r_action, r_obj_id, r_obj_type, r_before, r_after, r_chain_id, r_tags_json = row
+            (
+                r_rowid,
+                r_entry_hash,
+                r_prev_hash,
+                r_time,
+                r_actor,
+                r_action,
+                r_obj_id,
+                r_obj_type,
+                r_before,
+                r_after,
+                r_chain_id,
+                r_tags_json,
+            ) = row
 
             if r_rowid != prev_rowid + 1:
                 return False  # gap detected — entry deleted
@@ -779,26 +794,43 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         expected_prev_hash = "0" * 64
 
         for row in rows:
-            r_rowid, r_entry_hash, r_prev_hash, r_time, r_actor, r_action, r_obj_id, r_obj_type, r_before, r_after, r_chain_id, r_tags_json = row
+            (
+                r_rowid,
+                r_entry_hash,
+                r_prev_hash,
+                r_time,
+                r_actor,
+                r_action,
+                r_obj_id,
+                r_obj_type,
+                r_before,
+                r_after,
+                r_chain_id,
+                r_tags_json,
+            ) = row
 
             if r_rowid != prev_rowid + 1:
-                issues.append({
-                    "rowid": r_rowid,
-                    "issue": "rowid_gap",
-                    "expected_rowid": prev_rowid + 1,
-                    "actual_rowid": r_rowid,
-                })
+                issues.append(
+                    {
+                        "rowid": r_rowid,
+                        "issue": "rowid_gap",
+                        "expected_rowid": prev_rowid + 1,
+                        "actual_rowid": r_rowid,
+                    }
+                )
                 # Cannot trust chain after a gap
                 prev_rowid = r_rowid
                 continue
 
             if r_prev_hash != expected_prev_hash:
-                issues.append({
-                    "rowid": r_rowid,
-                    "issue": "broken_link",
-                    "expected_previous_entry": expected_prev_hash,
-                    "actual_previous_entry": r_prev_hash,
-                })
+                issues.append(
+                    {
+                        "rowid": r_rowid,
+                        "issue": "broken_link",
+                        "expected_previous_entry": expected_prev_hash,
+                        "actual_previous_entry": r_prev_hash,
+                    }
+                )
 
             ontology_tags = json.loads(r_tags_json) if r_tags_json else []
             hashable = {
@@ -816,12 +848,14 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             computed_hash = deterministic_hash(hashable)
 
             if computed_hash != r_entry_hash:
-                issues.append({
-                    "rowid": r_rowid,
-                    "issue": "hash_mismatch",
-                    "expected_hash": computed_hash,
-                    "actual_hash": r_entry_hash,
-                })
+                issues.append(
+                    {
+                        "rowid": r_rowid,
+                        "issue": "hash_mismatch",
+                        "expected_hash": computed_hash,
+                        "actual_hash": r_entry_hash,
+                    }
+                )
 
             expected_prev_hash = r_entry_hash
             prev_rowid = r_rowid
@@ -870,7 +904,19 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         """)
         entries = []
         for row in cursor.fetchall():
-            r_id, r_time, r_actor, r_action, r_obj_id, r_obj_type, r_before, r_after, r_chain_id, r_prev, r_hash = row
+            (
+                r_id,
+                r_time,
+                r_actor,
+                r_action,
+                r_obj_id,
+                r_obj_type,
+                r_before,
+                r_after,
+                r_chain_id,
+                r_prev,
+                r_hash,
+            ) = row
             entry = AuditEntry(
                 actor=r_actor,
                 action=r_action,

@@ -14,13 +14,14 @@ from typing import Any
 @dataclass(frozen=True)
 class RevisionRef:
     """Reference to a revision in the revision chain."""
+
     revision_id: str
     original_evidence_id: str
     revision_number: int
     revision_time: datetime
     revision_reason: str
     superseded: bool = False
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "revision_id": self.revision_id,
@@ -30,7 +31,7 @@ class RevisionRef:
             "revision_reason": self.revision_reason,
             "superseded": self.superseded,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RevisionRef:
         return cls(
@@ -46,6 +47,7 @@ class RevisionRef:
 @dataclass(frozen=True)
 class Transformation:
     """Record of a data transformation."""
+
     timestamp: datetime
     operation: str
     input_value: float | None
@@ -53,7 +55,7 @@ class Transformation:
     input_unit: str | None
     output_unit: str | None
     parameters: dict = field(default_factory=dict)
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -64,7 +66,7 @@ class Transformation:
             "output_unit": self.output_unit,
             "parameters": self.parameters,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Transformation:
         return cls(
@@ -81,11 +83,12 @@ class Transformation:
 @dataclass(frozen=True)
 class CheckResult:
     """Result of a verification check."""
+
     check_name: str
     result: str
     timestamp: datetime
     details: str | None = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "check_name": self.check_name,
@@ -93,7 +96,7 @@ class CheckResult:
             "timestamp": self.timestamp.isoformat(),
             "details": self.details,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckResult:
         return cls(
@@ -107,11 +110,12 @@ class CheckResult:
 @dataclass(frozen=True)
 class ProvenanceChain:
     """Full provenance trail for evidence."""
+
     original_source: str
     ingestion_pipeline: list[str]
     transformation_log: list[Transformation]
     verification_checks: list[CheckResult]
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "original_source": self.original_source,
@@ -119,15 +123,11 @@ class ProvenanceChain:
             "transformation_log": [t.to_dict() for t in self.transformation_log],
             "verification_checks": [c.to_dict() for c in self.verification_checks],
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProvenanceChain:
-        transformations = [
-            Transformation.from_dict(t) for t in data.get("transformation_log", [])
-        ]
-        checks = [
-            CheckResult.from_dict(c) for c in data.get("verification_checks", [])
-        ]
+        transformations = [Transformation.from_dict(t) for t in data.get("transformation_log", [])]
+        checks = [CheckResult.from_dict(c) for c in data.get("verification_checks", [])]
         return cls(
             original_source=data["original_source"],
             ingestion_pipeline=data.get("ingestion_pipeline", []),
@@ -140,48 +140,48 @@ class ProvenanceChain:
 class EvidenceObject:
     """
     Immutable evidence object representing a single macroeconomic observation.
-    
+
     Version: ev/v1
     Immutable: Yes (frozen=True)
     Every piece of data becomes an EvidenceObject.
     Evidence is never modified - revisions create new EvidenceObjects.
     """
-    
+
     # Identity
     evidence_id: str
-    
+
     # Source information
     source: str
     source_quality_score: float
-    
+
     # Series reference
     series_reference: str
-    
+
     # Time dimensions
     observation_time: datetime
     release_time: datetime | None
     available_time: datetime
-    
+
     # Data values
     value: float | None
     forecast: float | None
     previous: float | None
     revision: RevisionRef | None
-    
+
     # Quality metrics
     confidence: float
     quality_score: float
-    
+
     # Provenance
     provenance: ProvenanceChain
-    
+
     # Metadata
     metadata: dict = field(default_factory=dict)
-    
+
     # Generated fields
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     version: str = "ev/v1"
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary with deterministic ordering."""
         return {
@@ -203,23 +203,25 @@ class EvidenceObject:
             "created_at": self.created_at.isoformat(),
             "version": self.version,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> EvidenceObject:
         """Deserialize from dictionary."""
         revision = None
         if data.get("revision"):
             revision = RevisionRef.from_dict(data["revision"])
-        
+
         provenance = ProvenanceChain.from_dict(data.get("provenance", {}))
-        
+
         return cls(
             evidence_id=data["evidence_id"],
             source=data["source"],
             source_quality_score=data["source_quality_score"],
             series_reference=data["series_reference"],
             observation_time=datetime.fromisoformat(data["observation_time"]),
-            release_time=datetime.fromisoformat(data["release_time"]) if data.get("release_time") else None,
+            release_time=datetime.fromisoformat(data["release_time"])
+            if data.get("release_time")
+            else None,
             available_time=datetime.fromisoformat(data["available_time"]),
             value=data.get("value"),
             forecast=data.get("forecast"),
@@ -229,41 +231,46 @@ class EvidenceObject:
             quality_score=data["quality_score"],
             provenance=provenance,
             metadata=data.get("metadata", {}),
-            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
+            created_at=datetime.fromisoformat(
+                data.get("created_at", datetime.now(timezone.utc).isoformat())
+            ),
             version=data.get("version", "ev/v1"),
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON with deterministic ordering."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> EvidenceObject:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """
         Compute deterministic hash for the evidence object.
-        
+
         MIL-DET-001: Hash depends ONLY on semantic data, never on runtime metadata.
-        
+
         Allowed hash fields:
         - evidence_id, source, series_reference
         - observation_time, release_time, available_time
         - value, forecast, previous
         - confidence, quality_score
         - revision_id, revision_number
-        
+
         Forbidden hash fields:
         - created_at (runtime metadata)
         - version (schema version, not semantic)
         """
         import hashlib
         import json
+
         # Create hash-specific dict excluding runtime metadata
         hash_data = {
             "evidence_id": self.evidence_id,
@@ -282,22 +289,22 @@ class EvidenceObject:
             "quality_score": self.quality_score,
             "original_source": self.provenance.original_source,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
-    
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
     def validate(self) -> tuple[bool, list[str]]:
         """
         Validate the evidence object.
-        
+
         Returns:
             (is_valid, list_of_errors)
         """
         errors = []
-        
+
         # Validate evidence_id format
         if not self.evidence_id.startswith("EV_"):
             errors.append("evidence_id must start with 'EV_'")
-        
+
         # Validate scores
         if not (0.0 <= self.source_quality_score <= 1.0):
             errors.append("source_quality_score must be between 0.0 and 1.0")
@@ -305,11 +312,11 @@ class EvidenceObject:
             errors.append("confidence must be between 0.0 and 1.0")
         if not (0.0 <= self.quality_score <= 1.0):
             errors.append("quality_score must be between 0.0 and 1.0")
-        
+
         # Validate provenance
         if not self.provenance.original_source:
             errors.append("provenance.original_source is required")
         if not self.provenance.ingestion_pipeline:
             errors.append("provenance.ingestion_pipeline is required")
-        
+
         return (len(errors) == 0, errors)

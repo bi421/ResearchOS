@@ -82,3 +82,68 @@ repair_backup_*/
 *_AUDIT_*/
 EMERGENCY_*/
 *.bak
+
+# Local audit / diagnostic artifacts
+coverage_run_new.log
+decision_engine_full_dump.txt
+diagnosis.txt
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+*.db
+
+# C++ / CMake build
+cpp_quant_engine/build/
+*.pdb
+*.ilk
+*.exe
+*.obj
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Data files (large)
+data/raw/
+data/curated/*.csv
+data/curated/*.parquet
+!data/curated/README.md
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+*.db
+
+# C++ / CMake build
+cpp_quant_engine/build/
+*.pdb
+*.ilk
+*.exe
+*.obj
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Data files (large)
+data/raw/
+data/curated/*.csv
+data/curated/*.parquet
+!data/curated/README.md

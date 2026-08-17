@@ -1,7 +1,7 @@
 """
 Reasoning Engine -- deterministic evidence validation (Phase 4.5.2).
 
-``EvidenceValidator`` determines whether an :class:`EvidenceItem` is
+``EvidenceValidator`` determines whether an :class:`ReasoningEvidence` is
 structurally ready for reasoning. It does NOT judge truth, does NOT verify
 external data sources, and performs no filesystem or network access.
 
@@ -12,7 +12,7 @@ Validation rules (checked in fixed order so error output is deterministic):
     3. source must contain meaningful text (non-empty once stripped)
     4. id must be non-empty (non-empty once stripped)
 
-Rules 3 and 4 are defensive invariants: the Phase 4.5.1 ``EvidenceItem``
+Rules 3 and 4 are defensive invariants: the Phase 4.5.1 ``ReasoningEvidence``
 contract already guarantees non-empty ``id``, ``source`` and ``content_hash``,
 so these checks can never fail for a contract-valid item.  They exist so that the
 validator's contract document stays self-describing and so that a future, more
@@ -27,21 +27,21 @@ from __future__ import annotations
 
 from typing import List
 
-from researchos.reasoning_engine.contracts import EvidenceItem
+from researchos.reasoning_engine.contracts import ReasoningEvidence
 from researchos.reasoning_engine.evidence import EvidenceRecord
 
 
 class EvidenceValidator:
     """
-    Deterministic, stateless validator for :class:`EvidenceItem` objects.
+    Deterministic, stateless validator for :class:`ReasoningEvidence` objects.
 
-    The same ``EvidenceItem`` always yields the same ``EvidenceRecord``.
+    The same ``ReasoningEvidence`` always yields the same ``EvidenceRecord``.
     """
 
     MIN_RELIABILITY_SCORE: float = 0.5
     MIN_CONTENT_HASH_LENGTH: int = 8
 
-    def validate(self, evidence: EvidenceItem) -> EvidenceRecord:
+    def validate(self, evidence: ReasoningEvidence) -> EvidenceRecord:
         """
         Validate a single evidence item.
 
@@ -59,11 +59,11 @@ class EvidenceValidator:
         if len(evidence.content_hash) < self.MIN_CONTENT_HASH_LENGTH:
             errors.append("content_hash too short")
 
-        # Rule 3 (defensive -- guaranteed by the EvidenceItem contract)
+        # Rule 3 (defensive -- guaranteed by the ReasoningEvidence contract)
         if not evidence.source.strip():
             errors.append("source must contain meaningful text")
 
-        # Rule 4 (defensive -- guaranteed by the EvidenceItem contract)
+        # Rule 4 (defensive -- guaranteed by the ReasoningEvidence contract)
         if not evidence.id.strip():
             errors.append("id must be non-empty")
 

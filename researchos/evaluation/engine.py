@@ -127,9 +127,7 @@ def _compute_evidence(report: PipelineReport) -> float:
     training = report.training
     if training.metrics:
         valid_metrics = sum(
-            1
-            for v in training.metrics.values()
-            if isinstance(v, (int, float)) and math.isfinite(v)
+            1 for v in training.metrics.values() if isinstance(v, (int, float)) and math.isfinite(v)
         )
         metric_quality = min(1.0, valid_metrics / max(1, len(training.metrics)))
         score += 0.3 * metric_quality
@@ -141,9 +139,7 @@ def _compute_evidence(report: PipelineReport) -> float:
     return max(0.0, min(1.0, score))
 
 
-def _compute_overall(
-    reproducibility: float, stability: float, evidence: float
-) -> float:
+def _compute_overall(reproducibility: float, stability: float, evidence: float) -> float:
     """Weighted deterministic aggregation of sub-scores.
 
     Formula:
@@ -169,9 +165,7 @@ class ResearchEvaluator:
 
     def __init__(self, repository: PipelineRepository) -> None:
         if not isinstance(repository, PipelineRepository):
-            raise PipelineEvaluationError(
-                "repository must be a PipelineRepository"
-            )
+            raise PipelineEvaluationError("repository must be a PipelineRepository")
         self._repository = repository
 
     # ------------------------------------------------------------------
@@ -211,13 +205,9 @@ class ResearchEvaluator:
         try:
             record: PipelineRecord = self._repository.load(pipeline_id)
         except PipelineNotFoundError:
-            raise PipelineEvaluationError(
-                f"pipeline not found: {pipeline_id}"
-            ) from None
+            raise PipelineEvaluationError(f"pipeline not found: {pipeline_id}") from None
         except PipelineRepositoryError as exc:
-            raise PipelineEvaluationError(
-                f"repository error: {exc}"
-            ) from None
+            raise PipelineEvaluationError(f"repository error: {exc}") from None
 
         report: PipelineReport = record.report
 
@@ -291,27 +281,16 @@ class ResearchEvaluator:
           - ``winner``: ``"a"`` if a > b, ``"b"`` if b > a, ``"tie"`` otherwise.
         """
         if not isinstance(evaluation_a, EvaluationReport):
-            raise PipelineEvaluationError(
-                "evaluation_a must be an EvaluationReport"
-            )
+            raise PipelineEvaluationError("evaluation_a must be an EvaluationReport")
         if not isinstance(evaluation_b, EvaluationReport):
-            raise PipelineEvaluationError(
-                "evaluation_b must be an EvaluationReport"
-            )
+            raise PipelineEvaluationError("evaluation_b must be an EvaluationReport")
 
-        delta_overall = (
-            evaluation_a.score.overall_score - evaluation_b.score.overall_score
-        )
+        delta_overall = evaluation_a.score.overall_score - evaluation_b.score.overall_score
         delta_repro = (
-            evaluation_a.score.reproducibility_score
-            - evaluation_b.score.reproducibility_score
+            evaluation_a.score.reproducibility_score - evaluation_b.score.reproducibility_score
         )
-        delta_stab = (
-            evaluation_a.score.stability_score - evaluation_b.score.stability_score
-        )
-        delta_evid = (
-            evaluation_a.score.evidence_score - evaluation_b.score.evidence_score
-        )
+        delta_stab = evaluation_a.score.stability_score - evaluation_b.score.stability_score
+        delta_evid = evaluation_a.score.evidence_score - evaluation_b.score.evidence_score
 
         if delta_overall > 0:
             winner = "a"

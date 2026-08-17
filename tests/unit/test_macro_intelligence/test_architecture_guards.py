@@ -12,6 +12,7 @@ These tests enforce the MIL architecture invariants:
   - MIL-GRD-005: the full guard set is clean
   - Econometric algorithms are owned exclusively by the econometrics tier
 """
+
 from __future__ import annotations
 
 import pytest
@@ -32,33 +33,25 @@ class TestArchitectureGuards:
         """MIL-GRD-001: Lower tier must not import a higher tier."""
         violations = guard_report["reverse_dependencies"]
         # Yield a useful message listing any violations.
-        assert violations == [], (
-            "Reverse dependency violations found: "
-            + str(violations)
-        )
+        assert violations == [], "Reverse dependency violations found: " + str(violations)
 
     def test_mil_grd_002_no_forbidden_import(self, guard_report):
         """MIL-GRD-002: No V1 core / quant / experiment imports."""
         violations = guard_report["forbidden_imports"]
-        assert violations == [], (
-            "Forbidden V1/quant/experiment imports found: "
-            + str(violations)
-        )
+        assert violations == [], "Forbidden V1/quant/experiment imports found: " + str(violations)
 
     def test_mil_grd_003_no_runtime_random_in_hash(self, guard_report):
         """MIL-GRD-003: Hash functions must be deterministic."""
         violations = guard_report["runtime_random_in_hash"]
-        assert violations == [], (
-            "Non-deterministic runtime source in hash functions: "
-            + str(violations)
+        assert violations == [], "Non-deterministic runtime source in hash functions: " + str(
+            violations
         )
 
     def test_mil_grd_004_persistent_id_determinism(self, guard_report):
         """MIL-GRD-004: Persistent IDs must be content-derived."""
         violations = guard_report["persistent_id_determinism"]
-        assert violations == [], (
-            "Non-content-derived persistent ID generation found: "
-            + str(violations)
+        assert violations == [], "Non-content-derived persistent ID generation found: " + str(
+            violations
         )
 
     def test_mil_grd_005_full_guard_set_clean(self, guard_report):
@@ -114,6 +107,5 @@ class TestGuardHelpers:
         """Econometric algorithms are owned exclusively by the econometrics tier."""
         violations = guards.check_econometric_single_owner()
         assert violations == [], (
-            "Econometric algorithm implemented outside econometrics tier: "
-            + str(violations)
+            "Econometric algorithm implemented outside econometrics tier: " + str(violations)
         )

@@ -61,4 +61,3 @@ class ModelMetadata:
 
 
 __all__ = ["MODEL_METADATA_VERSION", "ModelMetadata"]
-

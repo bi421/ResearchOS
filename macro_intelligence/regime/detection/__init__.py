@@ -19,23 +19,23 @@ Architecture invariants:
 
 from __future__ import annotations
 
+from macro_intelligence.regime.detection.detector import RegimeDetector
+from macro_intelligence.regime.detection.employment_detector import detect_employment
+from macro_intelligence.regime.detection.growth_detector import detect_growth
+from macro_intelligence.regime.detection.inflation_detector import detect_inflation
+from macro_intelligence.regime.detection.liquidity_detector import detect_liquidity
 from macro_intelligence.regime.detection.models import (
-    FeatureVector,
     DetectionEvidence,
-    RegimeAssessment,
-    InflationSignal,
-    GrowthSignal,
-    MonetarySignal,
-    LiquiditySignal,
     EmploymentSignal,
+    FeatureVector,
+    GrowthSignal,
+    InflationSignal,
+    LiquiditySignal,
+    MonetarySignal,
+    RegimeAssessment,
     RiskSignal,
 )
-from macro_intelligence.regime.detection.detector import RegimeDetector
-from macro_intelligence.regime.detection.inflation_detector import detect_inflation
-from macro_intelligence.regime.detection.growth_detector import detect_growth
 from macro_intelligence.regime.detection.monetary_detector import detect_monetary
-from macro_intelligence.regime.detection.liquidity_detector import detect_liquidity
-from macro_intelligence.regime.detection.employment_detector import detect_employment
 from macro_intelligence.regime.detection.risk_detector import detect_risk
 
 __all__ = [

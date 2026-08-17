@@ -126,17 +126,13 @@ class TestCapabilityRegistration:
 class TestNumericalEquivalence:
     def test_returns_equivalence(self, router, python_backend):
         prices = _prices(_ROLLING_MIN)
-        cpp = router.execute(
-            "calculate_returns", {"prices": prices, "return_type": "percentage"}
-        )
+        cpp = router.execute("calculate_returns", {"prices": prices, "return_type": "percentage"})
         assert cpp.output == python_backend.calculate_returns(prices, "percentage")
 
     def test_volatility_equivalence(self, router, python_backend):
         returns = python_backend.calculate_returns(_prices(_ROLLING_MIN))
         for method in ("standard_deviation", "rolling", "change"):
-            cpp = router.execute(
-                "calculate_volatility", {"returns": returns, "method": method}
-            )
+            cpp = router.execute("calculate_volatility", {"returns": returns, "method": method})
             assert cpp.output == pytest.approx(
                 python_backend.calculate_volatility(returns, method), rel=1e-9
             )
@@ -195,9 +191,7 @@ class TestNumericalEquivalence:
 
 class TestRouterValidationMetadata:
     def test_validation_status_passed(self, router):
-        result = router.execute(
-            "calculate_returns", {"prices": _prices(_ROLLING_MIN)}
-        )
+        result = router.execute("calculate_returns", {"prices": _prices(_ROLLING_MIN)})
         assert result.metadata.validation_status == "passed"
         assert result.metadata.backend == "CppQuantAdapter"
         assert result.metadata.error_code == "ok"
@@ -229,15 +223,11 @@ class TestAutomaticFallback:
                 raise RuntimeError("broken candidate")
 
         router = BackendRouter(candidates=[_Broken()])
-        result = router.execute(
-            "calculate_returns", {"prices": _prices(_ROLLING_MIN)}
-        )
+        result = router.execute("calculate_returns", {"prices": _prices(_ROLLING_MIN)})
         assert result.metadata.fallback_used is True
         assert result.metadata.error_code == "execution_failed"
         assert result.metadata.backend == "PythonQuantBackend"
-        assert result.output == PythonQuantBackend().calculate_returns(
-            _prices(_ROLLING_MIN)
-        )
+        assert result.output == PythonQuantBackend().calculate_returns(_prices(_ROLLING_MIN))
 
 
 class TestProvenanceAndBoundaries:
@@ -245,16 +235,12 @@ class TestProvenanceAndBoundaries:
         # C++ adapter normalizes the same dataset contracts as Python backend.
         prices = _prices(_ROLLING_MIN)
         request = _make_request()
-        cpp_result = router.execute(
-            "run_simulation", {"request": request, "dataset": prices}
-        )
+        cpp_result = router.execute("run_simulation", {"request": request, "dataset": prices})
         py_result = python_backend.run_simulation(request, prices)
         assert cpp_result.output.input_hash == py_result.input_hash
         assert cpp_result.output.dataset_reference == request.dataset_reference
 
     def test_result_hash_self_consistent(self, router):
         prices = _prices(_ROLLING_MIN)
-        result = router.execute(
-            "run_simulation", {"request": _make_request(), "dataset": prices}
-        )
+        result = router.execute("run_simulation", {"request": _make_request(), "dataset": prices})
         assert result.output.result_hash == result.output.compute_result_hash()

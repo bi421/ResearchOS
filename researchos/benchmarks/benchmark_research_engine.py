@@ -51,7 +51,9 @@ def _timeit(fn: Callable[[], Any], repeats: int = 1) -> float:
     return (time.perf_counter() - start) * 1000.0
 
 
-def _benchmark_op(name: str, python_fn: Callable[[], Any], cpp_fn: Callable[[], Any]) -> Dict[str, Any]:
+def _benchmark_op(
+    name: str, python_fn: Callable[[], Any], cpp_fn: Callable[[], Any]
+) -> Dict[str, Any]:
     py_ms = _timeit(python_fn)
     cpp_ms = _timeit(cpp_fn)
     return {"operation": name, "python_ms": py_ms, "cpp_ms": cpp_ms}
@@ -103,9 +105,7 @@ def main() -> None:
 
     print(f"{'operation':<35}{'python_ms':>12}{'cpp_ms':>12}")
     for row in rows:
-        print(
-            f"{row['operation']:<35}{row['python_ms']:>12.3f}{row['cpp_ms']:>12.3f}"
-        )
+        print(f"{row['operation']:<35}{row['python_ms']:>12.3f}{row['cpp_ms']:>12.3f}")
 
     # Observational only — no assertions, no hash changes.
 

@@ -165,9 +165,7 @@ class ReplayEngine:
             last_bar = bars[-1]
             last_ts = getattr(last_bar, "timestamp", None)
             last_idx = len(bars) - 1
-            close_side = (
-                OrderSide.SELL if self.execution.position_qty > 0 else OrderSide.BUY
-            )
+            close_side = OrderSide.SELL if self.execution.position_qty > 0 else OrderSide.BUY
             liquidation_signal = Signal(
                 bar_index=last_idx,
                 timestamp=_iso(last_ts),
@@ -200,4 +198,3 @@ class ReplayEngine:
             "start_time": _iso(getattr(bars[0], "timestamp", None)),
             "end_time": _iso(getattr(bars[-1], "timestamp", None)),
         }
-

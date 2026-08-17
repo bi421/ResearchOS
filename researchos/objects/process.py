@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
 
@@ -91,11 +91,13 @@ class ResearchCycle(BaseObject):
 
     def add_quality_metric(self, name: str, value: float, weight: float = 1.0) -> None:
         """Add a quality metric to the cycle."""
-        self.quality_metrics.append({
-            "name": name,
-            "value": value,
-            "weight": weight,
-        })
+        self.quality_metrics.append(
+            {
+                "name": name,
+                "value": value,
+                "weight": weight,
+            }
+        )
 
     def complete(self) -> None:
         """Mark the research cycle as complete."""
@@ -121,17 +123,19 @@ class ResearchCycle(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "stages": self.stages,
-            "duration": self.duration,
-            "inputs": self.inputs,
-            "outputs": self.outputs,
-            "quality_metrics": self.quality_metrics,
-            "cycle_hash": self.cycle_hash,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "start_time": self.start_time.isoformat(),
+                "end_time": self.end_time.isoformat() if self.end_time else None,
+                "stages": self.stages,
+                "duration": self.duration,
+                "inputs": self.inputs,
+                "outputs": self.outputs,
+                "quality_metrics": self.quality_metrics,
+                "cycle_hash": self.cycle_hash,
+            }
+        )
         return base
 
     @classmethod
@@ -283,17 +287,19 @@ class ReasoningChain(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "steps": self.steps,
-            "inputs": self.inputs,
-            "outputs": self.outputs,
-            "rules_applied": self.rules_applied,
-            "evidence_used": self.evidence_used,
-            "confidence": self.confidence,
-            "chain_hash": self.chain_hash,
-            "trace": self.trace,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "steps": self.steps,
+                "inputs": self.inputs,
+                "outputs": self.outputs,
+                "rules_applied": self.rules_applied,
+                "evidence_used": self.evidence_used,
+                "confidence": self.confidence,
+                "chain_hash": self.chain_hash,
+                "trace": self.trace,
+            }
+        )
         return base
 
     @classmethod
@@ -403,18 +409,20 @@ class AuditEntry(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "actor": self.actor,
-            "action": self.action,
-            "object_id": self.object_id,
-            "affected_object_type": self.object_type,
-            "before_state": self.before_state,
-            "after_state": self.after_state,
-            "reasoning_chain_id": self.reasoning_chain_id,
-            "previous_entry": self.previous_entry,
-            "entry_hash": self.entry_hash,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "actor": self.actor,
+                "action": self.action,
+                "object_id": self.object_id,
+                "affected_object_type": self.object_type,
+                "before_state": self.before_state,
+                "after_state": self.after_state,
+                "reasoning_chain_id": self.reasoning_chain_id,
+                "previous_entry": self.previous_entry,
+                "entry_hash": self.entry_hash,
+            }
+        )
         return base
 
     @classmethod
@@ -431,4 +439,3 @@ class AuditEntry(BaseObject):
         obj.previous_entry = data.get("previous_entry", "")
         obj.entry_hash = data.get("entry_hash", "")
         return obj
-

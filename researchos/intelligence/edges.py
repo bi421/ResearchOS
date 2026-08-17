@@ -45,8 +45,7 @@ class Relationship(str, Enum):
         normalized = str(value).lower().strip()
         if normalized not in mapping:
             raise ValueError(
-                f"Unknown relationship {value!r}. "
-                f"Valid options: {[r.value for r in cls]}"
+                f"Unknown relationship {value!r}. Valid options: {[r.value for r in cls]}"
             )
         return mapping[normalized]
 
@@ -101,12 +100,8 @@ class EvidenceEdge:
     def __post_init__(self) -> None:
         """Validate identifiers and freeze all container fields."""
         object.__setattr__(self, "edge_id", _validate_identifier(self.edge_id, "edge_id"))
-        object.__setattr__(
-            self, "source_id", _validate_identifier(self.source_id, "source_id")
-        )
-        object.__setattr__(
-            self, "target_id", _validate_identifier(self.target_id, "target_id")
-        )
+        object.__setattr__(self, "source_id", _validate_identifier(self.source_id, "source_id"))
+        object.__setattr__(self, "target_id", _validate_identifier(self.target_id, "target_id"))
         if not isinstance(self.relationship, Relationship):
             raise EvidenceError("relationship must be a Relationship")
         object.__setattr__(self, "metadata", _as_immutable_mapping(self.metadata))

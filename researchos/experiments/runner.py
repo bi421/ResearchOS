@@ -59,14 +59,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from researchos.experiments.experiment import Experiment
 from researchos.experiments.result import ExperimentResult, ExperimentRun
-from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.quant_engine.router import BackendRouter
+from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import (
     CalculationVersion,
     SimulationRequest,
     SimulationResult,
 )
+from researchos.quant_engine.router import BackendRouter
 
 
 def _canonical(value: Any) -> Any:
@@ -349,10 +349,15 @@ class BaseExperimentRunner(AbstractExperimentRunner):
                 results.append((run, result))
             except Exception as e:
                 run.fail(reason=str(e))
-                results.append((run, ExperimentResult(
-                    run_id=run.id,
-                    trace=f"Failed: {e}",
-                )))
+                results.append(
+                    (
+                        run,
+                        ExperimentResult(
+                            run_id=run.id,
+                            trace=f"Failed: {e}",
+                        ),
+                    )
+                )
 
         return results
 
@@ -390,10 +395,15 @@ class BaseExperimentRunner(AbstractExperimentRunner):
                 results.append((run, result))
             except Exception as e:
                 run.fail(reason=str(e))
-                results.append((run, ExperimentResult(
-                    run_id=run.id,
-                    trace=f"Failed: {e}",
-                )))
+                results.append(
+                    (
+                        run,
+                        ExperimentResult(
+                            run_id=run.id,
+                            trace=f"Failed: {e}",
+                        ),
+                    )
+                )
 
         return results
 
@@ -451,9 +461,7 @@ class BaseExperimentRunner(AbstractExperimentRunner):
 
         # Build SimulationRequest for the Quant Engine
         request = SimulationRequest(
-            dataset_reference=(
-                dataset_config.source or "experiment"
-            ),
+            dataset_reference=(dataset_config.source or "experiment"),
             dataset_version=self._dataset_provenance(dataset),
             calculation_version=CalculationVersion.CALCULATION_V1,
             start_time=dataset_config.start_date,
@@ -546,9 +554,7 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         result.add_statistic("backend_result_hash", meta.result_hash)
         result.add_statistic(
             "backend_capability_profile",
-            meta.capability_profile.to_dict()
-            if meta.capability_profile is not None
-            else {},
+            meta.capability_profile.to_dict() if meta.capability_profile is not None else {},
         )
         # Phase 4.4 scheduler statistics
         result.add_statistic("backend_fallback_count", meta.fallback_count)

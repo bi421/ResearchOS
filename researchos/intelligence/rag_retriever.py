@@ -39,7 +39,6 @@ from researchos.intelligence.rag_contracts import (
     RetrievalSource,
 )
 
-
 # ═══════════════════════════════════════════════════════════════════
 # Constants
 # ═══════════════════════════════════════════════════════════════════
@@ -152,16 +151,11 @@ class DeterministicRetriever:
         all_hits.sort(key=lambda h: (-h.score, h.hit_id))
 
         # Apply max_hits and min_score
-        filtered = [
-            h for h in all_hits
-            if h.score >= query.min_score
-        ][: query.max_hits]
+        filtered = [h for h in all_hits if h.score >= query.min_score][: query.max_hits]
 
         elapsed_ms = (time.monotonic() - start_time) * 1000
 
-        sources_queried = tuple(sorted({
-            h.source.value for h in all_hits
-        }))
+        sources_queried = tuple(sorted({h.source.value for h in all_hits}))
 
         explanation = self._build_explanation(query, filtered, len(all_hits))
 
@@ -253,15 +247,17 @@ class DeterministicRetriever:
         for node_id, node_data in self._node_index.items():
             score = self._score_node(node_data, query_tokens, context_tags)
             if score >= min_score:
-                hits.append(RetrievalHit(
-                    hit_id=f"node-{node_id}",
-                    object_id=node_id,
-                    object_type="EvidenceNode",
-                    source=RetrievalSource.EVIDENCE_GRAPH,
-                    score=round(score, 4),
-                    snippet=self._make_snippet(node_data),
-                    metadata={"node_type": node_data.get("node_type", "")},
-                ))
+                hits.append(
+                    RetrievalHit(
+                        hit_id=f"node-{node_id}",
+                        object_id=node_id,
+                        object_type="EvidenceNode",
+                        source=RetrievalSource.EVIDENCE_GRAPH,
+                        score=round(score, 4),
+                        snippet=self._make_snippet(node_data),
+                        metadata={"node_type": node_data.get("node_type", "")},
+                    )
+                )
         return hits
 
     def _search_knowledge(
@@ -275,15 +271,17 @@ class DeterministicRetriever:
         for obj_id, obj_data in self._knowledge_index.items():
             score = self._score_knowledge(obj_data, query_tokens, context_tags)
             if score >= min_score:
-                hits.append(RetrievalHit(
-                    hit_id=f"kb-{obj_id}",
-                    object_id=obj_id,
-                    object_type=str(obj_data.get("type", "Unknown")),
-                    source=RetrievalSource.KNOWLEDGE_BASE,
-                    score=round(score, 4),
-                    snippet=self._make_snippet(obj_data),
-                    metadata=dict(obj_data.get("metadata", {})),
-                ))
+                hits.append(
+                    RetrievalHit(
+                        hit_id=f"kb-{obj_id}",
+                        object_id=obj_id,
+                        object_type=str(obj_data.get("type", "Unknown")),
+                        source=RetrievalSource.KNOWLEDGE_BASE,
+                        score=round(score, 4),
+                        snippet=self._make_snippet(obj_data),
+                        metadata=dict(obj_data.get("metadata", {})),
+                    )
+                )
         return hits
 
     def _search_market_memory(
@@ -298,15 +296,17 @@ class DeterministicRetriever:
             if obj_data.get("source") == "market_memory":
                 score = self._score_knowledge(obj_data, query_tokens, context_tags) * 0.8
                 if score >= min_score:
-                    hits.append(RetrievalHit(
-                        hit_id=f"mm-{obj_id}",
-                        object_id=obj_id,
-                        object_type=str(obj_data.get("type", "MarketMemory")),
-                        source=RetrievalSource.MARKET_MEMORY,
-                        score=round(score, 4),
-                        snippet=self._make_snippet(obj_data),
-                        metadata=dict(obj_data.get("metadata", {})),
-                    ))
+                    hits.append(
+                        RetrievalHit(
+                            hit_id=f"mm-{obj_id}",
+                            object_id=obj_id,
+                            object_type=str(obj_data.get("type", "MarketMemory")),
+                            source=RetrievalSource.MARKET_MEMORY,
+                            score=round(score, 4),
+                            snippet=self._make_snippet(obj_data),
+                            metadata=dict(obj_data.get("metadata", {})),
+                        )
+                    )
         return hits
 
     def _search_experiment_results(
@@ -321,15 +321,17 @@ class DeterministicRetriever:
             if obj_data.get("source") == "experiment_result":
                 score = self._score_knowledge(obj_data, query_tokens, context_tags) * 0.7
                 if score >= min_score:
-                    hits.append(RetrievalHit(
-                        hit_id=f"exp-{obj_id}",
-                        object_id=obj_id,
-                        object_type=str(obj_data.get("type", "ExperimentResult")),
-                        source=RetrievalSource.EXPERIMENT_RESULT,
-                        score=round(score, 4),
-                        snippet=self._make_snippet(obj_data),
-                        metadata=dict(obj_data.get("metadata", {})),
-                    ))
+                    hits.append(
+                        RetrievalHit(
+                            hit_id=f"exp-{obj_id}",
+                            object_id=obj_id,
+                            object_type=str(obj_data.get("type", "ExperimentResult")),
+                            source=RetrievalSource.EXPERIMENT_RESULT,
+                            score=round(score, 4),
+                            snippet=self._make_snippet(obj_data),
+                            metadata=dict(obj_data.get("metadata", {})),
+                        )
+                    )
         return hits
 
     # ------------------------------------------------------------------
@@ -411,9 +413,20 @@ class DeterministicRetriever:
     def _extract_text(data: Dict[str, Any]) -> str:
         """Extract searchable text from a dict."""
         parts: List[str] = []
-        for key in ("text", "content", "statement", "thesis", "description",
-                     "finding", "pattern", "recommendation", "label", "name",
-                     "node_type", "reference_id"):
+        for key in (
+            "text",
+            "content",
+            "statement",
+            "thesis",
+            "description",
+            "finding",
+            "pattern",
+            "recommendation",
+            "label",
+            "name",
+            "node_type",
+            "reference_id",
+        ):
             val = data.get(key)
             if isinstance(val, str) and val.strip():
                 parts.append(val)
@@ -424,8 +437,17 @@ class DeterministicRetriever:
         # Extract from metadata sub-dict
         metadata = data.get("metadata")
         if isinstance(metadata, dict):
-            for key in ("text", "content", "statement", "thesis", "description",
-                         "finding", "pattern", "recommendation", "tags"):
+            for key in (
+                "text",
+                "content",
+                "statement",
+                "thesis",
+                "description",
+                "finding",
+                "pattern",
+                "recommendation",
+                "tags",
+            ):
                 val = metadata.get(key)
                 if isinstance(val, str) and val.strip():
                     parts.append(val)
@@ -439,8 +461,7 @@ class DeterministicRetriever:
     def _make_snippet(data: Dict[str, Any]) -> str:
         """Create a short snippet from object data."""
         # Check direct fields first
-        for key in ("text", "content", "statement", "thesis", "description",
-                     "label", "name"):
+        for key in ("text", "content", "statement", "thesis", "description", "label", "name"):
             val = data.get(key)
             if isinstance(val, str) and val.strip():
                 snippet = val.strip()[:_MAX_SNIPPET_LENGTH]

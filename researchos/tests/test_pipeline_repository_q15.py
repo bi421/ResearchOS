@@ -22,10 +22,10 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from researchos.orchestration.contracts import (
-    PipelineReport,
-    PipelineStatus,
     EvidenceEdgeDescriptor,
     EvidenceNodeDescriptor,
+    PipelineReport,
+    PipelineStatus,
 )
 from researchos.pipeline_repository import (
     InvalidPipelineRecordError,
@@ -40,6 +40,8 @@ from researchos.quant_engine.models.contracts import (
 )
 from researchos.quant_engine.training.contracts import (
     ModelContract as TrainingModelContract,
+)
+from researchos.quant_engine.training.contracts import (
     ModelType,
 )
 from researchos.quant_engine.training.training_result import TrainingResult
@@ -556,9 +558,18 @@ class TestDependencyAudit(unittest.TestCase):
                     )
 
     def test_stdlib_only_imports(self):
-        allowed_roots = {"__future__", "json", "hashlib", "os", "typing",
-                         "dataclasses", "types", "researchos"}
+        allowed_roots = {
+            "__future__",
+            "json",
+            "hashlib",
+            "os",
+            "typing",
+            "dataclasses",
+            "types",
+            "researchos",
+        }
         import re
+
         for name, source in self._module_sources():
             for line in self._import_lines(source):
                 # Skip relative intra-package imports (e.g. "from .contracts").
@@ -577,4 +588,3 @@ class TestDependencyAudit(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

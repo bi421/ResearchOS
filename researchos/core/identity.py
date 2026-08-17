@@ -1,4 +1,4 @@
-﻿"""
+"""
 Deterministic identity generation for ResearchOS.
 
 Implements deterministic UUID generation and content hashing.
@@ -81,4 +81,3 @@ def generate_observation_id(
     """
     seed = f"{source}|{timestamp}|{value}"
     return generate_id(seed)
-

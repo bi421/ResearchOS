@@ -108,7 +108,7 @@ class LearningRecord(BaseObject):
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
             reason=f"Learning record finalized: {len(self.findings)} findings, "
-                   f"{len(self.recommendations)} recommendations",
+            f"{len(self.recommendations)} recommendations",
         )
 
     def _to_hashable_dict(self) -> Dict[str, Any]:
@@ -129,19 +129,21 @@ class LearningRecord(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "experiment_id": self.experiment_id,
-            "validation_id": self.validation_id,
-            "hypothesis_id": self.hypothesis_id,
-            "run_id": self.run_id,
-            "hypothesis_accepted": self.hypothesis_accepted,
-            "findings": self.findings,
-            "patterns_observed": self.patterns_observed,
-            "recommendations": self.recommendations,
-            "confidence": self.confidence,
-            "learning_trace": self.learning_trace,
-            "tags": self.tags,
-        })
+        base.update(
+            {
+                "experiment_id": self.experiment_id,
+                "validation_id": self.validation_id,
+                "hypothesis_id": self.hypothesis_id,
+                "run_id": self.run_id,
+                "hypothesis_accepted": self.hypothesis_accepted,
+                "findings": self.findings,
+                "patterns_observed": self.patterns_observed,
+                "recommendations": self.recommendations,
+                "confidence": self.confidence,
+                "learning_trace": self.learning_trace,
+                "tags": self.tags,
+            }
+        )
         return base
 
     @classmethod

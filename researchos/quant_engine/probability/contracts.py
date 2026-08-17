@@ -112,4 +112,3 @@ class MonteCarloResult:
             "seed": self.seed,
             "num_samples": self.num_samples,
         }
-

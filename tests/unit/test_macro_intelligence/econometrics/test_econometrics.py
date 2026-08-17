@@ -15,6 +15,7 @@ Covers:
   - Information criteria: AIC, BIC
   - Determinism, immutability, serialization round-trip, provenance
 """
+
 from __future__ import annotations
 
 import math
@@ -22,46 +23,48 @@ import math
 import pytest
 
 from macro_intelligence.econometrics import (
+    InformationCriteria,
+    IntervalResult,
+    ModelDiagnostics,
     # Models
     RegressionResult,
-    TestResult as EconometricTestResult,
     ResidualDiagnostics,
-    IntervalResult,
-    InformationCriteria,
-    ModelDiagnostics,
-    deterministic_hash,
-    # Regression
-    multiple_regression,
-    polynomial_regression,
-    logistic_regression,
-    univariate_ols,
-    # Autocorrelation
-    autocorrelation,
-    partial_autocorrelation,
+    # Information criteria
+    aic,
     # Stationarity
     augmented_dickey_fuller,
-    kpss,
+    # Autocorrelation
+    autocorrelation,
+    bic,
+    # Heteroskedasticity
+    breusch_pagan,
+    # Intervals
+    confidence_interval,
+    deterministic_hash,
+    # Diagnostics
+    durbin_watson,
     # Cointegration
     engle_granger,
     # Causality
     granger_causality,
+    information_criteria,
+    jarque_bera,
+    kpss,
+    logistic_regression,
+    model_diagnostics,
+    # Regression
+    multiple_regression,
+    partial_autocorrelation,
+    polynomial_regression,
+    prediction_interval,
+    residual_diagnostics,
+    univariate_ols,
     # VIF
     variance_inflation_factor,
     vif,
-    # Heteroskedasticity
-    breusch_pagan,
-    # Diagnostics
-    durbin_watson,
-    jarque_bera,
-    residual_diagnostics,
-    model_diagnostics,
-    # Intervals
-    confidence_interval,
-    prediction_interval,
-    # Information criteria
-    aic,
-    bic,
-    information_criteria,
+)
+from macro_intelligence.econometrics import (
+    TestResult as EconometricTestResult,
 )
 
 
@@ -174,8 +177,13 @@ class TestAutocorrelation:
         assert "max_lag" in r.parameters or "lag" in r.parameters
 
     def test_provenance(self):
-        r = autocorrelation([float(i % 5) for i in range(60)], max_lag=4,
-                            dataset_id="D", dataset_version="v", dataset_hash="h")
+        r = autocorrelation(
+            [float(i % 5) for i in range(60)],
+            max_lag=4,
+            dataset_id="D",
+            dataset_version="v",
+            dataset_hash="h",
+        )
         assert r.provenance.computation_method == "autocorrelation"
 
 
@@ -321,8 +329,9 @@ class TestResidualDiagnostics:
         assert r.jarque_bera >= 0
 
     def test_provenance(self):
-        r = residual_diagnostics([float(i % 2) for i in range(50)],
-                                 dataset_id="D", dataset_version="v", dataset_hash="h")
+        r = residual_diagnostics(
+            [float(i % 2) for i in range(50)], dataset_id="D", dataset_version="v", dataset_hash="h"
+        )
         assert r.provenance.computation_method == "residual_diagnostics"
 
 
@@ -467,8 +476,9 @@ class TestProvenance:
         assert r.provenance.parameters == {"n_predictors": 2, "add_intercept": True}
 
     def test_statistics_provenance(self):
-        r = augmented_dickey_fuller([float(i) for i in range(100)],
-                                    dataset_id="D", dataset_version="v1", dataset_hash="H")
+        r = augmented_dickey_fuller(
+            [float(i) for i in range(100)], dataset_id="D", dataset_version="v1", dataset_hash="H"
+        )
         assert r.provenance.dataset_id == "D"
         assert r.provenance.computation_method == "augmented_dickey_fuller"
         assert r.provenance.method_version == "ecm/adf/v1"

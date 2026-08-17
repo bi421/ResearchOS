@@ -1,12 +1,11 @@
-﻿"""
+"""
 Tests for Process Layer objects.
 
 Based on Article XVII: Object Model â€” Process Layer.
 Covers: ResearchCycle, ReasoningChain, AuditEntry
 """
 
-
-from researchos.objects.process import ResearchCycle, ReasoningChain, AuditEntry
+from researchos.objects.process import AuditEntry, ReasoningChain, ResearchCycle
 
 
 class TestResearchCycle:
@@ -153,8 +152,10 @@ class TestAuditEntry:
 
     def test_audit_entry_with_state(self):
         ae = AuditEntry(
-            "trader", "UPDATE",
-            "hyp_001", "Hypothesis",
+            "trader",
+            "UPDATE",
+            "hyp_001",
+            "Hypothesis",
             before_state="confidence=0.5",
             after_state="confidence=0.7",
         )
@@ -163,8 +164,10 @@ class TestAuditEntry:
 
     def test_audit_entry_with_reasoning_chain(self):
         ae = AuditEntry(
-            "system", "VERIFY",
-            "rc_001", "ReasoningChain",
+            "system",
+            "VERIFY",
+            "rc_001",
+            "ReasoningChain",
             reasoning_chain_id="chain_001",
         )
         assert ae.reasoning_chain_id == "chain_001"
@@ -172,7 +175,10 @@ class TestAuditEntry:
     def test_audit_entry_chain_link(self):
         ae1 = AuditEntry("system", "CREATE", "obs_001", "Observation")
         ae2 = AuditEntry(
-            "system", "UPDATE", "obs_001", "Observation",
+            "system",
+            "UPDATE",
+            "obs_001",
+            "Observation",
             previous_entry=ae1.entry_hash,  # both empty until save
         )
         assert ae2.previous_entry == ae1.entry_hash  # both ""
@@ -184,7 +190,10 @@ class TestAuditEntry:
     def test_chain_integrity_valid(self):
         AuditEntry("system", "CREATE", "obs_001", "Observation")
         ae2 = AuditEntry(
-            "system", "UPDATE", "obs_001", "Observation",
+            "system",
+            "UPDATE",
+            "obs_001",
+            "Observation",
             previous_entry="valid_hash_placeholder",
         )
         assert ae2.is_chain_intact("valid_hash_placeholder") is True
@@ -192,7 +201,10 @@ class TestAuditEntry:
     def test_chain_integrity_invalid(self):
         AuditEntry("system", "CREATE", "obs_001", "Observation")
         ae2 = AuditEntry(
-            "system", "UPDATE", "obs_001", "Observation",
+            "system",
+            "UPDATE",
+            "obs_001",
+            "Observation",
             previous_entry="expected_hash",
         )
         assert ae2.is_chain_intact("wrong_hash") is False
@@ -211,4 +223,3 @@ class TestAuditEntry:
         original_hash = ae.entry_hash
         d = ae.to_dict()
         assert d["entry_hash"] == original_hash  # both empty until save
-

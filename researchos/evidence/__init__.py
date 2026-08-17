@@ -17,6 +17,14 @@ Constraints honored:
 This is a certification/trust layer only — it computes no trading decisions.
 """
 
+from researchos.evidence.dataset_emission import (
+    DATASET_ARTIFACT_TYPE,
+    DATASET_EVIDENCE_VERSION,
+    build_dataset_envelope,
+    emit_dataset,
+    make_dataset_envelope_from_payload,
+    research_dataset_payload,
+)
 from researchos.evidence.envelope import (
     ARTIFACT_TYPES,
     ARTIFACT_TYPES_TUPLE,
@@ -25,14 +33,6 @@ from researchos.evidence.envelope import (
     build_envelope,
     compute_artifact_hash,
     compute_lineage_hash,
-)
-from researchos.evidence.dataset_emission import (
-    DATASET_ARTIFACT_TYPE,
-    DATASET_EVIDENCE_VERSION,
-    build_dataset_envelope,
-    emit_dataset,
-    make_dataset_envelope_from_payload,
-    research_dataset_payload,
 )
 from researchos.evidence.experiment_emission import (
     EXPERIMENT_ARTIFACT_TYPE,
@@ -43,16 +43,7 @@ from researchos.evidence.experiment_emission import (
     emit_experiment_with_dataset,
     experiment_payload,
 )
-from researchos.evidence.run_emission import (
-    EXPERIMENT_TO_RUN_RELATION,
-    RUN_ARTIFACT_TYPE,
-    RUN_EVIDENCE_VERSION,
-    attach_experiment_parent,
-    build_run_envelope,
-    emit_run,
-    emit_run_for_experiment,
-    run_payload,
-)
+from researchos.evidence.repository import EvidenceRepository
 from researchos.evidence.result_emission import (
     RESULT_ARTIFACT_TYPE,
     RESULT_EVIDENCE_VERSION,
@@ -62,6 +53,16 @@ from researchos.evidence.result_emission import (
     emit_result,
     emit_result_for_run,
     result_payload,
+)
+from researchos.evidence.run_emission import (
+    EXPERIMENT_TO_RUN_RELATION,
+    RUN_ARTIFACT_TYPE,
+    RUN_EVIDENCE_VERSION,
+    attach_experiment_parent,
+    build_run_envelope,
+    emit_run,
+    emit_run_for_experiment,
+    run_payload,
 )
 from researchos.evidence.validation_emission import (
     RESULT_TO_VALIDATION_RELATION,
@@ -74,7 +75,6 @@ from researchos.evidence.validation_emission import (
     validation_hash,
     validation_payload,
 )
-from researchos.evidence.repository import EvidenceRepository
 
 __all__ = [
     "ARTIFACT_TYPES",

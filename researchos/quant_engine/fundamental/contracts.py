@@ -160,8 +160,7 @@ class MacroFactorModel:
 
     def predict(self, features: Dict[str, float]) -> float:
         return self.intercept + sum(
-            self.coefficients[k] * features.get(k, 0.0)
-            for k in self.coefficients
+            self.coefficients[k] * features.get(k, 0.0) for k in self.coefficients
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -171,4 +170,3 @@ class MacroFactorModel:
             "intercept": self.intercept,
             "r_squared": self.r_squared,
         }
-

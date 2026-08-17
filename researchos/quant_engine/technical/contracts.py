@@ -82,12 +82,9 @@ class Bars:
 
     def validate(self) -> None:
         """Validate that all series have equal length."""
-        lengths = {len(self.open), len(self.high), len(self.low),
-                   len(self.close), len(self.volume)}
+        lengths = {len(self.open), len(self.high), len(self.low), len(self.close), len(self.volume)}
         if len(lengths) > 1:
-            raise ValueError(
-                f"All OHLCV series must have equal length, got {lengths}"
-            )
+            raise ValueError(f"All OHLCV series must have equal length, got {lengths}")
 
 
 @dataclass(frozen=True)
@@ -163,4 +160,3 @@ class IndicatorBatch:
             "bar_count": self.bar_count,
             "computation_version": self.computation_version,
         }
-

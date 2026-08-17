@@ -13,12 +13,12 @@ from datetime import datetime, timezone
 
 import pytest
 
-from researchos.repository.memory import MemoryRepository
-from researchos.pipeline import ResearchPipeline, ReferenceValidator
-from researchos.objects.observation import Observation
 from researchos.objects.evidence import Evidence
-from researchos.objects.research import Research
+from researchos.objects.observation import Observation
 from researchos.objects.process import AuditEntry
+from researchos.objects.research import Research
+from researchos.pipeline import ReferenceValidator, ResearchPipeline
+from researchos.repository.memory import MemoryRepository
 
 
 @pytest.fixture
@@ -40,7 +40,9 @@ class TestReferenceValidator:
 
     def test_exists_returns_true_for_saved(self, repo):
         v = ReferenceValidator(repo)
-        obj = Observation(source="T", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc), value=1.0)
+        obj = Observation(
+            source="T", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc), value=1.0
+        )
         repo.save(obj)
         assert v.exists(obj.id)
 
@@ -51,13 +53,17 @@ class TestReferenceValidator:
 
     def test_require_exists_returns_id_for_found(self, repo):
         v = ReferenceValidator(repo)
-        obj = Observation(source="T", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc), value=1.0)
+        obj = Observation(
+            source="T", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc), value=1.0
+        )
         repo.save(obj)
         assert v.require_exists(obj.id, "Observation") == obj.id
 
     def test_require_all_exist_raises_for_any_missing(self, repo):
         v = ReferenceValidator(repo)
-        obj = Observation(source="T", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc), value=1.0)
+        obj = Observation(
+            source="T", timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc), value=1.0
+        )
         repo.save(obj)
         with pytest.raises(ValueError, match="not found in repository"):
             v.require_all_exist([obj.id, "bad-id"], "Evidence")
@@ -238,8 +244,10 @@ class TestPipelineEndToEnd:
         obs = pipeline.add_observation(research.id, "T", self._ts(), 1.0)
         hyp = pipeline.create_hypothesis(research.id, "Primary", "Test")
         pipeline.create_evidence(
-            observation_id=obs.id, hypothesis_id=hyp.id,
-            interpretation="test", research_id=research.id,
+            observation_id=obs.id,
+            hypothesis_id=hyp.id,
+            interpretation="test",
+            research_id=research.id,
         )
 
         # Verify registry exists
@@ -277,6 +285,7 @@ class TestSqlitePipeline:
     def sqlite_repo(self, tmp_path):
         db_path = str(tmp_path / "test_researchos.db")
         from researchos.storage.repository import ResearchRepository
+
         repo = ResearchRepository(db_path)
         return repo
 
@@ -286,7 +295,9 @@ class TestSqlitePipeline:
         research = pipeline.start_research("Test Q", "Daily", "US")
         assert sqlite_repo.get(research.id) is not None
 
-        obs = pipeline.add_observation(research.id, "MACRO:CPI", datetime(2024, 6, 1, tzinfo=timezone.utc), 3.2)
+        obs = pipeline.add_observation(
+            research.id, "MACRO:CPI", datetime(2024, 6, 1, tzinfo=timezone.utc), 3.2
+        )
         hyp = pipeline.create_hypothesis(research.id, "Primary", "Test")
         ev = pipeline.create_evidence(obs.id, hyp.id, "test", research_id=research.id)
         pipeline.create_scenario(research.id, hyp.id, "Base", "Test", 0.5)
@@ -294,7 +305,9 @@ class TestSqlitePipeline:
         pipeline.detect_contradiction(research.id, "Internal", "test", sides=[])
         report = pipeline.generate_report(research.id, "Report", "Summary")
         pipeline.validate_research(research.id, report.id, "Accurate", 0.8)
-        pipeline.extract_knowledge("Relationship_Strength", "CPI", "impacts", "Fed", 0.7, source_references=[research.id])
+        pipeline.extract_knowledge(
+            "Relationship_Strength", "CPI", "impacts", "Fed", 0.7, source_references=[research.id]
+        )
         pipeline.assess_cognitive("trader-1", research.id, 0.8, 0.7)
 
         # All objects present
@@ -347,8 +360,10 @@ class TestSqlitePipeline:
         from researchos.objects.process import AuditEntry
 
         entry = AuditEntry(
-            actor="system", action="TEST",
-            object_id="obj1", object_type="Test",
+            actor="system",
+            action="TEST",
+            object_id="obj1",
+            object_type="Test",
             reasoning_chain_id="chain-123",
             ontology_tags=["tag1", "tag2"],
         )
@@ -359,7 +374,9 @@ class TestSqlitePipeline:
         """Objects survive save → load → rehydration with SQLite."""
         pipeline = ResearchPipeline(sqlite_repo)
         research = pipeline.start_research("Test Q")
-        obs = pipeline.add_observation(research.id, "MACRO:CPI", datetime(2024, 6, 1, tzinfo=timezone.utc), 3.2)
+        obs = pipeline.add_observation(
+            research.id, "MACRO:CPI", datetime(2024, 6, 1, tzinfo=timezone.utc), 3.2
+        )
 
         loaded = sqlite_repo.load_object(obs.id)
         assert loaded is not None
@@ -373,6 +390,7 @@ class TestSqlitePipeline:
         r1 = pipeline1.start_research("Identical Q", "Daily", "US")
 
         from researchos.storage.repository import ResearchRepository
+
         repo2 = ResearchRepository(sqlite_repo.db_path + ".2")
         pipeline2 = ResearchPipeline(repo2)
         r2 = pipeline2.start_research("Identical Q", "Daily", "US")

@@ -3,13 +3,14 @@ ResearchOS Macro Intelligence Layer - Architecture Audit & Consolidation
 Static analysis tool (read-only). Produces audit reports for the audit phase.
 This is a verification utility, NOT part of the MIL runtime.
 """
+
 import ast
+import json
 import os
 import re
-import json
 from collections import defaultdict
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MIL = os.path.join(ROOT, "macro_intelligence")
 
 # Layer tiers in dependency order (lower -> higher)
@@ -33,16 +34,18 @@ TIERS = [
 # Top-level module -> tier rank
 TIER_INDEX = {name: i for i, name in enumerate(TIERS)}
 # aliases
-TIER_INDEX.update({
-    "features": 6,
-    "statistics": 7,
-    "econometrics": 8,
-    "relationships": 9,
-    "regime": 10,
-    "knowledge": 11,
-    "storage": 12,
-    "audit": 13,
-})
+TIER_INDEX.update(
+    {
+        "features": 6,
+        "statistics": 7,
+        "econometrics": 8,
+        "relationships": 9,
+        "regime": 10,
+        "knowledge": 11,
+        "storage": 12,
+        "audit": 13,
+    }
+)
 
 FORBIDDEN_ROOT = [
     "researchos",  # V1 core
@@ -159,15 +162,33 @@ def immutability_audit():
                                 if kw.arg == "frozen" and isinstance(kw.value, ast.Constant):
                                     frozen = kw.value.value
                             if not frozen:
-                                findings.append(("NON_FROZEN_DATACLASS", get_module_name(path), node.name))
+                                findings.append(
+                                    ("NON_FROZEN_DATACLASS", get_module_name(path), node.name)
+                                )
                 # Mutable defaults in dataclass fields
                 if isinstance(node, ast.ClassDef):
                     for stmt in node.body:
                         if isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
                             # check for default_factory or mutable literal
                             v = stmt.value
-                            if isinstance(v, ast.List) or isinstance(v, ast.Dict) or isinstance(v, ast.Set):
-                                findings.append(("MUTABLE_DEFAULT", get_module_name(path), node.name + "." + (stmt.target.id if isinstance(stmt.target, ast.Name) else "?")))
+                            if (
+                                isinstance(v, ast.List)
+                                or isinstance(v, ast.Dict)
+                                or isinstance(v, ast.Set)
+                            ):
+                                findings.append(
+                                    (
+                                        "MUTABLE_DEFAULT",
+                                        get_module_name(path),
+                                        node.name
+                                        + "."
+                                        + (
+                                            stmt.target.id
+                                            if isinstance(stmt.target, ast.Name)
+                                            else "?"
+                                        ),
+                                    )
+                                )
     return findings
 
 
@@ -195,7 +216,13 @@ def determinism_audit():
                             else:
                                 name = ""
                             if name in ("random", "uuid4", "randint", "utcnow", "now", "secrets"):
-                                findings.append(("HASH_RUNTIME_RANDOM", get_module_name(path), node.name + " -> " + name))
+                                findings.append(
+                                    (
+                                        "HASH_RUNTIME_RANDOM",
+                                        get_module_name(path),
+                                        node.name + " -> " + name,
+                                    )
+                                )
     return findings
 
 
@@ -227,7 +254,9 @@ def provenance_audit():
 def version_audit():
     """Collect version constants."""
     versions = []
-    pat = re.compile(r"(VERSION|ALGORITHM_VERSION|RULES_VERSION|_VERSION)\s*=\s*[\"']([^\"']+)[\"']")
+    pat = re.compile(
+        r"(VERSION|ALGORITHM_VERSION|RULES_VERSION|_VERSION)\s*=\s*[\"']([^\"']+)[\"']"
+    )
     for r, _, fs in os.walk(MIL):
         for f in fs:
             if not f.endswith(".py"):
@@ -252,9 +281,22 @@ def duplicate_stat_audit():
       module).
     """
     stat_funcs = [
-        "mean", "median", "std", "variance", "var",
-        "pearson", "spearman", "regression", "cusum", "rolling", "ema",
-        "moving_average", "trend", "zscore", "z_score", "volatility",
+        "mean",
+        "median",
+        "std",
+        "variance",
+        "var",
+        "pearson",
+        "spearman",
+        "regression",
+        "cusum",
+        "rolling",
+        "ema",
+        "moving_average",
+        "trend",
+        "zscore",
+        "z_score",
+        "volatility",
     ]
     owners = defaultdict(list)
     for r, _, fs in os.walk(MIL):
@@ -284,16 +326,27 @@ def duplicate_stat_audit():
                     has_math = False
                     for stmt in node.body:
                         for sub in ast.walk(stmt):
-                            if isinstance(sub, ast.BinOp) and isinstance(sub.op, (
-                                ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
-                            )):
+                            if isinstance(sub, ast.BinOp) and isinstance(
+                                sub.op,
+                                (
+                                    ast.Add,
+                                    ast.Sub,
+                                    ast.Mult,
+                                    ast.Div,
+                                    ast.Pow,
+                                    ast.Mod,
+                                ),
+                            ):
                                 has_math = True
                                 break
                             if isinstance(sub, (ast.For, ast.While)):
                                 has_math = True
                                 break
-                            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) \
-                                    and sub.func.attr in ("sqrt", "exp", "log", "pow"):
+                            if (
+                                isinstance(sub, ast.Call)
+                                and isinstance(sub.func, ast.Attribute)
+                                and sub.func.attr in ("sqrt", "exp", "log", "pow")
+                            ):
                                 has_math = True
                                 break
                     if has_math:

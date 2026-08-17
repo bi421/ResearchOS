@@ -23,7 +23,7 @@ from typing import Dict, List, Optional, Set, TypeVar
 
 from researchos.market_memory.models import (
     HistoricalScenario,
-    MacroState,
+    MacroContextSnapshot,
     MarketRegime,
     MarketSnapshot,
 )
@@ -47,7 +47,7 @@ class MarketMemoryRepository:
     def __init__(self, sqlite_path: Optional[str] = None):
         self.snapshots: MemoryRepository[MarketSnapshot] = MemoryRepository()
         self.regimes: MemoryRepository[MarketRegime] = MemoryRepository()
-        self.macro_states: MemoryRepository[MacroState] = MemoryRepository()
+        self.macro_states: MemoryRepository[MacroContextSnapshot] = MemoryRepository()
         self.scenarios: MemoryRepository[HistoricalScenario] = MemoryRepository()
         self.dataset_sources: Set[str] = set()
 
@@ -121,7 +121,7 @@ class MarketMemoryRepository:
             obj = MarketRegime.from_dict(data)
             self.regimes.save(obj)
         for data in self._load_from_sqlite("MacroState"):
-            obj = MacroState.from_dict(data)
+            obj = MacroContextSnapshot.from_dict(data)
             self.macro_states.save(obj)
         for data in self._load_from_sqlite("HistoricalScenario"):
             obj = HistoricalScenario.from_dict(data)
@@ -149,14 +149,9 @@ class MarketMemoryRepository:
         """Get a market snapshot by ID."""
         return self.snapshots.get(id)
 
-    def get_snapshots_by_asset(
-        self, asset: str, limit: int = 100
-    ) -> List[MarketSnapshot]:
+    def get_snapshots_by_asset(self, asset: str, limit: int = 100) -> List[MarketSnapshot]:
         """Get snapshots for a specific asset, newest first."""
-        results = [
-            s for s in self.snapshots.get_all()
-            if s.asset == asset
-        ]
+        results = [s for s in self.snapshots.get_all() if s.asset == asset]
         results.sort(key=lambda s: s.timestamp, reverse=True)
         return results[:limit]
 
@@ -168,9 +163,7 @@ class MarketMemoryRepository:
     ) -> List[MarketSnapshot]:
         """Get snapshots for an asset within a time range."""
         return [
-            s for s in self.snapshots.get_all()
-            if s.asset == asset
-            and start <= s.timestamp <= end
+            s for s in self.snapshots.get_all() if s.asset == asset and start <= s.timestamp <= end
         ]
 
     # -------------------------------------------------------------------------
@@ -189,10 +182,7 @@ class MarketMemoryRepository:
 
     def get_regimes_by_asset(self, asset: str) -> List[MarketRegime]:
         """Get all regimes for a specific asset."""
-        results = [
-            r for r in self.regimes.get_all()
-            if r.asset == asset
-        ]
+        results = [r for r in self.regimes.get_all() if r.asset == asset]
         results.sort(key=lambda r: r.timestamp, reverse=True)
         return results
 
@@ -200,24 +190,24 @@ class MarketMemoryRepository:
     # Macro state operations
     # -------------------------------------------------------------------------
 
-    def save_macro_state(self, state: MacroState) -> MacroState:
+    def save_macro_state(self, state: MacroContextSnapshot) -> MacroContextSnapshot:
         """Save a macro state snapshot."""
         self.macro_states.save(state)
         self._save_to_sqlite(state, "MacroState")
         return state
 
-    def get_macro_state(self, id: str) -> Optional[MacroState]:
+    def get_macro_state(self, id: str) -> Optional[MacroContextSnapshot]:
         """Get a macro state by ID."""
         return self.macro_states.get(id)
 
     def get_macro_states_in_range(
         self, geography: str, start: datetime, end: datetime
-    ) -> List[MacroState]:
+    ) -> List[MacroContextSnapshot]:
         """Get macro states for a geography within a time range."""
         return [
-            m for m in self.macro_states.get_all()
-            if m.geography == geography
-            and start <= m.timestamp <= end
+            m
+            for m in self.macro_states.get_all()
+            if m.geography == geography and start <= m.timestamp <= end
         ]
 
     # -------------------------------------------------------------------------
@@ -238,24 +228,15 @@ class MarketMemoryRepository:
 
     def find_scenarios_by_tag(self, tag: str) -> List[HistoricalScenario]:
         """Find scenarios by tag (searches the scenario's `tags` attribute)."""
-        return [
-            s for s in self.scenarios.get_all()
-            if tag in s.tags
-        ]
+        return [s for s in self.scenarios.get_all() if tag in s.tags]
 
     def find_scenarios_by_outcome(self, outcome: str) -> List[HistoricalScenario]:
         """Find scenarios by outcome description."""
-        return [
-            s for s in self.scenarios.get_all()
-            if outcome.lower() in s.outcome.lower()
-        ]
+        return [s for s in self.scenarios.get_all() if outcome.lower() in s.outcome.lower()]
 
     def find_scenarios_by_dataset(self, dataset_source: str) -> List[HistoricalScenario]:
         """Find scenarios by dataset source."""
-        return [
-            s for s in self.scenarios.get_all()
-            if s.dataset_source == dataset_source
-        ]
+        return [s for s in self.scenarios.get_all() if s.dataset_source == dataset_source]
 
     def get_all_scenarios(self) -> List[HistoricalScenario]:
         """Get all scenarios."""
@@ -292,4 +273,3 @@ class MarketMemoryRepository:
         if self._sqlite_conn:
             self._sqlite_conn.execute("DELETE FROM market_memory_objects")
             self._sqlite_conn.commit()
-

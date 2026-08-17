@@ -126,19 +126,21 @@ class Observation(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "source": self.source,
-            "timestamp": self.timestamp.isoformat(),
-            "value": self.value,
-            "unit": self.unit,
-            "frequency": self.frequency,
-            "geography": self.geography,
-            "asset_class": self.asset_class,
-            "quality_flags": self.quality_flags,
-            "retrieval_time": self.retrieval_time.isoformat(),
-            "retrieval_method": self.retrieval_method,
-            "validated": self.validated,
-        })
+        base.update(
+            {
+                "source": self.source,
+                "timestamp": self.timestamp.isoformat(),
+                "value": self.value,
+                "unit": self.unit,
+                "frequency": self.frequency,
+                "geography": self.geography,
+                "asset_class": self.asset_class,
+                "quality_flags": self.quality_flags,
+                "retrieval_time": self.retrieval_time.isoformat(),
+                "retrieval_method": self.retrieval_method,
+                "validated": self.validated,
+            }
+        )
         return base
 
     @classmethod
@@ -152,7 +154,9 @@ class Observation(BaseObject):
         obj.geography = data.get("geography", "")
         obj.asset_class = data.get("asset_class", "")
         obj.quality_flags = list(data.get("quality_flags", []))
-        obj.retrieval_time = parse_timestamp(data["retrieval_time"]) if data.get("retrieval_time") else None
+        obj.retrieval_time = (
+            parse_timestamp(data["retrieval_time"]) if data.get("retrieval_time") else None
+        )
         obj.retrieval_method = data.get("retrieval_method", "")
         obj.validated = data.get("validated", False)
         return obj
@@ -203,17 +207,19 @@ class MarketState(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "asset": self.asset,
-            "regime": self.regime,
-            "trend": self.trend,
-            "volatility": self.volatility,
-            "liquidity": self.liquidity,
-            "sentiment": self.sentiment,
-            "observations": self.observations,
-            "confidence": self.confidence,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "asset": self.asset,
+                "regime": self.regime,
+                "trend": self.trend,
+                "volatility": self.volatility,
+                "liquidity": self.liquidity,
+                "sentiment": self.sentiment,
+                "observations": self.observations,
+                "confidence": self.confidence,
+            }
+        )
         return base
 
     @classmethod
@@ -290,17 +296,19 @@ class MacroState(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "geography": self.geography,
-            "regime": self.regime,
-            "inflation": self.inflation,
-            "growth": self.growth,
-            "policy_stance": self.policy_stance,
-            "risk_factors": self.risk_factors,
-            "observations": self.observations,
-            "confidence": self.confidence,
-        })
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "geography": self.geography,
+                "regime": self.regime,
+                "inflation": self.inflation,
+                "growth": self.growth,
+                "policy_stance": self.policy_stance,
+                "risk_factors": self.risk_factors,
+                "observations": self.observations,
+                "confidence": self.confidence,
+            }
+        )
         return base
 
     @classmethod

@@ -178,27 +178,37 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> Dict[str, Any]:
         if self._cpp_adapter is not None:
-            return self._cpp_adapter.calculate_performance_analytics(
-                returns, calculation_version
-            )
+            return self._cpp_adapter.calculate_performance_analytics(returns, calculation_version)
         return self._python.calculate_performance_analytics(returns, calculation_version)
 
     # ── Research analytical ops (deterministic Python reference; C++ not yet certified) ──
 
     def research_technical(self, bars: Any, specs: Sequence[Any], **params: Any) -> ResearchResult:
-        return self._delegate("research_technical", "technical", self._python.research_technical(bars, specs, **params), dict(params))
+        return self._delegate(
+            "research_technical",
+            "technical",
+            self._python.research_technical(bars, specs, **params),
+            dict(params),
+        )
 
     def research_probabilistic_fit(
         self, samples: Sequence[float], distribution: str, **params: Any
     ) -> ResearchResult:
         result = self._python.research_probabilistic_fit(samples, distribution, **params)
-        return self._delegate("research_probabilistic_fit", "probability", result, dict(params, distribution=distribution))
+        return self._delegate(
+            "research_probabilistic_fit",
+            "probability",
+            result,
+            dict(params, distribution=distribution),
+        )
 
     def research_probabilistic_hypothesis(
         self, samples: Sequence[float], test: str, **params: Any
     ) -> ResearchResult:
         result = self._python.research_probabilistic_hypothesis(samples, test, **params)
-        return self._delegate("research_probabilistic_hypothesis", "probability", result, dict(params, test=test))
+        return self._delegate(
+            "research_probabilistic_hypothesis", "probability", result, dict(params, test=test)
+        )
 
     def research_portfolio_metrics(
         self,
@@ -213,17 +223,23 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
         self, returns: Sequence[float], metric: str, **params: Any
     ) -> ResearchResult:
         result = self._python.research_historical(returns, metric, **params)
-        return self._delegate("research_historical", "historical", result, dict(params, metric=metric))
+        return self._delegate(
+            "research_historical", "historical", result, dict(params, metric=metric)
+        )
 
     def research_fundamental(self, analytics: str, inputs: Any, **params: Any) -> ResearchResult:
         result = self._python.research_fundamental(analytics, inputs, **params)
-        return self._delegate("research_fundamental", "fundamental", result, dict(params, analytics=analytics))
+        return self._delegate(
+            "research_fundamental", "fundamental", result, dict(params, analytics=analytics)
+        )
 
     def research_econometric_analysis(
         self, values: Sequence[float], model: str, **params: Any
     ) -> ResearchResult:
         result = self._python.research_econometric_analysis(values, model, **params)
-        return self._delegate("research_econometric_analysis", "econometrics", result, dict(params, model=model))
+        return self._delegate(
+            "research_econometric_analysis", "econometrics", result, dict(params, model=model)
+        )
 
     def research_validation(
         self,
@@ -240,7 +256,12 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
             "research_validation",
             "validation",
             result,
-            dict(params, train_size=int(train_size), validation_size=int(validation_size), step_size=int(step_size)),
+            dict(
+                params,
+                train_size=int(train_size),
+                validation_size=int(validation_size),
+                step_size=int(step_size),
+            ),
         )
 
     # ── internal ────────────────────────────────────────────────────────

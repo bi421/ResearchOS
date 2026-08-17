@@ -197,26 +197,28 @@ class DecisionContext(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "asset": self.asset,
-            "market_snapshot_id": self.market_snapshot_id,
-            "market_regime_id": self.market_regime_id,
-            "macro_state_id": self.macro_state_id,
-            "historical_scenario_ids": self.historical_scenario_ids,
-            "experiment_result_ids": self.experiment_result_ids,
-            "validation_ids": self.validation_ids,
-            "research_ids": self.research_ids,
-            "market_memory_report_ids": self.market_memory_report_ids,
-            "simulation_result_ids": self.simulation_result_ids,
-            "reasoning_chain_id": self.reasoning_chain_id,
-            "audit_entry_id": self.audit_entry_id,
-            "symbol": self.symbol,
-            "timeframe": self.timeframe,
-            "decision_timestamp": self.decision_timestamp.isoformat(),
-            "dataset_version": self.dataset_version,
-            "calculation_version": self.calculation_version,
-            "context_version": self.context_version,
-        })
+        base.update(
+            {
+                "asset": self.asset,
+                "market_snapshot_id": self.market_snapshot_id,
+                "market_regime_id": self.market_regime_id,
+                "macro_state_id": self.macro_state_id,
+                "historical_scenario_ids": self.historical_scenario_ids,
+                "experiment_result_ids": self.experiment_result_ids,
+                "validation_ids": self.validation_ids,
+                "research_ids": self.research_ids,
+                "market_memory_report_ids": self.market_memory_report_ids,
+                "simulation_result_ids": self.simulation_result_ids,
+                "reasoning_chain_id": self.reasoning_chain_id,
+                "audit_entry_id": self.audit_entry_id,
+                "symbol": self.symbol,
+                "timeframe": self.timeframe,
+                "decision_timestamp": self.decision_timestamp.isoformat(),
+                "dataset_version": self.dataset_version,
+                "calculation_version": self.calculation_version,
+                "context_version": self.context_version,
+            }
+        )
         return base
 
     @classmethod
@@ -236,7 +238,11 @@ class DecisionContext(BaseObject):
         obj.audit_entry_id = data.get("audit_entry_id", "")
         obj.symbol = data.get("symbol", "")
         obj.timeframe = data.get("timeframe", "")
-        obj.decision_timestamp = parse_timestamp(data["decision_timestamp"]) if data.get("decision_timestamp") else utc_now()
+        obj.decision_timestamp = (
+            parse_timestamp(data["decision_timestamp"])
+            if data.get("decision_timestamp")
+            else utc_now()
+        )
         obj.dataset_version = data.get("dataset_version", "DATASET_V1")
         obj.calculation_version = data.get("calculation_version", "DECISION_V1")
         obj.context_version = data.get("context_version", "CONTEXT_V1")
@@ -343,9 +349,7 @@ class DecisionContextValidator:
                 seen.add(ref_id)
             if duplicates:
                 dup_str = ", ".join(sorted(duplicates))
-                errors.append(
-                    f"Duplicate references found in '{list_name}': {dup_str}"
-                )
+                errors.append(f"Duplicate references found in '{list_name}': {dup_str}")
         return errors
 
     def _check_empty_ids(self, context: DecisionContext) -> List[str]:
@@ -355,9 +359,7 @@ class DecisionContextValidator:
             ids = getattr(context, list_name, [])
             empty_ids = [ref_id for ref_id in ids if not ref_id]
             if empty_ids:
-                errors.append(
-                    f"Empty ID found in '{list_name}' ({len(empty_ids)} occurrence(s))"
-                )
+                errors.append(f"Empty ID found in '{list_name}' ({len(empty_ids)} occurrence(s))")
         return errors
 
     def is_valid(self, context: DecisionContext) -> bool:

@@ -105,19 +105,21 @@ class Tick(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "symbol": self.symbol,
-            "timestamp": self.timestamp.isoformat(),
-            "price": self.price,
-            "volume": self.volume,
-            "side": self.side,
-            "exchange": self.exchange,
-            "conditions": self.conditions,
-            "bid": self.bid,
-            "ask": self.ask,
-            "spread": self.spread,
-            "mid_price": self.mid_price,
-        })
+        base.update(
+            {
+                "symbol": self.symbol,
+                "timestamp": self.timestamp.isoformat(),
+                "price": self.price,
+                "volume": self.volume,
+                "side": self.side,
+                "exchange": self.exchange,
+                "conditions": self.conditions,
+                "bid": self.bid,
+                "ask": self.ask,
+                "spread": self.spread,
+                "mid_price": self.mid_price,
+            }
+        )
         return base
 
     @classmethod
@@ -139,4 +141,3 @@ class Tick(BaseObject):
             f"Tick({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, "
             f"P={self.price:.4f} V={self.volume:.0f} {self.side})"
         )
-

@@ -73,19 +73,25 @@ class DatasetRepository(RepositoryInterface[T]):
 
     def find_by_symbol(self, symbol: str) -> List[T]:
         return [
-            obj for obj in self._store.values()
+            obj
+            for obj in self._store.values()
             if isinstance(obj, HistoricalDataset) and obj.symbol == symbol
         ]
 
     def find_by_timeframe(self, timeframe: str) -> List[T]:
         return [
-            obj for obj in self._store.values()
+            obj
+            for obj in self._store.values()
             if isinstance(obj, HistoricalDataset) and obj.timeframe == timeframe
         ]
 
     def find_by_symbol_and_timeframe(self, symbol: str, timeframe: str) -> Optional[T]:
         for obj in self._store.values():
-            if isinstance(obj, HistoricalDataset) and obj.symbol == symbol and obj.timeframe == timeframe:
+            if (
+                isinstance(obj, HistoricalDataset)
+                and obj.symbol == symbol
+                and obj.timeframe == timeframe
+            ):
                 return obj
         return None
 
@@ -193,11 +199,21 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                 )
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_symbol ON datasets(symbol)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_timeframe ON datasets(timeframe)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_symbol_timeframe ON datasets(symbol, timeframe)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_symbol_timeframe ON dataset_metadata(symbol, timeframe)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_start_time ON dataset_metadata(start_time)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_end_time ON dataset_metadata(end_time)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_datasets_timeframe ON datasets(timeframe)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_datasets_symbol_timeframe ON datasets(symbol, timeframe)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_metadata_symbol_timeframe ON dataset_metadata(symbol, timeframe)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_metadata_start_time ON dataset_metadata(start_time)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_metadata_end_time ON dataset_metadata(end_time)"
+            )
             conn.commit()
         finally:
             conn.close()
@@ -220,14 +236,18 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                         spread REAL, tick_volume REAL, real_volume REAL
                     )
                 """)
-                cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)")
+                cursor.execute(
+                    f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)"
+                )
             else:
                 cursor.execute(f"""
                     CREATE TABLE IF NOT EXISTS {table_name} (
                         id TEXT PRIMARY KEY, timestamp TEXT NOT NULL, data TEXT NOT NULL
                     )
                 """)
-                cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)")
+                cursor.execute(
+                    f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)"
+                )
             conn.commit()
         finally:
             conn.close()
@@ -246,23 +266,33 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO datasets
                 (id, symbol, timeframe, data_type, source, quality, status,
                  record_count, start_time, end_time, dataset_hash,
                  dataset_content_hash, version, tags, ontology_tags, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                dataset.id, dataset.symbol, dataset.timeframe, dataset.data_type,
-                dataset.source, dataset.quality.value, dataset.status.value,
-                dataset.record_count,
-                dataset.start_time.isoformat() if dataset.start_time else None,
-                dataset.end_time.isoformat() if dataset.end_time else None,
-                dataset.dataset_hash, dataset.dataset_content_hash,
-                dataset.version,
-                json.dumps(dataset.tags), json.dumps(dataset.ontology_tags),
-                dataset.created_at.isoformat(),
-            ))
+            """,
+                (
+                    dataset.id,
+                    dataset.symbol,
+                    dataset.timeframe,
+                    dataset.data_type,
+                    dataset.source,
+                    dataset.quality.value,
+                    dataset.status.value,
+                    dataset.record_count,
+                    dataset.start_time.isoformat() if dataset.start_time else None,
+                    dataset.end_time.isoformat() if dataset.end_time else None,
+                    dataset.dataset_hash,
+                    dataset.dataset_content_hash,
+                    dataset.version,
+                    json.dumps(dataset.tags),
+                    json.dumps(dataset.ontology_tags),
+                    dataset.created_at.isoformat(),
+                ),
+            )
             conn.commit()
         finally:
             conn.close()
@@ -278,14 +308,25 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
             rows: List[Any] = []
             for record in dataset._records:
                 if isinstance(record, Candle):
-                    rows.append((
-                        record.id, record.symbol, record.timeframe,
-                        record.timestamp.isoformat(), record.open, record.high,
-                        record.low, record.close, record.volume,
-                        record.quote_volume, record.trades_count,
-                        1 if record.is_complete else 0,
-                        record.spread, record.tick_volume, record.real_volume,
-                    ))
+                    rows.append(
+                        (
+                            record.id,
+                            record.symbol,
+                            record.timeframe,
+                            record.timestamp.isoformat(),
+                            record.open,
+                            record.high,
+                            record.low,
+                            record.close,
+                            record.volume,
+                            record.quote_volume,
+                            record.trades_count,
+                            1 if record.is_complete else 0,
+                            record.spread,
+                            record.tick_volume,
+                            record.real_volume,
+                        )
+                    )
             if rows:
                 cursor.executemany(
                     f"""
@@ -305,23 +346,36 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO dataset_metadata
                 (id, dataset_id, symbol, timeframe, data_type, source, source_file,
                  record_count, start_time, end_time, quality, status, dataset_hash,
                  version, statistics, tags, description, ontology_tags, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                metadata.id, metadata.dataset_id, metadata.symbol, metadata.timeframe,
-                metadata.data_type, metadata.source, metadata.source_file,
-                metadata.record_count,
-                metadata.start_time.isoformat() if metadata.start_time else None,
-                metadata.end_time.isoformat() if metadata.end_time else None,
-                metadata.quality.value, metadata.status.value, metadata.dataset_hash,
-                metadata.version, json.dumps(metadata.statistics),
-                json.dumps(metadata.tags), metadata.description,
-                json.dumps(metadata.ontology_tags), metadata.created_at.isoformat(),
-            ))
+            """,
+                (
+                    metadata.id,
+                    metadata.dataset_id,
+                    metadata.symbol,
+                    metadata.timeframe,
+                    metadata.data_type,
+                    metadata.source,
+                    metadata.source_file,
+                    metadata.record_count,
+                    metadata.start_time.isoformat() if metadata.start_time else None,
+                    metadata.end_time.isoformat() if metadata.end_time else None,
+                    metadata.quality.value,
+                    metadata.status.value,
+                    metadata.dataset_hash,
+                    metadata.version,
+                    json.dumps(metadata.statistics),
+                    json.dumps(metadata.tags),
+                    metadata.description,
+                    json.dumps(metadata.ontology_tags),
+                    metadata.created_at.isoformat(),
+                ),
+            )
             conn.commit()
         finally:
             conn.close()
@@ -335,10 +389,13 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                     id TEXT PRIMARY KEY, object_type TEXT NOT NULL, data TEXT NOT NULL
                 )
             """)
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO generic_objects (id, object_type, data)
                 VALUES (?, ?, ?)
-            """, (obj.id, obj.__class__.__name__, json.dumps(obj.to_dict())))
+            """,
+                (obj.id, obj.__class__.__name__, json.dumps(obj.to_dict())),
+            )
             conn.commit()
         finally:
             conn.close()
@@ -529,14 +586,21 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
             records = []
             for row in rows:
                 record = {
-                    "id": row[0], "symbol": row[1], "timeframe": row[2],
+                    "id": row[0],
+                    "symbol": row[1],
+                    "timeframe": row[2],
                     "timestamp": row[3],
                 }
                 if len(row) > 4:
-                    record.update({
-                        "open": row[4], "high": row[5], "low": row[6],
-                        "close": row[7], "volume": row[8],
-                    })
+                    record.update(
+                        {
+                            "open": row[4],
+                            "high": row[5],
+                            "low": row[6],
+                            "close": row[7],
+                            "volume": row[8],
+                        }
+                    )
                 records.append(record)
             return records
         finally:
@@ -548,8 +612,13 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
     def _row_to_dataset(self, row) -> Optional[HistoricalDataset]:
         try:
             dataset = HistoricalDataset(
-                symbol=row[1], timeframe=row[2], data_type=row[3],
-                source=row[4], quality=row[5], version=row[11], id=row[0],
+                symbol=row[1],
+                timeframe=row[2],
+                data_type=row[3],
+                source=row[4],
+                quality=row[5],
+                version=row[11],
+                id=row[0],
             )
             dataset.status = DatasetStatus(row[6])
             dataset.dataset_hash = row[10] if row[10] else ""
@@ -590,30 +659,31 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
             )
             if not cursor.fetchone():
                 return []
-            cursor.execute(
-                f"SELECT * FROM {table_name} ORDER BY timestamp ASC"
-            )
+            cursor.execute(f"SELECT * FROM {table_name} ORDER BY timestamp ASC")
             rows = cursor.fetchall()
             records: List[Any] = []
             for r in rows:
                 if dataset.data_type == "candle":
                     from researchos.core.timestamp import parse_timestamp
-                    records.append(Candle(
-                        symbol=r[1],
-                        timeframe=r[2],
-                        timestamp=parse_timestamp(r[3]),
-                        open=r[4],
-                        high=r[5],
-                        low=r[6],
-                        close=r[7],
-                        volume=r[8] if len(r) > 8 else 0.0,
-                        quote_volume=r[9] if len(r) > 9 else 0.0,
-                        trades_count=r[10] if len(r) > 10 else 0,
-                        is_complete=bool(r[11]) if len(r) > 11 else True,
-                        spread=r[12] if len(r) > 12 and r[12] is not None else None,
-                        tick_volume=r[13] if len(r) > 13 and r[13] is not None else None,
-                        real_volume=r[14] if len(r) > 14 and r[14] is not None else None,
-                    ))
+
+                    records.append(
+                        Candle(
+                            symbol=r[1],
+                            timeframe=r[2],
+                            timestamp=parse_timestamp(r[3]),
+                            open=r[4],
+                            high=r[5],
+                            low=r[6],
+                            close=r[7],
+                            volume=r[8] if len(r) > 8 else 0.0,
+                            quote_volume=r[9] if len(r) > 9 else 0.0,
+                            trades_count=r[10] if len(r) > 10 else 0,
+                            is_complete=bool(r[11]) if len(r) > 11 else True,
+                            spread=r[12] if len(r) > 12 and r[12] is not None else None,
+                            tick_volume=r[13] if len(r) > 13 and r[13] is not None else None,
+                            real_volume=r[14] if len(r) > 14 and r[14] is not None else None,
+                        )
+                    )
             return records
         finally:
             conn.close()
@@ -621,14 +691,21 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
     def _row_to_metadata(self, row) -> Optional[DatasetMetadata]:
         try:
             meta = DatasetMetadata(
-                dataset_id=row[1], symbol=row[2], timeframe=row[3],
-                data_type=row[4], source=row[5], source_file=row[6],
-                record_count=row[7], quality=row[10], status=row[11],
-                dataset_hash=row[12] if row[12] else "", version=row[13],
+                dataset_id=row[1],
+                symbol=row[2],
+                timeframe=row[3],
+                data_type=row[4],
+                source=row[5],
+                source_file=row[6],
+                record_count=row[7],
+                quality=row[10],
+                status=row[11],
+                dataset_hash=row[12] if row[12] else "",
+                version=row[13],
                 tags=json.loads(row[15]) if row[15] else [],
-                description=row[16] if row[16] else "", id=row[0],
+                description=row[16] if row[16] else "",
+                id=row[0],
             )
             return meta
         except Exception:
             return None
-

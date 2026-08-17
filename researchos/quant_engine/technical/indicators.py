@@ -17,10 +17,10 @@ from typing import Dict, List, Optional
 
 from researchos.quant_engine.technical.contracts import Bars
 
-
 # ──────────────────────────────────────────────
 # Internal helpers (vectorized-style, pure)
 # ──────────────────────────────────────────────
+
 
 def _sma(values: List[float], period: int) -> List[Optional[float]]:
     out: List[Optional[float]] = [None] * len(values)
@@ -108,6 +108,7 @@ def _pad(values: List[float], warmup: int) -> List[Optional[float]]:
 # Trend indicators
 # ──────────────────────────────────────────────
 
+
 def sma(bars: Bars, period: int = 20) -> List[Optional[float]]:
     return _sma(bars.close, period)
 
@@ -181,6 +182,7 @@ def vwma(bars: Bars, period: int = 20) -> List[Optional[float]]:
 # Momentum indicators
 # ──────────────────────────────────────────────
 
+
 def rsi(bars: Bars, period: int = 14) -> List[Optional[float]]:
     """Relative Strength Index (Wilder's smoothing)."""
     length = bars.length
@@ -224,8 +226,8 @@ def stochastic(
         return {"k": raw_k, "d": [None] * length}
 
     for i in range(period - 1, length):
-        highest = max(bars.high[i - period + 1:i + 1])
-        lowest = min(bars.low[i - period + 1:i + 1])
+        highest = max(bars.high[i - period + 1 : i + 1])
+        lowest = min(bars.low[i - period + 1 : i + 1])
         if highest == lowest:
             raw_k[i] = 50.0
         else:
@@ -300,6 +302,7 @@ def momentum(bars: Bars, period: int = 12) -> List[Optional[float]]:
 # Volatility indicators
 # ──────────────────────────────────────────────
 
+
 def atr(bars: Bars, period: int = 14) -> List[Optional[float]]:
     """Average True Range (Wilder's)."""
     tr = _true_range(bars)
@@ -320,7 +323,7 @@ def bollinger_bands(
         m = middle[i]
         if m is None:
             continue
-        window = bars.close[i - period + 1:i + 1]
+        window = bars.close[i - period + 1 : i + 1]
         mean = sum(window) / period
         var = sum((x - mean) ** 2 for x in window) / period
         sd = math.sqrt(var)
@@ -358,8 +361,8 @@ def donchian_channel(
     lower: List[Optional[float]] = [None] * length
     middle: List[Optional[float]] = [None] * length
     for i in range(period - 1, length):
-        window_high = bars.high[i - period + 1:i + 1]
-        window_low = bars.low[i - period + 1:i + 1]
+        window_high = bars.high[i - period + 1 : i + 1]
+        window_low = bars.low[i - period + 1 : i + 1]
         u = max(window_high)
         lower_val = min(window_low)
         upper[i] = u
@@ -371,6 +374,7 @@ def donchian_channel(
 # ──────────────────────────────────────────────
 # Volume indicators
 # ──────────────────────────────────────────────
+
 
 def obv(bars: Bars) -> List[Optional[float]]:
     """On-Balance Volume."""
@@ -488,6 +492,7 @@ def accumulation_distribution(bars: Bars) -> List[Optional[float]]:
 # Trend strength indicators
 # ──────────────────────────────────────────────
 
+
 def dmi(bars: Bars, period: int = 14) -> Dict[str, List[Optional[float]]]:
     """
     Directional Movement Indicators: +DI, -DI, ADX, ADXR.
@@ -559,6 +564,7 @@ def adx(bars: Bars, period: int = 14) -> List[Optional[float]]:
 # MACD family
 # ──────────────────────────────────────────────
 
+
 def macd(
     bars: Bars,
     fast: int = 12,
@@ -600,6 +606,7 @@ def macd(
 # ──────────────────────────────────────────────
 # SuperTrend, Ichimoku Cloud, Parabolic SAR
 # ──────────────────────────────────────────────
+
 
 def supertrend(
     bars: Bars,
@@ -713,8 +720,8 @@ def ichimoku_cloud(
     chikou: List[Optional[float]] = [None] * length
 
     def _hl_mid(start_idx: int, end_idx: int) -> float:
-        h = max(bars.high[start_idx:end_idx + 1])
-        low_val = min(bars.low[start_idx:end_idx + 1])
+        h = max(bars.high[start_idx : end_idx + 1])
+        low_val = min(bars.low[start_idx : end_idx + 1])
         return (h + low_val) / 2.0
 
     for i in range(length):
@@ -813,5 +820,3 @@ def parabolic_sar(
         "psar": psar_out,
         "trend": trend_out,
     }
-
-

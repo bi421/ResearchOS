@@ -19,23 +19,22 @@ Usage:
 See: docs/01_VISION.md through docs/17_OBJECT_MODEL.md
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __status__ = "Phase 0 — Constitutional Foundation"
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import Lifecycle
 from researchos.core.timestamp import utc_now
-
-from researchos.objects.observation import Observation, MarketState, MacroState
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.interpretation import Interpretation, Narrative
-from researchos.objects.hypothesis import Hypothesis, HypothesisSet
-from researchos.objects.scenario import Scenario, ScenarioSet
 from researchos.objects.confidence import Confidence, ConfidenceReport
 from researchos.objects.contradiction import Contradiction, ContradictionReport
-from researchos.objects.knowledge import Knowledge, Pattern, Lesson
-from researchos.objects.research import Research, ResearchReport, ResearchQuestion
+from researchos.objects.evidence import Evidence, EvidenceRegistry
+from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+from researchos.objects.interpretation import Interpretation, Narrative
+from researchos.objects.knowledge import Knowledge, Lesson, Pattern
+from researchos.objects.observation import MacroState, MarketState, Observation
+from researchos.objects.research import Research, ResearchQuestion, ResearchReport
+from researchos.objects.scenario import Scenario, ScenarioSet
 
 __all__ = [
     "BaseObject",

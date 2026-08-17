@@ -75,14 +75,16 @@ class GapDetector:
 
             if delta > tolerance:
                 expected_count = round(delta / expected_seconds) - 1
-                gaps.append({
-                    "start": prev.timestamp.isoformat(),
-                    "end": curr.timestamp.isoformat(),
-                    "gap_seconds": delta,
-                    "expected_seconds": expected_seconds,
-                    "expected_missing": expected_count,
-                    "index": i,
-                })
+                gaps.append(
+                    {
+                        "start": prev.timestamp.isoformat(),
+                        "end": curr.timestamp.isoformat(),
+                        "gap_seconds": delta,
+                        "expected_seconds": expected_seconds,
+                        "expected_missing": expected_count,
+                        "index": i,
+                    }
+                )
 
         return gaps
 
@@ -211,7 +213,7 @@ class OutlierDetector:
         prices = [c.close for c in records]
         mean = sum(prices) / len(prices)
         variance = sum((p - mean) ** 2 for p in prices) / len(prices)
-        std = variance ** 0.5
+        std = variance**0.5
 
         if std == 0:
             return []
@@ -366,4 +368,3 @@ class DatasetValidator:
                 return False
 
         return True
-

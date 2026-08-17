@@ -10,7 +10,7 @@ Based on the ResearchOS constitutional framework:
 Objects:
     - MarketSnapshot: OHLCV + derived features at a point in time
     - MarketRegime: Classified market regime with confidence
-    - MacroState: Macroeconomic conditions snapshot
+    - MacroContextSnapshot: Macroeconomic conditions snapshot
     - HistoricalScenario: Complete market scenario for comparison
 """
 
@@ -109,21 +109,23 @@ class MarketSnapshot(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "asset": self.asset,
-            "timestamp": self.timestamp.isoformat(),
-            "timeframe": self.timeframe,
-            "open": self.open,
-            "high": self.high,
-            "low": self.low,
-            "close": self.close,
-            "volume": self.volume,
-            "volatility": self.volatility,
-            "trend_state": self.trend_state,
-            "market_regime": self.market_regime,
-            "indicators": self.indicators,
-            "confidence": self.confidence,
-        })
+        base.update(
+            {
+                "asset": self.asset,
+                "timestamp": self.timestamp.isoformat(),
+                "timeframe": self.timeframe,
+                "open": self.open,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+                "volume": self.volume,
+                "volatility": self.volatility,
+                "trend_state": self.trend_state,
+                "market_regime": self.market_regime,
+                "indicators": self.indicators,
+                "confidence": self.confidence,
+            }
+        )
         return base
 
     @classmethod
@@ -212,17 +214,19 @@ class MarketRegime(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "regime": self.regime,
-            "asset": self.asset,
-            "timestamp": self.timestamp.isoformat(),
-            "confidence": self.confidence,
-            "snapshot_ids": self.snapshot_ids,
-            "volatility_level": self.volatility_level,
-            "trend_strength": self.trend_strength,
-            "duration_bars": self.duration_bars,
-            "notes": self.notes,
-        })
+        base.update(
+            {
+                "regime": self.regime,
+                "asset": self.asset,
+                "timestamp": self.timestamp.isoformat(),
+                "confidence": self.confidence,
+                "snapshot_ids": self.snapshot_ids,
+                "volatility_level": self.volatility_level,
+                "trend_strength": self.trend_strength,
+                "duration_bars": self.duration_bars,
+                "notes": self.notes,
+            }
+        )
         return base
 
     @classmethod
@@ -240,9 +244,14 @@ class MarketRegime(BaseObject):
         return obj
 
 
-class MacroState(BaseObject):
+class MacroContextSnapshot(BaseObject):
     """
     A snapshot of macroeconomic conditions relevant to trading.
+
+    Renamed from ``MacroState`` (2026-08-17) to end the name collision with
+    ``researchos.objects.observation.MacroState`` registered in the storage
+    OBJECT_REGISTRY — see docs/architecture/OWNERSHIP.md.  Serialization is
+    unchanged: the legacy ``object_type`` string and ID seed are pinned.
 
     Encapsulates:
         - DXY: US Dollar Index value
@@ -315,22 +324,27 @@ class MacroState(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "timestamp": self.timestamp.isoformat(),
-            "geography": self.geography,
-            "dxy": self.dxy,
-            "real_yield": self.real_yield,
-            "cpi": self.cpi,
-            "fed_event": self.fed_event,
-            "nfp": self.nfp,
-            "geopolitical_events": self.geopolitical_events,
-            "overall_assessment": self.overall_assessment,
-            "confidence": self.confidence,
-        })
+        # Legacy serialization pin — object_type stays "MacroState" so that
+        # renamed-class dicts remain byte-identical with stored mirror data.
+        base["object_type"] = "MacroState"
+        base.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "geography": self.geography,
+                "dxy": self.dxy,
+                "real_yield": self.real_yield,
+                "cpi": self.cpi,
+                "fed_event": self.fed_event,
+                "nfp": self.nfp,
+                "geopolitical_events": self.geopolitical_events,
+                "overall_assessment": self.overall_assessment,
+                "confidence": self.confidence,
+            }
+        )
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroState":
+    def from_dict(cls, data: dict) -> "MacroContextSnapshot":
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data["timestamp"])
         obj.geography = data.get("geography", "US")
@@ -345,6 +359,10 @@ class MacroState(BaseObject):
         return obj
 
 
+# Deprecated compatibility alias — canonical name is ``MacroContextSnapshot``.
+MacroState = MacroContextSnapshot
+
+
 class HistoricalScenario(BaseObject):
     """
     A complete historical market scenario for comparison with current conditions.
@@ -352,7 +370,7 @@ class HistoricalScenario(BaseObject):
     Bundles together:
         - A MarketSnapshot or range of snapshots
         - A MarketRegime classification
-        - MacroState context (by reference)
+        - MacroContextSnapshot context (by reference)
         - Outcome information (what happened next)
         - Similarity score for comparison
 
@@ -363,7 +381,7 @@ class HistoricalScenario(BaseObject):
         end_time: When the scenario ended
         snapshot_ids: IDs of related MarketSnapshot objects
         regime_id: ID of the MarketRegime
-        macro_id: ID of the MacroState
+        macro_id: ID of the MacroContextSnapshot
         outcome: What happened after this scenario
         price_outcome: Price change outcome (e.g., "+2.5%")
         volatility_outcome: Volatility change outcome
@@ -438,23 +456,25 @@ class HistoricalScenario(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "name": self.name,
-            "description": self.description,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "snapshot_ids": self.snapshot_ids,
-            "regime_id": self.regime_id,
-            "macro_id": self.macro_id,
-            "outcome": self.outcome,
-            "price_outcome": self.price_outcome,
-            "volatility_outcome": self.volatility_outcome,
-            "max_favorable_movement": self.max_favorable_movement,
-            "max_adverse_movement": self.max_adverse_movement,
-            "tags": self.tags,
-            "dataset_source": self.dataset_source,
-            "similarity_score": self.similarity_score,
-        })
+        base.update(
+            {
+                "name": self.name,
+                "description": self.description,
+                "start_time": self.start_time.isoformat() if self.start_time else None,
+                "end_time": self.end_time.isoformat() if self.end_time else None,
+                "snapshot_ids": self.snapshot_ids,
+                "regime_id": self.regime_id,
+                "macro_id": self.macro_id,
+                "outcome": self.outcome,
+                "price_outcome": self.price_outcome,
+                "volatility_outcome": self.volatility_outcome,
+                "max_favorable_movement": self.max_favorable_movement,
+                "max_adverse_movement": self.max_adverse_movement,
+                "tags": self.tags,
+                "dataset_source": self.dataset_source,
+                "similarity_score": self.similarity_score,
+            }
+        )
         return base
 
     @classmethod

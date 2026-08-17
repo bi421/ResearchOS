@@ -20,7 +20,6 @@ from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 
-
 # Attribution integrity thresholds
 ATTRIBUTION_COMPLETE_THRESHOLD = 0.95
 ATTRIBUTION_PARTIAL_THRESHOLD = 0.50
@@ -170,18 +169,20 @@ class Attribution(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "conclusion_id": self.conclusion_id,
-            "conclusion_type": self.conclusion_type,
-            "reasoning_path": self.reasoning_path,
-            "reasoning_object_ids": self.reasoning_object_ids,
-            "evidence_ids": self.evidence_ids,
-            "observation_ids": self.observation_ids,
-            "confidence": self.confidence,
-            "attribution_trace": self.attribution_trace,
-            "market_memory_ids": self.market_memory_ids,
-            "status": self.status,
-        })
+        base.update(
+            {
+                "conclusion_id": self.conclusion_id,
+                "conclusion_type": self.conclusion_type,
+                "reasoning_path": self.reasoning_path,
+                "reasoning_object_ids": self.reasoning_object_ids,
+                "evidence_ids": self.evidence_ids,
+                "observation_ids": self.observation_ids,
+                "confidence": self.confidence,
+                "attribution_trace": self.attribution_trace,
+                "market_memory_ids": self.market_memory_ids,
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod
@@ -290,10 +291,12 @@ class AttributionGraph(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "attribution_ids": self.attribution_ids,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "attribution_ids": self.attribution_ids,
+            }
+        )
         return base
 
     @classmethod

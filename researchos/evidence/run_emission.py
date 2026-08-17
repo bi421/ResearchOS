@@ -216,14 +216,9 @@ def emit_run(
             verification.
     """
     if envelope.artifact_type != RUN_ARTIFACT_TYPE:
-        raise ValueError(
-            f"emit_run() expects artifact_type='Run', got "
-            f"'{envelope.artifact_type}'"
-        )
+        raise ValueError(f"emit_run() expects artifact_type='Run', got '{envelope.artifact_type}'")
     if not envelope.verify():
-        raise ValueError(
-            f"Run evidence lineage mismatch for {envelope.artifact_hash}"
-        )
+        raise ValueError(f"Run evidence lineage mismatch for {envelope.artifact_hash}")
     repo = repository or EvidenceRepository()
     return repo.append_artifact(envelope)
 

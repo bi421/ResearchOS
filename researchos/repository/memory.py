@@ -51,10 +51,7 @@ class MemoryRepository(RepositoryInterface[T]):
 
     def find_by_tag(self, tag: str) -> List[T]:
         """Find all objects with a specific ontology tag."""
-        return [
-            obj for obj in self._store.values()
-            if tag in obj.ontology_tags
-        ]
+        return [obj for obj in self._store.values() if tag in obj.ontology_tags]
 
     def count(self) -> int:
         """Count the number of objects."""

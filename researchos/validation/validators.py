@@ -12,9 +12,9 @@ from typing import Any, Dict, List, Tuple, Type
 
 from researchos.core.base_object import BaseObject
 from researchos.validation.rules import (
-    validate_observation,
     validate_evidence,
     validate_hypothesis,
+    validate_observation,
     validate_scenario,
 )
 
@@ -129,7 +129,14 @@ class LearningRecordValidator(ObjectValidator):
 class CognitiveAssessmentValidator(ObjectValidator):
     def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         errors: List[str] = []
-        for field in ("knowledge_score", "reasoning_score", "discipline_score", "reflection_score", "learning_progress", "overall_score"):
+        for field in (
+            "knowledge_score",
+            "reasoning_score",
+            "discipline_score",
+            "reflection_score",
+            "learning_progress",
+            "overall_score",
+        ):
             val = data.get(field, 0.0)
             if not (0.0 <= val <= 1.0):
                 errors.append(f"{field} must be between 0.0 and 1.0")

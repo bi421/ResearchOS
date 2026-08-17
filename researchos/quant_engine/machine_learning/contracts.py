@@ -1,4 +1,4 @@
-﻿"""
+"""
 Machine Learning Feature Contracts
 """
 
@@ -8,6 +8,5 @@ from typing import Dict, List
 
 @dataclass(frozen=True)
 class FeatureSet:
-
-    name:str
-    features:Dict[str,List[float]]
+    name: str
+    features: Dict[str, List[float]]

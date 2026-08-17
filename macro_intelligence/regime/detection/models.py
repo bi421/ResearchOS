@@ -13,7 +13,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-
 # =============================================================================
 # Regime Classification Enums (Phase 2)
 # =============================================================================
@@ -21,6 +20,7 @@ from typing import Any
 
 class InflationSignal(Enum):
     """Inflation regime signal output."""
+
     LOW = "low"
     STABLE = "stable"
     RISING = "rising"
@@ -31,6 +31,7 @@ class InflationSignal(Enum):
 
 class GrowthSignal(Enum):
     """Growth regime signal output."""
+
     EXPANSION = "expansion"
     SLOWDOWN = "slowdown"
     CONTRACTION = "contraction"
@@ -39,6 +40,7 @@ class GrowthSignal(Enum):
 
 class MonetarySignal(Enum):
     """Monetary regime signal output."""
+
     HAWKISH = "hawkish"
     NEUTRAL = "neutral"
     DOVISH = "dovish"
@@ -46,6 +48,7 @@ class MonetarySignal(Enum):
 
 class LiquiditySignal(Enum):
     """Liquidity regime signal output."""
+
     EXPANDING = "expanding"
     NEUTRAL = "neutral"
     CONTRACTING = "contracting"
@@ -53,6 +56,7 @@ class LiquiditySignal(Enum):
 
 class EmploymentSignal(Enum):
     """Employment regime signal output."""
+
     STRONG = "strong"
     NORMAL = "normal"
     WEAKENING = "weakening"
@@ -61,6 +65,7 @@ class EmploymentSignal(Enum):
 
 class RiskSignal(Enum):
     """Risk regime signal output."""
+
     RISK_ON = "risk_on"
     NORMAL = "normal"
     RISK_OFF = "risk_off"
@@ -76,11 +81,11 @@ class RiskSignal(Enum):
 class FeatureVector:
     """
     Aggregated feature vector from validated evidence objects.
-    
+
     Contains all computed features needed for regime detection.
     Immutable: Yes (frozen=True)
     """
-    
+
     # Inflation features
     cpi_yoy: float | None = None
     cpi_core_yoy: float | None = None
@@ -92,7 +97,7 @@ class FeatureVector:
     inflation_momentum: float | None = None  # % change in trend
     inflation_z_score: float | None = None  # distance from mean in std units
     inflation_percentile: float | None = None  # percentile vs historical
-    
+
     # Growth features
     gdp_yoy: float | None = None
     gdp_mom: float | None = None
@@ -102,7 +107,7 @@ class FeatureVector:
     growth_momentum: float | None = None
     growth_z_score: float | None = None
     growth_percentile: float | None = None
-    
+
     # Monetary features
     fed_rate: float | None = None
     fed_policy_direction: str | None = None  # "TIGHTENING", "EASING", "HOLD"
@@ -111,7 +116,7 @@ class FeatureVector:
     real_yield_10y: float | None = None
     monetary_tightness: float | None = None  # composite tightness index
     monetary_z_score: float | None = None
-    
+
     # Liquidity features
     ted_spread: float | None = None  # T-bill - Eurodollar spread
     high_yield_spread: float | None = None  # HYS - treasury spread
@@ -119,7 +124,7 @@ class FeatureVector:
     dxy: float | None = None  # Dollar Index
     liquidity_index: float | None = None  # composite liquidity metric
     liquidity_z_score: float | None = None
-    
+
     # Employment features
     nfp_change: float | None = None  # thousands
     unemployment_rate: float | None = None
@@ -128,7 +133,7 @@ class FeatureVector:
     jolts_separations: float | None = None
     labor_market_z_score: float | None = None
     labor_market_percentile: float | None = None
-    
+
     # Risk features
     vix: float | None = None
     move_index: float | None = None
@@ -136,7 +141,7 @@ class FeatureVector:
     credit_spread_10y: float | None = None
     risk_premia: float | None = None
     risk_z_score: float | None = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
@@ -185,7 +190,7 @@ class FeatureVector:
             "risk_premia": self.risk_premia,
             "risk_z_score": self.risk_z_score,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> FeatureVector:
         """Deserialize from dictionary."""
@@ -235,30 +240,33 @@ class FeatureVector:
             risk_premia=data.get("risk_premia"),
             risk_z_score=data.get("risk_z_score"),
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> FeatureVector:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """
         Compute deterministic hash for the feature vector.
-        
+
         MIL-DET-001: Hash depends ONLY on semantic data.
         """
         import hashlib
         import json
+
         hash_data = {k: v for k, v in self.to_dict().items() if v is not None}
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 # =============================================================================
@@ -270,25 +278,25 @@ class FeatureVector:
 class DetectionEvidence:
     """
     Evidence object produced by a single detector.
-    
+
     Contains the raw signal, confidence, and all contributing factors
     needed for downstream classification.
     """
-    
+
     # Identity
     detector_name: str
     signal: str  # The detected regime signal
-    
+
     # Evidence
     confidence: float  # 0.0 to 1.0
     algorithm_version: str
     contributing_factors: dict[str, float] = field(default_factory=dict)
     evidence_refs: list[str] = field(default_factory=list)
-    
+
     # Metadata
     feature_hash: str | None = None
     details: str = ""
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "detector_name": self.detector_name,
@@ -300,7 +308,7 @@ class DetectionEvidence:
             "feature_hash": self.feature_hash,
             "details": self.details,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DetectionEvidence:
         return cls(
@@ -313,11 +321,12 @@ class DetectionEvidence:
             feature_hash=data.get("feature_hash"),
             details=data.get("details", ""),
         )
-    
+
     def compute_hash(self) -> str:
         """Deterministic hash for detection evidence."""
         import hashlib
         import json
+
         hash_data = {
             "detector_name": self.detector_name,
             "signal": self.signal,
@@ -326,8 +335,8 @@ class DetectionEvidence:
             "evidence_refs": sorted(self.evidence_refs),
             "algorithm_version": self.algorithm_version,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 # =============================================================================
@@ -339,15 +348,15 @@ class DetectionEvidence:
 class RegimeAssessment:
     """
     Aggregated regime assessment from all detectors.
-    
+
     Contains the combined signals, overall confidence, and
     all contributing detection evidence.
     """
-    
+
     # Timestamp
     assessment_time: datetime
     algorithm_version: str
-    
+
     # Per-detector signals
     inflation_signal: DetectionEvidence
     growth_signal: DetectionEvidence
@@ -355,13 +364,13 @@ class RegimeAssessment:
     liquidity_signal: DetectionEvidence
     employment_signal: DetectionEvidence
     risk_signal: DetectionEvidence
-    
+
     # Aggregated
     overall_confidence: float
     dominant_regime: str | None = None
     regime_description: str = ""
     evidence_refs: list[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "assessment_time": self.assessment_time.isoformat(),
@@ -377,7 +386,7 @@ class RegimeAssessment:
             "regime_description": self.regime_description,
             "evidence_refs": sorted(self.evidence_refs),
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RegimeAssessment:
         return cls(
@@ -394,23 +403,26 @@ class RegimeAssessment:
             regime_description=data.get("regime_description", ""),
             evidence_refs=data.get("evidence_refs", []),
         )
-    
+
     def to_json(self) -> str:
         """Serialize to JSON."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
-    
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     @classmethod
     def from_json(cls, json_str: str) -> RegimeAssessment:
         """Deserialize from JSON."""
         import json
+
         data = json.loads(json_str)
         return cls.from_dict(data)
-    
+
     def compute_hash(self) -> str:
         """Deterministic hash for regime assessment."""
         import hashlib
         import json
+
         hash_data = {
             "assessment_time": self.assessment_time.isoformat(),
             "algorithm_version": self.algorithm_version,
@@ -423,5 +435,5 @@ class RegimeAssessment:
             "overall_confidence": self.overall_confidence,
             "dominant_regime": self.dominant_regime,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

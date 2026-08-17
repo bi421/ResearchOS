@@ -88,17 +88,19 @@ class Interpretation(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "evidence_ids": self.evidence_ids,
-            "rule_applied": self.rule_applied,
-            "context": self.context,
-            "conclusion": self.conclusion,
-            "confidence": self.confidence,
-            "supporting_evidence": self.supporting_evidence,
-            "contradicting_evidence": self.contradicting_evidence,
-            "alternatives": self.alternatives,
-            "unknowns": self.unknowns,
-        })
+        base.update(
+            {
+                "evidence_ids": self.evidence_ids,
+                "rule_applied": self.rule_applied,
+                "context": self.context,
+                "conclusion": self.conclusion,
+                "confidence": self.confidence,
+                "supporting_evidence": self.supporting_evidence,
+                "contradicting_evidence": self.contradicting_evidence,
+                "alternatives": self.alternatives,
+                "unknowns": self.unknowns,
+            }
+        )
         return base
 
     @classmethod
@@ -192,20 +194,22 @@ class Narrative(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "thesis": self.thesis,
-            "primary_driver": self.primary_driver,
-            "supporting_drivers": self.supporting_drivers,
-            "interpretations": self.interpretations,
-            "evidence_strength": self.evidence_strength,
-            "coherence_score": self.coherence_score,
-            "plausibility_score": self.plausibility_score,
-            "invalidation_conditions": self.invalidation_conditions,
-            "catalysts": self.catalysts,
-            "confidence": self.confidence,
-            "status": self.status,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "thesis": self.thesis,
+                "primary_driver": self.primary_driver,
+                "supporting_drivers": self.supporting_drivers,
+                "interpretations": self.interpretations,
+                "evidence_strength": self.evidence_strength,
+                "coherence_score": self.coherence_score,
+                "plausibility_score": self.plausibility_score,
+                "invalidation_conditions": self.invalidation_conditions,
+                "catalysts": self.catalysts,
+                "confidence": self.confidence,
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod

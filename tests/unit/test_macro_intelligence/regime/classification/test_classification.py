@@ -3,15 +3,16 @@ ResearchOS Macro Intelligence Layer - Regime Classification Tests
 Tests for deterministic regime classification engine.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
 
 UTC = timezone.utc
 
 
 def _make_test_assessment(**kwargs):
     """Module-level helper to create a RegimeAssessment with default values."""
-    from macro_intelligence.regime.detection.models import RegimeAssessment, DetectionEvidence
+    from macro_intelligence.regime.detection.models import DetectionEvidence, RegimeAssessment
 
     defaults = {
         "assessment_time": datetime(2026, 8, 3, 12, 0, tzinfo=UTC),
@@ -104,10 +105,10 @@ class TestTaxonomy:
     def test_priority_orderings(self):
         """Test priority orderings are defined."""
         from macro_intelligence.regime.classification import (
-            MACRO_REGIME_PRIORITY,
             LIQUIDITY_REGIME_PRIORITY,
-            RISK_REGIME_PRIORITY,
+            MACRO_REGIME_PRIORITY,
             MONETARY_REGIME_PRIORITY,
+            RISK_REGIME_PRIORITY,
         )
 
         assert len(MACRO_REGIME_PRIORITY) == 6
@@ -974,7 +975,9 @@ class TestFullClassification:
         classifier = RegimeClassifier()
         assessment = _make_test_assessment()
 
-        classification = classifier.classify_macro_regime(assessment, classification_id="CL-TEST-001")
+        classification = classifier.classify_macro_regime(
+            assessment, classification_id="CL-TEST-001"
+        )
 
         json_str = classification.to_json()
         restored = type(classification).from_json(json_str)
@@ -991,7 +994,9 @@ class TestFullClassification:
         classifier = RegimeClassifier()
         assessment = _make_test_assessment()
 
-        classification = classifier.classify_macro_regime(assessment, classification_id="CL-MY-CUSTOM-ID")
+        classification = classifier.classify_macro_regime(
+            assessment, classification_id="CL-MY-CUSTOM-ID"
+        )
 
         assert classification.classification_id == "CL-MY-CUSTOM-ID"
 

@@ -14,45 +14,50 @@ Phase 1 of the Data Engine implementation provides:
 """
 
 from researchos.data_engine.candle import Candle
-from researchos.data_engine.tick import Tick
-from researchos.data_engine.quote import Quote
-from researchos.data_engine.trade import Trade
-from researchos.data_engine.orderbook import OrderBook, OrderBookLevel
-from researchos.data_engine.dataset import HistoricalDataset, DataRecord
-from researchos.data_engine.metadata import DatasetMetadata
-from researchos.data_engine.loader import CsvLoader
-from researchos.data_engine.statistics import DatasetStatistics, compute_dataset_statistics
-from researchos.data_engine.validator import (
-    DatasetValidator,
-    GapDetector,
-    MissingCandleDetector,
-    DuplicateDetector,
-    OutlierDetector,
-)
-from researchos.data_engine.repository import DatasetRepository, SqliteDatasetRepository
-from researchos.data_engine.iterator import HistoricalIterator
-from researchos.data_engine.query import RangeQuery, MultiSymbolQuery
-from researchos.data_engine.timezone import normalize_timestamp, convert_timezone, format_iso, parse_iso
-from researchos.data_engine.hashing import (
-    compute_dataset_hash,
-    compute_candle_hash,
-    compute_record_hash,
-    verify_dataset_integrity,
-    compute_range_hash,
-)
-from researchos.data_engine.versioning import DatasetVersion, bump_dataset_version
 from researchos.data_engine.contracts import (
-    Timeframe,
-    DataSource,
+    CandleField,
     DataQuality,
     DatasetStatus,
     DatasetType,
-    QuoteSide,
-    TradeSide,
-    CandleField,
+    DataSource,
     LoaderConfig,
+    QuoteSide,
+    Timeframe,
+    TradeSide,
     ValidationReport,
 )
+from researchos.data_engine.dataset import DataRecord, HistoricalDataset
+from researchos.data_engine.hashing import (
+    compute_candle_hash,
+    compute_dataset_hash,
+    compute_range_hash,
+    compute_record_hash,
+    verify_dataset_integrity,
+)
+from researchos.data_engine.iterator import HistoricalIterator
+from researchos.data_engine.loader import CsvLoader
+from researchos.data_engine.metadata import DatasetMetadata
+from researchos.data_engine.orderbook import OrderBook, OrderBookLevel
+from researchos.data_engine.query import MultiSymbolQuery, RangeQuery
+from researchos.data_engine.quote import Quote
+from researchos.data_engine.repository import DatasetRepository, SqliteDatasetRepository
+from researchos.data_engine.statistics import DatasetStatistics, compute_dataset_statistics
+from researchos.data_engine.tick import Tick
+from researchos.data_engine.timezone import (
+    convert_timezone,
+    format_iso,
+    normalize_timestamp,
+    parse_iso,
+)
+from researchos.data_engine.trade import Trade
+from researchos.data_engine.validator import (
+    DatasetValidator,
+    DuplicateDetector,
+    GapDetector,
+    MissingCandleDetector,
+    OutlierDetector,
+)
+from researchos.data_engine.versioning import DatasetVersion, bump_dataset_version
 
 __all__ = [
     "Candle",

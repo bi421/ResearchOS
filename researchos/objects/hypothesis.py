@@ -16,7 +16,6 @@ from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 
-
 # Hypothesis ranking weights (Article XVI, Section 4.5)
 RANK_EVIDENCE_STRENGTH = 0.40
 RANK_COHERENCE = 0.30
@@ -109,10 +108,10 @@ class Hypothesis(BaseObject):
                      Plausibility × 0.20 + Falsifiability × 0.10
         """
         return (
-            self.evidence_strength * RANK_EVIDENCE_STRENGTH +
-            self.coherence * RANK_COHERENCE +
-            self.plausibility * RANK_PLAUSIBILITY +
-            self.falsifiability * RANK_FALSIFIABILITY
+            self.evidence_strength * RANK_EVIDENCE_STRENGTH
+            + self.coherence * RANK_COHERENCE
+            + self.plausibility * RANK_PLAUSIBILITY
+            + self.falsifiability * RANK_FALSIFIABILITY
         )
 
     def check_invalidation(self, current_evidence: List[str]) -> bool:
@@ -157,23 +156,25 @@ class Hypothesis(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "type": self.type,
-            "statement": self.statement,
-            "narrative_id": self.narrative_id,
-            "evidence_ids": self.evidence_ids,
-            "evidence_strength": self.evidence_strength,
-            "coherence": self.coherence,
-            "plausibility": self.plausibility,
-            "falsifiability": self.falsifiability,
-            "rank_score": self.rank_score,
-            "confidence": self.confidence,
-            "valid_if": self.valid_if,
-            "invalid_if": self.invalid_if,
-            "monitoring_conditions": self.monitoring_conditions,
-            "status": self.status,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "type": self.type,
+                "statement": self.statement,
+                "narrative_id": self.narrative_id,
+                "evidence_ids": self.evidence_ids,
+                "evidence_strength": self.evidence_strength,
+                "coherence": self.coherence,
+                "plausibility": self.plausibility,
+                "falsifiability": self.falsifiability,
+                "rank_score": self.rank_score,
+                "confidence": self.confidence,
+                "valid_if": self.valid_if,
+                "invalid_if": self.invalid_if,
+                "monitoring_conditions": self.monitoring_conditions,
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod
@@ -269,10 +270,12 @@ class HypothesisSet(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "research_id": self.research_id,
-            "hypothesis_ids": self.hypothesis_ids,
-        })
+        base.update(
+            {
+                "research_id": self.research_id,
+                "hypothesis_ids": self.hypothesis_ids,
+            }
+        )
         return base
 
     @classmethod

@@ -1,4 +1,4 @@
-﻿"""
+"""
 CSV Loader — load market data from CSV files into Data Engine objects.
 
 Based on Article XVII: Object Model — Data Layer.
@@ -26,8 +26,8 @@ from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import CandleField, LoaderConfig, Timeframe
 from researchos.data_engine.quote import Quote
 from researchos.data_engine.tick import Tick
-from researchos.data_engine.trade import Trade
 from researchos.data_engine.timezone import normalize_timestamp
+from researchos.data_engine.trade import Trade
 
 FORMAT_GENERIC = "generic"
 FORMAT_MT5 = "mt5"
@@ -178,9 +178,7 @@ class CsvLoader:
             List of Candle objects.
         """
         rows = self._read_csv(file_path)
-        return self._parse_tradingview_rows(
-            rows, symbol, timeframe, timezone, remove_duplicates
-        )
+        return self._parse_tradingview_rows(rows, symbol, timeframe, timezone, remove_duplicates)
 
     def load_tradingview_candles_from_text(
         self,
@@ -192,9 +190,7 @@ class CsvLoader:
     ) -> List[Candle]:
         """Load TradingView candles from a CSV string."""
         rows = self._parse_csv_text(text)
-        return self._parse_tradingview_rows(
-            rows, symbol, timeframe, timezone, remove_duplicates
-        )
+        return self._parse_tradingview_rows(rows, symbol, timeframe, timezone, remove_duplicates)
 
     def load_candles_auto(
         self,
@@ -306,9 +302,7 @@ class CsvLoader:
         """
         valid = [t for t in timestamps if t is not None]
         if len(valid) < 2:
-            raise ValueError(
-                "Cannot auto-detect timeframe from fewer than 2 timestamps"
-            )
+            raise ValueError("Cannot auto-detect timeframe from fewer than 2 timestamps")
         deltas = []
         for i in range(1, len(valid)):
             delta = (valid[i] - valid[i - 1]).total_seconds()
@@ -317,11 +311,7 @@ class CsvLoader:
         if not deltas:
             raise ValueError("Cannot auto-detect timeframe: no positive intervals")
         median = sorted(deltas)[len(deltas) // 2]
-        candidates = {
-            tf.to_seconds(): tf.value
-            for tf in Timeframe
-            if tf.to_seconds() > 0
-        }
+        candidates = {tf.to_seconds(): tf.value for tf in Timeframe if tf.to_seconds() > 0}
         if median in candidates:
             return candidates[median]
         raise ValueError(
@@ -499,7 +489,9 @@ class CsvLoader:
             timestamps = []
             for row in rows:
                 try:
-                    timestamps.append(self._parse_timestamp(row[mapping.timestamp], source_timezone))
+                    timestamps.append(
+                        self._parse_timestamp(row[mapping.timestamp], source_timezone)
+                    )
                 except Exception:
                     timestamps.append(None)
             timeframe = self.detect_timeframe(timestamps)

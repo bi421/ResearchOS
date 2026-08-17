@@ -12,7 +12,7 @@ Architecture:
         |                                |
         +----------- EvidenceGraph -----+
                         |
-              EvidenceRepository (JSON, stdlib only)
+              EvidenceGraphStore (JSON, stdlib only)
 
     Q13: Deterministic RAG Retrieval
         RetrievalQuery -> DeterministicRetriever -> RetrievalResult
@@ -20,17 +20,16 @@ Architecture:
 """
 
 from researchos.intelligence.contracts import (
-    INTELLIGENCE_VERSION,
     EVIDENCE_GRAPH_VERSION,
+    INTELLIGENCE_VERSION,
     EvidenceError,
+    InvalidEdgeError,
     NodeAlreadyExistsError,
     NodeNotFoundError,
-    InvalidEdgeError,
 )
-from researchos.intelligence.nodes import NodeType, EvidenceNode
-from researchos.intelligence.edges import Relationship, EvidenceEdge
+from researchos.intelligence.edges import EvidenceEdge, Relationship
 from researchos.intelligence.graph import EvidenceGraph
-from researchos.intelligence.repository import DEFAULT_PATH, EvidenceRepository
+from researchos.intelligence.nodes import EvidenceNode, NodeType
 from researchos.intelligence.rag_contracts import (
     RetrievalContext,
     RetrievalHit,
@@ -39,6 +38,11 @@ from researchos.intelligence.rag_contracts import (
     RetrievalSource,
 )
 from researchos.intelligence.rag_retriever import DeterministicRetriever, SessionRetriever
+from researchos.intelligence.repository import (
+    DEFAULT_PATH,
+    EvidenceGraphStore,
+    EvidenceRepository,
+)
 
 __all__ = [
     # Versions
@@ -57,8 +61,9 @@ __all__ = [
     "EvidenceEdge",
     # Graph
     "EvidenceGraph",
-    # Repository
+    # Repository (EvidenceGraphStore; EvidenceRepository is a deprecated alias)
     "DEFAULT_PATH",
+    "EvidenceGraphStore",
     "EvidenceRepository",
     # RAG Retrieval (Q13)
     "RetrievalSource",

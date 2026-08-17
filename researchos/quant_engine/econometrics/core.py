@@ -43,6 +43,7 @@ def _std(values: Sequence[float]) -> float:
 # ACF / PACF
 # ──────────────────────────────────────────────
 
+
 def autocorrelation(values: Sequence[float], lag: int) -> float:
     """Autocorrelation at a given lag."""
     n = len(values)
@@ -94,7 +95,7 @@ def compute_acf(values: Sequence[float], max_lag: int = 20) -> AcfResult:
     q = 0.0
     for k in range(1, max_lag + 1):
         rk = autocorrelation(values, k)
-        q += (rk ** 2) / (n - k)
+        q += (rk**2) / (n - k)
     q *= n * (n + 2)
 
     # Chi-squared p-value approximation using Wilson-Hilferty.
@@ -141,6 +142,7 @@ def _normal_cdf(x: float) -> float:
 # Stationarity tests
 # ──────────────────────────────────────────────
 
+
 def adf_test(values: Sequence[float], max_lag: int = 1) -> StationarityTestResult:
     """Augmented Dickey-Fuller test (deterministic implementation)."""
     n = len(values)
@@ -176,7 +178,7 @@ def adf_test(values: Sequence[float], max_lag: int = 1) -> StationarityTestResul
     gamma = coefs[1]
     residuals = [Y[i] - sum(X[i][j] * coefs[j] for j in range(len(coefs))) for i in range(n_obs)]
     df = max(1, n_obs - len(coefs))
-    resid_var = max(1e-12, sum(r ** 2 for r in residuals) / df)
+    resid_var = max(1e-12, sum(r**2 for r in residuals) / df)
 
     XtX_inv = _mat_inv(XtX)
     se_gamma = math.sqrt(max(1e-12, resid_var * XtX_inv[1][1]))
@@ -184,7 +186,9 @@ def adf_test(values: Sequence[float], max_lag: int = 1) -> StationarityTestResul
 
     critical = {"1%": -3.43, "5%": -2.86, "10%": -2.57}
     is_stationary = stat < critical["5%"]
-    conclusion = StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
+    conclusion = (
+        StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
+    )
 
     return StationarityTestResult(
         statistic=stat,
@@ -204,15 +208,17 @@ def kpss_test(values: Sequence[float]) -> StationarityTestResult:
         )
     m = _mean(values)
     e = [values[i] - m for i in range(n)]
-    s = [sum(e[:i + 1]) for i in range(n)]
-    lm = sum(v ** 2 for v in s) / (n ** 2)
+    s = [sum(e[: i + 1]) for i in range(n)]
+    lm = sum(v**2 for v in s) / (n**2)
     var_e = _var(e)
     stat = lm / var_e if var_e != 0 else 0.0
 
     critical = {"1%": 0.739, "5%": 0.463, "10%": 0.347}
     # KPSS: H0 = stationary; reject if stat > critical.
     is_stationary = stat < critical["5%"]
-    conclusion = StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
+    conclusion = (
+        StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
+    )
 
     return StationarityTestResult(
         statistic=stat,
@@ -226,6 +232,7 @@ def kpss_test(values: Sequence[float]) -> StationarityTestResult:
 # ──────────────────────────────────────────────
 # AR / MA / ARMA model fitting
 # ──────────────────────────────────────────────
+
 
 def fit_ar(values: Sequence[float], p_order: int = 1) -> FittedModel:
     """Fit an AR(p) model via Yule-Walker equations."""
@@ -252,7 +259,7 @@ def fit_ar(values: Sequence[float], p_order: int = 1) -> FittedModel:
         residuals.append(values[i] - pred)
 
     # Log-likelihood, AIC, BIC
-    res_var = sum(r ** 2 for r in residuals) / len(residuals) if residuals else 1.0
+    res_var = sum(r**2 for r in residuals) / len(residuals) if residuals else 1.0
     log_lik = -0.5 * n * (math.log(2 * math.pi * res_var) + 1.0)
     k = p_order + 1
     aic = 2 * k - 2 * log_lik
@@ -295,7 +302,7 @@ def fit_ma(values: Sequence[float], q_order: int = 1) -> FittedModel:
     for i in range(q_order):
         coeffs[f"ma_{i + 1}"] = -theta[i + 1]
 
-    res_var = sum(r ** 2 for r in innovations) / n
+    res_var = sum(r**2 for r in innovations) / n
     log_lik = -0.5 * n * (math.log(2 * math.pi * res_var) + 1.0) if res_var > 0 else 0.0
     k = q_order + 1
     aic = 2 * k - 2 * log_lik
@@ -316,7 +323,9 @@ def fit_arma(values: Sequence[float], p_order: int = 1, q_order: int = 1) -> Fit
     """Fit an ARMA(p,q) model via iterative two-stage approximation."""
     n = len(values)
     if n < p_order + q_order + 2:
-        return FittedModel(family=ModelFamily.ARMA, metadata={"p_order": p_order, "q_order": q_order})
+        return FittedModel(
+            family=ModelFamily.ARMA, metadata={"p_order": p_order, "q_order": q_order}
+        )
 
     # Step 1: Fit AR(p) to get residuals.
     ar_model = fit_ar(values, p_order)
@@ -336,7 +345,7 @@ def fit_arma(values: Sequence[float], p_order: int = 1, q_order: int = 1) -> Fit
     # Pad residuals to match original length.
     padded = [0.0] * (p_order + q_order) + combined
 
-    res_var = sum(r ** 2 for r in padded) / n
+    res_var = sum(r**2 for r in padded) / n
     log_lik = -0.5 * n * (math.log(2 * math.pi * res_var) + 1.0) if res_var > 0 else 0.0
     k = p_order + q_order + 1
     aic = 2 * k - 2 * log_lik
@@ -406,7 +415,9 @@ def fit_arima(
     """Fit an ARIMA(p,d,q) model by differencing d times then fitting ARMA(p,q)."""
     n = len(values)
     if n < p + q + d + 2:
-        return FittedModel(family=ModelFamily.ARIMA, metadata={"p_order": p, "d_order": d, "q_order": q})
+        return FittedModel(
+            family=ModelFamily.ARIMA, metadata={"p_order": p, "d_order": d, "q_order": q}
+        )
 
     curr = list(values)
     for _ in range(d):
@@ -447,7 +458,15 @@ def fit_sarima(
     if n < p + q + d + (P + Q + D) * s + 2:
         return FittedModel(
             family=ModelFamily.SARIMA,
-            metadata={"p_order": p, "d_order": d, "q_order": q, "P_order": P, "D_order": D, "Q_order": Q, "seasonal_period": s},
+            metadata={
+                "p_order": p,
+                "d_order": d,
+                "q_order": q,
+                "P_order": P,
+                "D_order": D,
+                "Q_order": Q,
+                "seasonal_period": s,
+            },
         )
 
     curr = list(values)
@@ -473,7 +492,15 @@ def fit_sarima(
         log_likelihood=log_lik,
         aic=aic,
         bic=bic,
-        metadata={"p_order": p, "d_order": d, "q_order": q, "P_order": P, "D_order": D, "Q_order": Q, "seasonal_period": s},
+        metadata={
+            "p_order": p,
+            "d_order": d,
+            "q_order": q,
+            "P_order": P,
+            "D_order": D,
+            "Q_order": Q,
+            "seasonal_period": s,
+        },
     )
 
 
@@ -521,11 +548,15 @@ def fit_var(
                 coeffs[f"var_{v}_eq_var_{target_v}_lag_{lag}"] = b_v[idx]
                 idx += 1
 
-        res_v = [y_v[i] - sum(X[i][j] * b_v[j] for j in range(len(b_v))) for i in range(n_effective)]
+        res_v = [
+            y_v[i] - sum(X[i][j] * b_v[j] for j in range(len(b_v))) for i in range(n_effective)
+        ]
         all_residuals.extend(res_v)
 
     res_var = _var(all_residuals) if all_residuals else 1.0
-    log_lik = -0.5 * n_obs * k_vars * (math.log(2 * math.pi * res_var) + 1.0) if res_var > 0 else 0.0
+    log_lik = (
+        -0.5 * n_obs * k_vars * (math.log(2 * math.pi * res_var) + 1.0) if res_var > 0 else 0.0
+    )
     num_params = k_vars * (1 + k_vars * p)
     aic = 2 * num_params - 2 * log_lik
     bic = num_params * math.log(n_obs) - 2 * log_lik
@@ -570,7 +601,9 @@ def engle_granger_cointegration(
     adf_res = adf_test(residuals, max_lag=max_lag)
     var_y = _var(y)
     var_res = _var(residuals)
-    is_coint = adf_res.is_stationary or adf_res.statistic < -2.57 or (var_y > 0 and var_res / var_y < 0.05)
+    is_coint = (
+        adf_res.is_stationary or adf_res.statistic < -2.57 or (var_y > 0 and var_res / var_y < 0.05)
+    )
 
     return CointegrationTestResult(
         alpha=alpha,
@@ -604,7 +637,9 @@ def johansen_test(
     Y_lag: List[List[float]] = []
 
     for t in range(lag, n_obs):
-        dY.append([multivariate_series[v][t] - multivariate_series[v][t - 1] for v in range(k_vars)])
+        dY.append(
+            [multivariate_series[v][t] - multivariate_series[v][t - 1] for v in range(k_vars)]
+        )
         Y_lag.append([multivariate_series[v][t - 1] for v in range(k_vars)])
 
     S00 = [[0.0] * k_vars for _ in range(k_vars)]
@@ -732,7 +767,7 @@ def fit_tgarch(
     for t in range(1, n):
         r_prev = returns[t - 1]
         dummy = 1.0 if r_prev < 0.0 else 0.0
-        cond_var[t] = omega + (alpha + gamma * dummy) * (r_prev ** 2) + beta * cond_var[t - 1]
+        cond_var[t] = omega + (alpha + gamma * dummy) * (r_prev**2) + beta * cond_var[t - 1]
         if cond_var[t] <= 0:
             cond_var[t] = sigma2 * 1e-6
 
@@ -745,7 +780,7 @@ def fit_tgarch(
 
     r_last = returns[-1]
     dummy_last = 1.0 if r_last < 0.0 else 0.0
-    forecast_v2 = omega + (alpha + gamma * dummy_last) * (r_last ** 2) + beta * cond_var[-1]
+    forecast_v2 = omega + (alpha + gamma * dummy_last) * (r_last**2) + beta * cond_var[-1]
     forecast = [math.sqrt(max(forecast_v2, 1e-12))]
 
     return VolatilityModelResult(
@@ -763,6 +798,7 @@ def fit_tgarch(
 # ──────────────────────────────────────────────
 # Linear algebra helpers
 # ──────────────────────────────────────────────
+
 
 def _transpose(m: List[List[float]]) -> List[List[float]]:
     if not m:
@@ -875,4 +911,3 @@ def _eigenvalues_sym(a: List[List[float]], max_iter: int = 100) -> List[float]:
                         A[q][i] = A[i][q]
 
     return sorted([A[i][i] for i in range(n)], reverse=True)
-

@@ -17,52 +17,53 @@ Expected behavior:
   - no silent corruption
   - OLS delegation to the canonical Statistics owner remains intact
 """
+
 from __future__ import annotations
 
 import math
 
 import pytest
 
-from macro_intelligence.econometrics.matrix import (
-    transpose,
-    matmul,
-    invert,
-    solve,
-    determinant,
-    identity,
-)
-from macro_intelligence.econometrics.regression import (
-    multiple_regression,
-    polynomial_regression,
-    logistic_regression,
-    univariate_ols,
-)
 from macro_intelligence.econometrics.autocorrelation import (
     autocorrelation,
     partial_autocorrelation,
 )
-from macro_intelligence.econometrics.stationarity import (
-    augmented_dickey_fuller,
-    kpss,
-)
-from macro_intelligence.econometrics.cointegration import engle_granger
 from macro_intelligence.econometrics.causality import granger_causality
-from macro_intelligence.econometrics.vif import variance_inflation_factor
-from macro_intelligence.econometrics.heteroskedasticity import breusch_pagan
+from macro_intelligence.econometrics.cointegration import engle_granger
 from macro_intelligence.econometrics.diagnostics import (
     durbin_watson,
     jarque_bera,
     residual_diagnostics,
 )
-from macro_intelligence.econometrics.intervals import (
-    confidence_interval,
-    prediction_interval,
-)
+from macro_intelligence.econometrics.heteroskedasticity import breusch_pagan
 from macro_intelligence.econometrics.information_criteria import (
     aic,
     bic,
     information_criteria,
 )
+from macro_intelligence.econometrics.intervals import (
+    confidence_interval,
+    prediction_interval,
+)
+from macro_intelligence.econometrics.matrix import (
+    determinant,
+    identity,
+    invert,
+    matmul,
+    solve,
+    transpose,
+)
+from macro_intelligence.econometrics.regression import (
+    logistic_regression,
+    multiple_regression,
+    polynomial_regression,
+    univariate_ols,
+)
+from macro_intelligence.econometrics.stationarity import (
+    augmented_dickey_fuller,
+    kpss,
+)
+from macro_intelligence.econometrics.vif import variance_inflation_factor
 
 
 # ---------------------------------------------------------------------------

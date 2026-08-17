@@ -2,7 +2,7 @@
 Phase 7.3 — Probability Assessment Layer
 ========================================
 
-Aggregates existing EvidenceItem fields into deterministic probability estimates.
+Aggregates existing DecisionEvidenceItem fields into deterministic probability estimates.
 
 IMPORTANT — This layer is NOT allowed to contain:
     - trading strategy
@@ -20,7 +20,7 @@ Pipeline:
     -> ProbabilityCalculator -> ProbabilityAssessment -> ProbabilityValidator
 
 Computation (pure aggregation, no hidden weights, no source priority):
-    For each EvidenceItem read:
+    For each DecisionEvidenceItem read:
         item.confidence
         item.weight
         item.direction    # ProbabilityOutcome ("Bullish" | "Bearish" | "Neutral")
@@ -46,16 +46,15 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import utc_now, parse_timestamp
+from researchos.core.timestamp import parse_timestamp, utc_now
 from researchos.decision_engine.contracts import (
     CalculationMethod,
-    EvidenceItem,
+    DecisionEvidenceItem,
     ProbabilityOutcome,
 )
 from researchos.decision_engine.evidence import EvidenceCollection
-
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -140,10 +139,7 @@ class ProbabilityAssessment(BaseObject):
         id: Optional[str] = None,
     ):
         if id is None:
-            seed = (
-                f"ProbabilityAssessment|{decision_context_id}"
-                f"|{evidence_collection_id}"
-            )
+            seed = f"ProbabilityAssessment|{decision_context_id}|{evidence_collection_id}"
             id = generate_id(seed)
 
         super().__init__(id=id, ontology_tags=ontology_tags)
@@ -263,9 +259,7 @@ class ProbabilityAssessment(BaseObject):
         obj.calculation_method = CalculationMethod(
             data.get("calculation_method", CalculationMethod.WEIGHTED_EVIDENCE.value)
         )
-        obj.calculation_version = data.get(
-            "calculation_version", CALCULATION_VERSION
-        )
+        obj.calculation_version = data.get("calculation_version", CALCULATION_VERSION)
         obj.limitations = list(data.get("limitations", []))
         ts = data.get("timestamp")
         obj.timestamp = parse_timestamp(ts) if ts else utc_now()
@@ -280,11 +274,11 @@ class ProbabilityAssessment(BaseObject):
 
 class ProbabilityCalculator:
     """
-    Stateless calculator that aggregates EvidenceItem fields into a
+    Stateless calculator that aggregates DecisionEvidenceItem fields into a
     ProbabilityAssessment.
 
     The calculator performs **pure aggregation** — it reads only the existing
-    fields of each EvidenceItem (``confidence``, ``weight``, ``direction``)
+    fields of each DecisionEvidenceItem (``confidence``, ``weight``, ``direction``)
     and applies a single normalisation pass.  There are:
 
         * no hidden weights,
@@ -324,7 +318,7 @@ class ProbabilityCalculator:
         self,
         decision_context_id: str,
         evidence_collection_id: str,
-        items: List[EvidenceItem],
+        items: List[DecisionEvidenceItem],
         timestamp: Optional[datetime] = None,
     ) -> ProbabilityAssessment:
         """Compute a ProbabilityAssessment from raw components.
@@ -347,7 +341,7 @@ class ProbabilityCalculator:
         self,
         decision_context_id: str,
         evidence_collection_id: str,
-        items: List[EvidenceItem],
+        items: List[DecisionEvidenceItem],
         timestamp: Optional[datetime] = None,
     ) -> ProbabilityAssessment:
         bullish_weight = 0.0
@@ -395,18 +389,14 @@ class ProbabilityCalculator:
         # exactly 1.0.
         neutral_probability = 1.0 - bullish_probability - bearish_probability
 
-        confidence = (
-            sum(confidences) / len(confidences) if confidences else 0.0
-        )
+        confidence = sum(confidences) / len(confidences) if confidences else 0.0
         evidence_strength = (
             sum(weighted_contributions) / len(weighted_contributions)
             if weighted_contributions
             else 0.0
         )
         sample_size = len(items)
-        historical_consistency = max(
-            bullish_probability, bearish_probability, neutral_probability
-        )
+        historical_consistency = max(bullish_probability, bearish_probability, neutral_probability)
         uncertainty = 1.0 - historical_consistency
 
         limitations = self._derive_limitations(
@@ -440,7 +430,7 @@ class ProbabilityCalculator:
 
     @staticmethod
     def _derive_limitations(
-        items: List[EvidenceItem],
+        items: List[DecisionEvidenceItem],
         sample_size: int,
         total: float,
         confidence: float,
@@ -458,17 +448,14 @@ class ProbabilityCalculator:
 
         if total == 0:
             limitations.append(
-                "All evidence items have zero effective weight "
-                "(confidence * weight = 0)"
+                "All evidence items have zero effective weight (confidence * weight = 0)"
             )
 
         if confidence == 0.0:
             limitations.append("No confident evidence; all items have zero confidence")
 
         if uncertainty > 0.6:
-            limitations.append(
-                "High uncertainty: evidence directions are widely dispersed"
-            )
+            limitations.append("High uncertainty: evidence directions are widely dispersed")
 
         return limitations
 
@@ -531,24 +518,17 @@ class ProbabilityValidator:
     # Individual rules
     # ------------------------------------------------------------------
 
-    def _check_probability_sum(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_probability_sum(self, assessment: ProbabilityAssessment) -> List[str]:
         total = (
             assessment.bullish_probability
             + assessment.bearish_probability
             + assessment.neutral_probability
         )
         if not isinstance(total, (int, float)) or abs(total - 1.0) > self.TOLERANCE:
-            return [
-                f"Probabilities must sum to 1.0 (±{self.TOLERANCE}), "
-                f"got {total}"
-            ]
+            return [f"Probabilities must sum to 1.0 (±{self.TOLERANCE}), got {total}"]
         return []
 
-    def _check_probability_ranges(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_probability_ranges(self, assessment: ProbabilityAssessment) -> List[str]:
         errors: List[str] = []
         for name, value in (
             ("bullish_probability", assessment.bullish_probability),
@@ -556,42 +536,25 @@ class ProbabilityValidator:
             ("neutral_probability", assessment.neutral_probability),
         ):
             if not self._in_unit_interval(value):
-                errors.append(
-                    f"{name} must be in [0.0, 1.0], got {value}"
-                )
+                errors.append(f"{name} must be in [0.0, 1.0], got {value}")
         return errors
 
-    def _check_confidence_range(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_confidence_range(self, assessment: ProbabilityAssessment) -> List[str]:
         if not self._in_unit_interval(assessment.confidence):
-            return [
-                f"confidence must be in [0.0, 1.0], got {assessment.confidence}"
-            ]
+            return [f"confidence must be in [0.0, 1.0], got {assessment.confidence}"]
         return []
 
-    def _check_uncertainty_range(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_uncertainty_range(self, assessment: ProbabilityAssessment) -> List[str]:
         if not self._in_unit_interval(assessment.uncertainty):
-            return [
-                f"uncertainty must be in [0.0, 1.0], got {assessment.uncertainty}"
-            ]
+            return [f"uncertainty must be in [0.0, 1.0], got {assessment.uncertainty}"]
         return []
 
-    def _check_evidence_strength(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_evidence_strength(self, assessment: ProbabilityAssessment) -> List[str]:
         if not self._in_unit_interval(assessment.evidence_strength):
-            return [
-                f"evidence_strength must be in [0.0, 1.0], "
-                f"got {assessment.evidence_strength}"
-            ]
+            return [f"evidence_strength must be in [0.0, 1.0], got {assessment.evidence_strength}"]
         return []
 
-    def _check_historical_consistency(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_historical_consistency(self, assessment: ProbabilityAssessment) -> List[str]:
         if not self._in_unit_interval(assessment.historical_consistency):
             return [
                 f"historical_consistency must be in [0.0, 1.0], "
@@ -599,18 +562,12 @@ class ProbabilityValidator:
             ]
         return []
 
-    def _check_sample_size(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_sample_size(self, assessment: ProbabilityAssessment) -> List[str]:
         if assessment.sample_size < 0:
-            return [
-                f"sample_size must be >= 0, got {assessment.sample_size}"
-            ]
+            return [f"sample_size must be >= 0, got {assessment.sample_size}"]
         return []
 
-    def _check_references(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_references(self, assessment: ProbabilityAssessment) -> List[str]:
         errors: List[str] = []
         if not assessment.decision_context_id:
             errors.append("decision_context_id is empty")
@@ -618,9 +575,7 @@ class ProbabilityValidator:
             errors.append("evidence_collection_id is empty")
         return errors
 
-    def _check_hash(
-        self, assessment: ProbabilityAssessment
-    ) -> List[str]:
+    def _check_hash(self, assessment: ProbabilityAssessment) -> List[str]:
         errors: List[str] = []
         if not assessment.assessment_hash:
             errors.append("assessment_hash is empty")
@@ -633,8 +588,4 @@ class ProbabilityValidator:
 
     @staticmethod
     def _in_unit_interval(value: Any) -> bool:
-        return (
-            isinstance(value, (int, float))
-            and value >= 0.0
-            and value <= 1.0
-        )
+        return isinstance(value, (int, float)) and value >= 0.0 and value <= 1.0

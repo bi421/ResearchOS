@@ -103,19 +103,21 @@ class Quote(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "symbol": self.symbol,
-            "timestamp": self.timestamp.isoformat(),
-            "bid": self.bid,
-            "ask": self.ask,
-            "bid_size": self.bid_size,
-            "ask_size": self.ask_size,
-            "exchange": self.exchange,
-            "condition": self.condition,
-            "mid": self.mid,
-            "spread": self.spread,
-            "spread_bps": round(self.spread_bps, 4),
-        })
+        base.update(
+            {
+                "symbol": self.symbol,
+                "timestamp": self.timestamp.isoformat(),
+                "bid": self.bid,
+                "ask": self.ask,
+                "bid_size": self.bid_size,
+                "ask_size": self.ask_size,
+                "exchange": self.exchange,
+                "condition": self.condition,
+                "mid": self.mid,
+                "spread": self.spread,
+                "spread_bps": round(self.spread_bps, 4),
+            }
+        )
         return base
 
     @classmethod
@@ -137,4 +139,3 @@ class Quote(BaseObject):
             f"B={self.bid:.4f}×{self.bid_size:.0f} "
             f"A={self.ask:.4f}×{self.ask_size:.0f})"
         )
-

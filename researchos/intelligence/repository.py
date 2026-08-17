@@ -1,8 +1,13 @@
 """
 Evidence Graph — JSON repository.
 
-``EvidenceRepository`` persists an ``EvidenceGraph`` to JSON using only the
+``EvidenceGraphStore`` persists an ``EvidenceGraph`` to JSON using only the
 standard library.  There is no database yet and no external dependency.
+
+Renamed from ``EvidenceRepository`` (2026-08-17) to end the name collision
+with ``researchos.evidence.EvidenceRepository`` (the append-only artifact
+ledger).  ``EvidenceRepository`` remains available here as a deprecated
+compatibility alias.  See docs/architecture/OWNERSHIP.md.
 
 Responsibilities:
     - serialize a graph to a JSON string
@@ -25,7 +30,7 @@ from researchos.intelligence.graph import EvidenceGraph
 DEFAULT_PATH = "evidence_graph.json"
 
 
-class EvidenceRepository:
+class EvidenceGraphStore:
     """JSON-based persistence for ``EvidenceGraph`` objects."""
 
     VERSION = EVIDENCE_GRAPH_VERSION
@@ -103,7 +108,11 @@ class EvidenceRepository:
         return self.deserialize(text)
 
 
+# Deprecated compatibility alias — canonical name is ``EvidenceGraphStore``.
+EvidenceRepository = EvidenceGraphStore
+
 __all__ = [
     "DEFAULT_PATH",
+    "EvidenceGraphStore",
     "EvidenceRepository",
 ]

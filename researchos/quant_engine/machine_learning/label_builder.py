@@ -99,4 +99,3 @@ class LabelBuilder:
 
 
 __all__ = ["LabelBuilder"]
-

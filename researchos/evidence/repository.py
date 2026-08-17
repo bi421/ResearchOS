@@ -64,8 +64,7 @@ class EvidenceRepository:
         # Validate the envelope self-consistency before persisting.
         if not envelope.verify():
             raise ValueError(
-                f"EvidenceEnvelope lineage_hash mismatch for artifact "
-                f"{envelope.artifact_hash}"
+                f"EvidenceEnvelope lineage_hash mismatch for artifact {envelope.artifact_hash}"
             )
         with self._repo._transaction() as cursor:
             cursor.execute(
@@ -106,8 +105,7 @@ class EvidenceRepository:
         """Record a single parent→child lineage edge (append-only)."""
         if relation not in LINEAGE_RELATIONS:
             raise ValueError(
-                f"Unknown lineage relation '{relation}'. "
-                f"Expected one of {LINEAGE_RELATIONS}."
+                f"Unknown lineage relation '{relation}'. Expected one of {LINEAGE_RELATIONS}."
             )
         with self._repo._transaction() as cursor:
             self._insert_edge(cursor, parent_hash, child_hash, relation)
@@ -164,8 +162,7 @@ class EvidenceRepository:
         conn = self._repo._get_conn()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT artifact_type, version, payload, parent_hashes, lineage_hash "
-            "FROM evidence"
+            "SELECT artifact_type, version, payload, parent_hashes, lineage_hash FROM evidence"
         )
         for row in cursor.fetchall():
             artifact_type = row[0]

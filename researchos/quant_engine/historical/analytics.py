@@ -48,6 +48,7 @@ def _std(values: Sequence[float]) -> float:
 # Pattern mining
 # ──────────────────────────────────────────────
 
+
 def pattern_frequencies(
     returns: ReturnSeries,
     window: int = 5,
@@ -104,6 +105,7 @@ def consecutive_streaks(returns: ReturnSeries) -> Dict[str, float]:
 # Regimes
 # ──────────────────────────────────────────────
 
+
 def detect_market_regimes(
     returns: ReturnSeries,
     lookback: int = 20,
@@ -119,7 +121,7 @@ def detect_market_regimes(
     states: List[MarketState] = []
     rolling_vols: List[float] = []
     for i in range(lookback - 1, n):
-        window = returns.returns[i - lookback + 1:i + 1]
+        window = returns.returns[i - lookback + 1 : i + 1]
         m = _mean(window)
         v = _std(window)
         rolling_vols.append(v)
@@ -153,7 +155,7 @@ def detect_market_regimes(
         # Convert back to full-series indices (offset by lookback-1).
         full_s = s + (lookback - 1)
         full_e = e + (lookback - 1)
-        seg = returns.returns[full_s:full_e + 1]
+        seg = returns.returns[full_s : full_e + 1]
         out.append(
             RegimeStatistics(
                 state=state,
@@ -171,6 +173,7 @@ def detect_market_regimes(
 # ──────────────────────────────────────────────
 # Seasonality
 # ──────────────────────────────────────────────
+
 
 def monthly_seasonality(returns: ReturnSeries) -> SeasonalityProfile:
     """Average return and hit rate by month index (0-11)."""
@@ -211,6 +214,7 @@ def weekly_seasonality(returns: ReturnSeries) -> SeasonalityProfile:
 # ──────────────────────────────────────────────
 # Session statistics & volatility clustering
 # ──────────────────────────────────────────────
+
 
 def session_statistics(returns: ReturnSeries) -> Dict[str, float]:
     """Summary statistics per session (whole-series aggregates)."""
@@ -260,6 +264,7 @@ def volatility_clustering(
 # Trend persistence, breakouts, mean reversion
 # ──────────────────────────────────────────────
 
+
 def trend_persistence(returns: ReturnSeries, window: int = 10) -> Dict[str, float]:
     """Fraction of windows where return sign is maintained for N periods."""
     returns.validate()
@@ -269,8 +274,8 @@ def trend_persistence(returns: ReturnSeries, window: int = 10) -> Dict[str, floa
     persist = 0
     reverse = 0
     for i in range(n - window):
-        first = sum(returns.returns[i:i + window])
-        second = sum(returns.returns[i + window:i + 2 * window])
+        first = sum(returns.returns[i : i + window])
+        second = sum(returns.returns[i + window : i + 2 * window])
         if first > 0 and second > 0:
             persist += 1
         elif first < 0 and second < 0:
@@ -298,8 +303,8 @@ def breakout_frequency(returns: ReturnSeries, window: int = 20) -> Dict[str, flo
     up = 0
     down = 0
     for i in range(window, n - 1):
-        high = max(price[i - window + 1:i + 1])
-        low = min(price[i - window + 1:i + 1])
+        high = max(price[i - window + 1 : i + 1])
+        low = min(price[i - window + 1 : i + 1])
         if price[i + 1] > high:
             up += 1
         elif price[i + 1] < low:
@@ -319,7 +324,7 @@ def mean_reversion_frequency(returns: ReturnSeries, window: int = 5) -> Dict[str
     rev = 0
     total = 0
     for i in range(n - window - 1):
-        move = sum(returns.returns[i:i + window])
+        move = sum(returns.returns[i : i + window])
         next_day = returns.returns[i + window]
         if move > 0 and next_day < 0:
             rev += 1
@@ -337,6 +342,7 @@ def mean_reversion_frequency(returns: ReturnSeries, window: int = 5) -> Dict[str
 # ──────────────────────────────────────────────
 # Drawdown & recovery statistics
 # ──────────────────────────────────────────────
+
 
 def drawdown_statistics(returns: ReturnSeries) -> DrawdownStatistics:
     """Drawdown and recovery statistics."""
@@ -415,6 +421,7 @@ def recovery_statistics(returns: ReturnSeries) -> Dict[str, float]:
 # State transitions
 # ──────────────────────────────────────────────
 
+
 def state_transition_table(returns: ReturnSeries, lookback: int = 20) -> StateTransitionTable:
     """Transition probabilities between discretized market states."""
     regimes = detect_market_regimes(returns, lookback)
@@ -449,6 +456,7 @@ def state_transition_table(returns: ReturnSeries, lookback: int = 20) -> StateTr
 # ──────────────────────────────────────────────
 # Feature extraction
 # ──────────────────────────────────────────────
+
 
 def extract_features(returns: ReturnSeries) -> FeatureExtraction:
     """Extract a flat set of deterministic historical features."""
@@ -486,7 +494,7 @@ def _skew(values: Sequence[float]) -> float:
     sd = _std(values)
     if sd == 0:
         return 0.0
-    return sum((v - m) ** 3 for v in values) / (n * sd ** 3)
+    return sum((v - m) ** 3 for v in values) / (n * sd**3)
 
 
 def _kurtosis(values: Sequence[float]) -> float:
@@ -497,5 +505,4 @@ def _kurtosis(values: Sequence[float]) -> float:
     var = sum((v - m) ** 2 for v in values) / n
     if var == 0:
         return 0.0
-    return sum((v - m) ** 4 for v in values) / (n * var ** 2) - 3.0
-
+    return sum((v - m) ** 4 for v in values) / (n * var**2) - 3.0

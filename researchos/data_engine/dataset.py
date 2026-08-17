@@ -21,14 +21,14 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
-from researchos.data_engine.contracts import DataQuality, DatasetStatus
 from researchos.data_engine.candle import Candle
+from researchos.data_engine.contracts import DataQuality, DatasetStatus
+from researchos.data_engine.orderbook import OrderBook
 from researchos.data_engine.quote import Quote
 from researchos.data_engine.tick import Tick
 from researchos.data_engine.trade import Trade
-from researchos.data_engine.orderbook import OrderBook
 
 DataRecord = Union[Candle, Tick, Quote, Trade, OrderBook]
 
@@ -218,9 +218,7 @@ class HistoricalDataset(BaseObject):
         # Content-based identity: derived ONLY from the records themselves.
         # Two datasets with different candle records MUST produce different
         # content hashes, even if symbol/timeframe/source are identical.
-        self.dataset_content_hash = deterministic_hash(
-            {"record_hashes": sorted(record_hashes)}
-        )
+        self.dataset_content_hash = deterministic_hash({"record_hashes": sorted(record_hashes)})
 
     def _to_hashable_dict(self) -> Dict[str, Any]:
         return {
@@ -241,23 +239,27 @@ class HistoricalDataset(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "symbol": self.symbol,
-            "timeframe": self.timeframe,
-            "data_type": self.data_type,
-            "source": self.source,
-            "quality": self.quality.value,
-            "status": self.status.value,
-            "record_count": len(self._records),
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "duration_seconds": self.duration_seconds,
-            "dataset_hash": self.dataset_hash,
-            "dataset_content_hash": self.dataset_content_hash,
-            "version": self.version,
-            "tags": self.tags,
-            "records": [r.to_dict() if hasattr(r, "to_dict") else str(r) for r in self._records],
-        })
+        base.update(
+            {
+                "symbol": self.symbol,
+                "timeframe": self.timeframe,
+                "data_type": self.data_type,
+                "source": self.source,
+                "quality": self.quality.value,
+                "status": self.status.value,
+                "record_count": len(self._records),
+                "start_time": self.start_time.isoformat() if self.start_time else None,
+                "end_time": self.end_time.isoformat() if self.end_time else None,
+                "duration_seconds": self.duration_seconds,
+                "dataset_hash": self.dataset_hash,
+                "dataset_content_hash": self.dataset_content_hash,
+                "version": self.version,
+                "tags": self.tags,
+                "records": [
+                    r.to_dict() if hasattr(r, "to_dict") else str(r) for r in self._records
+                ],
+            }
+        )
         return base
 
     @classmethod

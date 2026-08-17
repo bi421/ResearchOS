@@ -12,8 +12,9 @@ Run with:
     python -m pytest cpp_quant_engine/tests/test_python_integration.py -v
 """
 
-import pytest
 import math
+
+import pytest
 
 from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.models import (
@@ -23,8 +24,8 @@ from researchos.quant_engine.models import (
 )
 from researchos.quant_engine.simulation import HistoricalSimulationEngine
 
-
 # ── Fixtures ────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def python_backend():
@@ -36,6 +37,7 @@ def cpp_backend():
     """Try to load C++ backend, skip if not available."""
     try:
         from cpp_quant_engine.backend_wrapper import CppQuantBackendWrapper
+
         backend = CppQuantBackendWrapper()
         if not backend.is_cpp:
             pytest.skip("C++ backend not available — skipping integration tests")
@@ -46,7 +48,38 @@ def cpp_backend():
 
 @pytest.fixture
 def sample_prices():
-    return [100.0, 102.0, 101.0, 105.0, 103.0, 107.0, 106.0, 110.0, 108.0, 112.0, 111.0, 115.0, 113.0, 117.0, 116.0, 120.0, 118.0, 122.0, 121.0, 125.0, 123.0, 127.0, 126.0, 130.0, 128.0, 132.0, 131.0, 135.0, 133.0, 137.0]
+    return [
+        100.0,
+        102.0,
+        101.0,
+        105.0,
+        103.0,
+        107.0,
+        106.0,
+        110.0,
+        108.0,
+        112.0,
+        111.0,
+        115.0,
+        113.0,
+        117.0,
+        116.0,
+        120.0,
+        118.0,
+        122.0,
+        121.0,
+        125.0,
+        123.0,
+        127.0,
+        126.0,
+        130.0,
+        128.0,
+        132.0,
+        131.0,
+        135.0,
+        133.0,
+        137.0,
+    ]
 
 
 @pytest.fixture
@@ -67,6 +100,7 @@ def sample_equity_curve(sample_returns):
 
 # ── Backend Comparison Tests ────────────────────────────────────────────────
 
+
 def test_returns_identical(python_backend, cpp_backend, sample_prices):
     """C++ and Python backends must produce identical returns."""
     for return_type in ["absolute", "percentage", "log"]:
@@ -75,8 +109,9 @@ def test_returns_identical(python_backend, cpp_backend, sample_prices):
 
         assert len(py_result) == len(cpp_result)
         for i in range(len(py_result)):
-            assert abs(py_result[i] - cpp_result[i]) < 1e-12, \
+            assert abs(py_result[i] - cpp_result[i]) < 1e-12, (
                 f"Mismatch at {i} for return_type={return_type}: {py_result[i]} vs {cpp_result[i]}"
+            )
 
 
 def test_volatility_identical(python_backend, cpp_backend, sample_returns):
@@ -89,7 +124,9 @@ def test_volatility_identical(python_backend, cpp_backend, sample_returns):
     # Rolling
     py_rolling = python_backend.calculate_volatility(sample_returns, "rolling")
     cpp_rolling = cpp_backend.calculate_volatility(sample_returns, "rolling")
-    assert abs(py_rolling - cpp_rolling) < 1e-12, f"Rolling vol mismatch: {py_rolling} vs {cpp_rolling}"
+    assert abs(py_rolling - cpp_rolling) < 1e-12, (
+        f"Rolling vol mismatch: {py_rolling} vs {cpp_rolling}"
+    )
 
 
 def test_drawdown_identical(python_backend, cpp_backend, sample_equity_curve):
@@ -98,8 +135,9 @@ def test_drawdown_identical(python_backend, cpp_backend, sample_equity_curve):
     cpp_dd = cpp_backend.calculate_drawdown(sample_equity_curve)
 
     for key in py_dd:
-        assert abs(py_dd[key] - cpp_dd[key]) < 1e-10, \
+        assert abs(py_dd[key] - cpp_dd[key]) < 1e-10, (
             f"Drawdown mismatch for {key}: {py_dd[key]} vs {cpp_dd[key]}"
+        )
 
 
 def test_statistics_identical(python_backend, cpp_backend, sample_returns):
@@ -110,8 +148,9 @@ def test_statistics_identical(python_backend, cpp_backend, sample_returns):
     for key in py_stats:
         if key in ("count",):
             continue  # int vs float
-        assert abs(py_stats[key] - cpp_stats[key]) < 1e-10, \
+        assert abs(py_stats[key] - cpp_stats[key]) < 1e-10, (
             f"Statistics mismatch for {key}: {py_stats[key]} vs {cpp_stats[key]}"
+        )
 
 
 def test_metrics_identical(python_backend, cpp_backend, sample_returns, sample_equity_curve):
@@ -127,8 +166,7 @@ def test_metrics_identical(python_backend, cpp_backend, sample_returns, sample_e
         if math.isinf(py_val) and math.isinf(cpp_val):
             continue
 
-        assert abs(py_val - cpp_val) < 1e-10, \
-            f"Metrics mismatch for {key}: {py_val} vs {cpp_val}"
+        assert abs(py_val - cpp_val) < 1e-10, f"Metrics mismatch for {key}: {py_val} vs {cpp_val}"
 
 
 def test_performance_analytics_identical(python_backend, cpp_backend, sample_returns):
@@ -145,11 +183,13 @@ def test_performance_analytics_identical(python_backend, cpp_backend, sample_ret
         if math.isinf(py_val) and math.isinf(cpp_val):
             continue
 
-        assert abs(py_val - cpp_val) < 1e-10, \
+        assert abs(py_val - cpp_val) < 1e-10, (
             f"Performance mismatch for {key}: {py_val} vs {cpp_val}"
+        )
 
 
 # ── Deterministic Results Tests ─────────────────────────────────────────────
+
 
 def test_deterministic_returns(cpp_backend, sample_prices):
     """C++ backend must produce deterministic results."""
@@ -174,6 +214,7 @@ def test_deterministic_metrics(cpp_backend, sample_returns, sample_equity_curve)
 
 # ── Edge Case Tests ─────────────────────────────────────────────────────────
 
+
 def test_empty_returns_raises(cpp_backend):
     """C++ backend must raise on empty data."""
     with pytest.raises((ValueError, RuntimeError)):
@@ -196,6 +237,7 @@ def test_zero_variance_metrics(cpp_backend):
 
 # ── Simulation Consistency Tests ────────────────────────────────────────────
 
+
 def test_simulation_identical_results(python_backend, cpp_backend, sample_prices):
     """C++ and Python simulations must produce identical results."""
     request = SimulationRequest(
@@ -213,13 +255,15 @@ def test_simulation_identical_results(python_backend, cpp_backend, sample_prices
 
     # Compare returns
     for i in range(len(py_result.returns)):
-        assert abs(py_result.returns[i] - cpp_result.returns[i]) < 1e-12, \
+        assert abs(py_result.returns[i] - cpp_result.returns[i]) < 1e-12, (
             f"Return mismatch at {i}: {py_result.returns[i]} vs {cpp_result.returns[i]}"
+        )
 
     # Compare equity curves
     for i in range(len(py_result.equity_curve)):
-        assert abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10, \
+        assert abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10, (
             f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
+        )
 
     # Compare metrics
     for key in py_result.metrics:
@@ -227,8 +271,7 @@ def test_simulation_identical_results(python_backend, cpp_backend, sample_prices
         cpp_val = cpp_result.metrics[key]
         if math.isinf(py_val) and math.isinf(cpp_val):
             continue
-        assert abs(py_val - cpp_val) < 1e-10, \
-            f"Metric mismatch for {key}: {py_val} vs {cpp_val}"
+        assert abs(py_val - cpp_val) < 1e-10, f"Metric mismatch for {key}: {py_val} vs {cpp_val}"
 
 
 def test_simulation_deterministic_cpp(cpp_backend, sample_prices):
@@ -251,6 +294,7 @@ def test_simulation_deterministic_cpp(cpp_backend, sample_prices):
 
 # ── Experiment Framework Integration ────────────────────────────────────────
 
+
 def test_experiment_framework_integration(cpp_backend, sample_prices):
     """C++ backend must work with HistoricalSimulationEngine."""
     engine = HistoricalSimulationEngine()
@@ -272,6 +316,7 @@ def test_experiment_framework_integration(cpp_backend, sample_prices):
 
 
 # ── Serialization Compatibility ─────────────────────────────────────────────
+
 
 def test_serialization_roundtrip(cpp_backend, sample_prices):
     """SimulationResult from C++ backend must be serializable."""

@@ -1,6 +1,8 @@
-﻿from pathlib import Path
-import polars as pl
 from dataclasses import dataclass
+from pathlib import Path
+
+import polars as pl
+
 
 # Энэ бол таны researchos/data_engine/dataset.py дээр нэмэх ёстой класс
 @dataclass
@@ -12,13 +14,20 @@ class XAUUSD_M1_Dataset:
         if year:
             df = df.filter(pl.col("ts_utc").dt.year() == year)
         if resample:
-            df = df.group_by_dynamic("ts_utc", every=resample).agg([
-                pl.col("open").first().alias("open"),
-                pl.col("high").max().alias("high"),
-                pl.col("low").min().alias("low"),
-                pl.col("close").last().alias("close"),
-            ]).sort("ts_utc")
+            df = (
+                df.group_by_dynamic("ts_utc", every=resample)
+                .agg(
+                    [
+                        pl.col("open").first().alias("open"),
+                        pl.col("high").max().alias("high"),
+                        pl.col("low").min().alias("low"),
+                        pl.col("close").last().alias("close"),
+                    ]
+                )
+                .sort("ts_utc")
+            )
         return df
+
 
 # Тест
 if __name__ == "__main__":

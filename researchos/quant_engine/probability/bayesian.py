@@ -128,12 +128,8 @@ class HiddenMarkovModel:
         self.num_states = num_states
         self.num_observations = num_observations
         self.start_prob = [1.0 / num_states] * num_states
-        self.transition = [
-            [1.0 / num_states] * num_states for _ in range(num_states)
-        ]
-        self.emission = [
-            [1.0 / num_observations] * num_observations for _ in range(num_states)
-        ]
+        self.transition = [[1.0 / num_states] * num_states for _ in range(num_states)]
+        self.emission = [[1.0 / num_observations] * num_observations for _ in range(num_states)]
 
     def forward(self, observations: Sequence[int]) -> List[List[float]]:
         """Forward algorithm — alpha probabilities."""
@@ -143,10 +139,10 @@ class HiddenMarkovModel:
             alpha[0][s] = self.start_prob[s] * self.emission[s][observations[0]]
         for t in range(1, T):
             for s in range(self.num_states):
-                alpha[t][s] = sum(
-                    alpha[t - 1][j] * self.transition[j][s]
-                    for j in range(self.num_states)
-                ) * self.emission[s][observations[t]]
+                alpha[t][s] = (
+                    sum(alpha[t - 1][j] * self.transition[j][s] for j in range(self.num_states))
+                    * self.emission[s][observations[t]]
+                )
         return alpha
 
     def log_likelihood(self, observations: Sequence[int]) -> float:
@@ -162,7 +158,9 @@ class HiddenMarkovModel:
         v = [[0.0] * self.num_states for _ in range(T)]
         back = [[0] * self.num_states for _ in range(T)]
         for s in range(self.num_states):
-            v[0][s] = math.log(self.start_prob[s] + 1e-12) + math.log(self.emission[s][observations[0]] + 1e-12)
+            v[0][s] = math.log(self.start_prob[s] + 1e-12) + math.log(
+                self.emission[s][observations[0]] + 1e-12
+            )
         for t in range(1, T):
             for s in range(self.num_states):
                 best = float("-inf")
@@ -179,4 +177,3 @@ class HiddenMarkovModel:
         for t in range(T - 1, 0, -1):
             path.insert(0, back[t][path[0]])
         return path
-

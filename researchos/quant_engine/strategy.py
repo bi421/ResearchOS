@@ -122,4 +122,3 @@ class BuyAndHoldStrategy(StrategyEvaluationInterface):
         if hasattr(ts, "isoformat"):
             return ts.isoformat()
         return str(ts)
-

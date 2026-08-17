@@ -21,7 +21,6 @@ from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
 
 
-
 class MarketMemoryReport(BaseObject):
     """
     A consolidated report of market memory analysis.
@@ -92,12 +91,14 @@ class MarketMemoryReport(BaseObject):
         details: str = "",
     ) -> None:
         """Add an audit entry to the report."""
-        self.audit_entries.append({
-            "timestamp": utc_now().isoformat(),
-            "actor": actor,
-            "action": action,
-            "details": details,
-        })
+        self.audit_entries.append(
+            {
+                "timestamp": utc_now().isoformat(),
+                "actor": actor,
+                "action": action,
+                "details": details,
+            }
+        )
 
     def finalize(self) -> None:
         """Mark the report as final."""
@@ -113,7 +114,9 @@ class MarketMemoryReport(BaseObject):
             "target_snapshot_id": self.target_snapshot_id,
             "matched_scenarios": sorted(
                 [m["scenario_id"] for m in self.matched_scenarios],
-            ) if self.matched_scenarios else [],
+            )
+            if self.matched_scenarios
+            else [],
             "outcome_analysis": str(self.outcome_analysis),
             "feature_weights": dict(sorted(self.feature_weights.items())),
             "calculation_method": self.calculation_method,
@@ -127,21 +130,23 @@ class MarketMemoryReport(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "report_type": self.report_type,
-            "target_snapshot_id": self.target_snapshot_id,
-            "matched_scenarios": self.matched_scenarios,
-            "outcome_analysis": self.outcome_analysis,
-            "feature_weights": self.feature_weights,
-            "calculation_method": self.calculation_method,
-            "evidence_ids": self.evidence_ids,
-            "historical_sources": self.historical_sources,
-            "confidence_basis": self.confidence_basis,
-            "limitations": self.limitations,
-            "audit_entries": self.audit_entries,
-            "generated_at": self.generated_at.isoformat(),
-            "status": self.status,
-        })
+        base.update(
+            {
+                "report_type": self.report_type,
+                "target_snapshot_id": self.target_snapshot_id,
+                "matched_scenarios": self.matched_scenarios,
+                "outcome_analysis": self.outcome_analysis,
+                "feature_weights": self.feature_weights,
+                "calculation_method": self.calculation_method,
+                "evidence_ids": self.evidence_ids,
+                "historical_sources": self.historical_sources,
+                "confidence_basis": self.confidence_basis,
+                "limitations": self.limitations,
+                "audit_entries": self.audit_entries,
+                "generated_at": self.generated_at.isoformat(),
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod
@@ -158,6 +163,8 @@ class MarketMemoryReport(BaseObject):
         obj.confidence_basis = data.get("confidence_basis", "")
         obj.limitations = list(data.get("limitations", []))
         obj.audit_entries = list(data.get("audit_entries", []))
-        obj.generated_at = parse_timestamp(data["generated_at"]) if data.get("generated_at") else utc_now()
+        obj.generated_at = (
+            parse_timestamp(data["generated_at"]) if data.get("generated_at") else utc_now()
+        )
         obj.status = data.get("status", "Draft")
         return obj

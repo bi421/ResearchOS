@@ -50,9 +50,7 @@ class MacroContextBuilder:
             "knowledge_hashes": sorted(k.compute_hash() for k in knowledge_objects),
             "algorithm_version": ALGORITHM_VERSION,
         }
-        canonical = __import__("json").dumps(
-            semantic, sort_keys=True, separators=(",", ":")
-        )
+        canonical = __import__("json").dumps(semantic, sort_keys=True, separators=(",", ":"))
         digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
         return f"CTX_{digest}"
 

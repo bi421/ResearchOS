@@ -14,20 +14,20 @@ regression class.
 
 MIL-ECM-012: Econometrics owns diagnostics; diagnostics are separated from fit.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional
 
-
-from macro_intelligence.statistics.descriptive import mean, std, skewness, kurtosis
-from macro_intelligence.statistics.distributions import t_distribution_p_value
-from macro_intelligence.statistics.provenance import StatisticalProvenance
 from macro_intelligence.econometrics.models import (
-    ResidualDiagnostics,
-    ModelDiagnostics,
     InformationCriteria,
+    ModelDiagnostics,
+    ResidualDiagnostics,
     TestResult,
 )
+from macro_intelligence.statistics.descriptive import kurtosis, mean, skewness, std
+from macro_intelligence.statistics.distributions import t_distribution_p_value
+from macro_intelligence.statistics.provenance import StatisticalProvenance
 
 DURBIN_WATSON_VERSION = "ecm/dw/v1"
 JARQUE_BERA_VERSION = "ecm/jb/v1"
@@ -60,9 +60,7 @@ def durbin_watson(
     if denom == 0:
         dw = 0.0
     else:
-        diff_sum = sum(
-            (residuals[i] - residuals[i - 1]) ** 2 for i in range(1, n)
-        )
+        diff_sum = sum((residuals[i] - residuals[i - 1]) ** 2 for i in range(1, n))
         dw = diff_sum / denom
 
     # Rule of thumb: values far from 2 (outside 1.5, 2.5) indicate autocorrelation.
@@ -114,7 +112,7 @@ def jarque_bera(
     jb_stat = (n / 6.0) * (s * s + ((k - 3.0) ** 2) / 4.0)
 
     # Approximate p-value via chi-square tail (approx with t-distribution).
-    p_value = t_distribution_p_value(jb_stat ** 0.5, n - 2)
+    p_value = t_distribution_p_value(jb_stat**0.5, n - 2)
     is_significant = p_value < 0.05
 
     params = {"n_observations": n}
@@ -163,7 +161,7 @@ def residual_diagnostics(
     ku = kurtosis(residuals)
 
     jb = (n / 6.0) * (sk * sk + ((ku - 3.0) ** 2) / 4.0)
-    jb_p = t_distribution_p_value(jb ** 0.5, n - 2)
+    jb_p = t_distribution_p_value(jb**0.5, n - 2)
 
     denom = sum(r * r for r in residuals)
     dw = sum((residuals[i] - residuals[i - 1]) ** 2 for i in range(1, n)) / denom if denom else 0.0
@@ -181,7 +179,7 @@ def residual_diagnostics(
     ss_res = sum((e2[i] - fitted_aux[i]) ** 2 for i in range(n))
     r2_aux = 1.0 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
     bp_stat = n * r2_aux
-    bp_p = t_distribution_p_value(bp_stat ** 0.5, n - 2)
+    bp_p = t_distribution_p_value(bp_stat**0.5, n - 2)
 
     prov = StatisticalProvenance(
         dataset_id=dataset_id,

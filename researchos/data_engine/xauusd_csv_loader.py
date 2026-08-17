@@ -1,9 +1,12 @@
-import polars as pl
 import hashlib
 from pathlib import Path
 
+import polars as pl
+
+
 class XauCsvLoader:
     """Dukascopy орлох, XAUUSD-д зориулсан deterministic loader"""
+
     def __init__(self, csv_path: str):
         self.csv_path = Path(csv_path)
 

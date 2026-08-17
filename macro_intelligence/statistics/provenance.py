@@ -7,6 +7,7 @@ Defines the provenance envelope attached to every statistical output so that
 each result can be traced back to its exact input lineage and the computation
 that produced it.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -25,10 +26,9 @@ def content_hash(content: Any) -> str:
     """
     import hashlib
     import json
-    canonical = json.dumps(
-        content, sort_keys=True, separators=(',', ':'), default=str
-    )
-    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+    canonical = json.dumps(content, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -43,6 +43,7 @@ class StatisticalProvenance:
 
     This envelope is metadata only; it does not alter statistical behaviour.
     """
+
     dataset_id: Optional[str] = None
     dataset_version: Optional[str] = None
     dataset_hash: Optional[str] = None
@@ -76,21 +77,22 @@ class StatisticalProvenance:
     def to_json(self) -> str:
         """Serialize to JSON with deterministic ordering."""
         import json
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(',', ':'))
+
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
 
     @classmethod
     def from_json(cls, json_str: str) -> StatisticalProvenance:
         """Deserialize from JSON."""
         import json
+
         return cls.from_dict(json.loads(json_str))
 
     def compute_hash(self) -> str:
         """Compute a deterministic hash over the provenance envelope."""
         import hashlib
-        canonical = __import__('json').dumps(
-            self.to_dict(), sort_keys=True, separators=(',', ':')
-        )
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+        canonical = __import__("json").dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @property
     def method_name(self) -> str:

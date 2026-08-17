@@ -80,9 +80,7 @@ def _make_repo() -> EvidenceRepository:
 class TestResultPayload:
     def test_payload_preserves_content(self):
         result = _make_result()
-        payload = result_payload(
-            result, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
+        payload = result_payload(result, run_hash="run-hash-1", experiment_hash="exp-hash-1")
         assert payload["result_hash"] == result.result_hash
         assert payload["run_id"] == "run-1"
         assert payload["run_hash"] == "run-hash-1"
@@ -107,9 +105,7 @@ class TestResultPayload:
 
     def test_payload_excludes_telemetry(self):
         result = _make_result_with_telemetry(time_ms=123.5)
-        payload = result_payload(
-            result, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
+        payload = result_payload(result, run_hash="run-hash-1", experiment_hash="exp-hash-1")
         assert "backend_execution_time_ms" not in payload
         assert "backend_execution_timestamp" not in payload
         assert "created_at" not in payload
@@ -135,23 +131,15 @@ class TestBuildResultEnvelope:
     def test_changed_metric_different_artifact_hash(self):
         r1 = _make_result(metrics={"sharpe": 1.5})
         r2 = _make_result(metrics={"sharpe": 2.0})
-        e1 = build_result_envelope(
-            r1, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
-        e2 = build_result_envelope(
-            r2, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
+        e1 = build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1")
+        e2 = build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1")
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_changed_statistics_different_artifact_hash(self):
         r1 = _make_result(statistics={"mean": 0.05})
         r2 = _make_result(statistics={"mean": 0.10})
-        e1 = build_result_envelope(
-            r1, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
-        e2 = build_result_envelope(
-            r2, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
+        e1 = build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1")
+        e2 = build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1")
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_changed_run_hash_different_artifact_hash(self):
@@ -167,12 +155,8 @@ class TestBuildResultEnvelope:
         # Same logical result, different telemetry → same artifact hash.
         r1 = _make_result_with_telemetry(time_ms=1.0)
         r2 = _make_result_with_telemetry(time_ms=999.0)
-        e1 = build_result_envelope(
-            r1, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
-        e2 = build_result_envelope(
-            r2, run_hash="run-hash-1", experiment_hash="exp-hash-1"
-        )
+        e1 = build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1")
+        e2 = build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1")
         assert e1.artifact_hash == e2.artifact_hash
 
     def test_artifact_type_is_result(self):
@@ -292,9 +276,7 @@ class TestRunResultLineage:
     def test_emit_result_for_run_links_lineage(self):
         repo = _make_repo()
         run_hash = "run-hash-0002"
-        stored = emit_result_for_run(
-            _make_result(), run_hash, repo, experiment_hash="exp-hash-1"
-        )
+        stored = emit_result_for_run(_make_result(), run_hash, repo, experiment_hash="exp-hash-1")
         assert run_hash in stored.parent_hashes
         assert repo.count_edges() == 1
         assert repo.get_children(run_hash) == [stored.artifact_hash]
@@ -357,9 +339,7 @@ class TestProgressTracking:
     def test_acceptance_run_to_result_lineage(self):
         repo = _make_repo()
         run_hash = "run-hash-lineage"
-        stored = emit_result_for_run(
-            _make_result(), run_hash, repo, experiment_hash="exp-hash-1"
-        )
+        stored = emit_result_for_run(_make_result(), run_hash, repo, experiment_hash="exp-hash-1")
         assert repo.get_children(run_hash) == [stored.artifact_hash]
 
     def test_acceptance_repository_retrieval(self):

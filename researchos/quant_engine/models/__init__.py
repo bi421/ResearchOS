@@ -22,17 +22,7 @@ from .contracts import (
     ModelContract,
     ModelContractError,
 )
-from .metadata import (
-    MODEL_METADATA_VERSION,
-    ModelMetadata,
-)
-from .registry import (
-    MODEL_REGISTRY_VERSION,
-    ModelAlreadyExistsError,
-    ModelNotFoundError,
-    ModelRegistry,
-    ModelRegistryError,
-)
+
 # Backward-compatible re-export of the legacy quant-engine model contracts
 # that previously lived in ``researchos/quant_engine/models.py``.  Every name
 # is preserved verbatim so existing importers keep working unchanged.
@@ -49,6 +39,17 @@ from .legacy_models import (  # noqa: F401
     SimulationResult,
     Trade,
     periods_per_year_from_timeframe,
+)
+from .metadata import (
+    MODEL_METADATA_VERSION,
+    ModelMetadata,
+)
+from .registry import (
+    MODEL_REGISTRY_VERSION,
+    ModelAlreadyExistsError,
+    ModelNotFoundError,
+    ModelRegistry,
+    ModelRegistryError,
 )
 
 __all__ = [
@@ -77,4 +78,3 @@ __all__ = [
     "Trade",
     "periods_per_year_from_timeframe",
 ]
-

@@ -158,9 +158,7 @@ def _validate_version(version: str) -> None:
     if not isinstance(version, str) or not version:
         raise ModelContractError("version must be a non-empty string")
     if _VERSION_PATTERN.fullmatch(version) is None:
-        raise ModelContractError(
-            "version must follow the semantic form 'major.minor.patch'"
-        )
+        raise ModelContractError("version must follow the semantic form 'major.minor.patch'")
 
 
 __all__ = [
@@ -168,4 +166,3 @@ __all__ = [
     "ModelContract",
     "ModelContractError",
 ]
-

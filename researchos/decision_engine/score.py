@@ -27,10 +27,10 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.decision_engine.contracts import (
-    EvidenceItem,
+    DecisionEvidenceItem,
     EvidenceSource,
     WeightConfiguration,
 )
@@ -82,7 +82,7 @@ class EvidenceScore(BaseObject):
         confidence_score: float = 0.0,
         uncertainty_score: float = 0.0,
         evidence_count: int = 0,
-        evidence_items: Optional[List[EvidenceItem]] = None,
+        evidence_items: Optional[List[DecisionEvidenceItem]] = None,
         weighting_version: str = "WEIGHT_V1",
         scoring_version: str = "SCORE_V1",
         ontology_tags: Optional[List[str]] = None,
@@ -108,7 +108,7 @@ class EvidenceScore(BaseObject):
         self.confidence_score = confidence_score
         self.uncertainty_score = uncertainty_score
         self.evidence_count = evidence_count
-        self.evidence_items: List[EvidenceItem] = evidence_items or []
+        self.evidence_items: List[DecisionEvidenceItem] = evidence_items or []
         self.weighting_version = weighting_version
         self.scoring_version = scoring_version
         self._score_hash: str = ""
@@ -156,26 +156,28 @@ class EvidenceScore(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "context_id": self.context_id,
-            "total_score": self.total_score,
-            "bullish_score": self.bullish_score,
-            "bearish_score": self.bearish_score,
-            "neutral_score": self.neutral_score,
-            "macro_score": self.macro_score,
-            "historical_score": self.historical_score,
-            "experiment_score": self.experiment_score,
-            "validation_score": self.validation_score,
-            "market_memory_score": self.market_memory_score,
-            "quant_score": self.quant_score,
-            "confidence_score": self.confidence_score,
-            "uncertainty_score": self.uncertainty_score,
-            "evidence_count": self.evidence_count,
-            "evidence_items": [e.to_dict() for e in self.evidence_items],
-            "weighting_version": self.weighting_version,
-            "scoring_version": self.scoring_version,
-            "score_hash": self._score_hash,
-        })
+        base.update(
+            {
+                "context_id": self.context_id,
+                "total_score": self.total_score,
+                "bullish_score": self.bullish_score,
+                "bearish_score": self.bearish_score,
+                "neutral_score": self.neutral_score,
+                "macro_score": self.macro_score,
+                "historical_score": self.historical_score,
+                "experiment_score": self.experiment_score,
+                "validation_score": self.validation_score,
+                "market_memory_score": self.market_memory_score,
+                "quant_score": self.quant_score,
+                "confidence_score": self.confidence_score,
+                "uncertainty_score": self.uncertainty_score,
+                "evidence_count": self.evidence_count,
+                "evidence_items": [e.to_dict() for e in self.evidence_items],
+                "weighting_version": self.weighting_version,
+                "scoring_version": self.scoring_version,
+                "score_hash": self._score_hash,
+            }
+        )
         return base
 
     @classmethod
@@ -196,7 +198,7 @@ class EvidenceScore(BaseObject):
         obj.uncertainty_score = float(data.get("uncertainty_score", 0.0))
         obj.evidence_count = int(data.get("evidence_count", 0))
         obj.evidence_items = [
-            EvidenceItem.from_dict(e) for e in data.get("evidence_items", [])
+            DecisionEvidenceItem.from_dict(e) for e in data.get("evidence_items", [])
         ]
         obj.weighting_version = data.get("weighting_version", "WEIGHT_V1")
         obj.scoring_version = data.get("scoring_version", "SCORE_V1")
@@ -206,7 +208,7 @@ class EvidenceScore(BaseObject):
 
 def compute_evidence_score(
     context_id: str,
-    evidence_items: List[EvidenceItem],
+    evidence_items: List[DecisionEvidenceItem],
     weight_config: WeightConfiguration,
     scoring_version: str = "SCORE_V1",
 ) -> EvidenceScore:
@@ -238,7 +240,7 @@ def compute_evidence_score(
     source_confidences: Dict[str, float] = {}
     total_items = len(evidence_items)
 
-# Map source types to weight config attributes
+    # Map source types to weight config attributes
     source_weight_map = {
         EvidenceSource.MARKET_MEMORY.value: weight_config.market_memory_weight,
         EvidenceSource.MACRO_INTELLIGENCE.value: weight_config.macro_weight,
@@ -282,42 +284,60 @@ def compute_evidence_score(
     val_key = EvidenceSource.VALIDATION.value
     quant_key = EvidenceSource.QUANT_ENGINE.value
 
-    market_memory_score = max(
-        source_scores.get(mm_key, {}).get("Bullish", 0.0),
-        source_scores.get(mm_key, {}).get("Bearish", 0.0),
-        source_scores.get(mm_key, {}).get("Neutral", 0.0),
-    ) if mm_key in source_scores else 0.0
+    market_memory_score = (
+        max(
+            source_scores.get(mm_key, {}).get("Bullish", 0.0),
+            source_scores.get(mm_key, {}).get("Bearish", 0.0),
+            source_scores.get(mm_key, {}).get("Neutral", 0.0),
+        )
+        if mm_key in source_scores
+        else 0.0
+    )
 
     historical_score = market_memory_score  # Same source
-    macro_score = max(
-        source_scores.get(macro_key, {}).get("Bullish", 0.0),
-        source_scores.get(macro_key, {}).get("Bearish", 0.0),
-        source_scores.get(macro_key, {}).get("Neutral", 0.0),
-    ) if macro_key in source_scores else 0.0
+    macro_score = (
+        max(
+            source_scores.get(macro_key, {}).get("Bullish", 0.0),
+            source_scores.get(macro_key, {}).get("Bearish", 0.0),
+            source_scores.get(macro_key, {}).get("Neutral", 0.0),
+        )
+        if macro_key in source_scores
+        else 0.0
+    )
 
-    experiment_score = max(
-        source_scores.get(exp_key, {}).get("Bullish", 0.0),
-        source_scores.get(exp_key, {}).get("Bearish", 0.0),
-        source_scores.get(exp_key, {}).get("Neutral", 0.0),
-    ) if exp_key in source_scores else 0.0
+    experiment_score = (
+        max(
+            source_scores.get(exp_key, {}).get("Bullish", 0.0),
+            source_scores.get(exp_key, {}).get("Bearish", 0.0),
+            source_scores.get(exp_key, {}).get("Neutral", 0.0),
+        )
+        if exp_key in source_scores
+        else 0.0
+    )
 
-    validation_score = max(
-        source_scores.get(val_key, {}).get("Bullish", 0.0),
-        source_scores.get(val_key, {}).get("Bearish", 0.0),
-        source_scores.get(val_key, {}).get("Neutral", 0.0),
-    ) if val_key in source_scores else 0.0
+    validation_score = (
+        max(
+            source_scores.get(val_key, {}).get("Bullish", 0.0),
+            source_scores.get(val_key, {}).get("Bearish", 0.0),
+            source_scores.get(val_key, {}).get("Neutral", 0.0),
+        )
+        if val_key in source_scores
+        else 0.0
+    )
 
-    quant_score = max(
-        source_scores.get(quant_key, {}).get("Bullish", 0.0),
-        source_scores.get(quant_key, {}).get("Bearish", 0.0),
-        source_scores.get(quant_key, {}).get("Neutral", 0.0),
-    ) if quant_key in source_scores else 0.0
+    quant_score = (
+        max(
+            source_scores.get(quant_key, {}).get("Bullish", 0.0),
+            source_scores.get(quant_key, {}).get("Bearish", 0.0),
+            source_scores.get(quant_key, {}).get("Neutral", 0.0),
+        )
+        if quant_key in source_scores
+        else 0.0
+    )
 
     # Confidence score: average of source confidences
     confidence_score = (
-        sum(source_confidences.values()) / len(source_confidences)
-        if source_confidences
-        else 0.0
+        sum(source_confidences.values()) / len(source_confidences) if source_confidences else 0.0
     )
 
     # Uncertainty score: disagreement between sources
@@ -344,4 +364,3 @@ def compute_evidence_score(
         weighting_version=weight_config.weighting_version,
         scoring_version=scoring_version,
     )
-

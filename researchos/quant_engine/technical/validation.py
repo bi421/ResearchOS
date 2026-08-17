@@ -30,9 +30,7 @@ def validate_bars(bars: Bars) -> None:
             if value is None:
                 raise ValueError(f"{name} series contains None at index {i}")
             if not isinstance(value, (int, float)):
-                raise TypeError(
-                    f"{name} series must contain numeric values, got {type(value)}"
-                )
+                raise TypeError(f"{name} series must contain numeric values, got {type(value)}")
             if value != value:  # NaN check
                 raise ValueError(f"{name} series contains NaN at index {i}")
 
@@ -83,4 +81,3 @@ def validate_params(
     for key, default in allowed.items():
         result[key] = params.get(key, default)
     return result
-

@@ -26,7 +26,6 @@ from researchos.experiments.experiment import Experiment
 from researchos.experiments.result import ExperimentResult, ExperimentRun
 from researchos.experiments.runner import BaseExperimentRunner
 
-
 # =============================================================================
 # Issue #3 — Immutable ExperimentResult containers
 # =============================================================================
@@ -213,7 +212,4 @@ class TestDatasetProvenance:
         exp = self._make_ready_experiment()
         _, r1 = runner.run(exp, dataset=_price_dataset(20, base=100.0))
         _, r2 = runner.run(exp, dataset=_price_dataset(20, base=101.0))
-        assert (
-            r1.statistics["dataset_version"]
-            != r2.statistics["dataset_version"]
-        )
+        assert r1.statistics["dataset_version"] != r2.statistics["dataset_version"]

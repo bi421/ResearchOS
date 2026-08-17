@@ -7,7 +7,7 @@ __version__ = "1.0.0"
 __author__ = "ResearchOS Quant Platform"
 __all__ = [
     "contracts",
-    "interfaces", 
+    "interfaces",
     "storage",
     "validation",
     "quality",

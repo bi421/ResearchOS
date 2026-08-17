@@ -7,6 +7,7 @@ from enum import Enum
 
 class ErrorType(Enum):
     """Error types for adapter operations."""
+
     TIMEOUT = "timeout"
     RATE_LIMIT = "rate_limit"
     AUTH_ERROR = "auth_error"
@@ -19,6 +20,7 @@ class ErrorType(Enum):
 
 class HealthStatus(Enum):
     """Health status for sources."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -27,6 +29,7 @@ class HealthStatus(Enum):
 
 class Severity(Enum):
     """Severity levels for alerts."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -35,6 +38,7 @@ class Severity(Enum):
 
 class FrequencyEnum(Enum):
     """Data frequency enumeration."""
+
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
@@ -44,6 +48,7 @@ class FrequencyEnum(Enum):
 
 class SeriesType(Enum):
     """Type of series data."""
+
     LEVEL = "level"
     CHANGE = "change"
     YOY = "yoy"
@@ -54,6 +59,7 @@ class SeriesType(Enum):
 
 class EventCategory(Enum):
     """Event category enumeration."""
+
     FOMC_MEETING = "fomc_meeting"
     FOMC_STATEMENT = "fomc_statement"
     FOMC_SUMMARY = "fomc_summary"
@@ -68,6 +74,7 @@ class EventCategory(Enum):
 
 class ImportanceLevel(Enum):
     """Event importance levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -76,6 +83,7 @@ class ImportanceLevel(Enum):
 
 class AlertType(Enum):
     """Alert type enumeration."""
+
     WARNING = "warning"
     CRITICAL = "critical"
     SOURCE_OUTAGE = "source_outage"
@@ -83,6 +91,7 @@ class AlertType(Enum):
 
 class QuarantineStatus(Enum):
     """Quarantine status."""
+
     PENDING = "pending"
     UNDER_REVIEW = "under_review"
     RELEASED = "released"
@@ -92,6 +101,7 @@ class QuarantineStatus(Enum):
 
 class PatternType(Enum):
     """Pattern type enumeration."""
+
     REGIME_SHIFT = "regime_shift"
     CORRELATION_BREAK = "correlation_break"
     VOLATILITY_CLUSTER = "volatility_cluster"
@@ -105,6 +115,7 @@ class PatternType(Enum):
 
 class InflationRegime(Enum):
     """Inflation regime classification."""
+
     LOW = "low_inflation"
     TARGET = "target_inflation"
     ELEVATED = "elevated_inflation"
@@ -113,6 +124,7 @@ class InflationRegime(Enum):
 
 class GrowthRegime(Enum):
     """Growth regime classification."""
+
     RECOVERY = "recovery"
     EXPANSION = "expansion"
     SLOWDOWN = "slowdown"
@@ -121,6 +133,7 @@ class GrowthRegime(Enum):
 
 class MonetaryRegime(Enum):
     """Monetary regime classification."""
+
     DOVISH_EASY = "dovish_easy"
     NEUTRAL = "neutral"
     TIGHTENING = "tightening"
@@ -129,6 +142,7 @@ class MonetaryRegime(Enum):
 
 class RiskRegime(Enum):
     """Risk regime classification."""
+
     RISK_ON = "risk_on"
     NEUTRAL = "neutral"
     RISK_OFF = "risk_off"

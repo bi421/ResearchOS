@@ -120,9 +120,7 @@ class ResearchDataset:
             TypeError: If the payload is not a mapping.
         """
         if not isinstance(payload, Mapping):
-            raise TypeError(
-                f"payload must be a mapping, got {type(payload).__name__}"
-            )
+            raise TypeError(f"payload must be a mapping, got {type(payload).__name__}")
         required = (
             "feature_names",
             "features",
@@ -134,9 +132,7 @@ class ResearchDataset:
         )
         missing = [k for k in required if k not in payload]
         if missing:
-            raise ValueError(
-                f"payload missing required key(s): {', '.join(missing)}"
-            )
+            raise ValueError(f"payload missing required key(s): {', '.join(missing)}")
 
         feature_names = tuple(str(n) for n in payload["feature_names"])
         features = tuple(tuple(float(v) for v in row) for row in payload["features"])
@@ -150,8 +146,7 @@ class ResearchDataset:
 
         if sample_count != len(labels):
             raise ValueError(
-                f"payload sample_count={sample_count} does not match "
-                f"len(labels)={len(labels)}"
+                f"payload sample_count={sample_count} does not match len(labels)={len(labels)}"
             )
         if feature_count != len(feature_names):
             raise ValueError(
@@ -179,4 +174,3 @@ class ResearchDataset:
 
 
 __all__ = ["BUILDER_VERSION", "DATASET_VERSION", "ResearchDataset"]
-

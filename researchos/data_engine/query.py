@@ -70,9 +70,9 @@ class RangeQuery:
         else:
             results.sort(key=lambda r: r.timestamp)
         if self.offset > 0:
-            results = results[self.offset:]
+            results = results[self.offset :]
         if self.limit > 0:
-            results = results[:self.limit]
+            results = results[: self.limit]
         return results
 
     def to_dict(self) -> Dict[str, Any]:
@@ -172,4 +172,3 @@ class MultiSymbolQuery:
             sort_by=data.get("sort_by", "timestamp"),
             sort_order=data.get("sort_order", "asc"),
         )
-

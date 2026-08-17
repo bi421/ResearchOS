@@ -217,9 +217,7 @@ def compute_dataset_statistics(
         stats.gap_count = gap_count
         missing_count = max(0, expected_total - stats.record_count)
         if expected_total > 0:
-            stats.missing_percentage = min(
-                100.0, 100.0 * missing_count / expected_total
-            )
+            stats.missing_percentage = min(100.0, 100.0 * missing_count / expected_total)
 
     # Average spread
     spreads: List[float] = []

@@ -40,6 +40,8 @@ from researchos.quant_engine.models.contracts import (
 )
 from researchos.quant_engine.training.contracts import (
     ModelContract as TrainingModelContract,
+)
+from researchos.quant_engine.training.contracts import (
     ModelType,
 )
 from researchos.quant_engine.training.training_result import TrainingResult
@@ -47,7 +49,6 @@ from researchos.quant_engine.validation.contracts import (
     FoldResult,
     ValidationResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -117,9 +118,7 @@ def _make_validation(
         validation_size=20,
         test_size=0,
         fold_count=fold_count,
-        fold_results=tuple(
-            _make_fold(i + 1, m) for i, m in enumerate(fold_metrics)
-        ),
+        fold_results=tuple(_make_fold(i + 1, m) for i, m in enumerate(fold_metrics)),
         metrics={"mean_accuracy": 0.85},
         metadata={"method": "walk_forward"},
     )
@@ -263,9 +262,7 @@ class TestEvaluationScoreContract(unittest.TestCase):
 
 class TestEvaluationReportContract(unittest.TestCase):
     def setUp(self):
-        self.score = EvaluationScore(
-            "p1", 0.8, 0.7, 0.6, 0.72, "B+", metadata={"src": "test"}
-        )
+        self.score = EvaluationScore("p1", 0.8, 0.7, 0.6, 0.72, "B+", metadata={"src": "test"})
         self.eid = _evaluation_id(self.score, "2024-01-01T00:00:00Z")
 
     def test_frozen_dataclass(self):
@@ -299,14 +296,16 @@ class TestEvaluationReportContract(unittest.TestCase):
 
     def test_rejects_blank_evaluation_id(self):
         with self.assertRaises(InvalidEvaluationError):
-            EvaluationReport(
-                "", "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-            )
+            EvaluationReport("", "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
 
     def test_rejects_non_score(self):
         with self.assertRaises(InvalidEvaluationError):
             EvaluationReport(
-                self.eid, "p1", "not_a_score", "2024-01-01T00:00:00Z", EVALUATION_VERSION  # type: ignore
+                self.eid,
+                "p1",
+                "not_a_score",
+                "2024-01-01T00:00:00Z",
+                EVALUATION_VERSION,  # type: ignore
             )
 
     def test_serializable(self):
@@ -375,9 +374,7 @@ class TestScoreComputation(unittest.TestCase):
             EvidenceNodeDescriptor("n1", "dataset", {"hash": "abc"}),
             EvidenceNodeDescriptor("n2", "model", {"name": "m1"}),
         )
-        edges = (
-            EvidenceEdgeDescriptor("e1", "n1", "n2", "trains"),
-        )
+        edges = (EvidenceEdgeDescriptor("e1", "n1", "n2", "trains"),)
         report = _make_report(nodes=nodes, edges=edges)
         score = _compute_reproducibility(report)
         self.assertAlmostEqual(score, 0.95, places=10)
@@ -415,12 +412,8 @@ class TestScoreComputation(unittest.TestCase):
         self.assertAlmostEqual(score, 0.7, places=10)
 
     def test_evidence_with_nodes(self):
-        nodes = (
-            EvidenceNodeDescriptor("n1", "dataset", {"hash": "abc"}),
-        )
-        edges = (
-            EvidenceEdgeDescriptor("e1", "n1", "n2", "trains"),
-        )
+        nodes = (EvidenceNodeDescriptor("n1", "dataset", {"hash": "abc"}),)
+        edges = (EvidenceEdgeDescriptor("e1", "n1", "n2", "trains"),)
         report = _make_report(nodes=nodes, edges=edges)
         score = _compute_evidence(report)
         self.assertAlmostEqual(score, 1.0, places=10)
@@ -485,9 +478,7 @@ class TestResearchEvaluator(unittest.TestCase):
         reports = self.evaluator.evaluate_all()
         self.assertGreater(len(reports), 0)
         for i in range(1, len(reports)):
-            self.assertGreaterEqual(
-                reports[i].evaluation_id, reports[i - 1].evaluation_id
-            )
+            self.assertGreaterEqual(reports[i].evaluation_id, reports[i - 1].evaluation_id)
 
     def test_evaluate_all_deterministic(self):
         r1 = self.evaluator.evaluate_all()
@@ -526,25 +517,19 @@ class TestEvaluationImmutability(unittest.TestCase):
     def test_report_frozen(self):
         score = EvaluationScore("p1", 0.8, 0.7, 0.6, 0.72, "B+")
         eid = _evaluation_id(score, "")
-        report = EvaluationReport(
-            eid, "p1", score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-        )
+        report = EvaluationReport(eid, "p1", score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
         with self.assertRaises(FrozenInstanceError):
             report.pipeline_id = "x"  # type: ignore
 
     def test_metadata_mutation_raises(self):
-        score = EvaluationScore(
-            "p1", 0.8, 0.7, 0.6, 0.72, "B+", metadata={"key": "value"}
-        )
+        score = EvaluationScore("p1", 0.8, 0.7, 0.6, 0.72, "B+", metadata={"key": "value"})
         with self.assertRaises(TypeError):
             score.metadata["key"] = "new_value"  # type: ignore
 
     def test_immutable_after_deserialization(self):
         score = EvaluationScore("p1", 0.8, 0.7, 0.6, 0.72, "B+")
         eid = _evaluation_id(score, "")
-        original = EvaluationReport(
-            eid, "p1", score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-        )
+        original = EvaluationReport(eid, "p1", score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
         restored = EvaluationReport.from_dict(original.to_dict())
         with self.assertRaises(FrozenInstanceError):
             restored.pipeline_id = "x"  # type: ignore
@@ -599,13 +584,15 @@ class TestEvaluationFailures(unittest.TestCase):
 
     def test_report_from_dict_malformed_score_raises(self):
         with self.assertRaises(InvalidEvaluationError):
-            EvaluationReport.from_dict({
-                "evaluation_id": "e1",
-                "pipeline_id": "p1",
-                "score": "not_a_score",
-                "created_at": "",
-                "version": "1.0.0",
-            })
+            EvaluationReport.from_dict(
+                {
+                    "evaluation_id": "e1",
+                    "pipeline_id": "p1",
+                    "score": "not_a_score",
+                    "created_at": "",
+                    "version": "1.0.0",
+                }
+            )
 
 
 # ===================================================================
@@ -677,8 +664,17 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
         import os
 
         forbidden = {
-            "numpy", "pandas", "sklearn", "torch", "tensorflow",
-            "openai", "llm", "pickle", "sqlite", "random", "uuid",
+            "numpy",
+            "pandas",
+            "sklearn",
+            "torch",
+            "tensorflow",
+            "openai",
+            "llm",
+            "pickle",
+            "sqlite",
+            "random",
+            "uuid",
             "time",
         }
         eval_dir = os.path.join(
@@ -697,16 +693,12 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
                         for alias in node.names:
                             root_name = alias.name.split(".")[0]
                             if root_name in forbidden:
-                                self.fail(
-                                    f"forbidden import in {fn}: {alias.name}"
-                                )
+                                self.fail(f"forbidden import in {fn}: {alias.name}")
                     elif isinstance(node, ast.ImportFrom):
                         if node.module:
                             root_name = node.module.split(".")[0]
                             if root_name in forbidden:
-                                self.fail(
-                                    f"forbidden import in {fn}: {node.module}"
-                                )
+                                self.fail(f"forbidden import in {fn}: {node.module}")
 
     def test_stdlib_only_imports(self):
         import ast
@@ -739,9 +731,7 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
                         for alias in node.names:
                             root_name = alias.name.split(".")[0]
                             if root_name not in allowed_roots:
-                                self.fail(
-                                    f"non-stdlib import in {fn}: {alias.name}"
-                                )
+                                self.fail(f"non-stdlib import in {fn}: {alias.name}")
                     elif isinstance(node, ast.ImportFrom):
                         # Only audit absolute imports (node.level == 0).
                         # Relative imports (e.g. ``from .contracts import ...``)
@@ -750,9 +740,7 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
                         if node.level == 0 and node.module:
                             root_name = node.module.split(".")[0]
                             if root_name not in allowed_roots:
-                                self.fail(
-                                    f"non-stdlib import in {fn}: {node.module}"
-                                )
+                                self.fail(f"non-stdlib import in {fn}: {node.module}")
 
 
 if __name__ == "__main__":

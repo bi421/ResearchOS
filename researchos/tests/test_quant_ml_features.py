@@ -45,8 +45,8 @@ def _make_close(n: int = 100, start: float = 100.0, step: float = 0.5) -> list:
 def _make_ohlcv(n: int = 100):
     close = _make_close(n)
     high = [c + 1.0 for c in close]
-    low  = [c - 1.0 for c in close]
-    vol  = [1000.0 + i * 10.0 for i in range(n)]
+    low = [c - 1.0 for c in close]
+    vol = [1000.0 + i * 10.0 for i in range(n)]
     return high, low, close, vol
 
 
@@ -64,7 +64,7 @@ class TestReturns(unittest.TestCase):
         c = [100.0, 101.0, 102.0]
         r = returns(c)
         self.assertAlmostEqual(r[1], 0.01, places=8)
-        self.assertAlmostEqual(r[2], 1/101, places=8)
+        self.assertAlmostEqual(r[2], 1 / 101, places=8)
 
     def test_determinism(self):
         c = _make_close(50)
@@ -338,8 +338,8 @@ class TestFeatureBuilder(unittest.TestCase):
         n = 120
         self.close = _make_close(n)
         self.high = [c + 1.0 for c in self.close]
-        self.low  = [c - 1.0 for c in self.close]
-        self.vol  = [1000.0] * n
+        self.low = [c - 1.0 for c in self.close]
+        self.vol = [1000.0] * n
 
     def test_builds_feature_set(self):
         fb = FeatureBuilder(self.close, self.high, self.low, self.vol)
@@ -364,7 +364,9 @@ class TestFeatureBuilder(unittest.TestCase):
         self.assertEqual(fs1.data, fs2.data)
 
     def test_with_labels(self):
-        labels = [1.0 if self.close[i] > self.close[i-1] else 0.0 for i in range(1, len(self.close))] + [0.0]
+        labels = [
+            1.0 if self.close[i] > self.close[i - 1] else 0.0 for i in range(1, len(self.close))
+        ] + [0.0]
         fb = FeatureBuilder(self.close, self.high, self.low, self.vol, labels=labels)
         fs = fb.build(drop_na=True)
         self.assertIsNotNone(fs.labels)

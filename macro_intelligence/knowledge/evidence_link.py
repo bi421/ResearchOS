@@ -24,8 +24,8 @@ from typing import Any
 
 from macro_intelligence.knowledge.models import (
     ALGORITHM_VERSION,
-    KnowledgeProvenance,
     KnowledgeObject,
+    KnowledgeProvenance,
 )
 
 
@@ -72,6 +72,7 @@ class EvidenceLink:
     def compute_hash(self) -> str:
         import hashlib
         import json
+
         hash_data = {
             "knowledge_id": self.knowledge_id,
             "evidence_ids": sorted(self.evidence_ids),
@@ -81,8 +82,8 @@ class EvidenceLink:
             "transition_id": self.transition_id,
             "algorithm_version": self.algorithm_version,
         }
-        canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 class EvidenceLinker:

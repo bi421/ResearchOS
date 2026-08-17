@@ -36,10 +36,6 @@ from researchos.evidence.experiment_emission import (
     emit_experiment_with_dataset,
 )
 from researchos.evidence.repository import EvidenceRepository
-from researchos.evidence.result_emission import (
-    build_result_envelope,
-    emit_result_for_run,
-)
 from researchos.evidence.reproduction import (
     ExecutionFailure,
     HashMismatch,
@@ -50,6 +46,10 @@ from researchos.evidence.reproduction import (
     ReproductionError,
     ReproductionReport,
     research_dataset_to_runner_dataset,
+)
+from researchos.evidence.result_emission import (
+    build_result_envelope,
+    emit_result_for_run,
 )
 from researchos.evidence.run_emission import (
     build_run_envelope,
@@ -549,4 +549,3 @@ class TestAcceptanceCriteria:
         assert issubclass(ReconstructionFailure, ReproductionError)
         assert issubclass(ExecutionFailure, ReproductionError)
         assert issubclass(HashMismatch, ReproductionError)
-

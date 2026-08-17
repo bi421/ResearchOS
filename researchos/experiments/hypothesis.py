@@ -66,10 +66,7 @@ class QuantHypothesis(BaseObject):
         id: Optional[str] = None,
     ):
         if id is None:
-            seed = (
-                f"QuantHypothesis|{research_question}|"
-                f"{null_hypothesis}|{alternative_hypothesis}"
-            )
+            seed = f"QuantHypothesis|{research_question}|{null_hypothesis}|{alternative_hypothesis}"
             id = generate_id(seed)
 
         super().__init__(id=id, ontology_tags=ontology_tags)
@@ -120,7 +117,9 @@ class QuantHypothesis(BaseObject):
         self.status = HypothesisStatus.INCONCLUSIVE
         self.lifecycle.transition(
             LifecycleStage.ANALYZED,
-            reason=f"QuantHypothesis inconclusive: {reason}" if reason else "QuantHypothesis inconclusive",
+            reason=f"QuantHypothesis inconclusive: {reason}"
+            if reason
+            else "QuantHypothesis inconclusive",
         )
 
     def _to_hashable_dict(self) -> Dict[str, Any]:
@@ -144,19 +143,21 @@ class QuantHypothesis(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "research_question": self.research_question,
-            "null_hypothesis": self.null_hypothesis,
-            "alternative_hypothesis": self.alternative_hypothesis,
-            "hypothesis_type": self.hypothesis_type,
-            "significance_level": self.significance_level,
-            "expected_effect": self.expected_effect,
-            "parameters": self.parameters,
-            "metric_definitions": [m.to_dict() for m in self.metric_definitions],
-            "tags": self.tags,
-            "hypothesis_trace": self.hypothesis_trace,
-            "status": self.status.value,
-        })
+        base.update(
+            {
+                "research_question": self.research_question,
+                "null_hypothesis": self.null_hypothesis,
+                "alternative_hypothesis": self.alternative_hypothesis,
+                "hypothesis_type": self.hypothesis_type,
+                "significance_level": self.significance_level,
+                "expected_effect": self.expected_effect,
+                "parameters": self.parameters,
+                "metric_definitions": [m.to_dict() for m in self.metric_definitions],
+                "tags": self.tags,
+                "hypothesis_trace": self.hypothesis_trace,
+                "status": self.status.value,
+            }
+        )
         return base
 
     @classmethod

@@ -169,13 +169,10 @@ def emit_dataset(
     """
     if envelope.artifact_type != DATASET_ARTIFACT_TYPE:
         raise ValueError(
-            f"emit_dataset() expects artifact_type='Dataset', got "
-            f"'{envelope.artifact_type}'"
+            f"emit_dataset() expects artifact_type='Dataset', got '{envelope.artifact_type}'"
         )
     if not envelope.verify():
-        raise ValueError(
-            f"Dataset evidence lineage mismatch for {envelope.artifact_hash}"
-        )
+        raise ValueError(f"Dataset evidence lineage mismatch for {envelope.artifact_hash}")
     repo = repository or EvidenceRepository()
     return repo.append_artifact(envelope)
 

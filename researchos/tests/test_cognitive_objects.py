@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tests for Cognitive Layer objects.
 
 Based on Article XVII: Object Model â€” Cognitive Layer.
@@ -7,7 +7,7 @@ Covers: Bias, LearningRecord, CognitiveAssessment
 
 import pytest
 
-from researchos.objects.cognitive import Bias, LearningRecord, CognitiveAssessment
+from researchos.objects.cognitive import Bias, CognitiveAssessment, LearningRecord
 
 
 class TestBias:
@@ -38,7 +38,8 @@ class TestBias:
 
     def test_bias_with_evidence(self):
         b = Bias(
-            "Recency", "trader_001",
+            "Recency",
+            "trader_001",
             evidence=["Recent trade log shows overweighting of last 3 trades"],
         )
         assert len(b.evidence) == 1
@@ -50,8 +51,11 @@ class TestBias:
 
     def test_bias_serialization(self):
         b = Bias(
-            "Loss_Aversion", "trader_001", decision_id="dec_001",
-            severity=0.4, frequency=0.6,
+            "Loss_Aversion",
+            "trader_001",
+            decision_id="dec_001",
+            severity=0.4,
+            frequency=0.6,
         )
         d = b.to_dict()
         assert d["type"] == "Loss_Aversion"
@@ -102,7 +106,9 @@ class TestLearningRecord:
 
     def test_learning_record_serialization(self):
         lr = LearningRecord(
-            "trader_001", "Reflection", score=0.6,
+            "trader_001",
+            "Reflection",
+            score=0.6,
             recommendations=["Journal daily"],
         )
         d = lr.to_dict()
@@ -191,7 +197,8 @@ class TestCognitiveAssessment:
 
     def test_assessment_serialization(self):
         ca = CognitiveAssessment(
-            "trader_001", "res_001",
+            "trader_001",
+            "res_001",
             knowledge_score=0.9,
             reasoning_score=0.8,
         )
@@ -210,4 +217,3 @@ class TestCognitiveAssessment:
         ca.learning_progress = 2.0
         score = ca.compute_overall_score()
         assert score <= 1.0  # Clamped
-

@@ -58,9 +58,7 @@ def _make_experiment(
         name=name,
         dataset_config=dataset,
         simulation_config=sim,
-        metric_definitions=[
-            MetricDefinition(name="sharpe", higher_is_better=True)
-        ],
+        metric_definitions=[MetricDefinition(name="sharpe", higher_is_better=True)],
         parameters=params or {"lookback": 20},
         version=version,
     )
@@ -122,12 +120,8 @@ class TestBuildExperimentEnvelope:
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_changed_params_different_artifact_hash(self):
-        e1 = build_experiment_envelope(
-            _make_experiment(params={"lookback": 20})
-        )
-        e2 = build_experiment_envelope(
-            _make_experiment(params={"lookback": 30})
-        )
+        e1 = build_experiment_envelope(_make_experiment(params={"lookback": 20}))
+        e2 = build_experiment_envelope(_make_experiment(params={"lookback": 30}))
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_artifact_type_is_experiment(self):
@@ -207,9 +201,7 @@ class TestDatasetExperimentLineage:
     def test_lineage_edge_dataset_to_experiment(self):
         repo = _make_repo()
         ds_hash = "dataset-hash-0001"
-        e = build_experiment_envelope(
-            _make_experiment(), parent_hashes=[ds_hash]
-        )
+        e = build_experiment_envelope(_make_experiment(), parent_hashes=[ds_hash])
         emit_experiment(e, repo)
         children = repo.get_children(ds_hash)
         assert e.artifact_hash in children
@@ -219,9 +211,7 @@ class TestDatasetExperimentLineage:
     def test_emit_experiment_with_dataset_links_lineage(self):
         repo = _make_repo()
         ds_hash = "dataset-hash-0002"
-        stored = emit_experiment_with_dataset(
-            _make_experiment(), ds_hash, repo
-        )
+        stored = emit_experiment_with_dataset(_make_experiment(), ds_hash, repo)
         assert ds_hash in stored.parent_hashes
         assert repo.count_edges() == 1
         assert repo.get_children(ds_hash) == [stored.artifact_hash]
@@ -240,19 +230,13 @@ class TestProgressTracking:
         )
 
     def test_acceptance_changed_config_diff_hash(self):
-        e1 = build_experiment_envelope(
-            _make_experiment(sim=SimulationConfig(seed=1))
-        )
-        e2 = build_experiment_envelope(
-            _make_experiment(sim=SimulationConfig(seed=2))
-        )
+        e1 = build_experiment_envelope(_make_experiment(sim=SimulationConfig(seed=1)))
+        e2 = build_experiment_envelope(_make_experiment(sim=SimulationConfig(seed=2)))
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_acceptance_dataset_linkage_preserved(self):
         exp = _make_experiment(dataset=DatasetConfig(source="yahoo"))
-        e = build_experiment_envelope(
-            exp, parent_hashes=["ds-hash-x"]
-        )
+        e = build_experiment_envelope(exp, parent_hashes=["ds-hash-x"])
         assert "ds-hash-x" in e.parent_hashes
         assert e.payload["dataset_config"]["source"] == "yahoo"
 
@@ -265,9 +249,7 @@ class TestProgressTracking:
     def test_acceptance_dataset_to_experiment_edge(self):
         repo = _make_repo()
         ds_hash = "ds-hash-lineage"
-        stored = emit_experiment_with_dataset(
-            _make_experiment(), ds_hash, repo
-        )
+        stored = emit_experiment_with_dataset(_make_experiment(), ds_hash, repo)
         assert repo.get_children(ds_hash) == [stored.artifact_hash]
 
     def test_acceptance_version_constant(self):

@@ -54,9 +54,7 @@ def _as_immutable_mapping(value: Any) -> MappingProxyType:
     """Normalise a metadata value to an immutable mapping."""
     if isinstance(value, Mapping):
         return MappingProxyType(dict(value))
-    raise InvalidEvaluationError(
-        f"metadata must be a mapping, got {type(value).__name__}"
-    )
+    raise InvalidEvaluationError(f"metadata must be a mapping, got {type(value).__name__}")
 
 
 def _validate_identifier(value: Any, name: str) -> str:
@@ -181,9 +179,7 @@ class EvaluationScore:
         except KeyError as exc:
             raise InvalidEvaluationError(f"missing key: {exc.args[0]}") from None
         except (TypeError, ValueError) as exc:
-            raise InvalidEvaluationError(
-                f"invalid evaluation score: {exc}"
-            ) from None
+            raise InvalidEvaluationError(f"invalid evaluation score: {exc}") from None
 
 
 # ---------------------------------------------------------------------------
@@ -274,9 +270,7 @@ class EvaluationReport:
         except EvaluationError:
             raise
         except (TypeError, ValueError) as exc:
-            raise InvalidEvaluationError(
-                f"invalid evaluation report: {exc}"
-            ) from None
+            raise InvalidEvaluationError(f"invalid evaluation report: {exc}") from None
 
 
 __all__ = [

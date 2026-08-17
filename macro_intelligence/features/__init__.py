@@ -2,32 +2,29 @@
 ResearchOS Macro Intelligence Layer - Feature Engineering Package
 """
 
-from macro_intelligence.features.enums import (
-    FeatureCategory,
-    FeatureType,
-    FeatureState,
-    CalculationMethod,
-    ValidationRule,
-    FeatureVersionCompatibility,
-)
-
 from macro_intelligence.features.definitions import (
     FeatureDefinition,
     FeatureValue,
     FeatureVector,
 )
-
+from macro_intelligence.features.enums import (
+    CalculationMethod,
+    FeatureCategory,
+    FeatureState,
+    FeatureType,
+    FeatureVersionCompatibility,
+    ValidationRule,
+)
 from macro_intelligence.features.pipeline import (
+    FeatureCalculationResult,
     FeatureExtractor,
-    FeatureValidator,
     FeatureNormalizer,
     FeaturePipeline,
-    FeatureCalculationResult,
+    FeatureValidator,
 )
-
 from macro_intelligence.features.registry import (
-    FeatureRegistry,
     FeatureMetadata,
+    FeatureRegistry,
 )
 
 __all__ = [

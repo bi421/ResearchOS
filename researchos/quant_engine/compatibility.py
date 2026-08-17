@@ -22,7 +22,6 @@ from researchos.quant_engine.models import (
     SimulationResult,
 )
 
-
 _DEFAULT_SIG_DIGITS = 12
 
 DEFAULT_TOLERANCES: Dict[str, Tuple[float, float]] = {
@@ -149,16 +148,10 @@ def canonicalize(
     """Recursively canonicalize floating-point values."""
 
     if isinstance(value, dict):
-        return {
-            k: canonicalize(v, sig_digits)
-            for k, v in value.items()
-        }
+        return {k: canonicalize(v, sig_digits) for k, v in value.items()}
 
     if isinstance(value, (list, tuple)):
-        return [
-            canonicalize(v, sig_digits)
-            for v in value
-        ]
+        return [canonicalize(v, sig_digits) for v in value]
 
     return _canonical_scalar(value, sig_digits)
 
@@ -192,9 +185,7 @@ def canonical_result_hash(
         "metadata": dict(sorted(result.metadata.items())),
     }
 
-    return deterministic_hash(
-        canonicalize(content, sig_digits)
-    )
+    return deterministic_hash(canonicalize(content, sig_digits))
 
 
 @dataclass
@@ -256,25 +247,15 @@ class CompatibilityReport:
 
             status = "OK" if sec.matched else "MISMATCH"
 
-            mode = (
-                "exact"
-                if sec.exact
-                else "within tolerance"
-            )
+            mode = "exact" if sec.exact else "within tolerance"
 
-            lines.append(
-                f"    {name:<24}: {status} ({mode})"
-            )
+            lines.append(f"    {name:<24}: {status} ({mode})")
 
             if sec.detail:
-                lines.append(
-                    f"      {sec.detail}"
-                )
+                lines.append(f"      {sec.detail}")
 
         for note in self.notes:
-            lines.append(
-                f"  note: {note}"
-            )
+            lines.append(f"  note: {note}")
 
         if not self.matched:
             lines.append("")
@@ -303,9 +284,7 @@ class CompatibilityReport:
                     "exact": section.exact,
                     "detail": section.detail,
                 }
-                for name, section in sorted(
-                    self.sections.items()
-                )
+                for name, section in sorted(self.sections.items())
             },
             "backend_versions": dict(self.backend_versions),
             "field_diffs": [
@@ -331,33 +310,22 @@ class CompatibilityReport:
         failures = []
 
         if not self.matched:
-            failures.append(
-                "field parity mismatch"
-            )
+            failures.append("field parity mismatch")
 
         if check_hash and not self.hash_parity:
-            failures.append(
-                "canonical result-hash parity mismatch"
-            )
+            failures.append("canonical result-hash parity mismatch")
 
         if check_hash and not self.input_hash_matches:
-            failures.append(
-                "input_hash mismatch"
-            )
+            failures.append("input_hash mismatch")
 
         if not self.simulation_id_matches:
-            failures.append(
-                "simulation_id mismatch"
-            )
+            failures.append("simulation_id mismatch")
 
         if not failures:
             return
 
         raise AssertionError(
-            "Backend parity certification failed: "
-            + "; ".join(failures)
-            + "\n\n"
-            + self.summary()
+            "Backend parity certification failed: " + "; ".join(failures) + "\n\n" + self.summary()
         )
 
 
@@ -385,9 +353,7 @@ def verify_backend_parity(
     prices: List[float],
     request: Optional[SimulationRequest] = None,
     risk_free_rate: float = 0.0,
-    tolerances: Optional[
-        Dict[str, Tuple[float, float]]
-    ] = None,
+    tolerances: Optional[Dict[str, Tuple[float, float]]] = None,
 ) -> CompatibilityReport:
     """
     Execute complete Python/C++ parity certification.
@@ -428,15 +394,9 @@ def verify_backend_parity(
         prices,
     )
 
-    report.input_hash_matches = (
-        py_result.input_hash
-        == cpp_result.input_hash
-    )
+    report.input_hash_matches = py_result.input_hash == cpp_result.input_hash
 
-    report.simulation_id_matches = (
-        py_result.simulation_id
-        == cpp_result.simulation_id
-    )
+    report.simulation_id_matches = py_result.simulation_id == cpp_result.simulation_id
 
     # ------------------------------------------------------------
     # 2. DIRECT calculate_returns parity
@@ -448,18 +408,14 @@ def verify_backend_parity(
         "log",
     ):
         try:
-            py_returns = (
-                python_backend.calculate_returns(
-                    prices,
-                    method,
-                )
+            py_returns = python_backend.calculate_returns(
+                prices,
+                method,
             )
 
-            cpp_returns = (
-                cpp_backend.calculate_returns(
-                    prices,
-                    method,
-                )
+            cpp_returns = cpp_backend.calculate_returns(
+                prices,
+                method,
             )
 
             _compare_section(
@@ -472,9 +428,7 @@ def verify_backend_parity(
             )
 
         except ValueError as exc:
-            report.notes.append(
-                f"calculate_returns[{method}] unsupported: {exc}"
-            )
+            report.notes.append(f"calculate_returns[{method}] unsupported: {exc}")
 
     # ------------------------------------------------------------
     # 3. DIRECT volatility parity
@@ -507,12 +461,8 @@ def verify_backend_parity(
     _compare_section(
         report,
         "direct_drawdown",
-        python_backend.calculate_drawdown(
-            py_result.equity_curve
-        ),
-        cpp_backend.calculate_drawdown(
-            cpp_result.equity_curve
-        ),
+        python_backend.calculate_drawdown(py_result.equity_curve),
+        cpp_backend.calculate_drawdown(cpp_result.equity_curve),
         tol["drawdown"],
         path="calculate_drawdown",
     )
@@ -524,12 +474,8 @@ def verify_backend_parity(
     _compare_section(
         report,
         "direct_statistics",
-        python_backend.calculate_statistics(
-            py_result.returns
-        ),
-        cpp_backend.calculate_statistics(
-            cpp_result.returns
-        ),
+        python_backend.calculate_statistics(py_result.returns),
+        cpp_backend.calculate_statistics(cpp_result.returns),
         tol["statistics"],
         path="calculate_statistics",
     )
@@ -562,12 +508,8 @@ def verify_backend_parity(
     _compare_section(
         report,
         "direct_performance",
-        python_backend.calculate_performance_analytics(
-            py_result.returns
-        ),
-        cpp_backend.calculate_performance_analytics(
-            cpp_result.returns
-        ),
+        python_backend.calculate_performance_analytics(py_result.returns),
+        cpp_backend.calculate_performance_analytics(cpp_result.returns),
         tol["performance"],
         path="calculate_performance_analytics",
     )
@@ -656,32 +598,22 @@ def verify_backend_parity(
 
     if not report.input_hash_matches:
         report.matched = False
-        report.notes.append(
-            "input_hash differs between Python and C++."
-        )
+        report.notes.append("input_hash differs between Python and C++.")
 
     if not report.simulation_id_matches:
         report.matched = False
-        report.notes.append(
-            "simulation_id differs between Python and C++."
-        )
+        report.notes.append("simulation_id differs between Python and C++.")
 
     # ------------------------------------------------------------
     # 15. Canonical hash parity
     # ------------------------------------------------------------
 
-    canonical_py = canonical_result_hash(
-        py_result
-    )
+    canonical_py = canonical_result_hash(py_result)
 
-    canonical_cpp = canonical_result_hash(
-        cpp_result
-    )
+    canonical_cpp = canonical_result_hash(cpp_result)
 
     report.hash_parity = (
-        report.input_hash_matches
-        and report.simulation_id_matches
-        and canonical_py == canonical_cpp
+        report.input_hash_matches and report.simulation_id_matches and canonical_py == canonical_cpp
     )
 
     if not report.hash_parity:
@@ -701,10 +633,7 @@ def verify_backend_parity(
     # 16. Final certification invariant
     # ------------------------------------------------------------
 
-    if not all(
-        section.matched
-        for section in report.sections.values()
-    ):
+    if not all(section.matched for section in report.sections.values()):
         report.matched = False
 
     # Collapse any legacy/internal section labels that may have been
@@ -786,11 +715,9 @@ def _volatility_by_method(
         "change",
     ):
         try:
-            out[method] = (
-                backend.calculate_volatility(
-                    returns,
-                    method=method,
-                )
+            out[method] = backend.calculate_volatility(
+                returns,
+                method=method,
             )
         except ValueError:
             continue
@@ -805,15 +732,11 @@ def _provenance(
         "simulation_id": result.simulation_id,
         "dataset_reference": result.dataset_reference,
         "dataset_version": result.dataset_version,
-        "calculation_version": (
-            result.calculation_version.value
-        ),
+        "calculation_version": (result.calculation_version.value),
         "start_time": result.start_time,
         "end_time": result.end_time,
         "input_hash": result.input_hash,
-        "parameters": dict(
-            sorted(result.parameters.items())
-        ),
+        "parameters": dict(sorted(result.parameters.items())),
     }
 
 
@@ -850,12 +773,12 @@ def _canonical_section_name(name: str) -> str:
         return name
 
     if name.startswith("direct_"):
-        candidate = name[len("direct_"):]
+        candidate = name[len("direct_") :]
         if candidate in DEFAULT_TOLERANCES:
             return candidate
 
     if name.startswith("result_"):
-        candidate = name[len("result_"):]
+        candidate = name[len("result_") :]
         if candidate in DEFAULT_TOLERANCES:
             return candidate
 
@@ -880,11 +803,7 @@ def _compare_section(
         atol=atol,
     )
 
-    exact = (
-        matched
-        and rtol == 0.0
-        and atol == 0.0
-    )
+    exact = matched and rtol == 0.0 and atol == 0.0
 
     report.sections[name] = SectionResult(
         name=name,
@@ -922,15 +841,9 @@ def _section_detail(
         if rtol == 0.0 and atol == 0.0:
             return "exact match"
 
-        return (
-            f"within tolerance "
-            f"(rtol={rtol:g}, atol={atol:g})"
-        )
+        return f"within tolerance (rtol={rtol:g}, atol={atol:g})"
 
-    return (
-        f"outside tolerance "
-        f"(rtol={rtol:g}, atol={atol:g})"
-    )
+    return f"outside tolerance (rtol={rtol:g}, atol={atol:g})"
 
 
 def _collect_diffs(
@@ -942,10 +855,7 @@ def _collect_diffs(
     atol: float,
     path: str,
 ) -> None:
-    if (
-        isinstance(py_value, dict)
-        and isinstance(cpp_value, dict)
-    ):
+    if isinstance(py_value, dict) and isinstance(cpp_value, dict):
         for key in sorted(
             set(py_value) | set(cpp_value),
             key=str,
@@ -962,14 +872,9 @@ def _collect_diffs(
 
         return
 
-    if (
-        isinstance(py_value, (list, tuple))
-        and isinstance(cpp_value, (list, tuple))
-    ):
+    if isinstance(py_value, (list, tuple)) and isinstance(cpp_value, (list, tuple)):
         if len(py_value) == len(cpp_value):
-            for i, (a, b) in enumerate(
-                zip(py_value, cpp_value)
-            ):
+            for i, (a, b) in enumerate(zip(py_value, cpp_value)):
                 _collect_diffs(
                     report,
                     name,
@@ -986,9 +891,7 @@ def _collect_diffs(
                     py_value=py_value,
                     cpp_value=cpp_value,
                     matched=False,
-                    tolerance=(
-                        f"rtol={rtol:g},atol={atol:g}"
-                    ),
+                    tolerance=(f"rtol={rtol:g},atol={atol:g}"),
                 )
             )
 
@@ -1012,19 +915,14 @@ def _collect_diffs(
                     py_value,
                     cpp_value,
                 )
-                if (
-                    _is_number(py_value)
-                    and _is_number(cpp_value)
-                )
+                if (_is_number(py_value) and _is_number(cpp_value))
                 else None
             ),
             abs_diff=_abs_diff(
                 py_value,
                 cpp_value,
             ),
-            tolerance=(
-                f"rtol={rtol:g},atol={atol:g}"
-            ),
+            tolerance=(f"rtol={rtol:g},atol={atol:g}"),
         )
     )
 

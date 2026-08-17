@@ -15,10 +15,10 @@ from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp
 
-
 # ---------------------------------------------------------------------------
 # MarketEvent — base container for all market event types
 # ---------------------------------------------------------------------------
+
 
 class MarketEvent(BaseObject):
     """A discrete, timestamped event in market structure.
@@ -90,18 +90,20 @@ class MarketEvent(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "event_type": self.event_type,
-            "asset": self.asset,
-            "timeframe": self.timeframe,
-            "timestamp": self.timestamp.isoformat(),
-            "direction": self.direction,
-            "price_level": self.price_level,
-            "description": self.description,
-            "category": self.category,
-            "reference_ids": self.reference_ids,
-            "metadata": self.metadata,
-        })
+        base.update(
+            {
+                "event_type": self.event_type,
+                "asset": self.asset,
+                "timeframe": self.timeframe,
+                "timestamp": self.timestamp.isoformat(),
+                "direction": self.direction,
+                "price_level": self.price_level,
+                "description": self.description,
+                "category": self.category,
+                "reference_ids": self.reference_ids,
+                "metadata": self.metadata,
+            }
+        )
         return base
 
     @classmethod
@@ -123,6 +125,7 @@ class MarketEvent(BaseObject):
 # ---------------------------------------------------------------------------
 # MarketStructure — Break of Structure / Change of Character
 # ---------------------------------------------------------------------------
+
 
 class MarketStructure(BaseObject):
     """A market structure break: BOS (Break of Structure) or CHOCH (Change of Character).
@@ -203,18 +206,20 @@ class MarketStructure(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "structure_type": self.structure_type,
-            "asset": self.asset,
-            "timeframe": self.timeframe,
-            "timestamp": self.timestamp.isoformat(),
-            "direction": self.direction,
-            "price_level": self.price_level,
-            "confirmed": self.confirmed,
-            "previous_structure_id": self.previous_structure_id,
-            "confirmation_price": self.confirmation_price,
-            "notes": self.notes,
-        })
+        base.update(
+            {
+                "structure_type": self.structure_type,
+                "asset": self.asset,
+                "timeframe": self.timeframe,
+                "timestamp": self.timestamp.isoformat(),
+                "direction": self.direction,
+                "price_level": self.price_level,
+                "confirmed": self.confirmed,
+                "previous_structure_id": self.previous_structure_id,
+                "confirmation_price": self.confirmation_price,
+                "notes": self.notes,
+            }
+        )
         return base
 
     @classmethod
@@ -236,6 +241,7 @@ class MarketStructure(BaseObject):
 # ---------------------------------------------------------------------------
 # LiquidityEvent — Liquidity sweeps, stop runs, manipulations
 # ---------------------------------------------------------------------------
+
 
 class LiquidityEvent(BaseObject):
     """A liquidity-related market event: sweep, stop run, or manipulation.
@@ -315,18 +321,20 @@ class LiquidityEvent(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "event_type": self.event_type,
-            "asset": self.asset,
-            "timeframe": self.timeframe,
-            "timestamp": self.timestamp.isoformat(),
-            "direction": self.direction,
-            "price_level": self.price_level,
-            "swept_levels": self.swept_levels,
-            "outcome": self.outcome,
-            "reference_id": self.reference_id,
-            "notes": self.notes,
-        })
+        base.update(
+            {
+                "event_type": self.event_type,
+                "asset": self.asset,
+                "timeframe": self.timeframe,
+                "timestamp": self.timestamp.isoformat(),
+                "direction": self.direction,
+                "price_level": self.price_level,
+                "swept_levels": self.swept_levels,
+                "outcome": self.outcome,
+                "reference_id": self.reference_id,
+                "notes": self.notes,
+            }
+        )
         return base
 
     @classmethod
@@ -348,6 +356,7 @@ class LiquidityEvent(BaseObject):
 # ---------------------------------------------------------------------------
 # MarketSession — Trading session summary
 # ---------------------------------------------------------------------------
+
 
 class MarketSession(BaseObject):
     """A trading session summary (London, New York, Asia, etc.).
@@ -439,21 +448,23 @@ class MarketSession(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "session_name": self.session_name,
-            "asset": self.asset,
-            "date": self.date,
-            "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat(),
-            "open": self.open,
-            "high": self.high,
-            "low": self.low,
-            "close": self.close,
-            "direction": self.direction,
-            "volume_ratio": self.volume_ratio,
-            "range_atr_ratio": self.range_atr_ratio,
-            "notes": self.notes,
-        })
+        base.update(
+            {
+                "session_name": self.session_name,
+                "asset": self.asset,
+                "date": self.date,
+                "start_time": self.start_time.isoformat(),
+                "end_time": self.end_time.isoformat(),
+                "open": self.open,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+                "direction": self.direction,
+                "volume_ratio": self.volume_ratio,
+                "range_atr_ratio": self.range_atr_ratio,
+                "notes": self.notes,
+            }
+        )
         return base
 
     @classmethod
@@ -478,6 +489,7 @@ class MarketSession(BaseObject):
 # ---------------------------------------------------------------------------
 # VolatilityState — Volatility regime measurement
 # ---------------------------------------------------------------------------
+
 
 class VolatilityState(BaseObject):
     """A volatility regime measurement at a point in time.
@@ -549,18 +561,20 @@ class VolatilityState(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "asset": self.asset,
-            "timeframe": self.timeframe,
-            "timestamp": self.timestamp.isoformat(),
-            "atr_value": self.atr_value,
-            "atr_percentile": self.atr_percentile,
-            "volatility_regime": self.volatility_regime,
-            "expanding": self.expanding,
-            "contracting": self.contracting,
-            "bb_width": self.bb_width,
-            "notes": self.notes,
-        })
+        base.update(
+            {
+                "asset": self.asset,
+                "timeframe": self.timeframe,
+                "timestamp": self.timestamp.isoformat(),
+                "atr_value": self.atr_value,
+                "atr_percentile": self.atr_percentile,
+                "volatility_regime": self.volatility_regime,
+                "expanding": self.expanding,
+                "contracting": self.contracting,
+                "bb_width": self.bb_width,
+                "notes": self.notes,
+            }
+        )
         return base
 
     @classmethod
@@ -582,6 +596,7 @@ class VolatilityState(BaseObject):
 # ---------------------------------------------------------------------------
 # NewsReference — News event reference with impact assessment
 # ---------------------------------------------------------------------------
+
 
 class NewsReference(BaseObject):
     """A news event reference with impact and sentiment assessment.
@@ -649,17 +664,19 @@ class NewsReference(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "title": self.title,
-            "source": self.source,
-            "published_at": self.published_at.isoformat(),
-            "impact_score": self.impact_score,
-            "sentiment": self.sentiment,
-            "affected_assets": self.affected_assets,
-            "category": self.category,
-            "summary": self.summary,
-            "url": self.url,
-        })
+        base.update(
+            {
+                "title": self.title,
+                "source": self.source,
+                "published_at": self.published_at.isoformat(),
+                "impact_score": self.impact_score,
+                "sentiment": self.sentiment,
+                "affected_assets": self.affected_assets,
+                "category": self.category,
+                "summary": self.summary,
+                "url": self.url,
+            }
+        )
         return base
 
     @classmethod
@@ -680,6 +697,7 @@ class NewsReference(BaseObject):
 # ---------------------------------------------------------------------------
 # MarketOutcome — Outcome tracking for market events
 # ---------------------------------------------------------------------------
+
 
 class MarketOutcome(BaseObject):
     """The outcome of a market event or structure break.
@@ -759,20 +777,22 @@ class MarketOutcome(BaseObject):
 
     def to_dict(self) -> dict:
         base = super().to_dict()
-        base.update({
-            "event_id": self.event_id,
-            "event_type": self.event_type,
-            "asset": self.asset,
-            "timestamp": self.timestamp.isoformat(),
-            "outcome_type": self.outcome_type,
-            "actual_move": self.actual_move,
-            "expected_move": self.expected_move,
-            "confidence": self.confidence,
-            "max_favorable": self.max_favorable,
-            "max_adverse": self.max_adverse,
-            "duration_minutes": self.duration_minutes,
-            "notes": self.notes,
-        })
+        base.update(
+            {
+                "event_id": self.event_id,
+                "event_type": self.event_type,
+                "asset": self.asset,
+                "timestamp": self.timestamp.isoformat(),
+                "outcome_type": self.outcome_type,
+                "actual_move": self.actual_move,
+                "expected_move": self.expected_move,
+                "confidence": self.confidence,
+                "max_favorable": self.max_favorable,
+                "max_adverse": self.max_adverse,
+                "duration_minutes": self.duration_minutes,
+                "notes": self.notes,
+            }
+        )
         return base
 
     @classmethod

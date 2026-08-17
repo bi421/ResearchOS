@@ -3,6 +3,7 @@ STEP 9 — Pipeline Execution Verification Audit.
 
 Verification-only tests for the ResearchPipeline.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -10,25 +11,26 @@ from typing import List
 
 import pytest
 
-from researchos.repository.memory import MemoryRepository
-from researchos.pipeline import ResearchPipeline
-from researchos.objects.observation import Observation, MarketState, MacroState
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.objects.interpretation import Interpretation, Narrative
-from researchos.objects.hypothesis import Hypothesis, HypothesisSet
-from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.cognitive import Bias, CognitiveAssessment, LearningRecord
 from researchos.objects.confidence import Confidence, ConfidenceReport
 from researchos.objects.contradiction import Contradiction, ContradictionReport
-from researchos.objects.research import Research, ResearchReport, ResearchQuestion
-from researchos.objects.validation import Validation, FailureAnalysis
+from researchos.objects.evidence import Evidence, EvidenceRegistry
+from researchos.objects.hypothesis import Hypothesis, HypothesisSet
+from researchos.objects.interpretation import Interpretation, Narrative
 from researchos.objects.knowledge import Knowledge, Lesson, Pattern
-from researchos.objects.cognitive import CognitiveAssessment, Bias, LearningRecord
-from researchos.objects.process import AuditEntry, ResearchCycle, ReasoningChain
+from researchos.objects.observation import MacroState, MarketState, Observation
+from researchos.objects.process import AuditEntry, ReasoningChain, ResearchCycle
+from researchos.objects.research import Research, ResearchQuestion, ResearchReport
+from researchos.objects.scenario import Scenario, ScenarioSet
+from researchos.objects.validation import FailureAnalysis, Validation
+from researchos.pipeline import ResearchPipeline
+from researchos.repository.memory import MemoryRepository
 from researchos.storage.repository import ResearchRepository
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def repo():
@@ -84,7 +86,7 @@ class TestPhase1_RuntimeFlow:
         """Stage 1: Research initiation."""
         research = pipeline.start_research("Test Q", "Daily", "US")
         assert isinstance(research, Research)
-        assert repo.get(research.id) is not None          # persisted
+        assert repo.get(research.id) is not None  # persisted
         audits = collect_audits(repo)
         assert any(a.action == "RESEARCH_STARTED" for a in audits)  # audit
 
@@ -92,8 +94,8 @@ class TestPhase1_RuntimeFlow:
         """Stage 2: Observation."""
         research = pipeline.start_research("Test Q")
         obs = pipeline.add_observation(research.id, "MACRO:CPI", ts(), 3.2)
-        assert isinstance(obs, Observation)               # output
-        assert repo.get(obs.id) is not None               # persisted
+        assert isinstance(obs, Observation)  # output
+        assert repo.get(obs.id) is not None  # persisted
         assert obs.id in repo.get(research.id).observation_ids  # linked
         audits = collect_audits(repo)
         assert any(a.action == "OBSERVATION_ADDED" for a in audits)
@@ -111,8 +113,8 @@ class TestPhase1_RuntimeFlow:
         )
         assert isinstance(ev, Evidence)
         assert repo.get(ev.id) is not None
-        assert ev.observation_id == obs.id                 # link preserved
-        assert ev.hypothesis_id == hyp.id                  # link preserved
+        assert ev.observation_id == obs.id  # link preserved
+        assert ev.hypothesis_id == hyp.id  # link preserved
         audits = collect_audits(repo)
         assert any(a.action == "EVIDENCE_CREATED" for a in audits)
 
@@ -122,7 +124,10 @@ class TestPhase1_RuntimeFlow:
         obs = pipeline.add_observation(research.id, "MACRO:CPI", ts(), 3.2)
         hyp = pipeline.create_hypothesis(research.id, "Primary", "Test")
         ev = pipeline.create_evidence(
-            obs.id, hyp.id, "CPI trend", research_id=research.id,
+            obs.id,
+            hyp.id,
+            "CPI trend",
+            research_id=research.id,
         )
         interp = pipeline.create_interpretation(
             evidence_ids=[ev.id],
@@ -140,7 +145,10 @@ class TestPhase1_RuntimeFlow:
         """Stage 5: Narrative."""
         research = pipeline.start_research("Test Q")
         interp = pipeline.create_interpretation(
-            evidence_ids=[], rule_applied="r1", context="ctx", conclusion="c1",
+            evidence_ids=[],
+            rule_applied="r1",
+            context="ctx",
+            conclusion="c1",
         )
         narrative = pipeline.create_narrative(
             research_id=research.id,
@@ -301,7 +309,9 @@ class TestPhase1_RuntimeFlow:
         ct = pipeline.detect_contradiction(r.id, "Internal", "Data conflict")
         rp = pipeline.generate_report(r.id, "Full Report")
         v = pipeline.validate_research(r.id, rp.id, overall_status="Accurate", quality_score=0.85)
-        k = pipeline.extract_knowledge("Relationship", "CPI", "impacts", "Fed", source_references=[r.id])
+        k = pipeline.extract_knowledge(
+            "Relationship", "CPI", "impacts", "Fed", source_references=[r.id]
+        )
         ca = pipeline.assess_cognitive("trader-1", r.id, knowledge_score=0.8)
 
         # Every object retrievable from repo
@@ -315,6 +325,7 @@ class TestPhase1_RuntimeFlow:
 # ===========================================================================
 # PHASE 2 — End-to-End Reproducibility Test
 # ===========================================================================
+
 
 class TestPhase2_Reproducibility:
     """Run identical pipeline twice — compare IDs, hashes, audit sequence."""
@@ -332,7 +343,9 @@ class TestPhase2_Reproducibility:
         pipeline.detect_contradiction(r.id, "Internal", "Repro conflict")
         rp = pipeline.generate_report(r.id, "Repro Report")
         pipeline.validate_research(r.id, rp.id, overall_status="Accurate", quality_score=0.85)
-        pipeline.extract_knowledge("Relationship", "CPI", "impacts", "Fed", source_references=[r.id])
+        pipeline.extract_knowledge(
+            "Relationship", "CPI", "impacts", "Fed", source_references=[r.id]
+        )
         pipeline.assess_cognitive("trader-1", r.id, knowledge_score=0.8)
         return pipeline, repo
 
@@ -380,6 +393,7 @@ class TestPhase2_Reproducibility:
 
         for o1, o2 in zip(non_audit1, non_audit2):
             import json as _json
+
             d1 = _json.loads(o1.to_json())
             d2 = _json.loads(o2.to_json())
             assert d1["hash"] == d2["hash"], f"Hash mismatch in JSON for {type(o1).__name__}"
@@ -412,6 +426,7 @@ class TestPhase2_Reproducibility:
 # ===========================================================================
 # PHASE 3 — Failure Scenario Audit
 # ===========================================================================
+
 
 class TestPhase3_FailureScenarios:
     """Test invalid cases — pipeline must reject before creating objects."""
@@ -493,7 +508,10 @@ class TestPhase3_FailureScenarios:
         obs = pipeline.add_observation(research.id, "MACRO:CPI", ts(), 3.2)
         hyp = pipeline.create_hypothesis(research.id, "Primary", "Test hyp")
         ev = pipeline.create_evidence(
-            obs.id, hyp.id, "test", research_id=research.id,
+            obs.id,
+            hyp.id,
+            "test",
+            research_id=research.id,
         )
 
         # Verify partial state is valid
@@ -525,14 +543,17 @@ class TestPhase3_FailureScenarios:
 # PHASE 4 — Repository Integrity Audit
 # ===========================================================================
 
+
 class TestPhase4_RepositoryIntegrity:
     """Verify save_object / load_by_id / load_by_type / delete_object."""
 
     def test_save_and_load_by_id(self):
         """Create object, save, reload, compare hash."""
-        from researchos.storage.repository import ResearchRepository
-        import tempfile
         import os
+        import tempfile
+
+        from researchos.storage.repository import ResearchRepository
+
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -554,16 +575,18 @@ class TestPhase4_RepositoryIntegrity:
             assert data["hash"] == obs.hash
         finally:
             # Close connection before deleting file on Windows
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
 
     def test_load_by_type(self):
         """Save multiple types, load by type."""
-        from researchos.storage.repository import ResearchRepository
-        import tempfile
         import os
+        import tempfile
+
+        from researchos.storage.repository import ResearchRepository
+
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -582,16 +605,18 @@ class TestPhase4_RepositoryIntegrity:
             assert observations[0]["id"] == obs.id
             assert evidences[0]["id"] == ev.id
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
 
     def test_delete_object(self):
         """Save, delete, verify gone."""
-        from researchos.storage.repository import ResearchRepository
-        import tempfile
         import os
+        import tempfile
+
+        from researchos.storage.repository import ResearchRepository
+
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -602,38 +627,44 @@ class TestPhase4_RepositoryIntegrity:
             storage.delete_object(obs.id)
             assert storage.load_by_id(obs.id) is None
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
 
     def test_object_count(self):
         """Count objects by type."""
-        from researchos.storage.repository import ResearchRepository
-        import tempfile
         import os
+        import tempfile
+
+        from researchos.storage.repository import ResearchRepository
+
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
             storage = ResearchRepository(db_path)
             storage.save_object(Observation(source="T", timestamp=ts(), value=1.0))
             storage.save_object(Observation(source="T", timestamp=ts(), value=2.0))
-            storage.save_object(Evidence(observation_id="o1", hypothesis_id="h1", interpretation="t"))
+            storage.save_object(
+                Evidence(observation_id="o1", hypothesis_id="h1", interpretation="t")
+            )
 
             assert storage.object_count("Observation") == 2
             assert storage.object_count("Evidence") == 1
             assert storage.object_count() == 3
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
 
     def test_type_preserved_through_round_trip(self):
         """Object type string must survive save/load cycle."""
-        from researchos.storage.repository import ResearchRepository
-        import tempfile
         import os
+        import tempfile
+
+        from researchos.storage.repository import ResearchRepository
+
         db_fd, db_path = tempfile.mkstemp(suffix=".db")
         os.close(db_fd)
         try:
@@ -651,7 +682,7 @@ class TestPhase4_RepositoryIntegrity:
                 assert loaded is not None
                 assert loaded["object_type"] == type(obj).__name__
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
@@ -660,6 +691,7 @@ class TestPhase4_RepositoryIntegrity:
 # ===========================================================================
 # PHASE 5 — Audit Chain Verification
 # ===========================================================================
+
 
 class TestPhase5_AuditChain:
     """Verify AuditEntry chain integrity, ordering, immutability."""
@@ -712,12 +744,14 @@ class TestPhase5_AuditChain:
 # PHASE 6 — Serialization Round-Trip & Repository Rehydration
 # ===========================================================================
 
+
 class TestPhase6_Serialization:
     """Verify to_dict/from_dict round-trip for all 28 objects."""
 
     def test_from_dict_on_base_uses_new_pattern(self):
         """BaseObject.from_dict() now uses __new__ pattern and returns an instance."""
         from researchos.core.base_object import BaseObject
+
         obj = BaseObject.from_dict({"id": "test_id"})
         assert obj.id == "test_id"
         assert obj.created_at is not None
@@ -763,7 +797,9 @@ class TestPhase6_Serialization:
         assert reg2.evidence_ids == ["e1", "e2"]
 
     def test_interpretation_round_trip(self):
-        interp = Interpretation(evidence_ids=["e1"], rule_applied="rule1", context="test", conclusion="insight")
+        interp = Interpretation(
+            evidence_ids=["e1"], rule_applied="rule1", context="test", conclusion="insight"
+        )
         d = interp.to_dict()
         interp2 = Interpretation.from_dict(d)
         assert interp.id == interp2.id
@@ -863,8 +899,13 @@ class TestPhase6_Serialization:
         assert rr.research_id == rr2.research_id
 
     def test_validation_round_trip(self):
-        v = Validation(research_id="r1", research_report_id="rr1", time_horizon="Daily",
-                        overall_status="PASS", quality_score=0.95)
+        v = Validation(
+            research_id="r1",
+            research_report_id="rr1",
+            time_horizon="Daily",
+            overall_status="PASS",
+            quality_score=0.95,
+        )
         d = v.to_dict()
         v2 = Validation.from_dict(d)
         assert v.id == v2.id
@@ -971,29 +1012,60 @@ class TestPhase6_RepositoryRehydration:
 
     def test_object_registry_has_all_types(self):
         from researchos.storage.repository import OBJECT_REGISTRY
+
         expected_types = {
-            "Observation", "MarketState", "MacroState",
-            "Evidence", "EvidenceRegistry",
-            "Interpretation", "Narrative",
-            "Hypothesis", "HypothesisSet",
-            "Scenario", "ScenarioSet",
-            "Confidence", "ConfidenceReport",
-            "Contradiction", "ContradictionReport",
-            "Research", "ResearchQuestion", "ResearchReport",
-            "Validation", "FailureAnalysis",
-            "Knowledge", "Pattern", "Lesson",
-            "Bias", "LearningRecord", "CognitiveAssessment",
-            "ResearchCycle", "ReasoningChain", "AuditEntry",
-            "MarketEvent", "MarketStructure", "LiquidityEvent",
-            "MarketSession", "VolatilityState", "NewsReference", "MarketOutcome",
-            "Attribution", "AttributionGraph",
-            "RealYieldSnapshot", "DollarStrengthSnapshot",
-            "FedPolicyAssessment", "InflationAssessment",
-            "LaborMarketAssessment", "EconomicGrowthAssessment",
-            "SafeHavenAssessment", "CentralBankDemand",
-            "PhysicalDemandSnapshot", "PositioningAssessment",
-            "MacroScore", "MacroProbability",
-            "MacroRegime", "MacroReport",
+            "Observation",
+            "MarketState",
+            "MacroState",
+            "Evidence",
+            "EvidenceRegistry",
+            "Interpretation",
+            "Narrative",
+            "Hypothesis",
+            "HypothesisSet",
+            "Scenario",
+            "ScenarioSet",
+            "Confidence",
+            "ConfidenceReport",
+            "Contradiction",
+            "ContradictionReport",
+            "Research",
+            "ResearchQuestion",
+            "ResearchReport",
+            "Validation",
+            "FailureAnalysis",
+            "Knowledge",
+            "Pattern",
+            "Lesson",
+            "Bias",
+            "LearningRecord",
+            "CognitiveAssessment",
+            "ResearchCycle",
+            "ReasoningChain",
+            "AuditEntry",
+            "MarketEvent",
+            "MarketStructure",
+            "LiquidityEvent",
+            "MarketSession",
+            "VolatilityState",
+            "NewsReference",
+            "MarketOutcome",
+            "Attribution",
+            "AttributionGraph",
+            "RealYieldSnapshot",
+            "DollarStrengthSnapshot",
+            "FedPolicyAssessment",
+            "InflationAssessment",
+            "LaborMarketAssessment",
+            "EconomicGrowthAssessment",
+            "SafeHavenAssessment",
+            "CentralBankDemand",
+            "PhysicalDemandSnapshot",
+            "PositioningAssessment",
+            "MacroScore",
+            "MacroProbability",
+            "MacroRegime",
+            "MacroReport",
         }
         registry_types = set(OBJECT_REGISTRY.keys())
         missing = expected_types - registry_types
@@ -1003,6 +1075,7 @@ class TestPhase6_RepositoryRehydration:
 
     def test_load_object_round_trip(self, tmp_path):
         import os
+
         db_path = str(tmp_path / "test_rehydrate.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1013,13 +1086,14 @@ class TestPhase6_RepositoryRehydration:
             assert type(loaded).__name__ == "Observation"
             assert loaded.source == "MACRO:CPI"
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
 
     def test_load_objects_by_type(self, tmp_path):
         import os
+
         db_path = str(tmp_path / "test_by_type.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1031,7 +1105,7 @@ class TestPhase6_RepositoryRehydration:
             for obs in observations:
                 assert type(obs).__name__ == "Observation"
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
@@ -1041,21 +1115,26 @@ class TestPhase6_RepositoryRehydration:
         import json
         import os
         import sqlite3
+
         db_path = str(tmp_path / "test_unknown.db")
         storage = ResearchRepository(db_path=db_path)
         try:
             conn = sqlite3.connect(db_path)
             conn.execute(
                 "INSERT INTO objects (id, object_type, created_at, data) VALUES (?, ?, ?, ?)",
-                ["unknown_id", "UnknownType", ts().isoformat(),
-                 json.dumps({"id": "unknown_id", "object_type": "UnknownType"})],
+                [
+                    "unknown_id",
+                    "UnknownType",
+                    ts().isoformat(),
+                    json.dumps({"id": "unknown_id", "object_type": "UnknownType"}),
+                ],
             )
             conn.commit()
             conn.close()
             with pytest.raises(ValueError, match="No registered class"):
                 storage.load_object("unknown_id")
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
@@ -1063,13 +1142,14 @@ class TestPhase6_RepositoryRehydration:
     def test_load_object_missing(self, tmp_path):
         """Loading a non-existent ID returns None."""
         import os
+
         db_path = str(tmp_path / "test_missing.db")
         storage = ResearchRepository(db_path=db_path)
         try:
             result = storage.load_object("nonexistent_id")
             assert result is None
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
@@ -1079,6 +1159,7 @@ class TestPhase6_RepositoryRehydration:
         import json
         import os
         import sqlite3
+
         db_path = str(tmp_path / "test_corrupt.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1092,7 +1173,7 @@ class TestPhase6_RepositoryRehydration:
             with pytest.raises((ValueError, json.JSONDecodeError)):
                 storage.load_object("corrupt_id")
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
@@ -1100,6 +1181,7 @@ class TestPhase6_RepositoryRehydration:
     def test_save_get_delegation(self, tmp_path):
         """RepositoryInterface save/get/get_all delegation works."""
         import os
+
         db_path = str(tmp_path / "test_delegation.db")
         storage = ResearchRepository(db_path=db_path)
         try:
@@ -1111,7 +1193,7 @@ class TestPhase6_RepositoryRehydration:
             all_objs = storage.get_all()
             assert any(obj.id == o.id for obj in all_objs)
         finally:
-            if hasattr(storage, '_conn') and storage._conn:
+            if hasattr(storage, "_conn") and storage._conn:
                 storage._conn.close()
             if os.path.exists(db_path):
                 os.unlink(db_path)
@@ -1129,6 +1211,7 @@ class TestPhase6_RepositoryRehydration:
 # ===========================================================================
 # Regression tests for architecture remediation
 # ===========================================================================
+
 
 class TestFinding1_ObservationHashCoverage:
     """Observation._to_hashable_dict includes all semantically significant fields."""
@@ -1169,8 +1252,7 @@ class TestFinding2_SilentUtcNowFallback:
             ResearchCycle.from_dict(data)
 
     def test_audit_entry_from_dict_requires_timestamp(self):
-        data = {"id": "test", "actor": "sys", "action": "T", "object_id": "o1",
-                "object_type": "T"}
+        data = {"id": "test", "actor": "sys", "action": "T", "object_id": "o1", "object_type": "T"}
         with pytest.raises(KeyError):
             AuditEntry.from_dict(data)
 
@@ -1186,6 +1268,7 @@ class TestFinding3_ResearchCyclePersistence:
 
     def test_save_routes_research_cycle_to_cycles_table(self, tmp_path):
         import sqlite3
+
         db_path = str(tmp_path / "test_cycle_routing.db")
         repo = ResearchRepository(db_path)
         try:
@@ -1196,7 +1279,7 @@ class TestFinding3_ResearchCyclePersistence:
             conn.close()
             assert row is not None, "ResearchCycle was not saved to cycles table"
         finally:
-            if hasattr(repo, '_conn') and repo._conn:
+            if hasattr(repo, "_conn") and repo._conn:
                 repo._conn.close()
 
     def test_save_cycle_also_writes_to_objects_table(self, tmp_path):
@@ -1209,7 +1292,7 @@ class TestFinding3_ResearchCyclePersistence:
             assert loaded is not None
             assert isinstance(loaded, ResearchCycle)
         finally:
-            if hasattr(repo, '_conn') and repo._conn:
+            if hasattr(repo, "_conn") and repo._conn:
                 repo._conn.close()
 
 

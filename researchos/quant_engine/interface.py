@@ -76,7 +76,6 @@ class QuantComputationInterface(ABC):
 
         return default_capabilities(self)
 
-
     @abstractmethod
     def calculate_returns(
         self,

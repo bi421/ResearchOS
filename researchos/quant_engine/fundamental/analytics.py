@@ -31,10 +31,10 @@ from researchos.quant_engine.fundamental.contracts import (
     NewsEvent,
 )
 
-
 # ──────────────────────────────────────────────
 # Macro data analytics
 # ──────────────────────────────────────────────
+
 
 def surprise_score(point: MacroDataPoint) -> float:
     """Standardized surprise: (actual - forecast) / |forecast|."""
@@ -74,6 +74,7 @@ def macro_series_statistics(points: Sequence[MacroDataPoint]) -> Dict[str, float
 # Central bank & policy analytics
 # ──────────────────────────────────────────────
 
+
 def policy_rate_delta(previous_rate: float, new_rate: float) -> float:
     """Change in policy rate (in percentage points)."""
     return new_rate - previous_rate
@@ -91,6 +92,7 @@ def classify_policy_action(previous_rate: float, new_rate: float) -> str:
 # ──────────────────────────────────────────────
 # Treasury yield curve research
 # ──────────────────────────────────────────────
+
 
 def yield_curve_metrics(
     maturities: Sequence[str],
@@ -128,6 +130,7 @@ def yield_curve_metrics(
 # ──────────────────────────────────────────────
 # Commodity relationships
 # ──────────────────────────────────────────────
+
 
 def commodity_correlations(basket: CommodityBasket) -> Dict[str, float]:
     """Correlations between gold and other commodities."""
@@ -177,6 +180,7 @@ def commodity_ratio(basket: CommodityBasket) -> Dict[str, float]:
 # Bond market analytics
 # ──────────────────────────────────────────────
 
+
 def bond_convexity(
     price: float,
     duration: float,
@@ -184,7 +188,7 @@ def bond_convexity(
     convexity: float,
 ) -> float:
     """Approximate bond price change from duration + convexity."""
-    return (-duration * yield_change + 0.5 * convexity * yield_change ** 2) * price
+    return (-duration * yield_change + 0.5 * convexity * yield_change**2) * price
 
 
 def duration_estimate(
@@ -197,15 +201,12 @@ def duration_estimate(
         return 0.0
     if yield_to_maturity + 1.0 == 0:
         return float(periods)
-    num_sum = sum(
-        ((t + 1) * coupon / (1.0 + yield_to_maturity) ** (t + 1))
-        for t in range(periods)
-    )
+    num_sum = sum(((t + 1) * coupon / (1.0 + yield_to_maturity) ** (t + 1)) for t in range(periods))
     maturity_value = periods * (1.0 + coupon) / (1.0 + yield_to_maturity) ** periods
-    price = sum(
-        coupon / (1.0 + yield_to_maturity) ** (t + 1)
-        for t in range(periods)
-    ) + (1.0 + coupon) / (1.0 + yield_to_maturity) ** periods
+    price = (
+        sum(coupon / (1.0 + yield_to_maturity) ** (t + 1) for t in range(periods))
+        + (1.0 + coupon) / (1.0 + yield_to_maturity) ** periods
+    )
     if price == 0:
         return 0.0
     return (num_sum + maturity_value) / price
@@ -271,16 +272,18 @@ def yield_spread_metrics(yields_by_maturity: Dict[str, float]) -> Dict[str, floa
     return out
 
 
-
 # ──────────────────────────────────────────────
 # Economic calendar abstraction
 # ──────────────────────────────────────────────
+
 
 def filter_high_severity(events: Sequence[EconomicCalendarEvent]) -> List[EconomicCalendarEvent]:
     return [e for e in events if e.severity in (EventSeverity.HIGH, EventSeverity.CRITICAL)]
 
 
-def events_by_country(events: Sequence[EconomicCalendarEvent], country: str) -> List[EconomicCalendarEvent]:
+def events_by_country(
+    events: Sequence[EconomicCalendarEvent], country: str
+) -> List[EconomicCalendarEvent]:
     return [e for e in events if e.country.upper() == country.upper()]
 
 
@@ -303,6 +306,7 @@ def calendar_density(events: Sequence[EconomicCalendarEvent]) -> Dict[str, float
 # News-event normalization
 # ──────────────────────────────────────────────
 
+
 def normalize_news_text(raw: str) -> str:
     """Deterministic news text normalization."""
     text = raw.lower().strip()
@@ -314,12 +318,35 @@ def normalize_news_text(raw: str) -> str:
 def keyword_sentiment(text: str) -> float:
     """Simple deterministic lexicon-based sentiment score in [-1, 1]."""
     positive = {
-        "beat", "surge", "gain", "growth", "improve", "strong", "rise",
-        "up", "positive", "exceeds", "record", "boost", "rally",
+        "beat",
+        "surge",
+        "gain",
+        "growth",
+        "improve",
+        "strong",
+        "rise",
+        "up",
+        "positive",
+        "exceeds",
+        "record",
+        "boost",
+        "rally",
     }
     negative = {
-        "miss", "fall", "drop", "decline", "weak", "slow", "downgrade",
-        "loss", "cut", "negative", "below", "fear", "plunge", "slump",
+        "miss",
+        "fall",
+        "drop",
+        "decline",
+        "weak",
+        "slow",
+        "downgrade",
+        "loss",
+        "cut",
+        "negative",
+        "below",
+        "fear",
+        "plunge",
+        "slump",
     }
     words = set(normalize_news_text(text).split())
     pos_hits = words & positive
@@ -348,6 +375,7 @@ def normalize_news_event(raw_headline: str, source: str = "") -> NewsEvent:
 # ──────────────────────────────────────────────
 # Simple deterministic macro factor model
 # ──────────────────────────────────────────────
+
 
 def fit_macro_factor_model(
     target: Sequence[float],

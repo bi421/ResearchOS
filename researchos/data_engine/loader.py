@@ -1,4 +1,4 @@
-﻿"""
+"""
 Unified Data Loader - Multi-Asset Entry Point for ResearchOS
 
 This module provides a single, asset-agnostic interface to load market data.
@@ -8,29 +8,29 @@ independent of XAUUSD or any specific asset.
 
 Usage:
     from researchos.data_engine.loader import DataLoader
-    
+
     # Load XAUUSD (frozen - legacy)
     candles = DataLoader.load("xauusd", "h1")
-    
+
     # Load Crypto (active development)
     candles = DataLoader.load("btcusdt", "1h")
 """
 
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from researchos.data_engine.candle import Candle
-from researchos.data_engine.csv_loader import CsvLoader, FORMAT_MT5, FORMAT_TRADINGVIEW
+from researchos.data_engine.csv_loader import FORMAT_MT5, FORMAT_TRADINGVIEW, CsvLoader
 
 
 class DataLoader:
     """
     Unified data loader for any asset class.
-    
+
     Resolves file paths from a configuration registry and delegates
     parsing to the existing CsvLoader.
     """
-    
+
     # Registry: Maps symbol -> configuration for file resolution
     _CONFIG: Dict[str, Dict[str, Any]] = {
         # =========================================================
@@ -41,7 +41,6 @@ class DataLoader:
             "format": FORMAT_MT5,
             "file_pattern": "{symbol}_{timeframe}_*.csv",  # e.g., xauusd_h1_2021_2025_mt5.csv
         },
-        
         # =========================================================
         # 🚀 ACTIVE (Development) - Crypto Majors
         # =========================================================
@@ -69,7 +68,7 @@ class DataLoader:
         timeframe: str,
         file_path: Optional[str] = None,
         force_format: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> List[Candle]:
         """
         Universal load function for all assets.
@@ -89,11 +88,11 @@ class DataLoader:
             ValueError: If symbol is not registered.
         """
         symbol = symbol.lower()
-        
+
         # 1. If path is provided explicitly, use it directly
         if file_path is not None:
             return cls._load_from_path(file_path, symbol, timeframe, force_format, **kwargs)
-        
+
         # 2. Resolve path from configuration
         config = cls._CONFIG.get(symbol)
         if not config:
@@ -102,55 +101,49 @@ class DataLoader:
                 f"Supported symbols: {list(cls._CONFIG.keys())}. "
                 "Add it to DataLoader._CONFIG first."
             )
-        
+
         base = Path(config["base_path"])
         if not base.exists():
             raise FileNotFoundError(f"Data directory not found: {base}")
-        
+
         # Build pattern and search for files
         pattern = config["file_pattern"].format(symbol=symbol, timeframe=timeframe)
         matches = list(base.glob(pattern))
-        
+
         if not matches:
             # Fallback: Try broader glob (just in case filename structure is slightly different)
             fallback_pattern = f"*{timeframe}*.csv"
             fallback_matches = list(base.glob(fallback_pattern))
             if fallback_matches:
                 matches = fallback_matches
-        
+
         if not matches:
             raise FileNotFoundError(
-                f"No file found for {symbol} {timeframe} in {base}. "
-                f"Searched pattern: {pattern}"
+                f"No file found for {symbol} {timeframe} in {base}. Searched pattern: {pattern}"
             )
-        
+
         # Use the first match (or enhance later to pick the most recent)
         resolved_path = str(matches[0])
         print(f"[DataLoader] Resolved path: {resolved_path}")
-        
+
         return cls._load_from_path(
-            resolved_path, symbol, timeframe, 
-            force_format or config.get("format"), 
-            **kwargs
+            resolved_path, symbol, timeframe, force_format or config.get("format"), **kwargs
         )
 
     @classmethod
     def _load_from_path(
-        cls,
-        path: str,
-        symbol: str,
-        timeframe: str,
-        format_type: Optional[str],
-        **kwargs
+        cls, path: str, symbol: str, timeframe: str, format_type: Optional[str], **kwargs
     ) -> List[Candle]:
         """Delegate to CsvLoader with the given path."""
         loader = CsvLoader()
-        
+
         # If format is forced, use specific loader
         if format_type == FORMAT_MT5:
             return loader.load_mt5_candles(path, symbol=symbol, timeframe=timeframe, **kwargs)
         elif format_type == FORMAT_TRADINGVIEW:
-            return loader.load_tradingview_candles(path, symbol=symbol, timeframe=timeframe, **kwargs)
+            return loader.load_tradingview_candles(
+                path, symbol=symbol, timeframe=timeframe, **kwargs
+            )
         else:
             # Auto-detect format and columns (handles generic, mt5, tradingview)
             return loader.load_candles_auto(path, symbol=symbol, timeframe=timeframe, **kwargs)

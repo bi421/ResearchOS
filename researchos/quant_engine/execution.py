@@ -250,9 +250,13 @@ class ExecutionSimulationLayer:
             return
 
         if closing_short:
-            pnl = (self.entry_price - fill.fill_price) * qty - entry_fill.commission - fill.commission
+            pnl = (
+                (self.entry_price - fill.fill_price) * qty - entry_fill.commission - fill.commission
+            )
         else:
-            pnl = (fill.fill_price - self.entry_price) * qty - entry_fill.commission - fill.commission
+            pnl = (
+                (fill.fill_price - self.entry_price) * qty - entry_fill.commission - fill.commission
+            )
 
         cost_basis = abs(self.entry_price * qty) + entry_fill.commission
         return_pct = (pnl / cost_basis) if cost_basis != 0 else 0.0
@@ -324,7 +328,9 @@ class ExecutionSimulationLayer:
 
     def execution_stats(self) -> Dict[str, Any]:
         """Deterministic summary of the execution simulation."""
-        net_return = (self.final_equity / self.initial_capital - 1.0) if self.initial_capital else 0.0
+        net_return = (
+            (self.final_equity / self.initial_capital - 1.0) if self.initial_capital else 0.0
+        )
         wins = [t for t in self.trades if t.pnl > 0]
         losses = [t for t in self.trades if t.pnl < 0]
         return {
@@ -346,4 +352,3 @@ class ExecutionSimulationLayer:
             "num_winning_trades": len(wins),
             "num_losing_trades": len(losses),
         }
-

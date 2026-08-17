@@ -138,7 +138,9 @@ class DatasetMetadata(BaseObject):
             "start_time": self.start_time.isoformat() if self.start_time else "",
             "end_time": self.end_time.isoformat() if self.end_time else "",
             "timezone": self.timezone,
-            "quality": self.quality.value if isinstance(self.quality, DataQuality) else self.quality,
+            "quality": self.quality.value
+            if isinstance(self.quality, DataQuality)
+            else self.quality,
             "status": self.status.value if isinstance(self.status, DatasetStatus) else self.status,
             "dataset_hash": self.dataset_hash,
             "version": self.version,
@@ -150,31 +152,38 @@ class DatasetMetadata(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "dataset_id": self.dataset_id,
-            "symbol": self.symbol,
-            "timeframe": self.timeframe,
-            "data_type": self.data_type,
-            "source": self.source,
-            "source_file": self.source_file,
-            "record_count": self.record_count,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "date_range": (
-                [self.start_time.isoformat(), self.end_time.isoformat()]
-                if self.start_time and self.end_time else None
-            ),
-            "duration_days": round(self.duration_days, 4),
-            "avg_records_per_day": round(self.avg_records_per_day, 2),
-            "timezone": self.timezone,
-            "quality": self.quality.value if isinstance(self.quality, DataQuality) else self.quality,
-            "status": self.status.value if isinstance(self.status, DatasetStatus) else self.status,
-            "dataset_hash": self.dataset_hash,
-            "version": self.version,
-            "statistics": self.statistics,
-            "tags": self.tags,
-            "description": self.description,
-        })
+        base.update(
+            {
+                "dataset_id": self.dataset_id,
+                "symbol": self.symbol,
+                "timeframe": self.timeframe,
+                "data_type": self.data_type,
+                "source": self.source,
+                "source_file": self.source_file,
+                "record_count": self.record_count,
+                "start_time": self.start_time.isoformat() if self.start_time else None,
+                "end_time": self.end_time.isoformat() if self.end_time else None,
+                "date_range": (
+                    [self.start_time.isoformat(), self.end_time.isoformat()]
+                    if self.start_time and self.end_time
+                    else None
+                ),
+                "duration_days": round(self.duration_days, 4),
+                "avg_records_per_day": round(self.avg_records_per_day, 2),
+                "timezone": self.timezone,
+                "quality": self.quality.value
+                if isinstance(self.quality, DataQuality)
+                else self.quality,
+                "status": self.status.value
+                if isinstance(self.status, DatasetStatus)
+                else self.status,
+                "dataset_hash": self.dataset_hash,
+                "version": self.version,
+                "statistics": self.statistics,
+                "tags": self.tags,
+                "description": self.description,
+            }
+        )
         return base
 
     @classmethod
@@ -204,4 +213,3 @@ class DatasetMetadata(BaseObject):
             f"DatasetMetadata({self.symbol}, {self.timeframe}, "
             f"{self.record_count} records, {self.quality.value})"
         )
-

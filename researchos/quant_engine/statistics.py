@@ -23,9 +23,7 @@ def _validate_returns(returns: List[float], min_samples: int = 2) -> None:
     if not returns:
         raise ValueError("Cannot compute statistics on empty dataset")
     if len(returns) < min_samples:
-        raise ValueError(
-            f"Insufficient samples: need at least {min_samples}, got {len(returns)}"
-        )
+        raise ValueError(f"Insufficient samples: need at least {min_samples}, got {len(returns)}")
 
 
 def mean(returns: List[float]) -> float:
@@ -99,9 +97,7 @@ def rolling_volatility(
     """
     _validate_returns(returns, min_samples=window)
     if len(returns) < window:
-        raise ValueError(
-            f"Window size {window} exceeds data length {len(returns)}"
-        )
+        raise ValueError(f"Window size {window} exceeds data length {len(returns)}")
 
     vols: List[float] = []
     for i in range(len(returns) - window + 1):
@@ -268,9 +264,7 @@ def calculate_returns_from_prices(
         ValueError: If return_type is not recognized.
     """
     if len(prices) < 2:
-        raise ValueError(
-            f"Need at least 2 prices to calculate returns, got {len(prices)}"
-        )
+        raise ValueError(f"Need at least 2 prices to calculate returns, got {len(prices)}")
 
     if calculation_version != CalculationVersion.CALCULATION_V1:
         raise ValueError(f"Unsupported calculation version: {calculation_version}")
@@ -359,9 +353,7 @@ def regression_intercept(y: List[float]) -> float:
     return ybar - beta * xbar
 
 
-def _regression_accumulate(
-    x: List[float], y: List[float]
-) -> Any:
+def _regression_accumulate(x: List[float], y: List[float]) -> Any:
     """One-pass OLS sufficient statistics (mirrors C++ ``accumulate``)."""
     n = len(x)
     sum_x = sum(x)

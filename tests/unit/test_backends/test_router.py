@@ -45,8 +45,7 @@ def reference_returns(prices=PRICES):
 class _ShiftedBackend(PythonQuantBackend):
     """Returns outputs shifted by a constant → numerical mismatch."""
 
-    def calculate_returns(self, prices, return_type="percentage",
-                          calculation_version=V1):
+    def calculate_returns(self, prices, return_type="percentage", calculation_version=V1):
         out = super().calculate_returns(prices, return_type, calculation_version)
         return [x + 1.0 for x in out]
 
@@ -54,8 +53,7 @@ class _ShiftedBackend(PythonQuantBackend):
 class _RaiseBackend(PythonQuantBackend):
     """Raises on execution → backend unavailable / execution failure."""
 
-    def calculate_returns(self, prices, return_type="percentage",
-                          calculation_version=V1):
+    def calculate_returns(self, prices, return_type="percentage", calculation_version=V1):
         raise RuntimeError("backend exploded")
 
 
@@ -69,8 +67,7 @@ class _UnavailableBackend(PythonQuantBackend):
 class _NaNBackend(PythonQuantBackend):
     """Returns NaN → rejected by validation."""
 
-    def calculate_returns(self, prices, return_type="percentage",
-                          calculation_version=V1):
+    def calculate_returns(self, prices, return_type="percentage", calculation_version=V1):
         out = super().calculate_returns(prices, return_type, calculation_version)
         return [float("nan")] * len(out)
 
@@ -78,8 +75,7 @@ class _NaNBackend(PythonQuantBackend):
 class _ShapeBackend(PythonQuantBackend):
     """Returns a wrong-length vector → shape mismatch."""
 
-    def calculate_returns(self, prices, return_type="percentage",
-                          calculation_version=V1):
+    def calculate_returns(self, prices, return_type="percentage", calculation_version=V1):
         return [1.0]
 
 
@@ -123,9 +119,7 @@ class TestRouterSuccessPath:
         backend = _ShiftedBackend()
         router = BackendRouter(candidates=[backend])
         shifted = backend.calculate_returns(PRICES, "percentage", V1)
-        result = router.execute(
-            "calculate_returns", {"prices": PRICES}, expected=shifted
-        )
+        result = router.execute("calculate_returns", {"prices": PRICES}, expected=shifted)
         assert result.metadata.validation_status == ValidationStatus.PASSED.value
         assert result.metadata.fallback_used is False
         assert result.output == shifted
@@ -184,9 +178,7 @@ class TestRouterValidationStatus:
     def test_fallback_with_expected_validated(self):
         router = BackendRouter(candidates=[_ShiftedBackend()])
         expected = reference_returns()
-        result = router.execute(
-            "calculate_returns", {"prices": PRICES}, expected=expected
-        )
+        result = router.execute("calculate_returns", {"prices": PRICES}, expected=expected)
         assert result.metadata.validation_status == ValidationStatus.PASSED.value
 
 
@@ -315,8 +307,9 @@ class TestRouterVolatility:
 
     def test_volatility_fallback_on_shift(self):
         class _ShiftedVolatilityBackend(_ShiftedBackend):
-            def calculate_volatility(self, returns, method="standard_deviation",
-                                     calculation_version=V1):
+            def calculate_volatility(
+                self, returns, method="standard_deviation", calculation_version=V1
+            ):
                 return super().calculate_volatility(returns, method, calculation_version) + 5.0
 
         router = BackendRouter(candidates=[_ShiftedVolatilityBackend()])

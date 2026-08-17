@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from researchos.core.base_object import BaseObject
-from researchos.core.identity import generate_id, deterministic_hash
+from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 
 
@@ -117,9 +117,15 @@ class ExperimentReport(BaseObject):
             "summary": self.summary,
             "run_ids": sorted(self.run_ids),
             "best_run_id": self.best_run_id or "",
-            "metrics_summary": dict(sorted(self.metrics_summary.items())) if self.metrics_summary else {},
-            "validation_summary": dict(sorted(self.validation_summary.items())) if self.validation_summary else {},
-            "learning_summary": dict(sorted(self.learning_summary.items())) if self.learning_summary else {},
+            "metrics_summary": dict(sorted(self.metrics_summary.items()))
+            if self.metrics_summary
+            else {},
+            "validation_summary": dict(sorted(self.validation_summary.items()))
+            if self.validation_summary
+            else {},
+            "learning_summary": dict(sorted(self.learning_summary.items()))
+            if self.learning_summary
+            else {},
             "num_runs": self.num_runs,
             "num_passed_runs": self.num_passed_runs,
             "num_failed_runs": self.num_failed_runs,
@@ -130,23 +136,25 @@ class ExperimentReport(BaseObject):
 
     def to_dict(self) -> Dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "experiment_id": self.experiment_id,
-            "hypothesis_id": self.hypothesis_id,
-            "title": self.title,
-            "summary": self.summary,
-            "run_ids": self.run_ids,
-            "best_run_id": self.best_run_id,
-            "metrics_summary": self.metrics_summary,
-            "validation_summary": self.validation_summary,
-            "learning_summary": self.learning_summary,
-            "num_runs": self.num_runs,
-            "num_passed_runs": self.num_passed_runs,
-            "num_failed_runs": self.num_failed_runs,
-            "report_hash": self.report_hash,
-            "report_trace": self.report_trace,
-            "status": self.status,
-        })
+        base.update(
+            {
+                "experiment_id": self.experiment_id,
+                "hypothesis_id": self.hypothesis_id,
+                "title": self.title,
+                "summary": self.summary,
+                "run_ids": self.run_ids,
+                "best_run_id": self.best_run_id,
+                "metrics_summary": self.metrics_summary,
+                "validation_summary": self.validation_summary,
+                "learning_summary": self.learning_summary,
+                "num_runs": self.num_runs,
+                "num_passed_runs": self.num_passed_runs,
+                "num_failed_runs": self.num_failed_runs,
+                "report_hash": self.report_hash,
+                "report_trace": self.report_trace,
+                "status": self.status,
+            }
+        )
         return base
 
     @classmethod

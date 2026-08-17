@@ -129,12 +129,10 @@ class LineageTreeNode:
         return {
             "node": self.node.to_dict(),
             "parents": [
-                p.to_dict()
-                for p in sorted(self.parents, key=lambda n: n.node.artifact_hash)
+                p.to_dict() for p in sorted(self.parents, key=lambda n: n.node.artifact_hash)
             ],
             "children": [
-                c.to_dict()
-                for c in sorted(self.children, key=lambda n: n.node.artifact_hash)
+                c.to_dict() for c in sorted(self.children, key=lambda n: n.node.artifact_hash)
             ],
         }
 
@@ -292,12 +290,10 @@ class LineageQueryEngine:
         if env is None:
             return None
         parents = tuple(
-            LineageNode.from_envelope(self._get(h))
-            for h in self._parents_of(artifact_hash)
+            LineageNode.from_envelope(self._get(h)) for h in self._parents_of(artifact_hash)
         )
         children = tuple(
-            LineageNode.from_envelope(self._get(h))
-            for h in self._children_of(artifact_hash)
+            LineageNode.from_envelope(self._get(h)) for h in self._children_of(artifact_hash)
         )
         lineage_path = self._lineage_path_hashes(artifact_hash)
         return LineageExplanation(
@@ -343,12 +339,8 @@ class LineageQueryEngine:
         if env is None:
             return None
         root = LineageNode.from_envelope(env)
-        parent_nodes = self._tree_nodes(
-            self._parents_of(artifact_hash), set([artifact_hash])
-        )
-        child_nodes = self._tree_nodes(
-            self._children_of(artifact_hash), set([artifact_hash])
-        )
+        parent_nodes = self._tree_nodes(self._parents_of(artifact_hash), set([artifact_hash]))
+        child_nodes = self._tree_nodes(self._children_of(artifact_hash), set([artifact_hash]))
         return LineageTreeNode(node=root, parents=parent_nodes, children=child_nodes)
 
     def _tree_nodes(
@@ -368,9 +360,7 @@ class LineageQueryEngine:
             new_visited.add(h)
             parents = self._tree_nodes(self._parents_of(h), new_visited)
             children = self._tree_nodes(self._children_of(h), new_visited)
-            out.append(
-                LineageTreeNode(node=node, parents=parents, children=children)
-            )
+            out.append(LineageTreeNode(node=node, parents=parents, children=children))
         return tuple(out)
 
     # ── resolve_reference ──────────────────────────────────────────────
@@ -487,16 +477,12 @@ class LineageQueryEngine:
         # Experiment: parent(s) of the Run with artifact_type "Experiment".
         experiment: Optional[EvidenceEnvelope] = None
         if run is not None:
-            experiment = self._find_parent_of_type(
-                run.artifact_hash, "Experiment"
-            )
+            experiment = self._find_parent_of_type(run.artifact_hash, "Experiment")
 
         # Dataset: parent(s) of the Experiment with artifact_type "Dataset".
         dataset: Optional[EvidenceEnvelope] = None
         if experiment is not None:
-            dataset = self._find_parent_of_type(
-                experiment.artifact_hash, "Dataset"
-            )
+            dataset = self._find_parent_of_type(experiment.artifact_hash, "Dataset")
 
         # Validation: child of the Result with artifact_type "Validation".
         validation = self._find_child_of_type(result_hash, "Validation")
