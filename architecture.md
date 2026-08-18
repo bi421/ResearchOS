@@ -214,6 +214,7 @@ The repository currently contains the following major top-level areas:
 ```text
 ResearchOS/
 │
+├── cpp_quant_engine/
 ├── data/
 ├── docs/
 ├── macro_intelligence/
@@ -223,17 +224,20 @@ ResearchOS/
 ├── tests/
 ├── tools/
 │
+├── .github/
 ├── .gitignore
-├── ai_audit.ps1
-├── AI_AUDIT_REQUEST.txt
-├── AI_CONTEXT.md
-├── AI_GIT_HISTORY.txt
-├── AI_GIT_STATUS.txt
-├── AI_SOURCE_FILES.txt
-├── AI_TEST_INDEX.txt
-├── AI_TREE.txt
-└── architecture.md
+├── architecture.md
+├── CONTRIBUTING.md
+├── pyproject.toml
+├── README.md
+└── run_demo.py
 ```
+
+As of the `chore: remove build artifacts and AI dumps from tracking`
+cleanup (2026-08-18), the transient `ai_audit.ps1` / `AI_*.txt` /
+`AI_CONTEXT.md` dump files previously listed here were removed from
+version control and are now `.gitignore`d. They are regenerable
+local artifacts, not part of the canonical architecture.
 
 The repository also contains the C++ quantitative engine integration under:
 
@@ -268,6 +272,23 @@ researchos/
 ├── pipeline_repository/
 ├── evaluation/
 └── validation/
+```
+
+The following additional packages are also present in the current
+repository. They are classified TRANSITIONAL (see Section 71) pending
+explicit architectural review — their existence is verified, but their
+long-term placement in the canonical hierarchy is not yet decided:
+
+```text
+├── agents/           (AI-agent tool wrappers)
+├── benchmarks/
+├── engines/
+├── evidence/
+├── interfaces/        (CLI / FastAPI entrypoints)
+├── macro/
+├── pipeline/
+├── reasoning_engine/
+└── storage/
 ```
 
 Additional research and integration modules may exist as specialized or transitional components.
@@ -898,36 +919,19 @@ These should not be collapsed without an explicit architectural change.
 
 ```text
 macro_intelligence/
-```
-
-`macro_intelligence` is a separate major subsystem.
-
-It must not be incorrectly represented as:
-
-```text
-researchos/context/macro/
-```
-
-because that directory does not represent the current repository architecture.
-
----
-
-# 29. Macro Intelligence Architecture
-
-The verified macro subsystem contains major domains including:
-
-```text
-macro_intelligence/
 │
+├── audit/
 ├── contracts/
 ├── econometrics/
-├── exceptions/
+├── exceptions.py      (module, not a package)
 ├── features/
 ├── interfaces/
 ├── knowledge/
+├── provenance/
+├── regime/
 ├── relationships/
 ├── revision/
-├── regime/
+├── revision_provenance/
 ├── statistics/
 ├── storage/
 └── time/
@@ -1708,27 +1712,30 @@ Testing is part of the architecture.
 
 # 59. Current Verification Baseline
 
-The current verification record includes:
+The current verification record (2026-08-18 re-check) includes:
 
 ```text
 Pytest:
-3549 passed
-11 skipped
-
-Ruff:
-All checks passed
+3500 passed
+60 skipped
 ```
 
-The C++ backend was also verified as:
+The C++ backend integration path exists in the repository
+(`researchos/quant_engine/research_cpp_backend.py`,
+`CppQuantAdapter`) and native module. Whether `IS_CPP: True` at
+runtime depends on the native module being built for the active
+platform/Python version — this must be re-verified per environment
+rather than treated as a fixed global fact. A clean checkout without
+a prebuilt native module falls back to `PythonQuantBackend`
+(functionally correct, reference implementation) with a warning,
+rather than failing.
 
-```text
-HAS_CPP: True
-VERSION: 1.0.0
-IS_CPP: True
-ADAPTER_VERSION: 1.0.0
-```
-
-This confirms that the C++ backend is not merely a documentation concept; it has an actual native integration path.
+Ruff's pass/fail status likewise depends on which rule set is
+selected at invocation time; `pyproject.toml` currently pins only
+`line-length` and `target-version` under `[tool.ruff]` with no
+explicit `select`, so "all checks passed" should be re-verified
+against the exact ruff invocation used in CI
+(`.github/workflows/`) rather than assumed from a bare `ruff check .`.
 
 ---
 
