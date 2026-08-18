@@ -1,0 +1,146 @@
+# Cross-Asset Expansion Plan
+
+**Status:** Draft — planning only, no implementation yet
+**Date:** 2026-08-18
+**Scope:** Expand ResearchOS from an XAUUSD-only research system into a system that can analyze any combination of assets (metals, energy, equities, indices, FX, crypto) using the existing evidence-first architecture.
+
+---
+
+## 1. Goal Statement
+
+Turn the currently working XAUUSD pipeline (Data → Macro/Statistics → Backtest → Result) into a **generic, symbol-agnostic pipeline** that can run the same analysis and backtesting logic against any asset or combination of assets, while preserving the project's core guarantees: determinism, provenance, and evidence-first reasoning.
+
+This is explicitly an **extension**, not a rebuild. Two internal audits (`CROSS_ASSET_READINESS.md`, `MACRO_OWNERSHIP_PROPOSAL.md`, both dated 2026-08-17) already confirmed that most of the computation layer (`quant_engine/`, `BacktestEngine`) is already asset-agnostic. This plan focuses on closing the remaining gaps, not redoing finished work.
+
+---
+
+## 2. Current State Summary (verified this session)
+
+| Layer | Status | Evidence |
+|---|---|---|
+| Data ingestion (CSV → `HistoricalDataset` → SQLite) | Working, symbol-parameterized | `load_xauusd.py`, `SqliteDatasetRepository` |
+| Multi-symbol DataFrame provider | Working, symbol-agnostic | `MacroFactorProvider.get_factors(symbols=[...])` |
+| Correlation / statistics | Working | `MacroAnalyzer.compute_correlation()` |
+| Backtest engine (C++ + Python facade) | Working, deterministic, symbol-agnostic | `BacktestEngine.run()`, 10/10 tests pass, first real XAUUSD backtest run produced hash-verified results |
+| Experiment Framework ↔ Backtest integration | Working | `test_experiment_backend_integration.py::TestBacktestArtifacts` (2/2 pass) |
+| `quant_engine/` computation layer | ~95% asset-agnostic (audited) | `CROSS_ASSET_READINESS.md` |
+| Instrument metadata (tick size, calendar, currency, annualization) | **Missing** | `CROSS_ASSET_READINESS.md` §T3 |
+| Macro/regime evidence for decision layer | **Not wired** — two disconnected systems | `MACRO_OWNERSHIP_PROPOSAL.md` |
+| `DecisionContext` ↔ macro/backtest evidence | **Not wired** | confirmed this session (`macro_data` kwarg does not exist) |
+
+---
+
+## 3. How the New Goal Connects to Existing Core Modules
+
+This is the key question this document answers: for each core module, what does "supporting multiple assets" actually require?
+
+### 3.1 Data Engine (`researchos/data_engine/`)
+- **Already generic:** `HistoricalDataset`, `SqliteDatasetRepository`, `CsvLoader` (MT5/TradingView/generic formats) take `symbol` as a parameter already.
+- **Gap:** No standard vocabulary for asset classification. `ontology_tags: List[str]` exists on `HistoricalDataset` but is unused.
+- **Connection to goal:** Every new asset loaded through the existing loader becomes usable everywhere else in the system automatically — no new loader code needed per asset, only per *CSV format* (already handled by `FORMAT_MT5` / `FORMAT_TRADINGVIEW` / `FORMAT_GENERIC`).
+- **Known accidental duplication:** `xauusd_csv_loader.py` / `xauusd_dataset.py` exist alongside the generic loader/dataset files, but are confirmed (by audit) to be unused by `quant_engine` — safe to ignore or deprecate later, not a blocker.
+
+### 3.2 Instrument Metadata Registry (new, small module)
+- **Does not exist yet.** This is the one piece of genuinely new code required before multi-asset analysis can be *correct* (not just *runnable*).
+- **Why it's required:** `quant_engine/models.py` currently hardcodes `periods_per_year = 252 * 6.5 * 3600` (US equity session assumption) used in annualized return/volatility calculations. This is silently wrong for FX/metals (~260 days, ~24h) and crypto (365 days, 24h). Running a backtest on USOIL or BTCUSD today would produce a technically valid but *statistically incorrect* annualized Sharpe ratio, for example.
+- **Connects to:** `quant_engine/metrics.py`, `performance.py`, `statistics.py` (consumers of `periods_per_year`), `BacktestRequest`/`BacktestResult` (already carry `symbol`, so can carry a resolved metadata reference).
+- **Scope (per `CROSS_ASSET_READINESS.md` T3):** symbol → asset_class, tick size, session calendar id, currency, annualization periods. Additive only — must not change default behavior for XAUUSD until an explicit override is passed.
+
+### 3.3 Backtest Engine (`cpp_quant_engine`)
+- **Already generic.** `BacktestEngine.run(market_data, signal, ...)` takes `MarketData(symbol=..., candles=...)` — confirmed working with real XAUUSD data this session (55 trades, hash-verified).
+- **Connection to goal:** No changes needed to run the same engine against a second, third, Nth asset. The only dependency is Instrument Metadata (3.2) for *correct* annualized metrics — the engine will run without it, but analytics comparing assets would be misleading without it.
+
+### 3.4 Experiment Framework (`researchos/experiments/`)
+- **Already generic in principle:** `experiments/crypto/run_btc_research.py` already demonstrates the reuse pattern the audit refers to; `experiments/phase51` defaults to `symbol="XAUUSD"` but accepts arbitrary OHLCV.
+- **Gap:** No orchestration layer to run *the same experiment/strategy across a set of assets* and collect results side by side (batch/sweep runner).
+- **Connection to goal:** This is where "any combination of assets" becomes an actual product capability rather than "technically possible one at a time." Needs a small `MultiAssetExperimentRunner` that iterates `{symbol × strategy}` combinations, calling the existing `BacktestEngine` + `ExperimentRunner` per combination, and writing each result through the existing Evidence emission path.
+
+### 3.5 Evidence System (`researchos/evidence/`)
+- **Already has the machinery:** `result_emission.py`, `run_emission.py`, `experiment_emission.py`, `dataset_emission.py`, `EvidenceRepository`, `lineage.py`, `reproduction.py` — all asset-agnostic by construction (they operate on hashes and references, not symbols).
+- **Gap:** `BacktestResult` (from `cpp_quant_engine`) is not currently routed into this pipeline — confirmed this session it only prints to console. `test_experiment_backend_integration.py::TestBacktestArtifacts` proves the artifact *can* reach `ExperimentResult`, but the standalone script (`run_first_backtest.py`) does not yet use that path.
+- **Connection to goal:** Every backtest run for every asset must produce an `EvidenceRecord`, not just a printed result, or cross-asset comparison has no persistent, queryable, provenance-backed record to compare against.
+
+### 3.6 Macro Intelligence (`macro_intelligence/` vs `researchos/macro/`)
+- **Two disconnected systems** (per `MACRO_OWNERSHIP_PROPOSAL.md`): `researchos/macro/engine.py` is a live, XAUUSD-specific 10-driver heuristic; `macro_intelligence/` is a generic, scientifically rigorous but unused regime/econometrics library.
+- **Connection to goal:** Cross-asset macro context (e.g., "how does DXY regime affect USOIL vs XAUUSD differently") can only be built on the generic `macro_intelligence/` side — the XAUUSD heuristic engine cannot generalize by design (it IS gold-specific domain knowledge, not a bug).
+- **This is the highest-risk dependency** for the "multi-asset macro-aware analysis" part of the goal, but is **not required** for basic multi-asset backtesting/statistics to work. Treated as a parallel track, not a blocker.
+
+### 3.7 Decision Layer (`researchos/decision_engine/`)
+- **Gap confirmed this session:** `DecisionContext.__init__` has no field for raw macro data or correlations — it expects **IDs** (`macro_state_id`, etc.), consistent with the evidence-first design, but nothing currently produces those IDs.
+- **Connection to goal:** Not required for Phase 1 (running backtests/statistics across assets). Required for Phase 3+ (turning multi-asset evidence into a human-facing research report/decision recommendation).
+
+---
+
+## 4. How Results Will Be Measured and Verified
+
+Every phase below must satisfy these checks before being considered done. This mirrors the project's existing determinism/evidence discipline — no new verification philosophy, only applying the existing one to more assets.
+
+### 4.1 Correctness checks (per asset added)
+- [ ] Dataset loads with the correct `record_count`, `start_time`, `end_time` (spot-checked against source CSV).
+- [ ] `BacktestEngine.run()` produces a `result_hash` that is **stable across repeated runs** on identical input (determinism check — already proven for XAUUSD, must be repeated per asset).
+- [ ] Annualized metrics (Sharpe, volatility) use the correct `periods_per_year` for that asset's class once the Instrument Metadata Registry (3.2) exists — verified against a manually computed reference value for at least one asset per class (equity, FX/metals, crypto).
+
+### 4.2 Cross-asset consistency checks
+- [ ] Running the same strategy against two different assets must **not** silently reuse cached state from the first run (isolation check).
+- [ ] Batch/sweep runner (3.4) output count must equal `len(symbols) × len(strategies)` exactly — no silently dropped combinations.
+- [ ] Each result in the batch must carry a distinct `input_hash` (proves no accidental data leakage between assets).
+
+### 4.3 Evidence integrity checks
+- [ ] Every backtest run produces exactly one `EvidenceRecord` with `dataset_reference`, `method`, `result`, `why` populated (not just a console print).
+- [ ] `EvidenceRepository` query by symbol returns all and only the evidence for that symbol.
+- [ ] Reproduction Engine (`researchos/evidence/reproduction.py`) can regenerate a byte-identical result from a stored `EvidenceRecord` for at least one multi-asset case.
+
+### 4.4 Regression checks (must stay green throughout)
+- [ ] Full existing test suite (3,475 Python + 526 C++ tests, per `MACRO_OWNERSHIP_PROPOSAL.md` baseline) remains green after each phase.
+- [ ] `test_bridge.py::TestBacktest` (10/10) and `test_experiment_backend_integration.py::TestBacktestArtifacts` (2/2) remain green — these are the load-bearing tests for this entire plan.
+- [ ] XAUUSD backtest result (`result_hash` from the first real run this session) remains reproducible byte-for-byte — this is the regression baseline for "did multi-asset work break the original asset."
+
+---
+
+## 5. Phased Plan
+
+### Phase 0 — Baseline lock (no new code)
+- Record the current XAUUSD `input_hash` / `result_hash` from `run_first_backtest.py` as the permanent regression baseline.
+- Run and record full test suite pass/fail counts as the pre-change baseline.
+
+### Phase 1 — Instrument Metadata Registry (3.2)
+- Add a minimal symbol → {asset_class, currency, annualization_periods, calendar_id} registry.
+- Wire it into `quant_engine/models.py` as an **explicit override**, default path unchanged (per `CROSS_ASSET_READINESS.md` T1 guidance: additive only).
+- Verify with 4.1 checks (annualization correctness) for one asset per class.
+
+### Phase 2 — Second asset onboarding (proof of generality)
+- Load one non-XAUUSD asset (e.g., a currency pair or an equity) through the existing `CsvLoader` → `SqliteDatasetRepository` path.
+- Run `BacktestEngine.run()` against it with the same example strategy used for XAUUSD.
+- Verify with 4.1 and 4.2 checks. This phase proves the "any asset" claim empirically, not just architecturally.
+
+### Phase 3 — Evidence wiring for backtests
+- Route `BacktestResult` through the existing `result_emission.py` / `EvidenceRepository` path (already proven possible by `TestBacktestArtifacts`) instead of console-only output.
+- Verify with 4.3 checks.
+
+### Phase 4 — Multi-asset batch runner
+- Build `MultiAssetExperimentRunner`: iterates symbol × strategy combinations, reuses `BacktestEngine` + Evidence wiring from Phase 3.
+- Verify with 4.2 and 4.3 checks at batch scale (e.g., 3 assets × 2 strategies = 6 evidence records, all distinct).
+
+### Phase 5 (parallel track, not blocking) — Macro ownership resolution
+- Follow the migration shape already defined in `MACRO_OWNERSHIP_PROPOSAL.md`: adapter first, parity experiment second, retirement of heuristic regime classification only after parity evidence.
+- Not required for Phases 1–4 to be useful; required only for macro-aware cross-asset analysis (e.g., regime-conditional strategy comparison).
+
+### Phase 6 (later) — Decision layer integration
+- Define the missing `macro_state_id`-style evidence objects so `DecisionContext` can consume multi-asset backtest + macro evidence for human-facing reports.
+
+---
+
+## 6. Explicit Non-Goals (for this plan)
+
+- Not rebuilding `quant_engine/` — it is already asset-agnostic per audit.
+- Not merging `macro_intelligence/` and `researchos/macro/` outright — that migration is separately planned, high-risk, and gated on parity evidence (see `MACRO_OWNERSHIP_PROPOSAL.md`).
+- Not changing any formula in `metrics.py`, `performance.py`, `statistics.py` — flagged as "DO NOT CHANGE" in the existing audit.
+- Not moving `fundamental/` (gold-specific analytics) out of `quant_engine/` — documented as intentional, not a blocker.
+
+---
+
+## 7. Open Questions to Resolve Before Phase 2
+
+1. Which second asset to onboard first (currency pair vs. equity vs. energy) — affects which `periods_per_year` bucket gets validated first.
+2. Where the Instrument Metadata Registry should live: `data_engine/` (alongside dataset metadata) or a new top-level `instruments/` package.
+3. Whether `xauusd_csv_loader.py` / `xauusd_dataset.py` should be deleted now (confirmed unused) or left alone until a broader cleanup pass.

@@ -33,12 +33,24 @@ Design Principles:
 
 from __future__ import annotations
 
+
+import pandas as pd
+from typing import Dict, Optional
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+
+
+from typing import Any, List
+
 
 from researchos.core.base_object import BaseObject
+
+
 from researchos.core.identity import generate_id
+
+
 from researchos.core.lifecycle import LifecycleStage
+
+
 from researchos.core.timestamp import parse_timestamp, utc_now
 
 
@@ -98,6 +110,8 @@ class DecisionContext(BaseObject):
         ontology_tags: Optional[List[str]] = None,
         id: Optional[str] = None,
     ):
+        self.macro_data: Optional[pd.DataFrame] = None
+        self.macro_correlations: Optional[Dict[str, float]] = None
         if id is None:
             ts = decision_timestamp.isoformat() if decision_timestamp else utc_now().isoformat()
             seed = f"DecisionContext|{asset}|{ts}|{timeframe}"

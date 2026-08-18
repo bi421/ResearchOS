@@ -144,7 +144,7 @@ class CppQuantBackendWrapper(QuantComputationInterface):
     ) -> Dict[str, float]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
-        result = self._backend.calculate_metrics(returns, equity_curve, risk_free_rate)
+        result = self._backend.calculate_metrics(returns, equity_curve, risk_free_rate, symbol=symbol)
         return {k: float(v) for k, v in result.items()}
 
     # ──────────────────────────────────────────────
