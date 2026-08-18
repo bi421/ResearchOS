@@ -274,23 +274,6 @@ researchos/
 └── validation/
 ```
 
-The following additional packages are also present in the current
-repository. They are classified TRANSITIONAL (see Section 71) pending
-explicit architectural review — their existence is verified, but their
-long-term placement in the canonical hierarchy is not yet decided:
-
-```text
-├── agents/           (AI-agent tool wrappers)
-├── benchmarks/
-├── engines/
-├── evidence/
-├── interfaces/        (CLI / FastAPI entrypoints)
-├── macro/
-├── pipeline/
-├── reasoning_engine/
-└── storage/
-```
-
 Additional research and integration modules may exist as specialized or transitional components.
 
 These packages are not interchangeable.
