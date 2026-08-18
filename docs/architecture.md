@@ -2396,6 +2396,22 @@ FALSE CONFIDENCE
 
 ---
 
+## Canonical Research Output Flow
+
+The canonical research output flow is:
+
+``text
+INTELLIGENCE
+     ↓
+PROBABILITY
+     ↓
+RESEARCH OUTPUT
+```
+
+The Future Learning Layer remains a future, specification-gated subsystem and is not a mandatory stage of the current canonical execution flow.
+
+---
+
 # 79. Final Status
 
 This document is the canonical architecture reference for ResearchOS.
