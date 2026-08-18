@@ -38,7 +38,7 @@ html_content = r"""<!DOCTYPE html>
                 </h1>
                 <p class="text-xs text-slate-400 mt-1">Autonomous Agentic Research & Prop-Firm Quantitative Risk Validation Engine</p>
             </div>
-            
+
             <div class="flex items-center gap-3 flex-wrap">
                 <!-- Navigation Tabs -->
                 <div class="flex bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
@@ -68,7 +68,7 @@ html_content = r"""<!DOCTYPE html>
                             <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">REAL BACKEND</span>
                         </div>
                         <p class="text-xs text-slate-400 mb-3">Хиймэл оюун ухааны агент болон local runner ашиглан хүссэн сэдвээрээ бүрэн хэмжээний судалгааны цикл гүйцэтгэнэ.</p>
-                        
+
                         <div class="space-y-3 mb-4">
                             <div>
                                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Судалгааны сэдэв / Стратеги</label>
@@ -91,9 +91,9 @@ html_content = r"""<!DOCTYPE html>
                             class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2">
                             <span>▶ Мөчлөг эхлүүлэх (Execute Cycle)</span>
                         </button>
-                        
+
                         <div id="researchCards" class="grid grid-cols-2 gap-2 text-xs"></div>
-                        
+
                         <details class="text-xs">
                             <summary class="cursor-pointer text-slate-400 hover:text-slate-200 font-mono text-[11px]">JSON Audit Hash & Response харах</summary>
                             <pre id="researchRaw" class="raw-json overflow-auto bg-slate-950 border border-slate-800 rounded-lg p-3 mt-2 text-slate-300 font-mono text-[11px]"></pre>
@@ -111,7 +111,7 @@ html_content = r"""<!DOCTYPE html>
                             <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold">REAL QUANT</span>
                         </div>
                         <p class="text-xs text-slate-400 mb-3">FTMO, Funding Pips болон бусад prop firm стандартын дагуу өдрийн алдагдал, эрсдэл/ашиг харьцааг тооцоолно.</p>
-                        
+
                         <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
                             <label class="text-slate-400">Одоогийн үлдэгдэл ($)
                                 <input id="currentBalance" type="number" value="25000" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 mt-1 text-sm text-slate-200 font-mono focus:border-cyan-500 focus:outline-none"></label>
@@ -129,10 +129,10 @@ html_content = r"""<!DOCTYPE html>
                             class="w-full bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2">
                             <span>⚖️ Эрсдэлийн параметр шалгах</span>
                         </button>
-                        
+
                         <div id="gaugeRow" class="flex justify-around flex-wrap gap-2 py-1"></div>
                         <div id="ledRow" class="flex flex-wrap gap-2"></div>
-                        
+
                         <details class="text-xs">
                             <summary class="cursor-pointer text-slate-400 hover:text-slate-200 font-mono text-[11px]">Raw JSON Response харах</summary>
                             <pre id="riskRaw" class="raw-json overflow-auto bg-slate-950 border border-slate-800 rounded-lg p-3 mt-2 text-slate-300 font-mono text-[11px]"></pre>
@@ -288,7 +288,7 @@ async function runResearch() {
     const cards = document.getElementById("researchCards");
     const raw = document.getElementById("researchRaw");
     cards.innerHTML = `<p class="text-xs text-slate-400 col-span-2 p-3 text-center animate-pulse">🤖 Агент судалгааны цикл гүйцэтгэж байна...</p>`;
-    
+
     try {
         const res = await fetch("/api/research/run", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -297,7 +297,7 @@ async function runResearch() {
         const data = await res.json();
         raw.textContent = JSON.stringify(data, null, 2);
         if (data.detail) { cards.innerHTML = `<p class="text-xs text-rose-400 col-span-2">Алдаа: ${data.detail}</p>`; return; }
-        
+
         const payload = data.data || data;
         cards.innerHTML = `
             <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5">
@@ -328,7 +328,7 @@ async function validateRisk() {
     const raw = document.getElementById("riskRaw");
     gaugeRow.innerHTML = `<p class="text-xs text-slate-400 p-2 animate-pulse">⚖️ Эрсдэл тооцоолж байна...</p>`;
     ledRow.innerHTML = "";
-    
+
     try {
         const res = await fetch("/api/risk/validate", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -337,7 +337,7 @@ async function validateRisk() {
         const data = await res.json();
         raw.textContent = JSON.stringify(data, null, 2);
         const result = data.result || data;
-        
+
         const gaugeMeta = {
             daily_drawdown_pct: { label: "Өдрийн алдагдал", max: 5.0, suffix: "%" },
             total_drawdown_pct: { label: "Нийт алдагдал", max: 10.0, suffix: "%" },
@@ -348,7 +348,7 @@ async function validateRisk() {
             total_passed: "Нийт лимит", risk_passed: "Арилжааны эрсдэл",
             rr_passed: "Risk:Reward",
         };
-        
+
         let gauges = "", leds = "";
         for (const [k, meta] of Object.entries(gaugeMeta)) {
             if (k in result) gauges += makeGauge(meta.label, result[k], meta.max, meta.suffix);
@@ -363,7 +363,7 @@ async function validateRisk() {
         for (const [k, label] of Object.entries(ledMeta)) {
             if (k in result) leds += makeLed(label, result[k]);
         }
-        
+
         gaugeRow.innerHTML = gauges || `<p class="text-xs text-slate-400">Өгөгдөл олдсонгүй.</p>`;
         ledRow.innerHTML = leds;
     } catch (e) { gaugeRow.innerHTML = `<p class="text-xs text-rose-400">Алдаа: ${e.message}</p>`; }
