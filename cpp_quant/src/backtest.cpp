@@ -129,7 +129,7 @@ BacktestResult BacktestEngine::runGeneric(const std::vector<int>& signals) {
             if (t.is_win) { wins++; sum_win += t.pnl; }
             else { sum_loss += t.pnl; }
         }
-        result.winrate = (double)wins / result.trades.size();
+        result.winrate = (double)wins / result.trades.size() * 100.0;
         result.total_return = (capital - initial_capital_) / initial_capital_;
         result.avg_win = (wins > 0) ? sum_win / wins : 0.0;
         result.avg_loss = (result.trades.size() - wins > 0) ? sum_loss / (result.trades.size() - wins) : 0.0;
