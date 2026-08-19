@@ -77,3 +77,7 @@ repair_backup_*/
 EMERGENCY_*/
 *.bak
 monitoring/
+
+# Local AI agent config (status uncertain, not committing for now)
+Modelfile
+collect_ai_evidence.ps1
