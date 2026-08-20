@@ -1,8 +1,10 @@
-﻿"""
+"""
 Advanced Backtest Engine with Risk Management (Stop Loss, Take Profit, Max Hold).
 """
+
 from typing import List
 from dataclasses import dataclass
+
 
 @dataclass
 class AdvancedBacktestResult:
@@ -20,15 +22,16 @@ class AdvancedBacktestResult:
     total_slippage: float
     signals: List
 
+
 class AdvancedBacktestEngine:
     def __init__(
         self,
         initial_capital=100000.0,
         commission=0.001,
         slippage=0.0005,
-        stop_loss=0.15,      # 15% алдагдалд зогсоох
-        take_profit=0.30,    # 30% ашигт авах
-        max_hold_days=30     # Хамгийн их 30 хоног барих
+        stop_loss=0.15,  # 15% алдагдалд зогсоох
+        take_profit=0.30,  # 30% ашигт авах
+        max_hold_days=30,  # Хамгийн их 30 хоног барих
     ):
         self.initial_capital = initial_capital
         self.commission = commission
@@ -40,7 +43,7 @@ class AdvancedBacktestEngine:
     def run(self, prices: List[float], strategy) -> AdvancedBacktestResult:
         signals = strategy.generate_signals(prices)
         if not signals:
-            return AdvancedBacktestResult(0,0,0,0,0,0,0,0,0,0,0,0,[])
+            return AdvancedBacktestResult(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [])
 
         capital = self.initial_capital
         position = 0.0
@@ -82,7 +85,7 @@ class AdvancedBacktestEngine:
                 # Стратегийн SELL дохио
                 elif day in signal_map and signal_map[day].action == "SELL":
                     force_sell = True
-                    sell_reason = "Strategy SELL Signal" # noqa: F841
+                    sell_reason = "Strategy SELL Signal"  # noqa: F841
 
                 if force_sell:
                     # Гүйлгээ хаах
@@ -131,25 +134,37 @@ class AdvancedBacktestEngine:
         total_return = (final_value - self.initial_capital) / self.initial_capital
 
         years = len(prices) / 252
-        annualised_return = (1 + total_return) ** (1 / years) - 1 if years > 0 and total_return > -1 else 0.0
+        annualised_return = (
+            (1 + total_return) ** (1 / years) - 1 if years > 0 and total_return > -1 else 0.0
+        )
 
-        daily_returns = [(prices[i] - prices[i-1]) / prices[i-1] for i in range(1, len(prices))]
+        daily_returns = [(prices[i] - prices[i - 1]) / prices[i - 1] for i in range(1, len(prices))]
         if daily_returns:
             avg_ret = sum(daily_returns) / len(daily_returns)
             std_ret = (sum((r - avg_ret) ** 2 for r in daily_returns) / len(daily_returns)) ** 0.5
-            sharpe_ratio = (avg_ret / std_ret) * (252 ** 0.5) if std_ret > 0 else 0.0
+            sharpe_ratio = (avg_ret / std_ret) * (252**0.5) if std_ret > 0 else 0.0
         else:
             sharpe_ratio = 0.0
 
         win_rate = len(wins) / (len(wins) + len(losses)) if (len(wins) + len(losses)) > 0 else 0.0
-        profit_factor = sum(wins) / sum(losses) if sum(losses) > 0 else (float('inf') if wins else 0.0)
+        profit_factor = (
+            sum(wins) / sum(losses) if sum(losses) > 0 else (float("inf") if wins else 0.0)
+        )
         avg_win = sum(wins) / len(wins) if wins else 0.0
         avg_loss = sum(losses) / len(losses) if losses else 0.0
 
         return AdvancedBacktestResult(
-            total_return=total_return, annualised_return=annualised_return, sharpe_ratio=sharpe_ratio,
-            max_drawdown=max_drawdown, win_rate=win_rate, profit_factor=profit_factor,
-            num_trades=num_trades, avg_win=avg_win, avg_loss=avg_loss,
-            max_consecutive_losses=max_consec_losses, total_commission=total_commission, total_slippage=total_slippage,
-            signals=signals
+            total_return=total_return,
+            annualised_return=annualised_return,
+            sharpe_ratio=sharpe_ratio,
+            max_drawdown=max_drawdown,
+            win_rate=win_rate,
+            profit_factor=profit_factor,
+            num_trades=num_trades,
+            avg_win=avg_win,
+            avg_loss=avg_loss,
+            max_consecutive_losses=max_consec_losses,
+            total_commission=total_commission,
+            total_slippage=total_slippage,
+            signals=signals,
         )

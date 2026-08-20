@@ -1,17 +1,20 @@
-﻿"""
+"""
 ML-based strategy with BUY and SELL signals.
 """
+
 from typing import List, Any
 from dataclasses import dataclass
 import pandas as pd
 from .features import create_features
 from .model import predict
 
+
 @dataclass
 class Signal:
-    action: str   # "BUY" or "SELL"
+    action: str  # "BUY" or "SELL"
     price: float
     timestamp: Any = None
+
 
 class MLStrategy:
     def __init__(self, model, scaler, feature_names, threshold=0.55):
@@ -34,7 +37,7 @@ class MLStrategy:
         for i, idx in enumerate(df_feat.index):
             if i < len(probs):
                 prob = probs[i]
-                price = df_feat.loc[idx, 'close']
+                price = df_feat.loc[idx, "close"]
                 if prob > self.threshold:
                     signals.append(Signal("BUY", price))
                 elif prob < (1 - self.threshold):

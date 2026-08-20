@@ -1,9 +1,11 @@
-﻿"""
+"""
 Backtest engine with proper trade recording.
 """
+
 from typing import List, Any
 from dataclasses import dataclass
 import numpy as np
+
 
 @dataclass
 class BacktestResult:
@@ -13,6 +15,7 @@ class BacktestResult:
     win_rate: float
     num_trades: int
     signals: List[Any]
+
 
 class BacktestEngine:
     def __init__(self, initial_capital=100000.0, commission=0.001, slippage=0.0005):
@@ -28,7 +31,7 @@ class BacktestEngine:
         capital = self.initial_capital
         position = 0.0
         entry_price = 0.0
-        trades = []          # (action, price, size, pnl)
+        trades = []  # (action, price, size, pnl)
         equity_curve = [capital]
 
         for signal in signals:
@@ -92,5 +95,5 @@ class BacktestEngine:
             max_drawdown=max_drawdown,
             win_rate=win_rate,
             num_trades=len(closed_trades),
-            signals=signals
+            signals=signals,
         )

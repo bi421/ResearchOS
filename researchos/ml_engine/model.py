@@ -1,24 +1,23 @@
 """
 Train and predict using ML models.
 """
+
 import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 import joblib
-import os
 
 
 def train_model(
     df: pd.DataFrame,
     model_type: str = "random_forest",
     test_size: float = 0.3,
-    random_state: int = 42
+    random_state: int = 42,
 ):
-    feature_cols = [col for col in df.columns if col not in ['target', 'datetime']]
+    feature_cols = [col for col in df.columns if col not in ["target", "datetime"]]
     X = df[feature_cols].values
-    y = df['target'].values
+    y = df["target"].values
 
     split_idx = int(len(X) * (1 - test_size))
     X_train, X_test = X[:split_idx], X[split_idx:]
@@ -30,21 +29,19 @@ def train_model(
 
     if model_type == "random_forest":
         model = RandomForestClassifier(
-            n_estimators=150,
-            max_depth=10,
-            min_samples_split=10,
-            random_state=random_state
+            n_estimators=150, max_depth=10, min_samples_split=10, random_state=random_state
         )
     elif model_type == "xgboost":
         try:
             from xgboost import XGBClassifier
+
             model = XGBClassifier(
                 n_estimators=100,
                 learning_rate=0.05,
                 max_depth=6,
                 random_state=random_state,
                 use_label_encoder=False,
-                eval_metric='logloss'
+                eval_metric="logloss",
             )
         except ImportError:
             raise ImportError("XGBoost ?????????? ?????. 'pip install xgboost' ?????????? ??.")

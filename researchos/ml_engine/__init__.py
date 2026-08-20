@@ -1,6 +1,7 @@
-﻿"""
+"""
 Machine Learning module for ResearchOS.
 """
+
 from .strategy import MLStrategy
 from .model import train_model, predict
 from .features import create_features

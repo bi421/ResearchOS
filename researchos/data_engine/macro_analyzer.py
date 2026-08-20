@@ -1,8 +1,10 @@
 """
 Compute macro relationships: correlation, rolling correlation, z-score.
 """
+
 import pandas as pd
 from typing import Dict
+
 
 class MacroAnalyzer:
     """Analyze macro factors correlation with XAUUSD."""

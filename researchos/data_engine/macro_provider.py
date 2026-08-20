@@ -1,10 +1,12 @@
 """
 Macro economic factors provider (DXY, US10Y, VIX, XAUUSD).
 """
+
 from typing import List, Optional
 import pandas as pd
 from researchos.data_engine.contracts import Timeframe
 from researchos.data_engine.repository import DatasetRepository
+
 
 class MacroFactorProvider:
     """Fetch macro economic indicators from DatasetRepository."""
@@ -51,12 +53,9 @@ class MacroFactorProvider:
                 # to_dataframe ??????? ??? _records-??? ???? DataFrame ????
                 records = getattr(dataset, "_records", [])
                 if records:
-                    df = pd.DataFrame([
-                        {
-                            "timestamp": r.timestamp,
-                            "close": r.close
-                        } for r in records
-                    ])
+                    df = pd.DataFrame(
+                        [{"timestamp": r.timestamp, "close": r.close} for r in records]
+                    )
                     df = df.set_index("timestamp")
                     df = df.loc[start_date:end_date] if start_date in df.index else df
                     data[symbol] = df["close"]

@@ -1,4 +1,4 @@
-﻿"""
+"""
 ResearchOS Learning Layer
 
 Research-only learning and probability calibration.
@@ -85,8 +85,7 @@ class BayesianLearner:
 
         # Store observations.
         self._history.extend(
-            (float(score), int(outcome))
-            for score, outcome in zip(scores, outcomes)
+            (float(score), int(outcome)) for score, outcome in zip(scores, outcomes)
         )
 
         # Update Bayesian posterior.
@@ -162,17 +161,12 @@ class BayesianLearner:
         score = float(evidence_score)
 
         if self._is_calibrated and self._calibration_model is not None:
-
             if self._calibration_type == "isotonic":
-                probability = float(
-                    self._calibration_model.predict([score])[0]
-                )
+                probability = float(self._calibration_model.predict([score])[0])
 
             elif self._calibration_type == "platt":
                 slope, intercept = self._calibration_model
-                probability = self._sigmoid(
-                    slope * score + intercept
-                )
+                probability = self._sigmoid(slope * score + intercept)
 
             else:
                 probability = self._sigmoid(2.5 * score)
@@ -204,9 +198,7 @@ class BayesianLearner:
             raise ValueError("scores and outcomes must have equal length")
 
         if len(scores) < 10:
-            raise ValueError(
-                "Need at least 10 samples for calibration."
-            )
+            raise ValueError("Need at least 10 samples for calibration.")
 
         y = [1 if outcome > 0 else 0 for outcome in outcomes]
 
@@ -256,9 +248,7 @@ class BayesianLearner:
             self._calibration_type = "platt"
 
         else:
-            raise ValueError(
-                "method must be 'isotonic' or 'platt'"
-            )
+            raise ValueError("method must be 'isotonic' or 'platt'")
 
         self._is_calibrated = True
 
@@ -282,37 +272,23 @@ class BayesianLearner:
         - calibration table
         """
         if len(scores) != len(outcomes):
-            raise ValueError(
-                "scores and outcomes must have equal length"
-            )
+            raise ValueError("scores and outcomes must have equal length")
 
         if not scores:
-            raise ValueError(
-                "scores and outcomes must be non-empty"
-            )
+            raise ValueError("scores and outcomes must be non-empty")
 
         if any(o not in (0, 1) for o in outcomes):
-            raise ValueError(
-                "outcomes must contain only 0 or 1"
-            )
+            raise ValueError("outcomes must contain only 0 or 1")
 
-        predictions = [
-            self.predict(score)
-            for score in scores
-        ]
+        predictions = [self.predict(score) for score in scores]
 
         brier_score = sum(
-            (prediction - outcome) ** 2
-            for prediction, outcome
-            in zip(predictions, outcomes)
+            (prediction - outcome) ** 2 for prediction, outcome in zip(predictions, outcomes)
         ) / len(outcomes)
 
         accuracy = sum(
-            (
-                prediction >= 0.5
-            ) == bool(outcome)
-            for prediction, outcome
-            in zip(predictions, outcomes)
+            (prediction >= 0.5) == bool(outcome)
+            for prediction, outcome in zip(predictions, outcomes)
         ) / len(outcomes)
 
         calibration = probability_calibration(
@@ -324,12 +300,8 @@ class BayesianLearner:
         return {
             "brier_score": float(brier_score),
             "accuracy": float(accuracy),
-            "mean_predicted_probability": (
-                sum(predictions) / len(predictions)
-            ),
-            "observed_frequency": (
-                sum(outcomes) / len(outcomes)
-            ),
+            "mean_predicted_probability": (sum(predictions) / len(predictions)),
+            "observed_frequency": (sum(outcomes) / len(outcomes)),
             "samples": len(outcomes),
             "calibration": calibration,
         }
@@ -354,9 +326,7 @@ class BayesianLearner:
         Return Bayesian credible interval for posterior win rate.
         """
         if not 0.0 < confidence < 1.0:
-            raise ValueError(
-                "confidence must be between 0 and 1"
-            )
+            raise ValueError("confidence must be between 0 and 1")
 
         from scipy.stats import beta
 
@@ -410,10 +380,7 @@ class BayesianLearner:
             "beta": self.beta,
             "is_calibrated": self._is_calibrated,
             "calibration_type": self._calibration_type,
-            "history": [
-                [score, outcome]
-                for score, outcome in self._history
-            ],
+            "history": [[score, outcome] for score, outcome in self._history],
         }
 
         if (
@@ -457,19 +424,11 @@ class BayesianLearner:
         self.alpha = float(data["alpha"])
         self.beta = float(data["beta"])
 
-        self._history = [
-            (float(score), int(outcome))
-            for score, outcome
-            in data.get("history", [])
-        ]
+        self._history = [(float(score), int(outcome)) for score, outcome in data.get("history", [])]
 
-        self._is_calibrated = bool(
-            data.get("is_calibrated", False)
-        )
+        self._is_calibrated = bool(data.get("is_calibrated", False))
 
-        self._calibration_type = data.get(
-            "calibration_type"
-        )
+        self._calibration_type = data.get("calibration_type")
 
         self._calibration_model = None
 
@@ -479,9 +438,7 @@ class BayesianLearner:
         calibration_type = self._calibration_type
 
         if calibration_type == "platt":
-            model = data.get(
-                "calibration_model"
-            )
+            model = data.get("calibration_model")
 
             if model is not None:
                 self._calibration_model = (
@@ -491,17 +448,9 @@ class BayesianLearner:
 
         elif calibration_type == "isotonic":
             if len(self._history) >= 10:
-                scores = [
-                    score
-                    for score, _
-                    in self._history
-                ]
+                scores = [score for score, _ in self._history]
 
-                outcomes = [
-                    outcome
-                    for _, outcome
-                    in self._history
-                ]
+                outcomes = [outcome for _, outcome in self._history]
 
                 self.calibrate(
                     scores,

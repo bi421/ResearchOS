@@ -63,8 +63,8 @@ COMEX_GOLD_FUTURES: FrozenSet[str] = frozenset(
         "GC2!",
         "GC3!",
         "GC4!",
-        "GC=",   # Bloomberg-style COMEX gold futures root
-        "/GC",   # CME ticker root
+        "GC=",  # Bloomberg-style COMEX gold futures root
+        "/GC",  # CME ticker root
         "HGC!",  # alternate gold front-month
     }
 )
@@ -142,4 +142,3 @@ def assert_xauusd_identity(symbol: str, yf_symbol: str) -> None:
     """
     if symbol.upper().replace("/", "") in {s.upper().replace("/", "") for s in XAUUSD_SYMBOLS}:
         assert_not_gold_futures(symbol, yf_symbol)
-

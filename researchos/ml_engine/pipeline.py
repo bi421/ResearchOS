@@ -1,6 +1,7 @@
 """
 End-to-end ML backtest pipeline.
 """
+
 import pandas as pd
 from typing import Tuple
 
@@ -23,9 +24,7 @@ def run_ml_backtest(
 
     if retrain:
         model, scaler, metrics = train_model(
-            df_feat,
-            model_type=model_type,
-            test_size=1 - train_ratio
+            df_feat, model_type=model_type, test_size=1 - train_ratio
         )
         save_model(model, scaler, metrics, "ml_model.pkl")
     else:
@@ -35,6 +34,6 @@ def run_ml_backtest(
     strategy = MLStrategy(model, scaler, feature_names, threshold=threshold)
 
     engine = BacktestEngine()
-    prices = df['close'].tolist()
+    prices = df["close"].tolist()
     result = engine.run(prices, strategy)
     return result, metrics

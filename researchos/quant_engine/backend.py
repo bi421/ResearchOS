@@ -160,6 +160,7 @@ class PythonQuantBackend(QuantComputationInterface):
 
         if method == "standard_deviation":
             from researchos.quant_engine.statistics import standard_deviation
+
             return standard_deviation(returns)
         elif method == "rolling":
             rolling = rolling_volatility(returns)

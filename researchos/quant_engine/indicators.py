@@ -1,11 +1,12 @@
-﻿"""
+"""
 Pure Python technical indicators. No external dependencies (numpy/pandas).
 """
+
 
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
         return []
-    deltas = [prices[i] - prices[i-1] for i in range(1, len(prices))]
+    deltas = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
     gains = [d if d > 0 else 0.0 for d in deltas]
     losses = [-d if d < 0 else 0.0 for d in deltas]
 
@@ -29,12 +30,14 @@ def calculate_rsi(prices, period=14):
             rsi_values.append(100.0 - (100.0 / (1.0 + rs)))
     return rsi_values
 
+
 def _calculate_ema(prices, period):
     multiplier = 2.0 / (period + 1)
     ema = [sum(prices[:period]) / period]
     for price in prices[period:]:
         ema.append((price - ema[-1]) * multiplier + ema[-1])
     return ema
+
 
 def calculate_macd(prices, fast=12, slow=26, signal=9):
     if len(prices) < slow + signal:
@@ -49,6 +52,7 @@ def calculate_macd(prices, fast=12, slow=26, signal=9):
     start_idx = offset + offset_sig
     return macd_line[start_idx:], signal_line, histogram
 
+
 def calculate_bollinger_bands(prices, period=20, std_dev=2.0):
     if len(prices) < period:
         return [], [], []
@@ -57,7 +61,7 @@ def calculate_bollinger_bands(prices, period=20, std_dev=2.0):
         window = prices[i - period + 1 : i + 1]
         sma = sum(window) / period
         variance = sum((x - sma) ** 2 for x in window) / period
-        std = variance ** 0.5
+        std = variance**0.5
         middle.append(sma)
         upper.append(sma + std_dev * std)
         lower.append(sma - std_dev * std)
