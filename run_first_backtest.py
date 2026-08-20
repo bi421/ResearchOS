@@ -10,7 +10,6 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "cpp_quant_engine", "python"))
 
 from researchos.data_engine.repository import SqliteDatasetRepository
-from researchos.data_engine.contracts import Timeframe
 
 from cpp_quant_engine.backend import BacktestEngine
 from cpp_quant_engine.models import MarketData, Candle as CQCandle

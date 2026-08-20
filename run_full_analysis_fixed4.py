@@ -1,6 +1,5 @@
 ﻿import yfinance as yf
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.decision_engine.contracts import EvidenceItem, EvidenceSource, ProbabilityOutcome, WeightConfiguration
@@ -284,7 +283,7 @@ for name, m in asset_metrics.items():
         dir_val = 'N/A'
     report += f"| {name} | {m['total_return']:.2%} | {m['sharpe_ratio']:.2f} | {sortino:.2f} | {calmar:.2f} | {m['max_drawdown']:.2%} | {dir_val} |\n"
 
-report += f"""
+report += """
 
 ## 🔗 Macro Factor Correlations (vs XAUUSD)
 
@@ -318,7 +317,7 @@ if 'US10Y' in macro_corr:
 if 'VIX' in macro_corr:
     report += f"- **VIX vs XAUUSD:** {macro_corr.get('VIX', 0):.3f} (risk-on/off)\n"
 
-report += f"""
+report += """
 
 ## 📋 All Evidence Items
 

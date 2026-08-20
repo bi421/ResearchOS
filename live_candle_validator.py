@@ -1,8 +1,5 @@
 ﻿import yfinance as yf
-import pandas as pd
 from datetime import datetime, timedelta
-from researchos.data_engine.asset_identity import DataIdentityError, is_gold_futures_symbol, resolve_xauusd_spot_proxy
-import time
 
 class LiveCandleValidator:
     def __init__(self, symbol: str, yf_symbol: str):

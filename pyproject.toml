@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "researchos"
 version = "1.0.1"
-description = "Institutional-grade market research platform — deterministic, explainable, scientific"
+description = "Institutional-grade market research platform â€” deterministic, explainable, scientific"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "ResearchOS Scientific License"}
@@ -84,6 +84,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [tool.ruff]
+exclude = ["archive"]
 line-length = 100
 target-version = "py310"
 

@@ -1,8 +1,6 @@
 ﻿import yfinance as yf
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
-from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.decision_engine.contracts import EvidenceItem, EvidenceSource, ProbabilityOutcome, WeightConfiguration
 from researchos.decision_engine.score import compute_evidence_score
 import sys

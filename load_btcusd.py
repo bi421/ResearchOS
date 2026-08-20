@@ -1,6 +1,5 @@
 ﻿import yfinance as yf
-import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from researchos.data_engine.dataset import HistoricalDataset
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.repository import SqliteDatasetRepository
