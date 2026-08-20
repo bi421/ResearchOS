@@ -1,3 +1,1 @@
-"""
-ResearchOS Macro Intelligence Layer - Tests
-"""
+"""Tests for ResearchOS."""

@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-08-20T16:11:59.256605",
+  "issues": [
+    {
+      "type": "model_not_learning",
+      "severity": "critical",
+      "description": "Загвар 15/20 тохиолдолд суурь шугамтай ижил (majority class)",
+      "fix": "feature_engineering",
+      "priority": 0
+    },
+    {
+      "type": "no_significance",
+      "severity": "medium",
+      "description": "Бонферронийн засварыг давсан хослол 0. Хамгийн ойр p=0.0049",
+      "fix": "fdr_correction",
+      "priority": 2
+    },
+    {
+      "type": "no_learning_signal",
+      "severity": "critical",
+      "description": "Загвар суурь шугамаас 1%-аас илүү сайжруулалт гаргаагүй",
+      "fix": "regime_filtering",
+      "priority": 0
+    }
+  ],
+  "fixes": [
+    {
+      "action": "add_features",
+      "target": "scripts/preprocess_data.py",
+      "change": "Add volatility and momentum indicators",
+      "code_snippet": "Add: ATR, RSI, Bollinger Bands width",
+      "impact": "critical",
+      "effort": "medium"
+    },
+    {
+      "action": "filter_by_regime",
+      "target": "scripts/preprocess_data.py",
+      "change": "Filter data by market regime (high volatility hours)",
+      "code_snippet": "Filter: London/NY overlap (15:00-19:00 UTC)",
+      "impact": "critical",
+      "effort": "medium"
+    },
+    {
+      "action": "change_statistical_method",
+      "target": "scripts/h1_horizon_sweep.py",
+      "change": "Replace Bonferroni with Benjamini-Hochberg FDR",
+      "code_snippet": "from statsmodels.stats.multitest import multipletests",
+      "impact": "medium",
+      "effort": "low"
+    }
+  ],
+  "suggestions": [
+    {
+      "action": "focus_on_horizon",
+      "horizon": 10,
+      "threshold": 0.001,
+      "reason": "Хамгийн бага p-value: 0.0049",
+      "next_step": "Test horizon=10 with additional features"
+    },
+    {
+      "action": "optimize_best_model",
+      "horizon": 1,
+      "threshold": 0.0,
+      "reason": "Хамгийн их сайжруулалт: 0.0000",
+      "next_step": "Hyperparameter tuning on this configuration"
+    },
+    {
+      "action": "test_new_hypothesis",
+      "hypothesis": "XAUUSD H1 has regime-dependent predictability",
+      "experiment": "Split data by volatility regime and test separately",
+      "expected_outcome": "Higher accuracy in high-volatility periods"
+    }
+  ]
+}

@@ -107,8 +107,13 @@ def main():
         model_acc = d.get("model", {}).get("accuracy")
         base_acc = d.get("baseline", {}).get("accuracy")
         p_value = d.get("significance", {}).get("p_value")
-        sig_raw = p_value is not None and p_value < alpha_raw
-        sig_corrected = p_value is not None and p_value < alpha_corrected
+        
+        # DO NO HARM FILTER: Загвар суурь түвшнээсээ доош унаж байвал шууд хасагдана
+        model_beats_baseline = (model_acc is not None) and (base_acc is not None) and (model_acc >= base_acc)
+        
+        # Статистик ач холбогдол нь зөвхөн загвар суурь түвшнээсээ илүү байх үед л хүчинтэй
+        sig_raw = model_beats_baseline and (p_value is not None) and (p_value < alpha_raw)
+        sig_corrected = model_beats_baseline and (p_value is not None) and (p_value < alpha_corrected)
 
         results.append(
             {
@@ -116,6 +121,7 @@ def main():
                 "model_acc": model_acc,
                 "baseline_acc": base_acc,
                 "p_value": p_value,
+                "model_beats_baseline": model_beats_baseline,
                 "sig_raw_0.05": sig_raw,
                 "sig_bonferroni": sig_corrected,
             }

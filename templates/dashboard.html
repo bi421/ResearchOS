@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>ResearchOS</title>
+    <style>
+        body { font-family: Arial; background: #f4f6f9; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        h1 { color: #2c3e50; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .stat-item { background: #f8f9fa; padding: 12px 16px; border-radius: 6px; border-left: 4px solid #3498db; }
+        .stat-item .label { font-size: 11px; color: #7f8c8d; text-transform: uppercase; }
+        .stat-item .value { font-size: 20px; font-weight: bold; color: #2c3e50; }
+        .stat-item .value.positive { color: #27ae60; }
+        .stat-item .value.negative { color: #e74c3c; }
+        .chart { width: 100%; overflow: hidden; }
+        .chart iframe { width: 100%; border: none; height: 420px; }
+        .footer { text-align: center; color: #95a5a6; font-size: 12px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 ResearchOS Dashboard</h1>
+        
+        <div class="card">
+            <h3>📈 Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item"><div class="label">Winrate</div><div class="value">{{ stats.winrate }}</div></div>
+                <div class="stat-item"><div class="label">Total Return</div><div class="value {{ 'positive' if stats.return[0] != '-' else 'negative' }}">{{ stats.return }}</div></div>
+                <div class="stat-item"><div class="label">Sharpe</div><div class="value">{{ stats.sharpe }}</div></div>
+                <div class="stat-item"><div class="label">Max Drawdown</div><div class="value negative">{{ stats.drawdown }}</div></div>
+                <div class="stat-item"><div class="label">Trades</div><div class="value">{{ stats.trades }}</div></div>
+                <div class="stat-item"><div class="label">Period</div><div class="value" style="font-size:14px;">{{ stats.period }}</div></div>
+            </div>
+        </div>
+        
+        <div class="card"><h3>📈 Equity</h3><div class="chart">{{ equity|safe }}</div></div>
+        <div class="card"><h3>📊 Price & SMA</h3><div class="chart">{{ sma|safe }}</div></div>
+        <div class="card"><h3>📉 Drawdown</h3><div class="chart">{{ dd|safe }}</div></div>
+        
+        <div class="footer">ResearchOS © 2026</div>
+    </div>
+</body>
+</html>

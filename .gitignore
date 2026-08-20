@@ -1,83 +1,37 @@
-﻿# Python bytecode
-__pycache__/
-*.py[cod]
-*.pyc
-*.pyo
-*.so
-
-# Test / coverage artifacts
-.pytest_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-.tox/
-
-# Virtual environments
+﻿# Виртуал орчин
 .venv/
 venv/
 env/
-ENV/
 
-# Build / distribution artifacts
-dist/
-build/
-*.egg-info/
-*.egg
-.eggs/
+# Python кэш
+__pycache__/
+*.pyc
+*.pyo
 *.pyd
-*.pdb
-*.ilk
-*.exe
-*.obj
 
-# C++ / CMake build
-cpp_quant/build/
-cpp_quant_engine/build/
-cpp_quant_engine/_deps/
-
-# IDE / editor
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# mypy / typing
-.mypy_cache/
-.dmypy.json
-.pyre/
-
-# Databases
-*.db
-
-# Large data & datasets
-data/raw/
-data/curated/
-data/curated/xauusd/*.csv
-data/curated/xauusd/*.parquet
-!data/curated/README.md
+# Өгөгдөл (ТОМ!)
+data/
+*.csv
+*.zip
 *.parquet
 
-# Generated / audit artifacts
-audit_mil_data.json
-AI_*
-repo_*.txt
-clean_structure.txt
-coverage_run_new.log
-decision_engine_full_dump.txt
-diagnosis.txt
+# Модел файлууд
+*.pkl
+*.keras
+*.h5
+*.joblib
 
-# Temporary AI-agent backup/audit directories
-repair_backup_*/
-*_BACKUP_*/
-*_AUDIT_*/
-EMERGENCY_*/
-*.bak
-monitoring/
+# C++ build файлууд
+build/
+cpp_quant/build/
+cpp_quant/*.pyd
+cpp_quant/*.so
+*.egg-info/
 
-# Local AI agent config (status uncertain, not committing for now)
-Modelfile
-collect_ai_evidence.ps1
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Лог файлууд
+*.log
