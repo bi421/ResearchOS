@@ -695,6 +695,7 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
         import ast
         import os
 
+        # ⭐️ FIX: Added "collections" and "collections.abc" for Python 3.3+ stdlib
         allowed_roots = {
             "__future__",
             "hashlib",
@@ -704,6 +705,8 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
             "enum",
             "math",
             "types",
+            "collections",
+            "collections.abc",  # Python 3.3+ stdlib module
             "researchos",
         }
         eval_dir = os.path.join(
