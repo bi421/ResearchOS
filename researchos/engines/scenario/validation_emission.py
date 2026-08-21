@@ -211,9 +211,7 @@ def validation_payload(
     }
 
     version = str(
-        getattr(validation, "version", "")
-        or metadata.get("validation_version", VALIDATION_EVIDENCE_VERSION)
-        or VALIDATION_EVIDENCE_VERSION
+        getattr(validation, "version", "") or metadata.get("validation_version", VALIDATION_EVIDENCE_VERSION) or VALIDATION_EVIDENCE_VERSION
     )
 
     payload: dict[str, Any] = {

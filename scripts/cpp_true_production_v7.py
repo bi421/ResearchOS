@@ -43,11 +43,7 @@ sweep_start = time.time()
 from cpp_quant import CppQuant
 
 for h in timeframes:
-    df_resampled = (
-        df.resample(f"{h}min")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
-    )
+    df_resampled = df.resample(f"{h}min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     print(f"⏳ {h}min агрегацлаж байна... ({len(df_resampled):,} candle)")
 
@@ -73,16 +69,12 @@ for h in timeframes:
                     "commission": t,
                     "winrate": winrate * 100,
                     "trades": result.get("num_trades", 0),
-                    "return": result.get("total_return", 0) * 100
-                    if result.get("total_return", 0) < 1
-                    else result.get("total_return", 0),
+                    "return": result.get("total_return", 0) * 100 if result.get("total_return", 0) < 1 else result.get("total_return", 0),
                     "sharpe": result.get("sharpe_ratio", 0),
                 }
             )
 
-            print(
-                f"  h={h:2d}min, t={t * 100:.2f}% | Winrate: {winrate * 100:.2f}%, Trades: {result.get('num_trades', 0)}"
-            )
+            print(f"  h={h:2d}min, t={t * 100:.2f}% | Winrate: {winrate * 100:.2f}%, Trades: {result.get('num_trades', 0)}")
 
         except Exception as e:
             print(f"  h={h:2d}min, t={t * 100:.2f}% | ❌ Алдаа: {e}")

@@ -46,11 +46,7 @@ for symbol, metrics, source in [
 
     item = EvidenceItem(
         source=source,
-        description=(
-            f"{symbol}: Return {metrics['total_return']:.2%}, "
-            f"Sharpe {metrics['sharpe_ratio']:.2f}, "
-            f"Max DD {metrics['max_drawdown']:.2%}"
-        ),
+        description=(f"{symbol}: Return {metrics['total_return']:.2%}, Sharpe {metrics['sharpe_ratio']:.2f}, Max DD {metrics['max_drawdown']:.2%}"),
         timestamp=datetime.now(),
         confidence=0.85,
         strength=strength,

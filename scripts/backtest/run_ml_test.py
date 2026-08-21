@@ -39,9 +39,7 @@ def main():
     print(f"Data loaded: {len(df_h)} bars")
 
     print(f"Running ML backtest ({args.model}, threshold={args.threshold})...")
-    result, metrics = run_ml_backtest(
-        df_h, model_type=args.model, threshold=args.threshold, train_ratio=args.train_ratio
-    )
+    result, metrics = run_ml_backtest(df_h, model_type=args.model, threshold=args.threshold, train_ratio=args.train_ratio)
 
     print("\n=== RESULTS ===")
     print(f"Total Return: {result.total_return:.2%}")

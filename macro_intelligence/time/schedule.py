@@ -62,9 +62,7 @@ class PlannedRelease:
             "series_id": self.series_id,
             "planned_time": TimeNormalizer.get_deterministic_timestamp(self.planned_time),
             "actual_time": TimeNormalizer.get_deterministic_timestamp(self.actual_time) if self.actual_time else None,
-            "estimated_time": TimeNormalizer.get_deterministic_timestamp(self.estimated_time)
-            if self.estimated_time
-            else None,
+            "estimated_time": TimeNormalizer.get_deterministic_timestamp(self.estimated_time) if self.estimated_time else None,
             "status": self.status.value,
             "delay_minutes": self.delay_minutes,
             "cancellation_reason": self.cancellation_reason,
@@ -83,12 +81,8 @@ class PlannedRelease:
             event_id=data["event_id"],
             series_id=data["series_id"],
             planned_time=TimeNormalizer.parse_deterministic_timestamp(data["planned_time"]),
-            actual_time=TimeNormalizer.parse_deterministic_timestamp(data["actual_time"])
-            if data.get("actual_time")
-            else None,
-            estimated_time=TimeNormalizer.parse_deterministic_timestamp(data["estimated_time"])
-            if data.get("estimated_time")
-            else None,
+            actual_time=TimeNormalizer.parse_deterministic_timestamp(data["actual_time"]) if data.get("actual_time") else None,
+            estimated_time=TimeNormalizer.parse_deterministic_timestamp(data["estimated_time"]) if data.get("estimated_time") else None,
             status=ReleaseStatus(data["status"]),
             delay_minutes=data.get("delay_minutes", 0),
             cancellation_reason=data.get("cancellation_reason"),

@@ -976,8 +976,7 @@ class TestFullWorkflow:
             experiment_id=exp.id,
             hypothesis_id=hyp.id,
             title="Momentum Strategy Report",
-            summary=f"Tested momentum vs buy-and-hold. "
-            f"Hypothesis {'accepted' if learning.hypothesis_accepted else 'rejected'}.",
+            summary=f"Tested momentum vs buy-and-hold. Hypothesis {'accepted' if learning.hypothesis_accepted else 'rejected'}.",
             run_ids=[run.id],
             best_run_id=run.id,
             metrics_summary=dict(result.metrics),

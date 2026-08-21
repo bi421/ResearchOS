@@ -106,9 +106,7 @@ for h in timeframes:
                 }
             )
 
-            print(
-                f"  h={h:2d}m, t={t * 100:.2f}% | Winrate: {result.get('winrate', 0) * 100:.2f}%, Trades: {result.get('num_trades', 0)}"
-            )
+            print(f"  h={h:2d}m, t={t * 100:.2f}% | Winrate: {result.get('winrate', 0) * 100:.2f}%, Trades: {result.get('num_trades', 0)}")
 
         except Exception as e:
             print(f"  h={h:2d}m, t={t * 100:.2f}% | ❌ Алдаа: {e}")

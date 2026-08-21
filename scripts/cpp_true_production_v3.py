@@ -76,9 +76,7 @@ for label, rule in timeframes.items():
     print(f"\n⏳ {label} агрегацлаж байна...")
 
     # Python-д агрегацлах (хурдан)
-    df_resampled = (
-        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_resampled = df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     print(f"   ✅ {len(df_resampled):,} candle")
 
@@ -105,9 +103,7 @@ for label, rule in timeframes.items():
                 }
             )
 
-            print(
-                f"   h={label}, t={t * 100:.2f}% | Winrate: {result['winrate'] * 100:.2f}%, Trades: {result['num_trades']}"
-            )
+            print(f"   h={label}, t={t * 100:.2f}% | Winrate: {result['winrate'] * 100:.2f}%, Trades: {result['num_trades']}")
 
         except Exception as e:
             print(f"   h={label}, t={t * 100:.2f}% | ❌ Алдаа: {e}")

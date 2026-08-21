@@ -284,8 +284,7 @@ class TestProgressTracking:
         r1 = _make_run_with_timing(duration=1.0)
         r2 = _make_run_with_timing(duration=500.0)
         assert (
-            build_run_envelope(r1, experiment_hash="exp-hash-1").artifact_hash
-            == build_run_envelope(r2, experiment_hash="exp-hash-1").artifact_hash
+            build_run_envelope(r1, experiment_hash="exp-hash-1").artifact_hash == build_run_envelope(r2, experiment_hash="exp-hash-1").artifact_hash
         )
 
     def test_acceptance_experiment_to_run_lineage(self):

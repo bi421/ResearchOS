@@ -35,9 +35,7 @@ timeframes = [("1min", "1min"), ("5min", "5min"), ("1h", "1h"), ("1D", "1D")]
 
 for label, rule in timeframes:
     ta = time.time()
-    df_resampled = (
-        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_resampled = df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     tb = time.time()
 
     engine = CppQuant()
@@ -47,6 +45,4 @@ for label, rule in timeframes:
     result = engine.run_sma(20, 50)
     td = time.time()
 
-    print(
-        f"{label}: resample={tb - ta:.2f}s | load_from_dataframe={tc - tb:.2f}s | run_sma={td - tc:.2f}s | candles={len(df_resampled):,}"
-    )
+    print(f"{label}: resample={tb - ta:.2f}s | load_from_dataframe={tc - tb:.2f}s | run_sma={td - tc:.2f}s | candles={len(df_resampled):,}")

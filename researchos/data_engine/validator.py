@@ -320,9 +320,7 @@ class DatasetValidator:
         gaps = self.gap_detector.detect(sorted_records, timeframe)
         report.gaps_found = len(gaps)
         for gap in gaps:
-            report.warnings.append(
-                f"Gap at index {gap['index']}: {gap['gap_seconds']}s ({gap['expected_missing']} expected records)"
-            )
+            report.warnings.append(f"Gap at index {gap['index']}: {gap['gap_seconds']}s ({gap['expected_missing']} expected records)")
 
         # Missing candle detection
         missing = self.missing_detector.detect(sorted_records, timeframe)

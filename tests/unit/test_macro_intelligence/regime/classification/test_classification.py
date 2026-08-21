@@ -1032,8 +1032,7 @@ class TestFullClassification:
             )
             classification = classifier.classify_macro_regime(assessment)
             assert classification.primary_regime.value == expected, (
-                f"Failed for {inflation_signal}/{growth_signal}: "
-                f"got {classification.primary_regime.value}, expected {expected}"
+                f"Failed for {inflation_signal}/{growth_signal}: got {classification.primary_regime.value}, expected {expected}"
             )
 
 

@@ -246,9 +246,7 @@ class KnowledgeObject:
             regime_context=data.get("regime_context", ""),
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
             provenance=provenance,
-            created_timestamp=datetime.fromisoformat(
-                data.get("created_timestamp", datetime.now(timezone.utc).isoformat())
-            ),
+            created_timestamp=datetime.fromisoformat(data.get("created_timestamp", datetime.now(timezone.utc).isoformat())),
         )
 
     def to_json(self) -> str:
@@ -355,9 +353,7 @@ class MacroContext:
             regime_context=data.get("regime_context", ""),
             knowledge_objects=knowledge,
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
-            created_timestamp=datetime.fromisoformat(
-                data.get("created_timestamp", datetime.now(timezone.utc).isoformat())
-            ),
+            created_timestamp=datetime.fromisoformat(data.get("created_timestamp", datetime.now(timezone.utc).isoformat())),
         )
 
     def to_json(self) -> str:

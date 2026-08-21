@@ -105,9 +105,7 @@ class RetrievalQuery:
         return cls(
             query_id=str(data["query_id"]),
             text=str(data.get("text", "")),
-            source_filter=[RetrievalSource.from_string(s) for s in data.get("source_filter", [])]
-            if data.get("source_filter")
-            else None,
+            source_filter=[RetrievalSource.from_string(s) for s in data.get("source_filter", [])] if data.get("source_filter") else None,
             max_hits=int(data.get("max_hits", 10)),
             min_score=float(data.get("min_score", 0.0)),
             timestamp=datetime.fromisoformat(data["timestamp"])
@@ -238,9 +236,7 @@ class RetrievalResult:
             return f"Query {self.query_id}: No results found."
         lines = [f"Query {self.query_id}: {len(self.hits)} result(s) found."]
         for i, hit in enumerate(self.hits[:5], 1):
-            lines.append(
-                f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:16]}...) score={hit.score:.4f}"
-            )
+            lines.append(f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:16]}...) score={hit.score:.4f}")
         if len(self.hits) > 5:
             lines.append(f"  ... and {len(self.hits) - 5} more")
         return "\n".join(lines)

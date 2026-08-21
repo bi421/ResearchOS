@@ -59,9 +59,7 @@ print("=" * 70)
 
 for label, rule in timeframes:
     print(f"\n?? {label} ?????????? ?????...")
-    df_tf = (
-        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_tf = df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     print(f"   {len(df_tf)} candle")
 
     engine.load_from_dataframe(df_tf)
@@ -92,9 +90,7 @@ for label, rule in timeframes:
                     "max_dd": r["max_drawdown"],
                 }
             )
-            print(
-                f"   {name}: WR {r['winrate']:.2f}% (CI: {ci_low_pct:.1f}-{ci_high_pct:.1f}%), Trades {r['num_trades']}"
-            )
+            print(f"   {name}: WR {r['winrate']:.2f}% (CI: {ci_low_pct:.1f}-{ci_high_pct:.1f}%), Trades {r['num_trades']}")
         except Exception as e:
             print(f"   {name}: ????? - {e}")
 

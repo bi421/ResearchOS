@@ -34,9 +34,7 @@ print(f"   {df.index[0]} -> {df.index[-1]}")
 
 # 2. 5 минут болгон агрегацлах
 print("\n5 минут болгон агрегацлаж байна...")
-df_5min = (
-    df.resample("5min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-)
+df_5min = df.resample("5min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 print(f"   {len(df_5min):,} candle (5 минут)")
 
 # 3. C++ engine руу дамжуулах

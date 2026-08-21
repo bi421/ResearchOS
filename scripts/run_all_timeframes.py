@@ -54,9 +54,7 @@ for label, rule, minutes in timeframes:
     print(f"\n? {label} ?????????? ?????...")
 
     # ??????????
-    df_resampled = (
-        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_resampled = df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     print(f"   ? {len(df_resampled):,} candle")
 

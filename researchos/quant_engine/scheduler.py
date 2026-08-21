@@ -346,10 +346,7 @@ class CertifiedPerformanceProfile:
             "version": self.version,
             "source": self.source,
             "thresholds": list(self._thresholds),
-            "measurements": {
-                f"{backend}|{operation}|{size}": stat.to_dict()
-                for (backend, operation, size), stat in sorted(self._stats.items())
-            },
+            "measurements": {f"{backend}|{operation}|{size}": stat.to_dict() for (backend, operation, size), stat in sorted(self._stats.items())},
         }
 
     @classmethod
@@ -392,12 +389,8 @@ class CertifiedPerformanceProfile:
             operation = str(row["operation"])
             for m in row.get("measurements", []):
                 size_class = classify_size(int(m["size"]))
-                measurements[(backend_name, operation, size_class)] = PerformanceStat.from_measurement(
-                    float(m["cpp_s"]) * 1000.0
-                )
-                measurements[(reference_backend_name, operation, size_class)] = PerformanceStat.from_measurement(
-                    float(m["python_s"]) * 1000.0
-                )
+                measurements[(backend_name, operation, size_class)] = PerformanceStat.from_measurement(float(m["cpp_s"]) * 1000.0)
+                measurements[(reference_backend_name, operation, size_class)] = PerformanceStat.from_measurement(float(m["python_s"]) * 1000.0)
         return cls(
             measurements=measurements,
             version=version,
@@ -570,9 +563,7 @@ class BackendScheduler:
             first = eligible[0][0]
             return SchedulerDecision(
                 selected_backend=first,
-                rationale=(
-                    f"no certified performance profile; first eligible candidate selected ({size.value} dataset)"
-                ),
+                rationale=(f"no certified performance profile; first eligible candidate selected ({size.value} dataset)"),
                 policy_version=self.policy_version,
                 profile_version="",
                 candidates_considered=tuple(name for name, _ in eligible),
@@ -587,10 +578,7 @@ class BackendScheduler:
             first = eligible[0][0]
             return SchedulerDecision(
                 selected_backend=first,
-                rationale=(
-                    f"no profile measurements for {operation} at {size.value}; "
-                    f"selected first eligible candidate ({first})"
-                ),
+                rationale=(f"no profile measurements for {operation} at {size.value}; selected first eligible candidate ({first})"),
                 policy_version=self.policy_version,
                 profile_version=self.profile_version,
                 candidates_considered=tuple(name for name, _ in eligible),

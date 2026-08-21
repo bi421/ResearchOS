@@ -71,12 +71,7 @@ class Hypothesis(BaseObject):
             setattr(self, key, value)
 
     def compute_rank_score(self) -> float:
-        return (
-            0.40 * self.evidence_strength
-            + 0.30 * self.coherence
-            + 0.20 * self.plausibility
-            + 0.10 * self.falsifiability
-        )
+        return 0.40 * self.evidence_strength + 0.30 * self.coherence + 0.20 * self.plausibility + 0.10 * self.falsifiability
 
     def validate(self) -> bool:
         if not self.research_id:

@@ -109,9 +109,7 @@ def test_returns_identical(python_backend, cpp_backend, sample_prices):
 
         assert len(py_result) == len(cpp_result)
         for i in range(len(py_result)):
-            assert (
-                abs(py_result[i] - cpp_result[i]) < 1e-12
-            ), f"Mismatch at {i} for return_type={return_type}: {py_result[i]} vs {cpp_result[i]}"
+            assert abs(py_result[i] - cpp_result[i]) < 1e-12, f"Mismatch at {i} for return_type={return_type}: {py_result[i]} vs {cpp_result[i]}"
 
 
 def test_volatility_identical(python_backend, cpp_backend, sample_returns):
@@ -144,9 +142,7 @@ def test_statistics_identical(python_backend, cpp_backend, sample_returns):
     for key in py_stats:
         if key in ("count",):
             continue  # int vs float
-        assert (
-            abs(py_stats[key] - cpp_stats[key]) < 1e-10
-        ), f"Statistics mismatch for {key}: {py_stats[key]} vs {cpp_stats[key]}"
+        assert abs(py_stats[key] - cpp_stats[key]) < 1e-10, f"Statistics mismatch for {key}: {py_stats[key]} vs {cpp_stats[key]}"
 
 
 def test_metrics_identical(python_backend, cpp_backend, sample_returns, sample_equity_curve):
@@ -249,15 +245,13 @@ def test_simulation_identical_results(python_backend, cpp_backend, sample_prices
 
     # Compare returns
     for i in range(len(py_result.returns)):
-        assert (
-            abs(py_result.returns[i] - cpp_result.returns[i]) < 1e-12
-        ), f"Return mismatch at {i}: {py_result.returns[i]} vs {cpp_result.returns[i]}"
+        assert abs(py_result.returns[i] - cpp_result.returns[i]) < 1e-12, f"Return mismatch at {i}: {py_result.returns[i]} vs {cpp_result.returns[i]}"
 
     # Compare equity curves
     for i in range(len(py_result.equity_curve)):
-        assert (
-            abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10
-        ), f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
+        assert abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10, (
+            f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
+        )
 
     # Compare metrics
     for key in py_result.metrics:

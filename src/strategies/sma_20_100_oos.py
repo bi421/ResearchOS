@@ -81,12 +81,7 @@ print(
     f"{res_total['max_drawdown']:8.2%} | {res_total['win_rate']:6.2%}"
 )
 print("\n" + "=" * 60)
-if (
-    res_val["num_trades"] >= 10
-    and res_val["sharpe"] > 0.5
-    and res_test["num_trades"] >= 10
-    and res_test["sharpe"] > 0.5
-):
+if res_val["num_trades"] >= 10 and res_val["sharpe"] > 0.5 and res_test["num_trades"] >= 10 and res_test["sharpe"] > 0.5:
     print("✅ SUCCESS: Strategy works consistently across all periods!")
     print("🚀 This strategy is ready for live trading simulation.")
 elif res_test["sharpe"] > 0.5:

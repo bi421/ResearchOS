@@ -378,9 +378,7 @@ class ParquetStore(BaseStore):
         merged = pa.concat_tables(tables)
 
         # Filter by date range
-        mask = (merged.column("observation_period").to_pylist() >= start) & (
-            merged.column("observation_period").to_pylist() <= end
-        )
+        mask = (merged.column("observation_period").to_pylist() >= start) & (merged.column("observation_period").to_pylist() <= end)
         filtered = merged.filter(mask)
 
         # Apply revision filter
@@ -954,11 +952,7 @@ class SourceRegistry:
     def get_supported_series(self) -> dict[str, list[str]]:
         """Get mapping of source to supported series."""
         registry = self._load_registry()
-        return {
-            source_id: data.get("supported_series", [])
-            for source_id, data in registry["sources"].items()
-            if data.get("enabled", False)
-        }
+        return {source_id: data.get("supported_series", []) for source_id, data in registry["sources"].items() if data.get("enabled", False)}
 ```
 
 ---

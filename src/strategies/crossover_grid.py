@@ -98,8 +98,6 @@ for r in results:
 # Find best by Sharpe (with trades >= 30)
 best = max([r for r in results if r["trades"] >= 30], key=lambda x: x["sharpe"], default=None)
 if best:
-    print(
-        f"\n✅ BEST: SMA{best['fast']}/{best['slow']} with ADX{best['adx']} – Sharpe={best['sharpe']:.2f}, Trades={best['trades']}"
-    )
+    print(f"\n✅ BEST: SMA{best['fast']}/{best['slow']} with ADX{best['adx']} – Sharpe={best['sharpe']:.2f}, Trades={best['trades']}")
 else:
     print("\n⚠️ No parameter set with >=30 trades.")

@@ -240,11 +240,7 @@ class AuditLog:
         object_id: str,
     ) -> list[IntegrityCheck]:
         """Get all integrity checks for a specific object."""
-        return [
-            check
-            for check in self.integrity_checks
-            if check.object_type == object_type and check.object_id == object_id
-        ]
+        return [check for check in self.integrity_checks if check.object_type == object_type and check.object_id == object_id]
 
     def get_latest_integrity_check(
         self,

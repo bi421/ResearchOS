@@ -329,9 +329,7 @@ class TestResidualDiagnostics:
         assert r.jarque_bera >= 0
 
     def test_provenance(self):
-        r = residual_diagnostics(
-            [float(i % 2) for i in range(50)], dataset_id="D", dataset_version="v", dataset_hash="h"
-        )
+        r = residual_diagnostics([float(i % 2) for i in range(50)], dataset_id="D", dataset_version="v", dataset_hash="h")
         assert r.provenance.computation_method == "residual_diagnostics"
 
 
@@ -476,9 +474,7 @@ class TestProvenance:
         assert r.provenance.parameters == {"n_predictors": 2, "add_intercept": True}
 
     def test_statistics_provenance(self):
-        r = augmented_dickey_fuller(
-            [float(i) for i in range(100)], dataset_id="D", dataset_version="v1", dataset_hash="H"
-        )
+        r = augmented_dickey_fuller([float(i) for i in range(100)], dataset_id="D", dataset_version="v1", dataset_hash="H")
         assert r.provenance.dataset_id == "D"
         assert r.provenance.computation_method == "augmented_dickey_fuller"
         assert r.provenance.method_version == "ecm/adf/v1"

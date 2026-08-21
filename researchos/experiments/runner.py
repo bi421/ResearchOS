@@ -234,9 +234,7 @@ class BaseExperimentRunner(AbstractExperimentRunner):
     def _ensure_ready(self, experiment: Experiment) -> None:
         """Ensure the experiment is in Ready status before running."""
         if experiment.status.value != "Ready" and experiment.status.value != "Running":
-            raise RuntimeError(
-                f"Cannot run experiment in status '{experiment.status.value}'. Mark experiment as Ready first."
-            )
+            raise RuntimeError(f"Cannot run experiment in status '{experiment.status.value}'. Mark experiment as Ready first.")
 
     def run(
         self,

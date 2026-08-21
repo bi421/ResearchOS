@@ -161,10 +161,7 @@ class PatternDetector:
         if transition_confidence < REGIME_TRANSITION_MIN_CONFIDENCE:
             return None
 
-        statement = (
-            f"Regime transition detected from {previous_regime} to {current_regime} "
-            f"with {transition_confidence:.2f} confidence."
-        )
+        statement = f"Regime transition detected from {previous_regime} to {current_regime} with {transition_confidence:.2f} confidence."
         return PatternFinding(
             pattern_type=KnowledgeType.REGIME_TRANSITION,
             statement=statement,
@@ -252,10 +249,7 @@ class PatternDetector:
             return None
 
         break_type = getattr(breaks[0], "break_type", "structural_break")
-        statement = (
-            f"Correlation break detected between {series_a} and {series_b} "
-            f"(type: {break_type}) with {highest:.2f} confidence."
-        )
+        statement = f"Correlation break detected between {series_a} and {series_b} (type: {break_type}) with {highest:.2f} confidence."
         return PatternFinding(
             pattern_type=KnowledgeType.CORRELATION_BREAK,
             statement=statement,
@@ -314,10 +308,7 @@ class PatternDetector:
         if best is None:
             return None
 
-        statement = (
-            f"Anomaly detected in feature {best}: z-score magnitude "
-            f"{best_score:.2f} beyond threshold {ANOMALY_MIN_ZSCORE}."
-        )
+        statement = f"Anomaly detected in feature {best}: z-score magnitude {best_score:.2f} beyond threshold {ANOMALY_MIN_ZSCORE}."
         return PatternFinding(
             pattern_type=KnowledgeType.ANOMALY,
             statement=statement,
@@ -350,10 +341,7 @@ class PatternDetector:
             return None
 
         suffix = f" ({regime_description})" if regime_description else ""
-        statement = (
-            f"Regime pattern detected: dominant regime is {dominant_regime}"
-            f"{suffix} with {regime_confidence:.2f} confidence."
-        )
+        statement = f"Regime pattern detected: dominant regime is {dominant_regime}{suffix} with {regime_confidence:.2f} confidence."
         return PatternFinding(
             pattern_type=KnowledgeType.REGIME_PATTERN,
             statement=statement,
@@ -496,21 +484,15 @@ class PatternDetector:
         """
         findings: list[PatternFinding] = []
 
-        finding = self.detect_regime_persistence(
-            persistence_periods, regime_confidence, continuation_probability, regime_name
-        )
+        finding = self.detect_regime_persistence(persistence_periods, regime_confidence, continuation_probability, regime_name)
         if finding:
             findings.append(finding)
 
-        finding = self.detect_regime_transition(
-            transition_detected, transition_confidence, previous_regime, current_regime
-        )
+        finding = self.detect_regime_transition(transition_detected, transition_confidence, previous_regime, current_regime)
         if finding:
             findings.append(finding)
 
-        finding = self.detect_persistent_relationship(
-            rolling_stability, overall_correlation, relationship_sample_size, series_a, series_b
-        )
+        finding = self.detect_persistent_relationship(rolling_stability, overall_correlation, relationship_sample_size, series_a, series_b)
         if finding:
             findings.append(finding)
 

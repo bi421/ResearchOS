@@ -189,9 +189,7 @@ class CalendarEvent:
             "duration": self.duration.total_seconds() if self.duration else None,
             "is_recurring": self.is_recurring,
             "recurrence_pattern": self.recurrence_pattern,
-            "recurrence_end": (
-                TimeNormalizer.get_deterministic_timestamp(self.recurrence_end) if self.recurrence_end else None
-            ),
+            "recurrence_end": (TimeNormalizer.get_deterministic_timestamp(self.recurrence_end) if self.recurrence_end else None),
             "title": self.title,
             "description": self.description,
             "series_ids": sorted(self.series_ids),
@@ -209,17 +207,11 @@ class CalendarEvent:
             event_id=data["event_id"],
             event_type=EventCategory(data["event_type"]),
             scheduled_time=TimeNormalizer.parse_deterministic_timestamp(data["scheduled_time"]),
-            actual_time=(
-                TimeNormalizer.parse_deterministic_timestamp(data["actual_time"]) if data.get("actual_time") else None
-            ),
+            actual_time=(TimeNormalizer.parse_deterministic_timestamp(data["actual_time"]) if data.get("actual_time") else None),
             duration=timedelta(seconds=data["duration"]) if data.get("duration") else None,
             is_recurring=data.get("is_recurring", False),
             recurrence_pattern=data.get("recurrence_pattern"),
-            recurrence_end=(
-                TimeNormalizer.parse_deterministic_timestamp(data["recurrence_end"])
-                if data.get("recurrence_end")
-                else None
-            ),
+            recurrence_end=(TimeNormalizer.parse_deterministic_timestamp(data["recurrence_end"]) if data.get("recurrence_end") else None),
             title=data.get("title", ""),
             description=data.get("description", ""),
             series_ids=data.get("series_ids", []),
@@ -325,11 +317,7 @@ class EventTimeline:
             next_event = self.events[i + 1]
 
             # Check if current event overlaps with next
-            current_end = (
-                current.scheduled_time + current.duration
-                if current.duration
-                else current.scheduled_time + timedelta(minutes=30)
-            )
+            current_end = current.scheduled_time + current.duration if current.duration else current.scheduled_time + timedelta(minutes=30)
 
             if next_event.scheduled_time < current_end:
                 raise ValueError(f"Overlapping events: {current.event_id} and {next_event.event_id}")

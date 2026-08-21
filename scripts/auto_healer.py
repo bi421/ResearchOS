@@ -233,6 +233,4 @@ if __name__ == "__main__":
     results_file = "data/curated/xauusd/phase51_h1_horizon_sweep.json"
     healer = AutoHealer(results_file)
     report = healer.run()
-    print(
-        f"\n📊 Summary: Issues: {len(report['issues'])} | Fixes: {len(report['fixes'])} | Suggestions: {len(report['suggestions'])}"
-    )
+    print(f"\n📊 Summary: Issues: {len(report['issues'])} | Fixes: {len(report['fixes'])} | Suggestions: {len(report['suggestions'])}")

@@ -48,11 +48,7 @@ for symbol, metrics, source in [
         source=source,
         id=f"{symbol}_performance",
         title=f"{symbol} Performance Analysis",
-        description=(
-            f"Return: {metrics['total_return']:.2%}, "
-            f"Sharpe: {metrics['sharpe_ratio']:.2f}, "
-            f"Max DD: {metrics['max_drawdown']:.2%}"
-        ),
+        description=(f"Return: {metrics['total_return']:.2%}, Sharpe: {metrics['sharpe_ratio']:.2f}, Max DD: {metrics['max_drawdown']:.2%}"),
         timestamp=datetime.now(),
         confidence=0.85,
         strength=strength,

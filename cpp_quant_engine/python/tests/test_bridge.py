@@ -320,17 +320,13 @@ class TestStatistics:
 
 class TestRisk:
     def test_drawdown_magnitude(self, backend):
-        res = backend.risk_compute(
-            RiskRequest(returns=[0.01, -0.02, 0.03], equity_curve=[100.0, 105.0, 102.0, 99.0, 101.0])
-        )
+        res = backend.risk_compute(RiskRequest(returns=[0.01, -0.02, 0.03], equity_curve=[100.0, 105.0, 102.0, 99.0, 101.0]))
         assert res.max_drawdown_pct == pytest.approx(5.7142857143, rel=1e-6)
         assert res.peak_index == 1
         assert res.trough_index == 3
 
     def test_var_cvar_present(self, backend):
-        res = backend.risk_compute(
-            RiskRequest(returns=[0.02, -0.05, 0.01, -0.03, 0.0, -0.04], equity_curve=[100.0, 101.0, 102.0])
-        )
+        res = backend.risk_compute(RiskRequest(returns=[0.02, -0.05, 0.01, -0.03, 0.0, -0.04], equity_curve=[100.0, 101.0, 102.0]))
         assert res.var_95 > 0.0
         assert res.var_99 > 0.0
         assert res.cvar_95 > 0.0
@@ -508,22 +504,16 @@ class TestBacktest:
 
 class TestPerformance:
     def test_total_return(self, backend):
-        res = backend.performance_analyze(
-            PerformanceRequest(equity_curve=[100.0, 110.0, 99.0, 108.9], initial_capital=100.0)
-        )
+        res = backend.performance_analyze(PerformanceRequest(equity_curve=[100.0, 110.0, 99.0, 108.9], initial_capital=100.0))
         assert res.total_return == pytest.approx(8.9)
         assert res.total_return_pct == pytest.approx(8.9)
 
     def test_drawdown_present(self, backend):
-        res = backend.performance_analyze(
-            PerformanceRequest(equity_curve=[100.0, 110.0, 99.0, 108.9, 119.79], initial_capital=100.0)
-        )
+        res = backend.performance_analyze(PerformanceRequest(equity_curve=[100.0, 110.0, 99.0, 108.9, 119.79], initial_capital=100.0))
         assert res.max_drawdown_pct > 0.0
 
     def test_downside_fields_present(self, backend):
-        res = backend.performance_analyze(
-            PerformanceRequest(equity_curve=[100.0, 90.0, 95.0, 85.0], initial_capital=100.0)
-        )
+        res = backend.performance_analyze(PerformanceRequest(equity_curve=[100.0, 90.0, 95.0, 85.0], initial_capital=100.0))
         assert res.downside_deviation_annualized >= 0.0
         assert res.var_95 != 0.0 or res.cvar_95 != 0.0
 
@@ -534,9 +524,7 @@ class TestPerformance:
             if 200 <= i < 300:
                 v -= 50.0
             eq.append(v)
-        res = backend.performance_analyze(
-            PerformanceRequest(equity_curve=eq, bars=make_candles(500, tf="D1"), initial_capital=100.0)
-        )
+        res = backend.performance_analyze(PerformanceRequest(equity_curve=eq, bars=make_candles(500, tf="D1"), initial_capital=100.0))
         assert res.num_yearly_periods > 0
         assert res.num_monthly_periods > 0
         assert res.max_drawdown_recovery_bars > 0
@@ -633,9 +621,7 @@ class TestLargeDatasets:
         assert len(res.equity_curve) == 100_000
 
     def test_large_performance(self, backend):
-        res = backend.performance_analyze(
-            PerformanceRequest(equity_curve=make_prices(100_000, base=1000.0), initial_capital=1000.0)
-        )
+        res = backend.performance_analyze(PerformanceRequest(equity_curve=make_prices(100_000, base=1000.0), initial_capital=1000.0))
         assert res.result_hash
         assert res.max_drawdown_recovery_bars >= 0
 

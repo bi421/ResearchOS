@@ -54,9 +54,7 @@ def run_backtest_and_create_evidence():
         market_memory_weight=0.0,
     )
 
-    score = compute_evidence_score(
-        context_id="backtest_integration", evidence_items=[item], weight_config=weight_config
-    )
+    score = compute_evidence_score(context_id="backtest_integration", evidence_items=[item], weight_config=weight_config)
 
     print(f"\n📊 Evidence Score: {score.total_score:.3f} ({direction.value})")
     print(f"   Strength: {strength:.2f}, Confidence: {item.confidence:.2f}")

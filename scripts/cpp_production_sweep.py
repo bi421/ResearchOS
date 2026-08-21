@@ -70,9 +70,7 @@ horizons = [5, 10, 15, 30, 60]  # минут
 thresholds = [0.0005, 0.0010, 0.0015, 0.0020]  # 0.05% - 0.20%
 
 results = []
-print(
-    f"\n C++ дээр sweep эхэлж байна ({len(horizons)} x {len(thresholds)} = {len(horizons) * len(thresholds)} тест)..."
-)
+print(f"\n C++ дээр sweep эхэлж байна ({len(horizons)} x {len(thresholds)} = {len(horizons) * len(thresholds)} тест)...")
 print(f"   Нийт {len(candles):,} лаа дээр ажиллана\n")
 
 total_start = time.time()

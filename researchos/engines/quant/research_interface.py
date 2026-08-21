@@ -195,9 +195,7 @@ class ResearchComputationInterface:
         """Run a deterministic hypothesis test."""
         raise NotImplementedError
 
-    def research_portfolio_metrics(
-        self, portfolio: Any, benchmark_returns: Sequence[float] | None = None, **params: Any
-    ) -> ResearchResult:
+    def research_portfolio_metrics(self, portfolio: Any, benchmark_returns: Sequence[float] | None = None, **params: Any) -> ResearchResult:
         """Compute deterministic portfolio analytics."""
         raise NotImplementedError
 

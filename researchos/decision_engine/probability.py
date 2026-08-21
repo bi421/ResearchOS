@@ -256,9 +256,7 @@ class ProbabilityAssessment(BaseObject):
         obj.evidence_strength = float(data.get("evidence_strength", 0.0))
         obj.historical_consistency = float(data.get("historical_consistency", 0.0))
         obj.sample_size = int(data.get("sample_size", 0))
-        obj.calculation_method = CalculationMethod(
-            data.get("calculation_method", CalculationMethod.WEIGHTED_EVIDENCE.value)
-        )
+        obj.calculation_method = CalculationMethod(data.get("calculation_method", CalculationMethod.WEIGHTED_EVIDENCE.value))
         obj.calculation_version = data.get("calculation_version", CALCULATION_VERSION)
         obj.limitations = list(data.get("limitations", []))
         ts = data.get("timestamp")

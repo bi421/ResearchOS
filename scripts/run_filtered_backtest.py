@@ -27,9 +27,7 @@ print(f"Data loaded: {len(df_h)} bars (4h)")
 
 # ⭐ ШИНЭ: Noise Filter хэрэглэх
 df_h = apply_noise_filter(df_h)
-print(
-    f"Trending & Low Volatility periods: {df_h['valid_trade'].sum()} / {len(df_h)} ({df_h['valid_trade'].mean():.2%})"
-)
+print(f"Trending & Low Volatility periods: {df_h['valid_trade'].sum()} / {len(df_h)} ({df_h['valid_trade'].mean():.2%})")
 
 # Filter-үүдийг feature болгон нэмэх (adx, price_vs_trend, valid_trade гэх мэт)
 # Valid_trade нь стратегид дохио өгөх эсэхийг шалгах gate болно.

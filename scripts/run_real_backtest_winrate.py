@@ -91,9 +91,7 @@ class RealBacktestWinrate:
                 else np.inf
             )
             total_return = (1 + df_trades["pnl"]).prod() - 1
-            sharpe = (
-                df_trades["pnl"].mean() / df_trades["pnl"].std() * np.sqrt(252) if df_trades["pnl"].std() != 0 else 0
-            )
+            sharpe = df_trades["pnl"].mean() / df_trades["pnl"].std() * np.sqrt(252) if df_trades["pnl"].std() != 0 else 0
 
             self.results[strategy_name] = {
                 "trades": len(trades),
@@ -127,16 +125,12 @@ class RealBacktestWinrate:
         def entry_condition(data, i):
             if i < 30:
                 return False
-            return (data["SMA_10"].iloc[i] > data["SMA_30"].iloc[i]) and (
-                data["SMA_10"].iloc[i - 1] <= data["SMA_30"].iloc[i - 1]
-            )
+            return (data["SMA_10"].iloc[i] > data["SMA_30"].iloc[i]) and (data["SMA_10"].iloc[i - 1] <= data["SMA_30"].iloc[i - 1])
 
         def exit_condition(data, i):
             if i < 30:
                 return False
-            return (data["SMA_10"].iloc[i] < data["SMA_30"].iloc[i]) and (
-                data["SMA_10"].iloc[i - 1] >= data["SMA_30"].iloc[i - 1]
-            )
+            return (data["SMA_10"].iloc[i] < data["SMA_30"].iloc[i]) and (data["SMA_10"].iloc[i - 1] >= data["SMA_30"].iloc[i - 1])
 
         return self.run_backtest("SMA Crossover", entry_condition, exit_condition)
 
@@ -177,11 +171,7 @@ class RealBacktestWinrate:
             if i < 200:
                 return False
             # MACD bullish crossover + price above SMA 200
-            return (
-                (data["MACD_Hist"].iloc[i] > 0)
-                and (data["MACD_Hist"].iloc[i - 1] <= 0)
-                and (data["Close"].iloc[i] > data["SMA_200"].iloc[i])
-            )
+            return (data["MACD_Hist"].iloc[i] > 0) and (data["MACD_Hist"].iloc[i - 1] <= 0) and (data["Close"].iloc[i] > data["SMA_200"].iloc[i])
 
         def exit_condition(data, i):
             if i < 200:

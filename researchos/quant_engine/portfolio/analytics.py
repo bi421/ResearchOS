@@ -657,10 +657,7 @@ def efficient_frontier(
         for _ in range(300):
             p_ret = sum(w * r for w, r in zip(weights, ann_returns))
             ret_err = p_ret - target_r
-            grad = [
-                2.0 * sum(cov[i][j] * weights[j] for j in range(n_assets)) + 5.0 * ret_err * ann_returns[i]
-                for i in range(n_assets)
-            ]
+            grad = [2.0 * sum(cov[i][j] * weights[j] for j in range(n_assets)) + 5.0 * ret_err * ann_returns[i] for i in range(n_assets)]
             weights = [weights[i] - lr * grad[i] for i in range(n_assets)]
             if not allow_short:
                 weights = _project_simplex(weights)

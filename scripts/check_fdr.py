@@ -37,9 +37,7 @@ if passed_fdr_count > 0:
             )
 else:
     print("⚠️ FDR-ээр ч гэсэн ямар ч хослол дахисангүй.")
-    print(
-        "   Дүгнэлт: Загварт бодит таамаглах чадвар байхгүй, өгөгдлийг бүрэн өөрчлөх (Feature Engineering) шаардлагатай."
-    )
+    print("   Дүгнэлт: Загварт бодит таамаглах чадвар байхгүй, өгөгдлийг бүрэн өөрчлөх (Feature Engineering) шаардлагатай.")
 
 # Шинэчилсэн үр дүнг хадгалах
 with open("data/curated/xauusd/phase51_h1_horizon_sweep_fdr.json", "w", encoding="utf-8") as f:

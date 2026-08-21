@@ -107,8 +107,7 @@ class LearningRecord(BaseObject):
         """Mark this learning record as complete."""
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
-            reason=f"Learning record finalized: {len(self.findings)} findings, "
-            f"{len(self.recommendations)} recommendations",
+            reason=f"Learning record finalized: {len(self.findings)} findings, {len(self.recommendations)} recommendations",
         )
 
     def _to_hashable_dict(self) -> dict[str, Any]:

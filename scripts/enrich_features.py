@@ -71,7 +71,5 @@ df.to_csv(output_file, index=False, encoding="utf-8")
 print("✅ Амжилттай! Шинж чанар нэмэгдсэн өгөгдөл хадгалагдлаа:")
 print(f"   📁 {output_file}")
 print(f"   📊 Нийт мөр: {len(df)}")
-print(
-    f"   📈 Нэмэгдсэн баганууд: {[c for c in df.columns if c not in ['open', 'high', 'low', 'close', 'volume', 'datetime']]}"
-)
+print(f"   📈 Нэмэгдсэн баганууд: {[c for c in df.columns if c not in ['open', 'high', 'low', 'close', 'volume', 'datetime']]}")
 print("=" * 60)

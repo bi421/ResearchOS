@@ -487,9 +487,7 @@ class TestDeterministicHashing:
         for _, obj in OBJECT_SAMPLES:
             h = obj._to_hashable_dict()
             if "ontology_tags" in h and isinstance(h["ontology_tags"], list):
-                assert h["ontology_tags"] == sorted(
-                    h["ontology_tags"]
-                ), f"{type(obj).__name__} ontology_tags not sorted in hashable dict"
+                assert h["ontology_tags"] == sorted(h["ontology_tags"]), f"{type(obj).__name__} ontology_tags not sorted in hashable dict"
 
     def test_object_hash_matches_across_round_trip(self):
         for _, obj in OBJECT_SAMPLES:

@@ -50,9 +50,7 @@ horizons = [1, 3, 5, 10, 20]
 thresholds = [0.0000, 0.0010, 0.0020, 0.0030]
 results = []
 
-print(
-    f"\n C++ дээр sweep эхэлж байна ({len(horizons)} x {len(thresholds)} = {len(horizons) * len(thresholds)} тест)..."
-)
+print(f"\n C++ дээр sweep эхэлж байна ({len(horizons)} x {len(thresholds)} = {len(horizons) * len(thresholds)} тест)...")
 
 for h in horizons:
     for t in thresholds:
@@ -119,8 +117,6 @@ if results:
     results.sort(key=lambda x: x["total_return_pct"], reverse=True)
     print("\n🏆 ШИЛДЭГ 5 ҮР ДҮН:")
     for r in results[:5]:
-        print(
-            f"  h={r['horizon']:2d}, t={r['threshold']:.4f} | Return: {r['total_return_pct']:.2f}% | Trades: {r['num_trades']}"
-        )
+        print(f"  h={r['horizon']:2d}, t={r['threshold']:.4f} | Return: {r['total_return_pct']:.2f}% | Trades: {r['num_trades']}")
 
 print("=" * 60)

@@ -242,9 +242,7 @@ class DecisionContext(BaseObject):
         obj.audit_entry_id = data.get("audit_entry_id", "")
         obj.symbol = data.get("symbol", "")
         obj.timeframe = data.get("timeframe", "")
-        obj.decision_timestamp = (
-            parse_timestamp(data["decision_timestamp"]) if data.get("decision_timestamp") else utc_now()
-        )
+        obj.decision_timestamp = parse_timestamp(data["decision_timestamp"]) if data.get("decision_timestamp") else utc_now()
         obj.dataset_version = data.get("dataset_version", "DATASET_V1")
         obj.calculation_version = data.get("calculation_version", "DECISION_V1")
         obj.context_version = data.get("context_version", "CONTEXT_V1")

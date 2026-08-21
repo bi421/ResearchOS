@@ -493,9 +493,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         object_type = data.get("object_type")
         cls = OBJECT_REGISTRY.get(object_type)
         if cls is None:
-            raise ValueError(
-                f"No registered class for object_type '{object_type}'. Register the class in OBJECT_REGISTRY."
-            )
+            raise ValueError(f"No registered class for object_type '{object_type}'. Register the class in OBJECT_REGISTRY.")
         return cls.from_dict(data)
 
     def load_objects_by_type(self, object_type: str) -> list[BaseObject]:
@@ -513,9 +511,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         """
         cls = OBJECT_REGISTRY.get(object_type)
         if cls is None:
-            raise ValueError(
-                f"No registered class for object_type '{object_type}'. Register the class in OBJECT_REGISTRY."
-            )
+            raise ValueError(f"No registered class for object_type '{object_type}'. Register the class in OBJECT_REGISTRY.")
         dicts = self.load_by_type(object_type)
         return [cls.from_dict(d) for d in dicts]
 

@@ -473,9 +473,7 @@ class TestEvidenceEdgeSerialization(unittest.TestCase):
         )
 
     def test_from_dict_reconstructs_relationship(self):
-        edge = EvidenceEdge.from_dict(
-            {"edge_id": "e", "source_id": "a", "target_id": "b", "relationship": "VALIDATED_BY"}
-        )
+        edge = EvidenceEdge.from_dict({"edge_id": "e", "source_id": "a", "target_id": "b", "relationship": "VALIDATED_BY"})
         self.assertIs(edge.relationship, Relationship.VALIDATED_BY)
 
     def test_serialization_deterministic(self):

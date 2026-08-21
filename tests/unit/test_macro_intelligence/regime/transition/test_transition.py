@@ -620,9 +620,7 @@ class TestTransitionProbabilityEngine:
 
         engine = TransitionProbabilityEngine()
         original_probs = engine.get_all_transition_probabilities(
-            __import__(
-                "macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]
-            ).MacroRegime.GOLDILOCKS
+            __import__("macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]).MacroRegime.GOLDILOCKS
         )
 
         engine.update_with_observations(
@@ -635,9 +633,7 @@ class TestTransitionProbabilityEngine:
 
         # Probabilities should have updated
         new_probs = engine.get_all_transition_probabilities(
-            __import__(
-                "macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]
-            ).MacroRegime.GOLDILOCKS
+            __import__("macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]).MacroRegime.GOLDILOCKS
         )
 
         assert engine.observation_count == 3
@@ -652,9 +648,9 @@ class TestTransitionProbabilityEngine:
         engine1 = TransitionProbabilityEngine()
         engine2 = TransitionProbabilityEngine()
 
-        assert engine1.get_transition_probability(
+        assert engine1.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH) == engine2.get_transition_probability(
             MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH
-        ) == engine2.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH)
+        )
 
 
 # =============================================================================

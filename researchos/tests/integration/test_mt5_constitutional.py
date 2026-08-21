@@ -1,9 +1,7 @@
 import re
 from pathlib import Path
 
-FORBIDDEN_TRADING_APIS = re.compile(
-    r"order_send|order_modify|order_close|order_delete|" r"OrderSend|OrderModify|OrderClose|OrderDelete"
-)
+FORBIDDEN_TRADING_APIS = re.compile(r"order_send|order_modify|order_close|order_delete|" r"OrderSend|OrderModify|OrderClose|OrderDelete")
 
 
 def test_mt5_no_trading():

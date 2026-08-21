@@ -197,7 +197,4 @@ class OrderBook(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"OrderBook({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}, "
-            f"{len(self.bids)} bids × {len(self.asks)} asks)"
-        )
+        return f"OrderBook({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}, {len(self.bids)} bids × {len(self.asks)} asks)"

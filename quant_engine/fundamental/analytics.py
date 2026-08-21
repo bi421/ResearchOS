@@ -203,10 +203,7 @@ def duration_estimate(
         return float(periods)
     num_sum = sum(((t + 1) * coupon / (1.0 + yield_to_maturity) ** (t + 1)) for t in range(periods))
     maturity_value = periods * (1.0 + coupon) / (1.0 + yield_to_maturity) ** periods
-    price = (
-        sum(coupon / (1.0 + yield_to_maturity) ** (t + 1) for t in range(periods))
-        + (1.0 + coupon) / (1.0 + yield_to_maturity) ** periods
-    )
+    price = sum(coupon / (1.0 + yield_to_maturity) ** (t + 1) for t in range(periods)) + (1.0 + coupon) / (1.0 + yield_to_maturity) ** periods
     if price == 0:
         return 0.0
     return (num_sum + maturity_value) / price

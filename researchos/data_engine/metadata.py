@@ -161,11 +161,7 @@ class DatasetMetadata(BaseObject):
                 "record_count": self.record_count,
                 "start_time": self.start_time.isoformat() if self.start_time else None,
                 "end_time": self.end_time.isoformat() if self.end_time else None,
-                "date_range": (
-                    [self.start_time.isoformat(), self.end_time.isoformat()]
-                    if self.start_time and self.end_time
-                    else None
-                ),
+                "date_range": ([self.start_time.isoformat(), self.end_time.isoformat()] if self.start_time and self.end_time else None),
                 "duration_days": round(self.duration_days, 4),
                 "avg_records_per_day": round(self.avg_records_per_day, 2),
                 "timezone": self.timezone,

@@ -75,9 +75,7 @@ class DatasetRepository(RepositoryInterface[T]):
         return [obj for obj in self._store.values() if isinstance(obj, HistoricalDataset) and obj.symbol == symbol]
 
     def find_by_timeframe(self, timeframe: str) -> list[T]:
-        return [
-            obj for obj in self._store.values() if isinstance(obj, HistoricalDataset) and obj.timeframe == timeframe
-        ]
+        return [obj for obj in self._store.values() if isinstance(obj, HistoricalDataset) and obj.timeframe == timeframe]
 
     def find_by_symbol_and_timeframe(self, symbol: str, timeframe: str) -> T | None:
         for obj in self._store.values():
@@ -191,9 +189,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_symbol ON datasets(symbol)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_timeframe ON datasets(timeframe)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_symbol_timeframe ON datasets(symbol, timeframe)")
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_metadata_symbol_timeframe ON dataset_metadata(symbol, timeframe)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_symbol_timeframe ON dataset_metadata(symbol, timeframe)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_start_time ON dataset_metadata(start_time)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_end_time ON dataset_metadata(end_time)")
             conn.commit()
@@ -508,11 +504,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
-            query = (
-                "SELECT * FROM datasets "
-                "WHERE start_time IS NOT NULL AND end_time IS NOT NULL "
-                "AND start_time <= ? AND end_time >= ?"
-            )
+            query = "SELECT * FROM datasets WHERE start_time IS NOT NULL AND end_time IS NOT NULL AND start_time <= ? AND end_time >= ?"
             params: list[Any] = [end_time.isoformat(), start_time.isoformat()]
             if symbol is not None:
                 query += " AND symbol = ?"

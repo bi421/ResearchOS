@@ -27,9 +27,7 @@ detail_trades = []
 detail_equity = []
 
 for label, rule in timeframes:
-    df_r = (
-        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_r = df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     engine = CppQuant()
     engine.load_from_dataframe(df_r)

@@ -258,9 +258,7 @@ class ReasoningChain(BaseObject):
                 return False
             available.update(step["outputs"])
 
-        self.trace = (
-            f"Chain verified: {len(self.steps)} steps, {len(self.initial_inputs)} inputs, {len(available)} outputs"
-        )
+        self.trace = f"Chain verified: {len(self.steps)} steps, {len(self.initial_inputs)} inputs, {len(available)} outputs"
         content = self._to_hashable_dict()
         self.chain_hash = deterministic_hash(content)
         self.lifecycle.transition(

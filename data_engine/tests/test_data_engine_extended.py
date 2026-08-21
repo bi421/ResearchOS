@@ -547,9 +547,7 @@ class TestEndToEndDeterminism:
     def test_gap_detection_after_load(self):
         loader = CsvLoader()
         candles = loader.load_mt5_candles_from_text(
-            "Date,Time,Open,High,Low,Close,Volume\n"
-            "2024.01.01,09:00,2000,2010,1995,2005,1000\n"
-            "2024.01.01,14:00,2010,2020,2005,2015,1000\n",
+            "Date,Time,Open,High,Low,Close,Volume\n2024.01.01,09:00,2000,2010,1995,2005,1000\n2024.01.01,14:00,2010,2020,2005,2015,1000\n",
             "XAU/USD",
             timeframe="1h",
             timezone="UTC",

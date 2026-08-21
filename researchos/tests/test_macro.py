@@ -284,9 +284,7 @@ def _load_bullish_drivers(engine):
     engine.assess_economic_growth(gdp=0.8, ism_manufacturing=46, ism_services=48)
     engine.assess_safe_haven(70, "Elevated", ["Conflict"], "Elevated")
     engine.assess_central_bank_demand(monthly_purchases=60, annual_purchases=900, demand_trend="Accelerating")
-    engine.assess_physical_demand(
-        comex_inventories=700, etf_flows_monthly=25, indian_demand="Strong", chinese_demand="Strong"
-    )
+    engine.assess_physical_demand(comex_inventories=700, etf_flows_monthly=25, indian_demand="Strong", chinese_demand="Strong")
     engine.assess_positioning(managed_money_long=50000, managed_money_short=180000)
 
 
@@ -299,9 +297,7 @@ def _load_bearish_drivers(engine):
     engine.assess_economic_growth(gdp=3.5, ism_manufacturing=58, ism_services=56)
     engine.assess_safe_haven(30, "Subdued", [], "Low")
     engine.assess_central_bank_demand(monthly_purchases=5, annual_purchases=50, demand_trend="Declining")
-    engine.assess_physical_demand(
-        comex_inventories=900, etf_flows_monthly=-15, indian_demand="Weak", chinese_demand="Weak"
-    )
+    engine.assess_physical_demand(comex_inventories=900, etf_flows_monthly=-15, indian_demand="Weak", chinese_demand="Weak")
     engine.assess_positioning(managed_money_long=250000, managed_money_short=30000)
 
 
@@ -397,9 +393,7 @@ class TestDriverAssessments:
 
     def test_fed_extreme_dovish(self, engine):
         """Extremely dovish = highest score."""
-        result = engine.assess_fed_policy(
-            policy_classification="Extremely_Dovish", rate_change_bps=-50, hawkishness_score=15.0
-        )
+        result = engine.assess_fed_policy(policy_classification="Extremely_Dovish", rate_change_bps=-50, hawkishness_score=15.0)
         assert result.score >= 80
         assert result.confidence >= 0.8
 
@@ -472,9 +466,7 @@ class TestDriverAssessments:
 
     def test_central_bank_high_demand(self, engine):
         """Strong central bank buying = bullish."""
-        result = engine.assess_central_bank_demand(
-            monthly_purchases=60, annual_purchases=900, demand_trend="Accelerating"
-        )
+        result = engine.assess_central_bank_demand(monthly_purchases=60, annual_purchases=900, demand_trend="Accelerating")
         assert result.score > 70
 
     def test_central_bank_low_demand(self, engine):

@@ -46,11 +46,7 @@ for symbol, metrics, source in [
     # Зөвхөн байгаа параметрүүдээр EvidenceItem үүсгэх
     item = EvidenceItem(
         source=source,
-        description=(
-            f"{symbol}: Return {metrics['total_return']:.2%}, "
-            f"Sharpe {metrics['sharpe_ratio']:.2f}, "
-            f"Max DD {metrics['max_drawdown']:.2%}"
-        ),
+        description=(f"{symbol}: Return {metrics['total_return']:.2%}, Sharpe {metrics['sharpe_ratio']:.2f}, Max DD {metrics['max_drawdown']:.2%}"),
         confidence=0.85,
         weight=0.3,
         metadata={
@@ -71,9 +67,7 @@ for symbol, metrics, source in [
 
 print("📊 Evidence Items Created:")
 for item in evidence_items:
-    print(
-        f"  {item.metadata.get('title', item.source.value)} → {item.metadata['direction']} (strength: {item.metadata['strength']:.2f})"
-    )
+    print(f"  {item.metadata.get('title', item.source.value)} → {item.metadata['direction']} (strength: {item.metadata['strength']:.2f})")
 
 context = DecisionContext(decision_timestamp=datetime.now(), context_id="multi_asset_comparison")
 
@@ -91,6 +85,4 @@ weight_config = WeightConfiguration(
 print("\n📈 Metrics only (Evidence Score cannot be computed without strength/direction in EvidenceItem):")
 for item in evidence_items:
     meta = item.metadata
-    print(
-        f"  {meta['symbol']}: Return {meta['total_return']:.2%}, Sharpe {meta['sharpe_ratio']:.2f}, Max DD {meta['max_drawdown']:.2%}"
-    )
+    print(f"  {meta['symbol']}: Return {meta['total_return']:.2%}, Sharpe {meta['sharpe_ratio']:.2f}, Max DD {meta['max_drawdown']:.2%}")

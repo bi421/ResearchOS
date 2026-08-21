@@ -110,11 +110,7 @@ sweep_start = time.time()
 
 for h in timeframes:
     print(f"\n⏳ {h}min агрегацлаж байна...")
-    df_h = (
-        df.resample(f"{h}min")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
-    )
+    df_h = df.resample(f"{h}min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     print(f"   {len(df_h):,} candle")
 
     for name, short, long in strategies:

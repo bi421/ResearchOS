@@ -418,9 +418,7 @@ class LineageQueryEngine:
                     out[key] = str(raw) if raw else None
         return out
 
-    def _find_reference_by_type(
-        self, env: EvidenceEnvelope, target_type: str, upstream: bool
-    ) -> EvidenceEnvelope | None:
+    def _find_reference_by_type(self, env: EvidenceEnvelope, target_type: str, upstream: bool) -> EvidenceEnvelope | None:
         """Find a reference envelope of ``target_type`` among the artifact's
         lineage neighbors (upstream parents or downstream children)."""
         if upstream:

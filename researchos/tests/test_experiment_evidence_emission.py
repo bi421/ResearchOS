@@ -224,10 +224,7 @@ class TestProgressTracking:
         return _make_repo()
 
     def test_acceptance_identical_identical_hash(self):
-        assert (
-            build_experiment_envelope(_make_experiment()).artifact_hash
-            == build_experiment_envelope(_make_experiment()).artifact_hash
-        )
+        assert build_experiment_envelope(_make_experiment()).artifact_hash == build_experiment_envelope(_make_experiment()).artifact_hash
 
     def test_acceptance_changed_config_diff_hash(self):
         e1 = build_experiment_envelope(_make_experiment(sim=SimulationConfig(seed=1)))

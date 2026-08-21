@@ -139,10 +139,7 @@ class HiddenMarkovModel:
             alpha[0][s] = self.start_prob[s] * self.emission[s][observations[0]]
         for t in range(1, T):
             for s in range(self.num_states):
-                alpha[t][s] = (
-                    sum(alpha[t - 1][j] * self.transition[j][s] for j in range(self.num_states))
-                    * self.emission[s][observations[t]]
-                )
+                alpha[t][s] = sum(alpha[t - 1][j] * self.transition[j][s] for j in range(self.num_states)) * self.emission[s][observations[t]]
         return alpha
 
     def log_likelihood(self, observations: Sequence[int]) -> float:

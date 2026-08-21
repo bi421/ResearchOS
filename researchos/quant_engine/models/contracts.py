@@ -148,9 +148,7 @@ def _validate_model_id(model_id: str) -> None:
     if not isinstance(model_id, str) or not model_id:
         raise ModelContractError("model_id must be a non-empty string")
     if _ID_PATTERN.fullmatch(model_id) is None:
-        raise ModelContractError(
-            "model_id may only contain letters, digits, '_', '.', '-' and must not start with a separator"
-        )
+        raise ModelContractError("model_id may only contain letters, digits, '_', '.', '-' and must not start with a separator")
 
 
 def _validate_version(version: str) -> None:

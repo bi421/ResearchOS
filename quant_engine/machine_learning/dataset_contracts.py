@@ -148,9 +148,7 @@ class ResearchDataset:
         if sample_count != len(labels):
             raise ValueError(f"payload sample_count={sample_count} does not match len(labels)={len(labels)}")
         if feature_count != len(feature_names):
-            raise ValueError(
-                f"payload feature_count={feature_count} does not match len(feature_names)={len(feature_names)}"
-            )
+            raise ValueError(f"payload feature_count={feature_count} does not match len(feature_names)={len(feature_names)}")
         if features and any(len(row) != feature_count for row in features):
             row_lengths = {len(row) for row in features}
             raise ValueError(f"payload feature rows have inconsistent widths {row_lengths}, expected {feature_count}")

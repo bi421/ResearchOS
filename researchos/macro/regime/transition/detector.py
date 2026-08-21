@@ -397,8 +397,7 @@ class RegimeTransitionDetector:
                     horizon_periods=horizon,
                     contributing_signals=[s.detector_name for s in signals if s.strength > 0.5],
                     evidence_refs=self._collect_evidence_refs(signals),
-                    explanation=f"Transition from {current_regime.value} to {target_regime.value} "
-                    f"with confidence {confidence:.2f}",
+                    explanation=f"Transition from {current_regime.value} to {target_regime.value} with confidence {confidence:.2f}",
                 )
                 warnings.append(warning)
 

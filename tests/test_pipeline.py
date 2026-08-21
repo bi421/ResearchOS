@@ -297,9 +297,7 @@ class TestSqlitePipeline:
         pipeline.detect_contradiction(research.id, "Internal", "test", sides=[])
         report = pipeline.generate_report(research.id, "Report", "Summary")
         pipeline.validate_research(research.id, report.id, "Accurate", 0.8)
-        pipeline.extract_knowledge(
-            "Relationship_Strength", "CPI", "impacts", "Fed", 0.7, source_references=[research.id]
-        )
+        pipeline.extract_knowledge("Relationship_Strength", "CPI", "impacts", "Fed", 0.7, source_references=[research.id])
         pipeline.assess_cognitive("trader-1", research.id, 0.8, 0.7)
 
         # All objects present

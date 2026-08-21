@@ -35,9 +35,7 @@ def benchmark(arr, name):
     t1 = time.perf_counter()
     elapsed_ms = (t1 - t0) * 1000
     bps = len(arr) / (t1 - t0) if (t1 - t0) > 0 else 0
-    print(
-        f"[3] {name}: {len(arr):,} bars in {elapsed_ms:.2f} ms -> {bps:,.0f} bars/sec | Return {(cum[-1] - 1) * 100:.1f}%"
-    )
+    print(f"[3] {name}: {len(arr):,} bars in {elapsed_ms:.2f} ms -> {bps:,.0f} bars/sec | Return {(cum[-1] - 1) * 100:.1f}%")
     return elapsed_ms
 
 

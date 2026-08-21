@@ -109,11 +109,7 @@ results = []
 sweep_start = time.time()
 
 for h in timeframes:
-    df_resampled = (
-        df.resample(f"{h}min")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
-    )
+    df_resampled = df.resample(f"{h}min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     print(f"\n⏳ {h}min агрегацлаж байна... ({len(df_resampled):,} candle)")
 
@@ -135,9 +131,7 @@ for h in timeframes:
                 }
             )
 
-            print(
-                f"  h={h:2d}min, c={c * 100:.2f}%, s={s * 100:.2f}% | Winrate: {result['winrate']:.2f}%, Trades: {result['trades']}"
-            )
+            print(f"  h={h:2d}min, c={c * 100:.2f}%, s={s * 100:.2f}% | Winrate: {result['winrate']:.2f}%, Trades: {result['trades']}")
 
 sweep_time = time.time() - sweep_start
 print(f"\n✅ Нийт Sweep хугацаа: {sweep_time:.2f} секунд")

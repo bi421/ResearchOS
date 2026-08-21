@@ -129,11 +129,7 @@ RULES: dict[str, KnowledgeRule] = {
     "REGIME_TRANSITION": KnowledgeRule(
         rule_id="KNOW-002",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF transition detected "
-            "AND transition confidence >= REGIME_TRANSITION_MIN_CONFIDENCE "
-            "THEN REGIME_TRANSITION knowledge"
-        ),
+        description=("IF transition detected AND transition confidence >= REGIME_TRANSITION_MIN_CONFIDENCE THEN REGIME_TRANSITION knowledge"),
         parameters={
             "min_confidence": REGIME_TRANSITION_MIN_CONFIDENCE,
         },
@@ -156,11 +152,7 @@ RULES: dict[str, KnowledgeRule] = {
     "CORRELATION_BREAK": KnowledgeRule(
         rule_id="KNOW-004",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF any structural break detected "
-            "AND break confidence >= CORRELATION_BREAK_MIN_CONFIDENCE "
-            "THEN CORRELATION_BREAK knowledge"
-        ),
+        description=("IF any structural break detected AND break confidence >= CORRELATION_BREAK_MIN_CONFIDENCE THEN CORRELATION_BREAK knowledge"),
         parameters={
             "min_confidence": CORRELATION_BREAK_MIN_CONFIDENCE,
         },
@@ -168,11 +160,7 @@ RULES: dict[str, KnowledgeRule] = {
     "ANOMALY": KnowledgeRule(
         rule_id="KNOW-005",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF a feature z-score magnitude >= ANOMALY_MIN_ZSCORE "
-            "AND feature confidence >= ANOMALY_MIN_CONFIDENCE "
-            "THEN ANOMALY knowledge"
-        ),
+        description=("IF a feature z-score magnitude >= ANOMALY_MIN_ZSCORE AND feature confidence >= ANOMALY_MIN_CONFIDENCE THEN ANOMALY knowledge"),
         parameters={
             "min_zscore": ANOMALY_MIN_ZSCORE,
             "min_confidence": ANOMALY_MIN_CONFIDENCE,
@@ -181,11 +169,7 @@ RULES: dict[str, KnowledgeRule] = {
     "REGIME_PATTERN": KnowledgeRule(
         rule_id="KNOW-006",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF a dominant regime pattern is observed "
-            "AND regime confidence >= REGIME_PATTERN_MIN_CONFIDENCE "
-            "THEN REGIME_PATTERN knowledge"
-        ),
+        description=("IF a dominant regime pattern is observed AND regime confidence >= REGIME_PATTERN_MIN_CONFIDENCE THEN REGIME_PATTERN knowledge"),
         parameters={
             "min_confidence": REGIME_PATTERN_MIN_CONFIDENCE,
         },

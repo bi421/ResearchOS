@@ -61,9 +61,7 @@ def metrics(d):
     dd = cum / peak - 1
     max_dd = dd.min()
     win_rate = (
-        (d.filter(pl.col("strat_ret") > 0).height / d.filter(pl.col("pos") == 1).height * 100)
-        if d.filter(pl.col("pos") == 1).height > 0
-        else 0
+        (d.filter(pl.col("strat_ret") > 0).height / d.filter(pl.col("pos") == 1).height * 100) if d.filter(pl.col("pos") == 1).height > 0 else 0
     )
     total_ret = cum[-1] - 1 if len(cum) > 0 else 0
     return {

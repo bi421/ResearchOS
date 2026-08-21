@@ -174,9 +174,7 @@ def immutability_audit():
                                     (
                                         "MUTABLE_DEFAULT",
                                         get_module_name(path),
-                                        node.name
-                                        + "."
-                                        + (stmt.target.id if isinstance(stmt.target, ast.Name) else "?"),
+                                        node.name + "." + (stmt.target.id if isinstance(stmt.target, ast.Name) else "?"),
                                     )
                                 )
     return findings
@@ -330,11 +328,7 @@ def duplicate_stat_audit():
                             if isinstance(sub, (ast.For, ast.While)):
                                 has_math = True
                                 break
-                            if (
-                                isinstance(sub, ast.Call)
-                                and isinstance(sub.func, ast.Attribute)
-                                and sub.func.attr in ("sqrt", "exp", "log", "pow")
-                            ):
+                            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) and sub.func.attr in ("sqrt", "exp", "log", "pow"):
                                 has_math = True
                                 break
                     if has_math:

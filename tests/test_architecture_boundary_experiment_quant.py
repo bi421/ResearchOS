@@ -68,10 +68,7 @@ def _executable_source(path: Path) -> str:
     tree = ast.parse(source)
     for node in ast.walk(tree):
         # Remove docstrings (module, class, function level).
-        if (
-            isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
-            and ast.get_docstring(node) is not None
-        ):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and ast.get_docstring(node) is not None:
             ast.get_docstring(node, clean=False)
             # Remove the string literal node(s) used as the docstring.
             body = node.body

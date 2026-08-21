@@ -128,15 +128,11 @@ class TestCppQuantAdapterVolatility:
 
     def test_rolling_matches(self, adapter, python_backend):
         rets = adapter.calculate_returns(make_prices(60))
-        assert adapter.calculate_volatility(rets, "rolling") == pytest.approx(
-            python_backend.calculate_volatility(rets, "rolling"), rel=1e-9
-        )
+        assert adapter.calculate_volatility(rets, "rolling") == pytest.approx(python_backend.calculate_volatility(rets, "rolling"), rel=1e-9)
 
     def test_change_matches(self, adapter, python_backend):
         rets = adapter.calculate_returns(make_prices(60))
-        assert adapter.calculate_volatility(rets, "change") == pytest.approx(
-            python_backend.calculate_volatility(rets, "change"), rel=1e-9
-        )
+        assert adapter.calculate_volatility(rets, "change") == pytest.approx(python_backend.calculate_volatility(rets, "change"), rel=1e-9)
 
     def test_empty_raises(self, adapter, python_backend):
         with pytest.raises(ValueError):
@@ -228,10 +224,7 @@ class TestCppQuantAdapterMetrics:
         equity = [100000.0]
         for r in rets:
             equity.append(equity[-1] * (1.0 + r))
-        assert (
-            adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
-            == python_backend.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
-        )
+        assert adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"] == python_backend.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
         assert isinstance(adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"], float)
 
     def test_calmar_consistent_with_rounded_drawdown(self, adapter, prices):

@@ -208,10 +208,7 @@ class TestProgressTracking:
         return EvidenceRepository(repository=ResearchRepository(db_path=":memory:"))
 
     def test_acceptance_same_dataset_same_hash(self):
-        assert (
-            build_dataset_envelope(_make_dataset()).artifact_hash
-            == build_dataset_envelope(_make_dataset()).artifact_hash
-        )
+        assert build_dataset_envelope(_make_dataset()).artifact_hash == build_dataset_envelope(_make_dataset()).artifact_hash
 
     def test_acceptance_changed_dataset_diff_hash(self):
         assert (

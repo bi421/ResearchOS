@@ -128,13 +128,7 @@ class Attribution(BaseObject):
             Dict with keys: complete (bool), missing_references (list),
             status (str).
         """
-        all_refs = (
-            [self.conclusion_id]
-            + self.reasoning_object_ids
-            + self.evidence_ids
-            + self.observation_ids
-            + self.market_memory_ids
-        )
+        all_refs = [self.conclusion_id] + self.reasoning_object_ids + self.evidence_ids + self.observation_ids + self.market_memory_ids
         missing = [rid for rid in all_refs if rid not in available_ids]
 
         ref_ratio = 1.0 - (len(missing) / max(len(all_refs), 1))

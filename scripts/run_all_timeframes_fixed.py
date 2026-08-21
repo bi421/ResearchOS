@@ -37,9 +37,7 @@ print("=" * 60)
 for label, rule in timeframes:
     print(f"\n{label} агрегацлаж байна...")
 
-    df_resampled = (
-        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_resampled = df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     print(f"   {len(df_resampled):,} candle")
 
@@ -66,9 +64,7 @@ for label, rule in timeframes:
     print(f"   Winrate: {result['winrate']:.2f}%")
     print(f"   Нийт өгөөж: {result['total_return']:.2f}%")
     print(f"   Sharpe: {result['sharpe_ratio']:.2f}")
-    print(
-        f"   Avg Win: {result['avg_win']:.2f}% | Avg Loss: {result['avg_loss']:.2f}% | Max DD: {result['max_drawdown']:.2f}%"
-    )
+    print(f"   Avg Win: {result['avg_win']:.2f}% | Avg Loss: {result['avg_loss']:.2f}% | Max DD: {result['max_drawdown']:.2f}%")
 
 # 3. Үр дүнгийн хүснэгт
 print("\n" + "=" * 80)

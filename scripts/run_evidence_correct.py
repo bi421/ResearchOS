@@ -51,11 +51,7 @@ for symbol, metrics, source in [
         strength=strength,
         weight=0.3,
         confidence=0.85,
-        description=(
-            f"{symbol}: Return {metrics['total_return']:.2%}, "
-            f"Sharpe {metrics['sharpe_ratio']:.2f}, "
-            f"Max DD {metrics['max_drawdown']:.2%}"
-        ),
+        description=(f"{symbol}: Return {metrics['total_return']:.2%}, Sharpe {metrics['sharpe_ratio']:.2f}, Max DD {metrics['max_drawdown']:.2%}"),
         supporting_ids=[],
     )
     evidence_items.append(item)

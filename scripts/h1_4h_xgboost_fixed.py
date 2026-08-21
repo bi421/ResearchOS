@@ -95,9 +95,7 @@ if X_val is not None:
     val_acc = model.score(X_val_scaled, y_val)
 else:
     val_acc = None
-print(
-    f"Train accuracy: {train_acc:.2%}, Val accuracy: {val_acc:.2%}" if val_acc else f"Train accuracy: {train_acc:.2%}"
-)
+print(f"Train accuracy: {train_acc:.2%}, Val accuracy: {val_acc:.2%}" if val_acc else f"Train accuracy: {train_acc:.2%}")
 
 
 # Дохио үүсгэх функц (Signal-г шууд ашиглана)

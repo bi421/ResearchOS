@@ -232,9 +232,5 @@ with open("trend_report_verified.md", "w", encoding="utf-8") as f:
     f.write(report)
 
 print("\n✅ Verified report saved: trend_report_verified.md")
-print(
-    f"📊 Market Sentiment: {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}"
-)
-print(
-    "\n💡 Итгэлтийн зөвлөмж: Тайланг бусад эх үүсвэртэй харьцуулж, дангаараа шийдвэр гаргахдаа болгоомжтой хандаарай."
-)
+print(f"📊 Market Sentiment: {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}")
+print("\n💡 Итгэлтийн зөвлөмж: Тайланг бусад эх үүсвэртэй харьцуулж, дангаараа шийдвэр гаргахдаа болгоомжтой хандаарай.")

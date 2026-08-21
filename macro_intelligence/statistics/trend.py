@@ -118,9 +118,7 @@ def trend_strength(
     if len(returns) < 2:
         return 0.0
 
-    cov = sum((returns[i] - mean_ret) * (returns[i - 1] - mean_ret) for i in range(1, len(returns))) / (
-        len(returns) - 1
-    )
+    cov = sum((returns[i] - mean_ret) * (returns[i - 1] - mean_ret) for i in range(1, len(returns))) / (len(returns) - 1)
 
     autocorr = cov / var_ret
 

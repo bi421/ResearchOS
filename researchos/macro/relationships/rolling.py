@@ -49,9 +49,7 @@ def compute_rolling(
     if evidence_refs is None:
         evidence_refs = []
 
-    correlations, corr_timestamps, stability = compute_rolling_correlation(
-        series_a_values, series_b_values, window_size
-    )
+    correlations, corr_timestamps, stability = compute_rolling_correlation(series_a_values, series_b_values, window_size)
 
     # Align timestamps
     if len(corr_timestamps) < len(timestamps):

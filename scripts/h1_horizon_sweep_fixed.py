@@ -96,9 +96,7 @@ for th in thresholds:
 valid_thresholds = [(th, res) for th, res in val_results if res.num_trades >= 30]
 if valid_thresholds:
     best_th, best_res = max(valid_thresholds, key=lambda x: x[1].sharpe_ratio)
-    print(
-        f"\n✅ Best threshold (validation): {best_th} (Sharpe={best_res.sharpe_ratio:.2f}, Trades={best_res.num_trades})"
-    )
+    print(f"\n✅ Best threshold (validation): {best_th} (Sharpe={best_res.sharpe_ratio:.2f}, Trades={best_res.num_trades})")
 else:
     best_th = 0.55  # fallback
     print("\n⚠️ No threshold with >=30 trades on validation. Using default 0.55.")

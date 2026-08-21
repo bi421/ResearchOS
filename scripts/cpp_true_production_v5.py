@@ -48,11 +48,7 @@ sweep_start = time.time()
 
 for h in timeframes:
     # ⚡ ЗАСВАР: '5T' → '5min' (Pandas 2.0+)
-    df_resampled = (
-        df.resample(f"{h}min")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
-    )
+    df_resampled = df.resample(f"{h}min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     print(f"⏳ {h}min агрегацлаж байна... ({len(df_resampled):,} candle)")
 
@@ -102,9 +98,7 @@ for h in timeframes:
                 }
             )
 
-            print(
-                f"  h={h:2d}min, t={t * 100:.2f}% | Winrate: {winrate * 100:.2f}%, Trades: {result.get('num_trades', 0)}"
-            )
+            print(f"  h={h:2d}min, t={t * 100:.2f}% | Winrate: {winrate * 100:.2f}%, Trades: {result.get('num_trades', 0)}")
 
         except Exception as e:
             print(f"  h={h:2d}min, t={t * 100:.2f}% | ❌ Алдаа: {e}")

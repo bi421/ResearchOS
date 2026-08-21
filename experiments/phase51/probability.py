@@ -102,9 +102,7 @@ class EmpiricalProbabilityEstimator:
         feature_indices: Sequence[int] | None = None,
     ) -> None:
         self.n_bins = int(n_bins)
-        self.feature_indices: tuple[int, ...] = tuple(
-            feature_indices if feature_indices is not None else DEFAULT_FEATURE_INDICES
-        )
+        self.feature_indices: tuple[int, ...] = tuple(feature_indices if feature_indices is not None else DEFAULT_FEATURE_INDICES)
         if not self.feature_indices:
             raise ValueError("At least one feature must be selected")
         self._boundaries: dict[int, tuple[float, float, float]] = {}

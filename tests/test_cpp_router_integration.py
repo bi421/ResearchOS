@@ -146,9 +146,7 @@ class TestNumericalEquivalence:
         cpp = router.execute("calculate_statistics", {"returns": returns})
         assert set(cpp.output) == set(python_backend.calculate_statistics(returns))
         for key in cpp.output:
-            assert cpp.output[key] == pytest.approx(
-                python_backend.calculate_statistics(returns)[key], rel=1e-9, abs=1e-12
-            )
+            assert cpp.output[key] == pytest.approx(python_backend.calculate_statistics(returns)[key], rel=1e-9, abs=1e-12)
 
     def test_metrics_equivalence(self, router, python_backend):
         returns = python_backend.calculate_returns(_prices(_ROLLING_MIN))

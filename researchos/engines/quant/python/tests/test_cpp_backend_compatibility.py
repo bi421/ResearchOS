@@ -219,9 +219,7 @@ class TestReport:
                 result.result_hash = result.compute_result_hash()
                 return result
 
-        report = verify_backend_parity(
-            python_backend, BrokenBackend(python_backend), make_prices(_ROLLING_MIN), make_request()
-        )
+        report = verify_backend_parity(python_backend, BrokenBackend(python_backend), make_prices(_ROLLING_MIN), make_request())
         assert report.matched is False
         with pytest.raises(AssertionError):
             report.assert_matches()

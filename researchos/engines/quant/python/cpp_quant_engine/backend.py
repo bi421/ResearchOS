@@ -186,9 +186,7 @@ def _assert_result_hash(result, recomputed: str) -> None:
     from researchos.engines.quant.cpp_engine.exceptions import HashMismatchError
 
     if result.result_hash and recomputed != result.result_hash:
-        raise HashMismatchError(
-            f"bridge result hash mismatch: C++ produced {result.result_hash}, Python recomputed {recomputed}"
-        )
+        raise HashMismatchError(f"bridge result hash mismatch: C++ produced {result.result_hash}, Python recomputed {recomputed}")
 
 
 def default_backend() -> CppQuantEngineBackend:
@@ -203,9 +201,7 @@ class Statistics:
 
     @staticmethod
     def compute(data: list[float], calculation_version: str = "CALCULATION_V1") -> StatisticsResult:
-        return default_backend().statistics_compute(
-            StatisticsRequest(data=list(data), calculation_version=calculation_version)
-        )
+        return default_backend().statistics_compute(StatisticsRequest(data=list(data), calculation_version=calculation_version))
 
 
 class Risk:

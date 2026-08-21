@@ -99,14 +99,7 @@ def compare_values(
 
 
 def _rel_diff(a: Any, b: Any) -> float | None:
-    if (
-        _is_number(a)
-        and _is_number(b)
-        and not math.isnan(a)
-        and not math.isnan(b)
-        and not math.isinf(a)
-        and not math.isinf(b)
-    ):
+    if _is_number(a) and _is_number(b) and not math.isnan(a) and not math.isnan(b) and not math.isinf(a) and not math.isinf(b):
         if b == 0.0:
             return 0.0 if a == 0.0 else float("inf")
 
@@ -263,9 +256,7 @@ class CompatibilityReport:
 
             for diff in self.field_diffs:
                 if not diff.matched:
-                    lines.append(
-                        f"    {diff.path}: python={diff.py_value!r} cpp={diff.cpp_value!r} (tol {diff.tolerance})"
-                    )
+                    lines.append(f"    {diff.path}: python={diff.py_value!r} cpp={diff.cpp_value!r} (tol {diff.tolerance})")
 
         return "\n".join(lines)
 
@@ -616,9 +607,7 @@ def verify_backend_parity(
     # last-bit floating-point differences.
 
     if py_result.result_hash != cpp_result.result_hash:
-        report.notes.append(
-            "raw result_hash differs across backends; canonical_result_hash is the cross-backend certification hash."
-        )
+        report.notes.append("raw result_hash differs across backends; canonical_result_hash is the cross-backend certification hash.")
 
     # ------------------------------------------------------------
     # 16. Final certification invariant

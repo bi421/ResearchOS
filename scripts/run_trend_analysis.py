@@ -218,9 +218,7 @@ for name, info in trend_results.items():
         sma20 = combined_df[name].rolling(20).mean().iloc[-1]
         sma50 = combined_df[name].rolling(50).mean().iloc[-1]
         emoji = "🟢" if info["trend"] == "BULLISH" else "🔴" if info["trend"] == "BEARISH" else "🟡"
-        report += (
-            f"| {name} |  | {emoji} {info['trend']} | {info['strength']:.2f} | {info['price_change']:.2%} |  |  |\n"
-        )
+        report += f"| {name} |  | {emoji} {info['trend']} | {info['strength']:.2f} | {info['price_change']:.2%} |  |  |\n"
 
 report += f"""
 
@@ -270,6 +268,4 @@ with open("trend_report.md", "w", encoding="utf-8") as f:
     f.write(report)
 
 print("\n✅ Trend report saved: trend_report.md")
-print(
-    f"📊 Market Sentiment: {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}"
-)
+print(f"📊 Market Sentiment: {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}")

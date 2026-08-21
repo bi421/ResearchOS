@@ -111,8 +111,7 @@ class EvidenceRepository:
         conn = self._repo._get_conn()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT artifact_type, artifact_hash, version, created_at, payload, "
-            "parent_hashes, lineage_hash FROM evidence WHERE artifact_hash = ?",
+            "SELECT artifact_type, artifact_hash, version, created_at, payload, parent_hashes, lineage_hash FROM evidence WHERE artifact_hash = ?",
             (artifact_hash,),
         )
         row = cursor.fetchone()

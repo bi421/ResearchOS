@@ -91,9 +91,7 @@ class MarketMemoryRepository:
         data = json.dumps(obj.to_dict(), sort_keys=True, default=str)
         dataset_source = getattr(obj, "dataset_source", "")
         self._sqlite_conn.execute(
-            "INSERT OR REPLACE INTO market_memory_objects (id, object_type, data, dataset_source, "
-            "saved_at) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT OR REPLACE INTO market_memory_objects (id, object_type, data, dataset_source, saved_at) VALUES (?, ?, ?, ?, ?)",
             (obj.id, object_type, data, dataset_source, datetime.now(timezone.utc).isoformat()),
         )
         self._sqlite_conn.commit()

@@ -32,9 +32,7 @@ try:
         print("\n🔄 C++ Engine дээр sweep эхэлж байна...")
         # Таны C++ кодод тохируулан run_sweep эсвэл optimize гэсэн функцийг дуудна
         # results = runner.run_sweep(horizons, thresholds)
-        print(
-            "⚠️ Санамж: C++ API-ын яг нарийн функцийн нэрийг (жишээ нь: run_sweep, optimize) баталгаажуулсны дараа бүрэн ажиллуулна."
-        )
+        print("⚠️ Санамж: C++ API-ын яг нарийн функцийн нэрийг (жишээ нь: run_sweep, optimize) баталгаажуулсны дараа бүрэн ажиллуулна.")
 
     elif hasattr(cpp_quant_engine, "Optimizer"):
         print("✅ Optimizer олдлоо. Үүнийг ашиглан sweep хийнэ.")

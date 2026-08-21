@@ -42,9 +42,7 @@ def load_xauusd_1d() -> pd.DataFrame:
     if not dfs:
         pytest.skip("No XAUUSD CSV files found")
     df = pd.concat(dfs).sort_index()
-    df_d = (
-        df.resample("1D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
-    )
+    df_d = df.resample("1D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     return df_d
 
 

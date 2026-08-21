@@ -134,9 +134,7 @@ for name, info in trend_results.items():
         strength=info["strength"],
         weight=0.35,
         confidence=0.75,
-        description=(
-            f"{name}: {info['trend']}, Price: ${info['current_price']:.2f}, Change: {info['price_change']:.2%}"
-        ),
+        description=(f"{name}: {info['trend']}, Price: ${info['current_price']:.2f}, Change: {info['price_change']:.2%}"),
         supporting_ids=[],
     )
     evidence_items.append(item)
@@ -192,6 +190,4 @@ with open("trend_report_verified.md", "w", encoding="utf-8") as f:
     f.write(report)
 
 print("\n✅ Report saved: trend_report_verified.md")
-print(
-    f"📊 Market Sentiment: {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}"
-)
+print(f"📊 Market Sentiment: {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}")

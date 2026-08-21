@@ -39,11 +39,7 @@ def normal_cdf(x: float, mu: float = 0.0, sigma: float = 1.0) -> float:
 def _t_pdf(x: float, df: float) -> float:
     if df <= 0:
         raise ValueError("df must be positive")
-    return (
-        math.gamma((df + 1.0) / 2.0)
-        / (math.sqrt(df * math.pi) * math.gamma(df / 2.0))
-        * (1.0 + (x * x) / df) ** (-(df + 1.0) / 2.0)
-    )
+    return math.gamma((df + 1.0) / 2.0) / (math.sqrt(df * math.pi) * math.gamma(df / 2.0)) * (1.0 + (x * x) / df) ** (-(df + 1.0) / 2.0)
 
 
 def student_t_pdf(x: float, df: float) -> float:
@@ -222,14 +218,10 @@ def _normal_ppf(p: float) -> float:
 
     if p < 0.02425:
         q = math.sqrt(-2.0 * math.log(p))
-        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
-            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
-        )
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0)
     if p > 0.97575:
         q = math.sqrt(-2.0 * math.log(1.0 - p))
-        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
-            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
-        )
+        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0)
 
     q = p - 0.5
     r = q * q

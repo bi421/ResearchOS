@@ -100,11 +100,7 @@ def should_generate_early_warning(
 ) -> bool:
     """Determine if an early warning should be generated."""
     avg_strength = sum(signal_strengths) / len(signal_strengths) if signal_strengths else 0
-    return (
-        confidence >= _EARLY_WARNING_MIN_CONFIDENCE
-        and horizon_periods >= _EARLY_WARNING_MIN_HORIZON
-        and avg_strength >= 0.3
-    )
+    return confidence >= _EARLY_WARNING_MIN_CONFIDENCE and horizon_periods >= _EARLY_WARNING_MIN_HORIZON and avg_strength >= 0.3
 
 
 def estimate_early_warning_horizon(

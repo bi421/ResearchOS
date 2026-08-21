@@ -98,9 +98,7 @@ class EvidenceGraph:
         if edge.target_id not in self._nodes:
             raise NodeNotFoundError(edge.target_id)
         if self._has_relationship(edge.source_id, edge.target_id, edge.relationship):
-            raise InvalidEdgeError(
-                f"duplicate relationship '{edge.relationship.value}' between {edge.source_id!r} and {edge.target_id!r}"
-            )
+            raise InvalidEdgeError(f"duplicate relationship '{edge.relationship.value}' between {edge.source_id!r} and {edge.target_id!r}")
         self._edges[edge.edge_id] = edge
         self._incident[edge.source_id].add(edge.edge_id)
         self._incident[edge.target_id].add(edge.edge_id)

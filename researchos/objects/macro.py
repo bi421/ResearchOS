@@ -1219,9 +1219,7 @@ class MacroProbability(BaseObject):
         self.historical_analogues: list[str] = historical_analogues or []
         self.methodology = methodology
         self.dominant_bias = dominant_bias
-        self.lifecycle.transition(
-            LifecycleStage.ANALYZED, reason=f"Probabilities computed: LONG={probability_long:.2f}"
-        )
+        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Probabilities computed: LONG={probability_long:.2f}")
 
     def _to_hashable_dict(self) -> dict:
         return {

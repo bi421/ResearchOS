@@ -90,9 +90,7 @@ def _require_evidence_type(value: Any) -> EvidenceType:
             return EvidenceType(value)
         except ValueError:
             valid = ", ".join(member.value for member in EvidenceType)
-            raise InvalidEvidenceTypeError(
-                f"evidence_type {value!r} is not a valid EvidenceType; allowed values: {valid}"
-            ) from None
+            raise InvalidEvidenceTypeError(f"evidence_type {value!r} is not a valid EvidenceType; allowed values: {valid}") from None
     raise InvalidEvidenceTypeError(f"evidence_type must be an EvidenceType or str, got {type(value).__name__}")
 
 

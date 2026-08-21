@@ -202,9 +202,7 @@ class PipelineRepository:
                 raise InvalidPipelineRecordError(f"record {pid!r} must be a mapping")
             record = PipelineRecord.from_dict(record_data)
             if record.pipeline_id != pid:
-                raise InvalidPipelineRecordError(
-                    f"record key {pid!r} does not match pipeline_id {record.pipeline_id!r}"
-                )
+                raise InvalidPipelineRecordError(f"record key {pid!r} does not match pipeline_id {record.pipeline_id!r}")
             repo._records[record.pipeline_id] = record
         return repo
 

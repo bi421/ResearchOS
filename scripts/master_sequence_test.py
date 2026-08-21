@@ -59,17 +59,9 @@ def load_btc(timeframe="4h"):
     df = ticker.history(start="2021-01-01", end="2026-08-20")
     # df columns: Open, High, Low, Close, Volume (capitalized)
     if timeframe == "4h":
-        df_h = (
-            df.resample("4h")
-            .agg({"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"})
-            .dropna()
-        )
+        df_h = df.resample("4h").agg({"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}).dropna()
     else:
-        df_h = (
-            df.resample("D")
-            .agg({"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"})
-            .dropna()
-        )
+        df_h = df.resample("D").agg({"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}).dropna()
     df_h.columns = ["open", "high", "low", "close", "volume"]  # rename to lowercase
     return df_h
 
@@ -235,9 +227,7 @@ print("=" * 60)
 print(f"{'Asset/Time':15} | {'Trades':6} | {'Return':8} | {'Sharpe':7} | {'MaxDD':8} | {'Status'}")
 print("-" * 60)
 for r in results:
-    print(
-        f"{r['name']:15} | {r['trades']:6d} | {r['return']:8.2%} | {r['sharpe']:7.2f} | {r['max_dd']:8.2%} | {r['status']}"
-    )
+    print(f"{r['name']:15} | {r['trades']:6d} | {r['return']:8.2%} | {r['sharpe']:7.2f} | {r['max_dd']:8.2%} | {r['status']}")
 
 best = max(results, key=lambda x: x["sharpe"]) if results else None
 if best:

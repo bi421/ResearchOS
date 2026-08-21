@@ -223,9 +223,7 @@ class ReproductionEngine:
         # ---------------------------------------------------------------
         chain = self._lineage.resolve_full_chain(result_hash)
         if chain is None:
-            raise MissingArtifact(
-                f"Result artifact {result_hash} is not a Result or is not present in the evidence store"
-            )
+            raise MissingArtifact(f"Result artifact {result_hash} is not a Result or is not present in the evidence store")
         self._assert_chain(chain, result_hash)
 
         # Build artifact_chain for the report.
@@ -251,9 +249,7 @@ class ReproductionEngine:
             ("Validation", chain.validation),
         ]:
             if env is not None and not env.verify():
-                raise IntegrityFailure(
-                    f"{typ} artifact {env.artifact_hash} failed integrity verification (lineage_hash mismatch)"
-                )
+                raise IntegrityFailure(f"{typ} artifact {env.artifact_hash} failed integrity verification (lineage_hash mismatch)")
 
         # ---------------------------------------------------------------
         # 3. Reconstruct inputs
@@ -289,14 +285,10 @@ class ReproductionEngine:
         # 6. Compare hashes
         # ---------------------------------------------------------------
         if not original_result_hash:
-            raise ReconstructionFailure(
-                "Result artifact payload does not carry a 'result_hash' reference to compare against"
-            )
+            raise ReconstructionFailure("Result artifact payload does not carry a 'result_hash' reference to compare against")
 
         if original_result_hash != reproduced_hash:
-            raise HashMismatch(
-                f"Reproduction hash mismatch: original={original_result_hash} reproduced={reproduced_hash}"
-            )
+            raise HashMismatch(f"Reproduction hash mismatch: original={original_result_hash} reproduced={reproduced_hash}")
 
         # Success: identical hashes.
         return ReproductionReport(

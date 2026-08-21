@@ -54,11 +54,7 @@ def load_data():
 
 def run_backtest(df, timeframe="1h", short=20, long=50):
     # Pandas 2.0+ дээр 'h' (жижиг үсэг) ашиглах
-    df_h = (
-        df.resample(timeframe)
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
-    )
+    df_h = df.resample(timeframe).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
     if len(df_h) < long:
         return None

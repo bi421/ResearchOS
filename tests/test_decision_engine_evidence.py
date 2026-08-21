@@ -423,10 +423,7 @@ class TestProbabilityCalculator:
         assert assessment.bullish_probability == pytest.approx(0.5)
         assert assessment.bearish_probability == pytest.approx(0.375)
         assert assessment.neutral_probability == pytest.approx(0.125)
-        assert (
-            assessment.bullish_probability + assessment.bearish_probability + assessment.neutral_probability
-            == pytest.approx(1.0)
-        )
+        assert assessment.bullish_probability + assessment.bearish_probability + assessment.neutral_probability == pytest.approx(1.0)
         assert assessment.confidence == pytest.approx(1.6 / 3.0)
         assert assessment.evidence_strength == pytest.approx(0.8 / 3.0)
         assert assessment.sample_size == 3

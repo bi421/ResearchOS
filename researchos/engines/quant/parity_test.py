@@ -134,9 +134,7 @@ def _assert_floats_bit_exact(name: str, python_val: float, cpp_val: float) -> No
 
     if py_bytes != cpp_bytes:
         pytest.fail(
-            f"BIT EXACT MISMATCH in {name}: "
-            f"Python={python_val!r} (hex={_float_to_hex(python_val)}) vs "
-            f"C++={cpp_val!r} (hex={_float_to_hex(cpp_val)})"
+            f"BIT EXACT MISMATCH in {name}: Python={python_val!r} (hex={_float_to_hex(python_val)}) vs C++={cpp_val!r} (hex={_float_to_hex(cpp_val)})"
         )
 
 
@@ -158,19 +156,13 @@ def _require_cpp_engine():
     try:
         from researchos.engines.quant.cpp_quant import run_ml_backtest_cpp  # noqa: F401
     except (ImportError, ModuleNotFoundError, OSError) as exc:
-        pytest.fail(
-            "C++ engine not available — this is a CRITICAL failure. "
-            "Build the C++ engine before deploying.\n"
-            f"Import error: {exc}"
-        )
+        pytest.fail(f"C++ engine not available — this is a CRITICAL failure. Build the C++ engine before deploying.\nImport error: {exc}")
 
     # Verify the module is actually the C++ engine, not a Python stub
     from researchos.engines.quant import cpp_quant
 
     if not hasattr(cpp_quant, "run_ml_backtest_cpp"):
-        pytest.fail(
-            "C++ engine module loaded but missing run_ml_backtest_cpp. This is a CRITICAL determinism violation."
-        )
+        pytest.fail("C++ engine module loaded but missing run_ml_backtest_cpp. This is a CRITICAL determinism violation.")
 
     return cpp_quant.run_ml_backtest_cpp
 

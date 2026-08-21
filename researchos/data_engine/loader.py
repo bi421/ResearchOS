@@ -97,9 +97,7 @@ class DataLoader:
         config = cls._CONFIG.get(symbol)
         if not config:
             raise ValueError(
-                f"Symbol '{symbol}' is not registered. "
-                f"Supported symbols: {list(cls._CONFIG.keys())}. "
-                "Add it to DataLoader._CONFIG first."
+                f"Symbol '{symbol}' is not registered. Supported symbols: {list(cls._CONFIG.keys())}. Add it to DataLoader._CONFIG first."
             )
 
         base = Path(config["base_path"])

@@ -65,17 +65,9 @@ def load_btc(timeframe="4h"):
     if "volume" not in df.columns:
         df["volume"] = 0
     if timeframe == "4h":
-        df_h = (
-            df.resample("4h")
-            .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-            .dropna()
-        )
+        df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     else:
-        df_h = (
-            df.resample("D")
-            .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-            .dropna()
-        )
+        df_h = df.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     return df_h
 
 
@@ -241,9 +233,7 @@ print("=" * 60)
 print(f"{'Asset/Time':15} | {'Trades':6} | {'Return':8} | {'Sharpe':7} | {'MaxDD':8} | {'Status'}")
 print("-" * 60)
 for r in results:
-    print(
-        f"{r['name']:15} | {r['trades']:6d} | {r['return']:8.2%} | {r['sharpe']:7.2f} | {r['max_dd']:8.2%} | {r['status']}"
-    )
+    print(f"{r['name']:15} | {r['trades']:6d} | {r['return']:8.2%} | {r['sharpe']:7.2f} | {r['max_dd']:8.2%} | {r['status']}")
 
 best = max(results, key=lambda x: x["sharpe"]) if results else None
 if best:

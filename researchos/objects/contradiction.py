@@ -173,9 +173,7 @@ class ContradictionReport(BaseObject):
         self.research_id = research_id
         self.contradictions = list(contradictions or [])
 
-        self.contradiction_ids = list(
-            contradiction_ids if contradiction_ids is not None else [c.id for c in self.contradictions]
-        )
+        self.contradiction_ids = list(contradiction_ids if contradiction_ids is not None else [c.id for c in self.contradictions])
 
     def add_contradiction(
         self,

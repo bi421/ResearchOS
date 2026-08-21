@@ -467,9 +467,7 @@ class ResearchEngine:
     def econometric_analysis(self, values: Sequence[float], model: str, **params: Any) -> ResearchResult:
         return self._backend.research_econometric_analysis(values, model, **params)
 
-    def validation(
-        self, dataset: Any, train_size: int, validation_size: int, step_size: int, **params: Any
-    ) -> ResearchResult:
+    def validation(self, dataset: Any, train_size: int, validation_size: int, step_size: int, **params: Any) -> ResearchResult:
         return self._backend.research_validation(dataset, train_size, validation_size, step_size, **params)
 
 

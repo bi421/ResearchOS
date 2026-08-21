@@ -1,18 +1,19 @@
-import yfinance as yf
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.decision_engine.contracts import EvidenceItem, EvidenceSource, ProbabilityOutcome, WeightConfiguration
-from researchos.decision_engine.score import compute_evidence_score
-from researchos.data_engine.asset_identity import DataIdentityError, assert_xasd_identity, resolve_xasd_spot_proxy
+import base64
+import io
 import sys
 import time
-import seaborn as sns
-import matplotlib.pyplot as plt
-import io
-import base64
 import warnings
+from datetime import datetime, timedelta
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import yfinance as yf
+
+from researchos.data_engine.asset_identity import assert_xasd_identity
+from researchos.decision_engine.contracts import EvidenceItem, EvidenceSource, ProbabilityOutcome, WeightConfiguration
+from researchos.decision_engine.score import compute_evidence_score
+from researchos.quant_engine.backend import PythonQuantBackend
 
 warnings.filterwarnings("ignore")
 
@@ -142,7 +143,7 @@ for name in combined_df.columns:
         m = compute_metrics(combined_df[name])
         if m:
             asset_metrics[name] = m
-            print(f'✓ {name}: Return {m["total_return"]:.2%}, Sharpe {m["sharpe_ratio"]:.2f}')
+            print(f"✓ {name}: Return {m['total_return']:.2%}, Sharpe {m['sharpe_ratio']:.2f}")
 
 # ============================================================
 # 5. REGIME DETECTION
@@ -193,11 +194,7 @@ for name, metrics in asset_metrics.items():
         strength=strength,
         weight=0.3,
         confidence=0.8,
-        description=(
-            f'{name}: Return {metrics["total_return"]:.2%}, '
-            f'Sharpe {metrics["sharpe_ratio"]:.2f}, '
-            f'Max DD {metrics["max_drawdown"]:.2%}'
-        ),
+        description=(f"{name}: Return {metrics['total_return']:.2%}, Sharpe {metrics['sharpe_ratio']:.2f}, Max DD {metrics['max_drawdown']:.2%}"),
         supporting_ids=[],
     )
     evidence_items.append(item)
@@ -238,9 +235,7 @@ if "XASD" in combined_df.columns:
 # ============================================================
 # 7. EVIDENCE SCORE
 # ============================================================
-weight_config = WeightConfiguration(
-    quant_weight=0.4, validation_weight=0.1, experiment_weight=0.2, macro_weight=0.3, market_memory_weight=0.0
-)
+weight_config = WeightConfiguration(quant_weight=0.4, validation_weight=0.1, experiment_weight=0.2, macro_weight=0.3, market_memory_weight=0.0)
 
 score = compute_evidence_score(
     context_id="full_analysis_v3",
@@ -254,15 +249,15 @@ score = compute_evidence_score(
 # ============================================================
 report = f"""
 # 📊 Multi-Asset Market Intelligence Report (v3)
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M')}
-**Period:** {start.strftime('%Y-%m-%d')} → {end.strftime('%Y-%m-%d')}
+**Generated:** {datetime.now().strftime("%Y-%m-%d %H:%M")}
+**Period:** {start.strftime("%Y-%m-%d")} → {end.strftime("%Y-%m-%d")}
 **Aligned Data Points:** {len(combined_df)} trading days
-**Assets Analyzed:** {', '.join(asset_metrics.keys())}
+**Assets Analyzed:** {", ".join(asset_metrics.keys())}
 
 ---
 
 ## 🌡️ Market Regime: **{regime}**
-**Reasons:** {', '.join(regime_reasons) if regime_reasons else 'No clear signals'}
+**Reasons:** {", ".join(regime_reasons) if regime_reasons else "No clear signals"}
 
 ---
 
@@ -278,7 +273,7 @@ report = f"""
 | Uncertainty | {score.uncertainty_score:.3f} |
 | Evidence Count | {score.evidence_count} |
 
-**Interpretation:** {'**BULLISH**' if score.total_score > 0.2 else '**BEARISH**' if score.total_score < -0.2 else '**NEUTRAL**'}
+**Interpretation:** {"**BULLISH**" if score.total_score > 0.2 else "**BEARISH**" if score.total_score < -0.2 else "**NEUTRAL**"}
 
 ---
 
@@ -299,7 +294,7 @@ for name, m in asset_metrics.items():
         dir_val = "N/A"
     report += f"| {name} | {m['total_return']:.2%} | {m['sharpe_ratio']:.2f} | {sortino:.2f} | {calmar:.2f} | {m['max_drawdown']:.2%} | {dir_val} |\n"
 
-report += f"""
+report += """
 
 ## 🌍 Macro Factor Correlations (vs XASD)
 
@@ -333,7 +328,7 @@ if "S10Y" in macro_corr:
 if "VIX" in macro_corr:
     report += f"- **VIX vs XASD:** {macro_corr.get('VIX', 0):.3f} (risk-on/off)\n"
 
-report += f"""
+report += """
 
 ## 📋 All Evidence Items
 
@@ -347,11 +342,11 @@ for item in evidence_items:
 report += f"""
 
 ## 📝 Summary
-- **Best Performer:** {max(asset_metrics.items(), key=lambda x: x[1]['total_return'])[0]} ({max(asset_metrics.items(), key=lambda x: x[1]['total_return'])[1]['total_return']:.2%})
-- **Worst Performer:** {min(asset_metrics.items(), key=lambda x: x[1]['total_return'])[0]} ({min(asset_metrics.items(), key=lambda x: x[1]['total_return'])[1]['total_return']:.2%})
-- **Highest Sharpe:** {max(asset_metrics.items(), key=lambda x: x[1]['sharpe_ratio'])[0]} (Sharpe: {max(asset_metrics.items(), key=lambda x: x[1]['sharpe_ratio'])[1]['sharpe_ratio']:.2f})
-- **Risk-Off Signal:** {'Yes' if regime == 'RISK-OFF' else 'No'}
-- **Overall Sentiment:** {'Bullish' if score.total_score > 0.2 else 'Bearish' if score.total_score < -0.2 else 'Neutral'}
+- **Best Performer:** {max(asset_metrics.items(), key=lambda x: x[1]["total_return"])[0]} ({max(asset_metrics.items(), key=lambda x: x[1]["total_return"])[1]["total_return"]:.2%})
+- **Worst Performer:** {min(asset_metrics.items(), key=lambda x: x[1]["total_return"])[0]} ({min(asset_metrics.items(), key=lambda x: x[1]["total_return"])[1]["total_return"]:.2%})
+- **Highest Sharpe:** {max(asset_metrics.items(), key=lambda x: x[1]["sharpe_ratio"])[0]} (Sharpe: {max(asset_metrics.items(), key=lambda x: x[1]["sharpe_ratio"])[1]["sharpe_ratio"]:.2f})
+- **Risk-Off Signal:** {"Yes" if regime == "RISK-OFF" else "No"}
+- **Overall Sentiment:** {"Bullish" if score.total_score > 0.2 else "Bearish" if score.total_score < -0.2 else "Neutral"}
 """
 
 with open("market_report_v3.md", "w", encoding="utf-8") as f:

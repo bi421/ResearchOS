@@ -646,10 +646,7 @@ class RetryExecutor:
 
                 # Calculate backoff
                 wait_time = self._calculate_backoff(attempt)
-                logger.warning(
-                    f"Attempt {attempt}/{self.policy.max_retries} failed for "
-                    f"{operation.__name__}: {e}. Retrying in {wait_time}s"
-                )
+                logger.warning(f"Attempt {attempt}/{self.policy.max_retries} failed for {operation.__name__}: {e}. Retrying in {wait_time}s")
                 time.sleep(wait_time)
 
         raise FinalRetryError(

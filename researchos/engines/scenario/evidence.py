@@ -139,9 +139,7 @@ class EvidenceCollection(BaseObject):
         obj = super().from_dict(data)
         obj.decision_context_id = data["decision_context_id"]
         obj.items = [DecisionEvidenceItem.from_dict(e) for e in data.get("items", [])]
-        obj.collection_timestamp = (
-            parse_timestamp(data["collection_timestamp"]) if data.get("collection_timestamp") else utc_now()
-        )
+        obj.collection_timestamp = parse_timestamp(data["collection_timestamp"]) if data.get("collection_timestamp") else utc_now()
         obj.collection_version = data.get("collection_version", "COLLECTION_V1")
         obj._collection_hash = data.get("collection_hash", "")
         return obj
@@ -276,9 +274,7 @@ class EvidenceAggregator:
         if context.macro_state_id:
             items.append(self._make_item(EvidenceSource.MACRO_INTELLIGENCE, context.macro_state_id, self._MACRO_STATE))
         if context.market_regime_id:
-            items.append(
-                self._make_item(EvidenceSource.MACRO_INTELLIGENCE, context.market_regime_id, self._MARKET_REGIME)
-            )
+            items.append(self._make_item(EvidenceSource.MACRO_INTELLIGENCE, context.market_regime_id, self._MARKET_REGIME))
         return items
 
     def _collect_quant_engine(self, context: DecisionContext) -> list[DecisionEvidenceItem]:

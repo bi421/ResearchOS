@@ -153,9 +153,5 @@ class DataComparator:
             "correlation_close": corr,
             "mape_close_pct": mape,
             "max_close_diff": max_diff,
-            "data_quality": "EXCELLENT"
-            if corr > 0.99 and mape < 1.0
-            else "GOOD"
-            if corr > 0.95 and mape < 5.0
-            else "POOR",
+            "data_quality": "EXCELLENT" if corr > 0.99 and mape < 1.0 else "GOOD" if corr > 0.95 and mape < 5.0 else "POOR",
         }

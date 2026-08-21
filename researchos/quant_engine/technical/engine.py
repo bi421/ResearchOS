@@ -115,9 +115,7 @@ class TechnicalAnalysisEngine:
 
         if isinstance(result, dict):
             values: list[float | None] = result.get(self._primary_key_for(spec.name), [None] * bars.length)
-            aux: dict[str, list[float | None]] = {
-                k: v for k, v in result.items() if k != self._primary_key_for(spec.name)
-            }
+            aux: dict[str, list[float | None]] = {k: v for k, v in result.items() if k != self._primary_key_for(spec.name)}
         else:
             values = result
             aux = {}
@@ -216,9 +214,7 @@ def _register_builtins() -> None:
     )
     register_indicator("CCI", IndicatorCategory.MOMENTUM, {"period": 20})(lambda bars, period: ind.cci(bars, period))
     register_indicator("ROC", IndicatorCategory.MOMENTUM, {"period": 12})(lambda bars, period: ind.roc(bars, period))
-    register_indicator("Momentum", IndicatorCategory.MOMENTUM, {"period": 12})(
-        lambda bars, period: ind.momentum(bars, period)
-    )
+    register_indicator("Momentum", IndicatorCategory.MOMENTUM, {"period": 12})(lambda bars, period: ind.momentum(bars, period))
 
     # Volatility
     register_indicator("ATR", IndicatorCategory.VOLATILITY, {"period": 14})(lambda bars, period: ind.atr(bars, period))
@@ -228,26 +224,18 @@ def _register_builtins() -> None:
     register_indicator("Keltner", IndicatorCategory.VOLATILITY, {"period": 20, "atr_period": 10, "multiplier": 2.0})(
         lambda bars, period, atr_period, multiplier: ind.keltner_channel(bars, period, atr_period, multiplier)
     )
-    register_indicator("Donchian", IndicatorCategory.VOLATILITY, {"period": 20})(
-        lambda bars, period: ind.donchian_channel(bars, period)
-    )
+    register_indicator("Donchian", IndicatorCategory.VOLATILITY, {"period": 20})(lambda bars, period: ind.donchian_channel(bars, period))
 
     # Volume
     register_indicator("OBV", IndicatorCategory.VOLUME, {})(lambda bars: ind.obv(bars))
     register_indicator("VWAP", IndicatorCategory.VOLUME, {})(lambda bars: ind.vwap(bars))
     register_indicator("MFI", IndicatorCategory.VOLUME, {"period": 14})(lambda bars, period: ind.mfi(bars, period))
     register_indicator("CMF", IndicatorCategory.VOLUME, {"period": 20})(lambda bars, period: ind.cmf(bars, period))
-    register_indicator("Accumulation/Distribution", IndicatorCategory.VOLUME, {})(
-        lambda bars: ind.accumulation_distribution(bars)
-    )
+    register_indicator("Accumulation/Distribution", IndicatorCategory.VOLUME, {})(lambda bars: ind.accumulation_distribution(bars))
 
     # Trend strength
-    register_indicator("ADX", IndicatorCategory.TREND_STRENGTH, {"period": 14})(
-        lambda bars, period: ind.adx(bars, period)
-    )
-    register_indicator("DMI", IndicatorCategory.TREND_STRENGTH, {"period": 14})(
-        lambda bars, period: ind.dmi(bars, period)
-    )
+    register_indicator("ADX", IndicatorCategory.TREND_STRENGTH, {"period": 14})(lambda bars, period: ind.adx(bars, period))
+    register_indicator("DMI", IndicatorCategory.TREND_STRENGTH, {"period": 14})(lambda bars, period: ind.dmi(bars, period))
 
     # MACD family
     register_indicator("MACD", IndicatorCategory.MACD, {"fast": 12, "slow": 26, "signal": 9})(

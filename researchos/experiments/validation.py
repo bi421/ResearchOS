@@ -203,9 +203,7 @@ class ExperimentValidation(BaseObject):
             self.overall_status = ValidationStatus.INCONCLUSIVE
 
         self.confidence = passed_count / max(total_count, 1)
-        self.validation_trace = (
-            f"Target validation: {self.overall_status.value} ({passed_count}/{total_count} targets met)"
-        )
+        self.validation_trace = f"Target validation: {self.overall_status.value} ({passed_count}/{total_count} targets met)"
 
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
@@ -265,16 +263,12 @@ class ExperimentValidation(BaseObject):
         if is_significant:
             self.overall_status = ValidationStatus.PASSED
             self.findings.append(
-                f"Result {result_value} is significantly different "
-                f"from expected {expected_value} (z={z_score:.2f}, "
-                f"critical={z_critical})"
+                f"Result {result_value} is significantly different from expected {expected_value} (z={z_score:.2f}, critical={z_critical})"
             )
         else:
             self.overall_status = ValidationStatus.INCONCLUSIVE
             self.findings.append(
-                f"Result {result_value} is NOT significantly different "
-                f"from expected {expected_value} (z={z_score:.2f}, "
-                f"critical={z_critical})"
+                f"Result {result_value} is NOT significantly different from expected {expected_value} (z={z_score:.2f}, critical={z_critical})"
             )
 
         self.confidence = min(abs(z_score) / (z_critical * 2), 1.0)

@@ -174,9 +174,7 @@ class DecisionReport(BaseObject):
 
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
-            reason=f"Decision report generated for {asset}: "
-            f"B={bullish_probability:.2%}, Be={bearish_probability:.2%}, "
-            f"N={neutral_probability:.2%}",
+            reason=f"Decision report generated for {asset}: B={bullish_probability:.2%}, Be={bearish_probability:.2%}, N={neutral_probability:.2%}",
         )
 
     @property

@@ -90,9 +90,7 @@ class ReplayEngine:
             if hasattr(first, "close"):
                 # Candle-like without timestamps — synthesize deterministic times.
                 start = datetime(2020, 1, 1)
-                return [
-                    ReplayBar(close=float(c.close), timestamp=start + timedelta(days=i)) for i, c in enumerate(dataset)
-                ]
+                return [ReplayBar(close=float(c.close), timestamp=start + timedelta(days=i)) for i, c in enumerate(dataset)]
             if isinstance(first, (int, float)):
                 start = datetime(2020, 1, 1)
                 return [ReplayBar(close=float(p), timestamp=start + timedelta(days=i)) for i, p in enumerate(dataset)]

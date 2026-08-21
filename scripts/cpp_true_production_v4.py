@@ -48,11 +48,7 @@ sweep_start = time.time()
 
 for h in timeframes:
     # DataFrame-г C++-д дамжуулах (resample хийх)
-    df_resampled = (
-        df.resample(f"{h}T", on="timestamp")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
-    )
+    df_resampled = df.resample(f"{h}T", on="timestamp").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     df_resampled = df_resampled.reset_index()
 
     # C++-д дамжуулах
@@ -79,9 +75,7 @@ for h in timeframes:
                 }
             )
 
-            print(
-                f"  h={h:2d}m, t={t * 100:.2f}% | Winrate: {winrate * 100:.2f}%, Trades: {result.get('num_trades', 0)}"
-            )
+            print(f"  h={h:2d}m, t={t * 100:.2f}% | Winrate: {winrate * 100:.2f}%, Trades: {result.get('num_trades', 0)}")
 
         except Exception as e:
             print(f"  h={h:2d}m, t={t * 100:.2f}% | ❌ Алдаа: {e}")

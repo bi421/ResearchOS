@@ -87,9 +87,7 @@ def sensitivity_analysis():
                     "win_rate": res["win_rate"] * 100,
                 }
             )
-            print(
-                f"   {short}/{long}: Return {res['return'] * 100:.1f}%, Trades {res['trades']}, Win Rate {res['win_rate'] * 100:.1f}%"
-            )
+            print(f"   {short}/{long}: Return {res['return'] * 100:.1f}%, Trades {res['trades']}, Win Rate {res['win_rate'] * 100:.1f}%")
 
     return results
 

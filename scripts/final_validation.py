@@ -14,11 +14,7 @@ print("=" * 70)
 print("\n[1/4] Өгөгдөл татаж байна...")
 df = yf.download("BTC-USD", period="6mo", progress=False)
 close_col = df["Close"]
-prices = (
-    close_col.iloc[:, 0].dropna().astype(float).tolist()
-    if isinstance(close_col, pd.DataFrame)
-    else close_col.dropna().astype(float).tolist()
-)
+prices = close_col.iloc[:, 0].dropna().astype(float).tolist() if isinstance(close_col, pd.DataFrame) else close_col.dropna().astype(float).tolist()
 print(f"    ✅ {len(prices)} өдрийн өгөгдөл бэлэн.")
 
 print("\n[2/4] Стратеги тохируулж байна...")

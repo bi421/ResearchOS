@@ -191,10 +191,4 @@ class WeightConfiguration:
 
     def total_weight(self) -> float:
         """Sum of all weights (should be 1.0)."""
-        return (
-            self.macro_weight
-            + self.market_memory_weight
-            + self.experiment_weight
-            + self.validation_weight
-            + self.quant_weight
-        )
+        return self.macro_weight + self.market_memory_weight + self.experiment_weight + self.validation_weight + self.quant_weight

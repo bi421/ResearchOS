@@ -154,9 +154,7 @@ class TestCertifiedPerformanceProfile:
                 ],
             }
         ]
-        profile = CertifiedPerformanceProfile.from_benchmark(
-            rows, backend_name="CppQuantAdapter", reference_backend_name="PythonQuantBackend"
-        )
+        profile = CertifiedPerformanceProfile.from_benchmark(rows, backend_name="CppQuantAdapter", reference_backend_name="PythonQuantBackend")
         # 1 operation × 2 sizes × 2 backends
         assert profile.measured() == 4
         cpp_small = profile.estimate_ms("CppQuantAdapter", "calculate_returns", DatasetSizeClass.SMALL)
@@ -223,9 +221,7 @@ class TestBackendScheduler:
         assert rejected_reason.startswith("estimated slower")
 
     def test_no_measurements_for_size_selects_first(self):
-        profile = CertifiedPerformanceProfile().add(
-            "Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0)
-        )
+        profile = CertifiedPerformanceProfile().add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         scheduler = BackendScheduler(profile=profile)
         # LARGE dataset has no measurements → first eligible wins.
         decision = scheduler.decide(

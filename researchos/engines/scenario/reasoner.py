@@ -234,9 +234,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=4,
-            description=(
-                f"Experiment contribution: {len(exp_items)} experiment results. Score={score.experiment_score:.4f}"
-            ),
+            description=(f"Experiment contribution: {len(exp_items)} experiment results. Score={score.experiment_score:.4f}"),
             inputs=context.experiment_result_ids,
             outputs=[],
             rule="ExperimentEvidence",
@@ -254,8 +252,7 @@ class DecisionReasoner:
         return ReasoningStep(
             order=5,
             description=(
-                f"Macro Intelligence contribution: {len(macro_items)} items. "
-                f"Regime={context.market_regime_id}, Score={score.macro_score:.4f}"
+                f"Macro Intelligence contribution: {len(macro_items)} items. Regime={context.market_regime_id}, Score={score.macro_score:.4f}"
             ),
             inputs=[context.macro_state_id] if context.macro_state_id else [],
             outputs=[],
@@ -274,9 +271,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=6,
-            description=(
-                f"Validation contribution: {len(val_items)} validation results. Score={score.validation_score:.4f}"
-            ),
+            description=(f"Validation contribution: {len(val_items)} validation results. Score={score.validation_score:.4f}"),
             inputs=context.validation_ids,
             outputs=[],
             rule="ValidationEvidence",
@@ -293,9 +288,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=7,
-            description=(
-                f"Quant Engine contribution: {len(quant_items)} statistical summaries. Score={score.quant_score:.4f}"
-            ),
+            description=(f"Quant Engine contribution: {len(quant_items)} statistical summaries. Score={score.quant_score:.4f}"),
             inputs=context.simulation_result_ids,
             outputs=[],
             rule="QuantEngineEvidence",
@@ -332,9 +325,7 @@ class DecisionReasoner:
         """Step 9: Uncertainty assessment."""
         return ReasoningStep(
             order=9,
-            description=(
-                f"Uncertainty assessment: uncertainty_score={score.uncertainty_score:.4f}. Source disagreement metric."
-            ),
+            description=(f"Uncertainty assessment: uncertainty_score={score.uncertainty_score:.4f}. Source disagreement metric."),
             inputs=[score.id],
             outputs=[],
             rule="UncertaintyAssessment",

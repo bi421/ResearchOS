@@ -177,9 +177,7 @@ class ResearchOrchestrator:
         if label_type == "multiclass":
             return builder.build_with_multiclass(horizon=label_horizon)
 
-        raise OrchestrationError(
-            f"unknown label_type: {label_type!r}; expected 'binary', 'regression', or 'multiclass'"
-        )
+        raise OrchestrationError(f"unknown label_type: {label_type!r}; expected 'binary', 'regression', or 'multiclass'")
 
     def validate(
         self,
@@ -326,9 +324,7 @@ class ResearchOrchestrator:
                 validation_size=validation_size,
                 step_size=step_size,
             )
-            validation_hash_str = hashlib.sha256(
-                json.dumps(validation.to_dict(), sort_keys=True, separators=(",", ":")).encode("utf-8")
-            ).hexdigest()
+            validation_hash_str = hashlib.sha256(json.dumps(validation.to_dict(), sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
             # Step 3: Train deterministic model.
             training = self.train(

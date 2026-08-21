@@ -280,13 +280,9 @@ class BayesianLearner:
 
         predictions = [self.predict(score) for score in scores]
 
-        brier_score = sum((prediction - outcome) ** 2 for prediction, outcome in zip(predictions, outcomes)) / len(
-            outcomes
-        )
+        brier_score = sum((prediction - outcome) ** 2 for prediction, outcome in zip(predictions, outcomes)) / len(outcomes)
 
-        accuracy = sum(
-            (prediction >= 0.5) == bool(outcome) for prediction, outcome in zip(predictions, outcomes)
-        ) / len(outcomes)
+        accuracy = sum((prediction >= 0.5) == bool(outcome) for prediction, outcome in zip(predictions, outcomes)) / len(outcomes)
 
         calibration = probability_calibration(
             predictions,

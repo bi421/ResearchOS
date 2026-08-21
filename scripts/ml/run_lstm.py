@@ -186,10 +186,7 @@ best_sharpe, best_th = -999, 0.52
 for th, res in results:
     if res["trades"] >= 15 and res["sharpe"] > best_sharpe:
         best_sharpe, best_th = res["sharpe"], th
-    print(
-        f"{th:5.2f}     | {res['trades']:6d} | {res['return']:7.2%} "
-        f"| {res['sharpe']:6.2f} | {res['dd']:6.2%} | {res['wr']:7.2%}"
-    )
+    print(f"{th:5.2f}     | {res['trades']:6d} | {res['return']:7.2%} | {res['sharpe']:6.2f} | {res['dd']:6.2%} | {res['wr']:7.2%}")
 print(f"Best: {best_th} (Sharpe={best_sharpe:.2f})")
 
 # Test

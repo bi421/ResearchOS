@@ -1632,9 +1632,7 @@ class KnowledgeGenerationPipeline:
 
         # Compare recent volatility to historical
         recent_vol = (sum((v - sum(values[-10:]) / 10) ** 2 for v in values[-10:]) / 10) ** 0.5
-        old_vol = (
-            sum((v - sum(values[:-10]) / len(values[:-10])) ** 2 for v in values[:-10]) / len(values[:-10])
-        ) ** 0.5
+        old_vol = (sum((v - sum(values[:-10]) / len(values[:-10])) ** 2 for v in values[:-10]) / len(values[:-10])) ** 0.5
 
         if old_vol == 0:
             return None
@@ -2021,9 +2019,7 @@ class MacroContextService:
         stats = self.knowledge_pipeline._analyze_statistics(latest, evidence) if latest else None
 
         # Get patterns
-        patterns = (
-            self.knowledge_pipeline._detect_patterns(latest, evidence, stats, KnowledgeContext()) if latest else []
-        )
+        patterns = self.knowledge_pipeline._detect_patterns(latest, evidence, stats, KnowledgeContext()) if latest else []
 
         # Get related events
         events = self.event_store.get_events_for_series(series_id, date - timedelta(days=30), date)
@@ -2340,11 +2336,7 @@ class BridgeContractValidator:
         """Verify bridge is read-only."""
         # Check that no write methods exist
         bridge_methods = [m for m in dir(V1BridgeMacroExtension) if not m.startswith("_")]
-        write_methods = [
-            m
-            for m in bridge_methods
-            if any(keyword in m.lower() for keyword in ["write", "update", "delete", "create", "append"])
-        ]
+        write_methods = [m for m in bridge_methods if any(keyword in m.lower() for keyword in ["write", "update", "delete", "create", "append"])]
         return len(write_methods) == 0
 
     def validate_versioning(self) -> bool:

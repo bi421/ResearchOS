@@ -60,9 +60,7 @@ result = {
         "max_drawdown_pct": round(float(max_dd * 100), 2),
         "win_rate_pct": round(float(win_rate), 2),
     },
-    "parquet_sha256": (PROJECT_ROOT / "data" / "curated" / "xauusd" / "xauusd_m1_2023_2025.sha256")
-    .read_text()
-    .split()[0],
+    "parquet_sha256": (PROJECT_ROOT / "data" / "curated" / "xauusd" / "xauusd_m1_2023_2025.sha256").read_text().split()[0],
 }
 out = PROJECT_ROOT / "data" / "curated" / "xauusd" / "phase51_cpp_hft.json"
 out.write_text(json.dumps(result, indent=2))

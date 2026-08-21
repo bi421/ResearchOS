@@ -237,9 +237,7 @@ def _get_offset(timezone_name: str) -> int:
             hours = int(parts[0])
             minutes = int(parts[1]) if len(parts) > 1 else 0
             if not (0 <= minutes < 60):
-                raise TimezoneResolutionError(
-                    f"Invalid timezone offset minutes in {timezone_name!r} (minutes must be in [0, 60))."
-                )
+                raise TimezoneResolutionError(f"Invalid timezone offset minutes in {timezone_name!r} (minutes must be in [0, 60)).")
             if hours < 0:
                 return hours * 60 - minutes
             if hours > 0:

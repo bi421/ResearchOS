@@ -114,10 +114,7 @@ class ResearchAttributionEngine:
                         is not attributable.
         """
         if conclusion_type not in ATTRIBUTABLE_TYPES:
-            raise ValueError(
-                f"Cannot create attribution for type '{conclusion_type}'. "
-                f"Attributable types: {sorted(ATTRIBUTABLE_TYPES)}"
-            )
+            raise ValueError(f"Cannot create attribution for type '{conclusion_type}'. Attributable types: {sorted(ATTRIBUTABLE_TYPES)}")
 
         obj = self.repo.get(conclusion_id)
         if obj is None:

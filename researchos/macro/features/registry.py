@@ -42,9 +42,7 @@ class FeatureMetadata:
             "version": self.version,
             "calculation_version": self.calculation_version,
             "created_at": TimeNormalizer.get_deterministic_timestamp(self.created_at),
-            "last_calculated": (
-                TimeNormalizer.get_deterministic_timestamp(self.last_calculated) if self.last_calculated else None
-            ),
+            "last_calculated": (TimeNormalizer.get_deterministic_timestamp(self.last_calculated) if self.last_calculated else None),
             "calculation_count": self.calculation_count,
             "errors": self.errors,
         }
@@ -60,11 +58,7 @@ class FeatureMetadata:
             version=data.get("version", "feat/registry/v1"),
             calculation_version=data.get("calculation_version", "calc/v1"),
             created_at=TimeNormalizer.parse_deterministic_timestamp(data["created_at"]),
-            last_calculated=(
-                TimeNormalizer.parse_deterministic_timestamp(data["last_calculated"])
-                if data.get("last_calculated")
-                else None
-            ),
+            last_calculated=(TimeNormalizer.parse_deterministic_timestamp(data["last_calculated"]) if data.get("last_calculated") else None),
             calculation_count=data.get("calculation_count", 0),
             errors=data.get("errors", []),
         )

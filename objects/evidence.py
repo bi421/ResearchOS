@@ -129,14 +129,7 @@ class Evidence(BaseObject):
         Quality = Source_Reliability × Recency × Relevance ×
                   Consensus × Structural_Importance × Quality_Factor
         """
-        quality = (
-            self.source_reliability
-            * self.recency
-            * self.relevance
-            * self.consensus
-            * self.structural_importance
-            * self.quality_factor
-        )
+        quality = self.source_reliability * self.recency * self.relevance * self.consensus * self.structural_importance * self.quality_factor
         return min(1.0, max(0.0, quality))
 
     def _compute_confidence(self) -> float:
@@ -255,9 +248,7 @@ class Evidence(BaseObject):
         obj.quality_factor = data.get("quality_factor", 1.0)
         obj.uncertainty = data.get("uncertainty", 0.0)
         obj.tier = data.get("tier", "Primary")
-        obj.observation_timestamp = (
-            parse_timestamp(data["observation_timestamp"]) if data.get("observation_timestamp") else None
-        )
+        obj.observation_timestamp = parse_timestamp(data["observation_timestamp"]) if data.get("observation_timestamp") else None
         obj.dependencies = list(data.get("dependencies", []))
         obj.conflicts = list(data.get("conflicts", []))
         obj.quality = data.get("quality", obj._compute_quality())

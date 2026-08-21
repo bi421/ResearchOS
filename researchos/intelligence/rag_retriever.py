@@ -508,19 +508,14 @@ class DeterministicRetriever:
     ) -> str:
         """Build a human-readable explanation of the retrieval result."""
         if not hits:
-            return (
-                f"Query '{query.text[:50]}...' returned no results "
-                f"(searched {total} objects, min_score={query.min_score:.2f})."
-            )
+            return f"Query '{query.text[:50]}...' returned no results (searched {total} objects, min_score={query.min_score:.2f})."
         lines = [
             f"Query: '{query.text[:80]}...'" if len(query.text) > 80 else f"Query: '{query.text}'",
             f"Results: {len(hits)} of {total} objects matched (min_score={query.min_score:.2f}).",
             "Top hits:",
         ]
         for i, hit in enumerate(hits[:3], 1):
-            lines.append(
-                f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:20]}...) score={hit.score:.4f}"
-            )
+            lines.append(f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:20]}...) score={hit.score:.4f}")
         if len(hits) > 3:
             lines.append(f"  ... and {len(hits) - 3} more results.")
         return "\n".join(lines)

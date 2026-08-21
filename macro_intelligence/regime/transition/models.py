@@ -64,9 +64,7 @@ class TransitionSignal:
             evidence_refs=data.get("evidence_refs", []),
             details=data.get("details", ""),
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
-            detection_timestamp=datetime.fromisoformat(
-                data.get("detection_timestamp", datetime.now(timezone.utc).isoformat())
-            ),
+            detection_timestamp=datetime.fromisoformat(data.get("detection_timestamp", datetime.now(timezone.utc).isoformat())),
         )
 
     def compute_hash(self) -> str:
@@ -402,11 +400,7 @@ class TransitionAnalysisResult:
         transition = RegimeTransition.from_dict(data["transition"]) if data.get("transition") else None
         early_warnings = [EarlyWarningSignal.from_dict(w) for w in data.get("early_warnings", [])]
         persistence = RegimePersistence.from_dict(data["persistence"]) if data.get("persistence") else None
-        prob_matrix = (
-            TransitionProbabilityMatrix.from_dict(data["probability_matrix"])
-            if data.get("probability_matrix")
-            else None
-        )
+        prob_matrix = TransitionProbabilityMatrix.from_dict(data["probability_matrix"]) if data.get("probability_matrix") else None
         prev = MacroRegime(data["previous_regime"]) if data.get("previous_regime") else None
         return cls(
             analysis_id=data["analysis_id"],

@@ -85,9 +85,7 @@ def _profile_for(op: str) -> CertifiedPerformanceProfile:
     """Profile where FastBackend beats SlowBackend for `op` at every size."""
     profile = CertifiedPerformanceProfile(version="1.0.0", source="test")
     for size in DatasetSizeClass:
-        profile = profile.add("FastBackend", op, size, PerformanceStat(1.0)).add(
-            "SlowBackend", op, size, PerformanceStat(10.0)
-        )
+        profile = profile.add("FastBackend", op, size, PerformanceStat(1.0)).add("SlowBackend", op, size, PerformanceStat(10.0))
     return profile
 
 

@@ -61,9 +61,7 @@ def metrics(d):
     dd = cum / peak - 1
     max_dd = dd.min()
     win_rate = (
-        (d.filter(pl.col("strat_ret") > 0).height / d.filter(pl.col("pos") == 1).height * 100)
-        if d.filter(pl.col("pos") == 1).height > 0
-        else 0
+        (d.filter(pl.col("strat_ret") > 0).height / d.filter(pl.col("pos") == 1).height * 100) if d.filter(pl.col("pos") == 1).height > 0 else 0
     )
     total_ret = cum[-1] - 1 if len(cum) > 0 else 0
     return {
@@ -89,9 +87,7 @@ print(f"FULL 2023-2025: {full_m}")
 result = {
     "dataset": str(PARQUET),
     "dataset_sha256": (
-        (RESULT_DIR / "xauusd_m1_2023_2025.sha256").read_text().split()[0]
-        if (RESULT_DIR / "xauusd_m1_2023_2025.sha256").exists()
-        else "unknown"
+        (RESULT_DIR / "xauusd_m1_2023_2025.sha256").read_text().split()[0] if (RESULT_DIR / "xauusd_m1_2023_2025.sha256").exists() else "unknown"
     ),
     "timeframe": "H1 resampled from M1",
     "strategy": "SMA50 > SMA200 long-only baseline",

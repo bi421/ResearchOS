@@ -98,9 +98,7 @@ class WalkForwardSplitter:
         # that cannot satisfy this is rejected rather than silently producing
         # zero (empty) folds.
         if dataset_length < self.train_size + self.validation_size:
-            raise ValidationError(
-                "dataset too small: need at least train_size + validation_size samples to form a single fold"
-            )
+            raise ValidationError("dataset too small: need at least train_size + validation_size samples to form a single fold")
 
         for k in range(DEFAULT_MAX_FOLDS):
             train_start = k * self.step_size

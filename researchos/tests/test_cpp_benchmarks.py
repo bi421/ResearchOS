@@ -60,9 +60,7 @@ def test_benchmark_cpp_is_faster_than_python_at_100k():
     results = run_benchmark()
     sim_row = next(r for r in results["rows"] if r["operation"] == "run_simulation")
     meas = next(m for m in sim_row["measurements"] if m["size"] == 100_000)
-    assert meas["cpp_s"] < max(meas["python_s"] * 2.0, 5.0), (
-        f"C++ unexpectedly slow: python={meas['python_s']:.3f}s cpp={meas['cpp_s']:.3f}s"
-    )
+    assert meas["cpp_s"] < max(meas["python_s"] * 2.0, 5.0), f"C++ unexpectedly slow: python={meas['python_s']:.3f}s cpp={meas['cpp_s']:.3f}s"
 
 
 def test_benchmark_data_helpers_deterministic():

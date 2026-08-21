@@ -804,9 +804,7 @@ class MacroAnalysisEngine:
         ontology_tags: list[str] | None = None,
     ) -> PhysicalDemandSnapshot:
         """Assess physical gold market conditions."""
-        score = self._score_physical_demand(
-            etf_flows_monthly, indian_demand, chinese_demand, seasonality, supply_pressure
-        )
+        score = self._score_physical_demand(etf_flows_monthly, indian_demand, chinese_demand, seasonality, supply_pressure)
         confidence = self._compute_physical_confidence(comex_inventories, etf_flows_monthly)
 
         snapshot = PhysicalDemandSnapshot(
@@ -1190,9 +1188,7 @@ class MacroAnalysisEngine:
         # Find matching regime
         regime_name = "Range_Bound"
         description = "No dominant macro catalyst, gold ranging"
-        for name, (low, high, _, desc) in sorted(
-            REGIME_SCORE_MAP.items(), key=lambda x: abs(x[1][0] + x[1][1]) / 2 - agg
-        ):
+        for name, (low, high, _, desc) in sorted(REGIME_SCORE_MAP.items(), key=lambda x: abs(x[1][0] + x[1][1]) / 2 - agg):
             if low <= agg <= high:
                 if abs(low + high) / 2 - agg < 20:  # Closest match
                     regime_name = name
@@ -1359,24 +1355,16 @@ class MacroAnalysisEngine:
 
         bias = probabilities.dominant_bias
         if bias == "Long":
-            parts.append(
-                f"The balance of evidence suggests a bullish bias (P(LONG)={probabilities.probability_long:.0%})."
-            )
+            parts.append(f"The balance of evidence suggests a bullish bias (P(LONG)={probabilities.probability_long:.0%}).")
         elif bias == "Short":
-            parts.append(
-                f"The balance of evidence suggests a bearish bias (P(SHORT)={probabilities.probability_short:.0%})."
-            )
+            parts.append(f"The balance of evidence suggests a bearish bias (P(SHORT)={probabilities.probability_short:.0%}).")
         elif bias == "Neutral":
             parts.append("Evidence is evenly balanced — no directional bias is warranted.")
 
         if probabilities.probability_fakeout > 0.35:
-            parts.append(
-                f"Elevated fakeout probability ({probabilities.probability_fakeout:.0%}) — confirm before acting."
-            )
+            parts.append(f"Elevated fakeout probability ({probabilities.probability_fakeout:.0%}) — confirm before acting.")
         if probabilities.probability_high_volatility > 0.5:
-            parts.append(
-                f"High volatility expected ({probabilities.probability_high_volatility:.0%}) — size accordingly."
-            )
+            parts.append(f"High volatility expected ({probabilities.probability_high_volatility:.0%}) — size accordingly.")
 
         return " ".join(parts)
 

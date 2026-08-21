@@ -407,9 +407,7 @@ class RelationshipResult:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RelationshipResult:
         overall = CorrelationResult.from_dict(data["overall_correlation"]) if data.get("overall_correlation") else None
-        rolling = (
-            RollingCorrelationResult.from_dict(data["rolling_correlation"]) if data.get("rolling_correlation") else None
-        )
+        rolling = RollingCorrelationResult.from_dict(data["rolling_correlation"]) if data.get("rolling_correlation") else None
         lag = LagRelationship.from_dict(data["lag_relationship"]) if data.get("lag_relationship") else None
         regime_rels = [RegimeRelationship.from_dict(r) for r in data.get("regime_relationships", [])]
         breaks = [StructuralBreak.from_dict(b) for b in data.get("structural_breaks", [])]

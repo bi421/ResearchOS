@@ -105,9 +105,7 @@ def validate_dataset(dataset: ResearchDataset) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _class_means(
-    features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]
-) -> tuple[list[float], list[float], int, int]:
+def _class_means(features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]) -> tuple[list[float], list[float], int, int]:
     n_features = len(features[0])
     pos_cnt = sum(1 for y in labels if y == 1.0)
     neg_cnt = sum(1 for y in labels if y == 0.0)
@@ -137,9 +135,7 @@ def _l1_normalize(weights: list[float]) -> list[float]:
     return [w / total for w in weights]
 
 
-def _best_separating_feature(
-    features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]
-) -> tuple[int, float, float, float]:
+def _best_separating_feature(features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]) -> tuple[int, float, float, float]:
     pos_mean, neg_mean, _, _ = _class_means(features, labels)
     diffs = [p - n for p, n in zip(pos_mean, neg_mean)]
     index = max(range(len(diffs)), key=lambda j: abs(diffs[j]))

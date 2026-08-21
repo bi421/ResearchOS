@@ -137,7 +137,4 @@ class Tick(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"Tick({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, "
-            f"P={self.price:.4f} V={self.volume:.0f} {self.side})"
-        )
+        return f"Tick({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, P={self.price:.4f} V={self.volume:.0f} {self.side})"
