@@ -1,35 +1,12 @@
-﻿# ===== RUFF CONFIGURATION =====
-line-length = 200
-
+﻿line-length = 999
 [lint]
 select = ["E", "W", "F", "I"]
-# ⭐️ E501-ийг БҮРЭН IGNORE хийх
-ignore = [
-    "E501",  # Line length - formatter-д хариуцуулна
-    "E402",  # Import position
-    "N801", "N802", "N803", "N806", "N813", "N814", "N818",  # Naming
-    "E701",  # Multiple statements
-]
-
-# ⭐️ Backup/archive файлуудыг БҮРЭН exclude хийх
-exclude = [
-    ".git",
-    ".lint_fix_backup*",
-    "archive",
-    "_backup_*",
-    "docs/archive",
-    "cpp_quant_engine/build",
-    "__pycache__",
-    "*.py.bak",
-    "*.pyc",
-]
-
+ignore = ["E501", "E402", "N801", "N802", "N803", "N806"]
+exclude = [".git", ".lint_fix_backup*", "archive", "_backup_*", "docs/archive"]
 [lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "PLR2004"]
-"scripts/**/*.py" = ["E402", "T201"]
+"tests/**/*.py" = ["S101"]
+"scripts/**/*.py" = ["E402"]
 "docs/**/*.md" = ["ALL"]
-"*.html" = ["ALL"]
-
 [format]
 quote-style = "double"
 indent-style = "space"
