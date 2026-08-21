@@ -1,14 +1,3 @@
-"""
-Observation objects — the atomic units of market data.
-
-Based on Article XVII: Object Model — Observation Layer.
-Based on Article XVI: Scientific Reasoning Framework — Observation Layer.
-
-An Observation is any raw, factual data point about market conditions
-that can be objectively verified. Observations are the starting point
-of the ResearchOS reasoning pipeline.
-"""
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -22,23 +11,10 @@ from researchos.core.timestamp import parse_timestamp, utc_now
 
 class Observation(BaseObject):
     """
-    The atomic unit of market data.
+    Atomic factual observation.
 
-    A single, objectively verifiable data point about market conditions.
-    Observations are immutable once created and validated.
-
-    Attributes:
-        source: Data source identifier (e.g., "MACRO:CPI_YOY")
-        timestamp: UTC timestamp of the observation
-        value: The raw observed value
-        unit: Unit of measurement
-        frequency: Data frequency
-        geography: Geographic scope
-        asset_class: Asset class
-        quality_flags: Data quality flags
-        retrieval_time: When data was retrieved
-        retrieval_method: Fixed retrieval procedure identifier
-        validated: Whether validation passed
+    The value field is intentionally preserved exactly because it is part
+    of identity, hashing, validation and serialization.
     """
 
     def __init__(
@@ -53,14 +29,24 @@ class Observation(BaseObject):
         quality_flags: Optional[List[str]] = None,
         retrieval_time: Optional[datetime] = None,
         retrieval_method: str = "",
+        validated: bool = False,
         ontology_tags: Optional[List[str]] = None,
         id: Optional[str] = None,
     ):
-        # Generate deterministic ID from source + timestamp + value
-        if id is None:
-            id = generate_observation_id(source, timestamp.isoformat(), value)
+        if isinstance(timestamp, str):
+            timestamp = parse_timestamp(timestamp)
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        if id is None:
+            id = generate_observation_id(
+                source,
+                timestamp.isoformat(),
+                value,
+            )
+
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
 
         self.source = source
         self.timestamp = timestamp
@@ -69,43 +55,43 @@ class Observation(BaseObject):
         self.frequency = frequency
         self.geography = geography
         self.asset_class = asset_class
-        self.quality_flags: List[str] = quality_flags or []
-        self.retrieval_time = retrieval_time or utc_now()
+        self.quality_flags = list(quality_flags or [])
+        self.retrieval_time = retrieval_time
         self.retrieval_method = retrieval_method
-        self.validated: bool = False
+        self.validated = bool(validated)
 
-    def validate(self, reference_time: Optional[datetime] = None) -> bool:
-        """
-        Validate this observation against three criteria:
-        1. Completeness — No missing values
-        2. Timeliness — Timestamp is before the reference time
-        3. Integrity — Value matches expected format and range
+    def validate(
+        self,
+        reference_time: Optional[datetime] = None,
+    ) -> bool:
+        if not self.source:
+            raise ValueError("Observation source cannot be empty")
 
-        Args:
-            reference_time: The time to compare against for timeliness.
-                            If None, uses the current time (non-deterministic).
-
-        Returns:
-            True if validation passes.
-        """
-        # Completeness check
         if self.value is None:
             return False
 
-        # Timeliness check (timestamp must be before reference_time)
         check_time = reference_time or utc_now()
+
         if self.timestamp > check_time:
             return False
 
-        # Integrity check (value must be a valid type)
-        if not isinstance(self.value, (int, float, str, bool)):
+        if not isinstance(
+            self.value,
+            (int, float, str, bool),
+        ):
             return False
 
         self.validated = True
-        self.lifecycle.transition(
-            LifecycleStage.VALIDATED,
-            reason="Observation validated",
-        )
+
+        try:
+            self.lifecycle.transition(
+                LifecycleStage.VALIDATED,
+                reason="Observation validated",
+            )
+        except Exception:
+            pass
+
+        self._hash = None
         return True
 
     def _to_hashable_dict(self) -> dict:
@@ -118,15 +104,16 @@ class Observation(BaseObject):
             "geography": self.geography,
             "asset_class": self.asset_class,
             "quality_flags": sorted(self.quality_flags),
-            "validated": self.validated,
-            "retrieval_time": self.retrieval_time.isoformat() if self.retrieval_time else "",
+            "retrieval_time": (self.retrieval_time.isoformat() if self.retrieval_time else ""),
             "retrieval_method": self.retrieval_method,
+            "validated": self.validated,
             "ontology_tags": sorted(self.ontology_tags),
         }
 
     def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
+        data = super().to_dict()
+
+        data.update(
             {
                 "source": self.source,
                 "timestamp": self.timestamp.isoformat(),
@@ -135,17 +122,21 @@ class Observation(BaseObject):
                 "frequency": self.frequency,
                 "geography": self.geography,
                 "asset_class": self.asset_class,
-                "quality_flags": self.quality_flags,
-                "retrieval_time": self.retrieval_time.isoformat(),
+                "quality_flags": list(self.quality_flags),
+                "retrieval_time": (
+                    self.retrieval_time.isoformat() if self.retrieval_time else None
+                ),
                 "retrieval_method": self.retrieval_method,
                 "validated": self.validated,
             }
         )
-        return base
+
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "Observation":
         obj = super().from_dict(data)
+
         obj.source = data["source"]
         obj.timestamp = parse_timestamp(data["timestamp"])
         obj.value = data["value"]
@@ -154,32 +145,20 @@ class Observation(BaseObject):
         obj.geography = data.get("geography", "")
         obj.asset_class = data.get("asset_class", "")
         obj.quality_flags = list(data.get("quality_flags", []))
-        obj.retrieval_time = (
-            parse_timestamp(data["retrieval_time"]) if data.get("retrieval_time") else None
+
+        retrieval_time = data.get("retrieval_time")
+        obj.retrieval_time = parse_timestamp(retrieval_time) if retrieval_time else None
+
+        obj.retrieval_method = data.get(
+            "retrieval_method",
+            "",
         )
-        obj.retrieval_method = data.get("retrieval_method", "")
-        obj.validated = data.get("validated", False)
+        obj.validated = bool(data.get("validated", False))
+
         return obj
 
 
 class MarketState(BaseObject):
-    """
-    A snapshot of market conditions at a specific point in time.
-
-    Based on Article XVII: Object Model — MarketState.
-
-    Attributes:
-        timestamp: UTC timestamp
-        asset: Asset identifier
-        regime: Market regime
-        trend: Price trend
-        volatility: Current volatility level
-        liquidity: Liquidity level
-        sentiment: Sentiment score (0.0-1.0)
-        observations: All observations in this state
-        confidence: Confidence in this state (0.0-1.0)
-    """
-
     def __init__(
         self,
         timestamp: datetime,
@@ -194,7 +173,11 @@ class MarketState(BaseObject):
         ontology_tags: Optional[List[str]] = None,
         id: Optional[str] = None,
     ):
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
+
         self.timestamp = timestamp
         self.asset = asset
         self.regime = regime
@@ -202,39 +185,8 @@ class MarketState(BaseObject):
         self.volatility = volatility
         self.liquidity = liquidity
         self.sentiment = sentiment
-        self.observations: List[str] = observations or []
+        self.observations = list(observations or [])
         self.confidence = confidence
-
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "timestamp": self.timestamp.isoformat(),
-                "asset": self.asset,
-                "regime": self.regime,
-                "trend": self.trend,
-                "volatility": self.volatility,
-                "liquidity": self.liquidity,
-                "sentiment": self.sentiment,
-                "observations": self.observations,
-                "confidence": self.confidence,
-            }
-        )
-        return base
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "MarketState":
-        obj = super().from_dict(data)
-        obj.timestamp = parse_timestamp(data["timestamp"])
-        obj.asset = data["asset"]
-        obj.regime = data.get("regime", "")
-        obj.trend = data.get("trend", "")
-        obj.volatility = data.get("volatility", 0.0)
-        obj.liquidity = data.get("liquidity", "")
-        obj.sentiment = data.get("sentiment", 0.0)
-        obj.observations = list(data.get("observations", []))
-        obj.confidence = data.get("confidence", 0.0)
-        return obj
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -250,25 +202,39 @@ class MarketState(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+        data.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "asset": self.asset,
+                "regime": self.regime,
+                "trend": self.trend,
+                "volatility": self.volatility,
+                "liquidity": self.liquidity,
+                "sentiment": self.sentiment,
+                "observations": list(self.observations),
+                "confidence": self.confidence,
+            }
+        )
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "MarketState":
+        obj = super().from_dict(data)
+        obj.timestamp = parse_timestamp(data["timestamp"])
+        obj.asset = data["asset"]
+        obj.regime = data.get("regime", "")
+        obj.trend = data.get("trend", "")
+        obj.volatility = data.get("volatility", 0.0)
+        obj.liquidity = data.get("liquidity", "")
+        obj.sentiment = data.get("sentiment", 0.0)
+        obj.observations = list(data.get("observations", []))
+        obj.confidence = data.get("confidence", 0.0)
+        return obj
+
 
 class MacroState(BaseObject):
-    """
-    A snapshot of macroeconomic conditions.
-
-    Based on Article XVII: Object Model — MacroState.
-
-    Attributes:
-        timestamp: UTC timestamp
-        geography: Geographic scope
-        regime: Economic regime
-        inflation: Inflation rate
-        growth: GDP growth rate
-        policy_stance: Central bank policy stance
-        risk_factors: Key macro risks
-        observations: All observations in this state
-        confidence: Confidence in this state (0.0-1.0)
-    """
-
     def __init__(
         self,
         timestamp: datetime,
@@ -283,47 +249,20 @@ class MacroState(BaseObject):
         ontology_tags: Optional[List[str]] = None,
         id: Optional[str] = None,
     ):
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
+
         self.timestamp = timestamp
         self.geography = geography
         self.regime = regime
         self.inflation = inflation
         self.growth = growth
         self.policy_stance = policy_stance
-        self.risk_factors: List[str] = risk_factors or []
-        self.observations: List[str] = observations or []
+        self.risk_factors = list(risk_factors or [])
+        self.observations = list(observations or [])
         self.confidence = confidence
-
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "timestamp": self.timestamp.isoformat(),
-                "geography": self.geography,
-                "regime": self.regime,
-                "inflation": self.inflation,
-                "growth": self.growth,
-                "policy_stance": self.policy_stance,
-                "risk_factors": self.risk_factors,
-                "observations": self.observations,
-                "confidence": self.confidence,
-            }
-        )
-        return base
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "MacroState":
-        obj = super().from_dict(data)
-        obj.timestamp = parse_timestamp(data["timestamp"])
-        obj.geography = data["geography"]
-        obj.regime = data.get("regime", "")
-        obj.inflation = data.get("inflation", 0.0)
-        obj.growth = data.get("growth", 0.0)
-        obj.policy_stance = data.get("policy_stance", "")
-        obj.risk_factors = list(data.get("risk_factors", []))
-        obj.observations = list(data.get("observations", []))
-        obj.confidence = data.get("confidence", 0.0)
-        return obj
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -338,3 +277,34 @@ class MacroState(BaseObject):
             "confidence": self.confidence,
             "ontology_tags": sorted(self.ontology_tags),
         }
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+        data.update(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "geography": self.geography,
+                "regime": self.regime,
+                "inflation": self.inflation,
+                "growth": self.growth,
+                "policy_stance": self.policy_stance,
+                "risk_factors": list(self.risk_factors),
+                "observations": list(self.observations),
+                "confidence": self.confidence,
+            }
+        )
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "MacroState":
+        obj = super().from_dict(data)
+        obj.timestamp = parse_timestamp(data["timestamp"])
+        obj.geography = data["geography"]
+        obj.regime = data.get("regime", "")
+        obj.inflation = data.get("inflation", 0.0)
+        obj.growth = data.get("growth", 0.0)
+        obj.policy_stance = data.get("policy_stance", "")
+        obj.risk_factors = list(data.get("risk_factors", []))
+        obj.observations = list(data.get("observations", []))
+        obj.confidence = data.get("confidence", 0.0)
+        return obj

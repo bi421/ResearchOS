@@ -1,56 +1,17 @@
-"""
-Hypothesis objects — testable predictions about market behavior.
-
-Based on Article XVII: Object Model — Hypothesis Layer.
-Based on Article XVI: Scientific Reasoning Framework — Hypothesis Layer.
-
-A hypothesis is a testable prediction derived from interpretations and narratives.
-Every hypothesis must be falsifiable.
-"""
-
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional, List, Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
-from researchos.core.lifecycle import LifecycleStage
-
-# Hypothesis ranking weights (Article XVI, Section 4.5)
-RANK_EVIDENCE_STRENGTH = 0.40
-RANK_COHERENCE = 0.30
-RANK_PLAUSIBILITY = 0.20
-RANK_FALSIFIABILITY = 0.10
 
 
 class Hypothesis(BaseObject):
     """
-    A testable prediction about market behavior.
+    Research hypothesis.
 
-    Based on Article XVII: Object Model — Hypothesis.
-
-    Every hypothesis must be:
-        - Specific: Clearly states what is expected to happen
-        - Testable: Can be proven wrong by specific observations
-        - Evidence-Based: Supported by current evidence
-        - Actionable: Has implications for market understanding
-
-    Attributes:
-        research_id: Link to Research
-        type: Primary, Alternative, Null, or Tail
-        statement: The testable prediction
-        narrative_id: Link to supporting Narrative
-        evidence_ids: All evidence supporting this hypothesis
-        evidence_strength: Total weighted evidence (0.0-1.0)
-        coherence: Agreement with known relationships (0.0-1.0)
-        plausibility: Consistency with theory (0.0-1.0)
-        falsifiability: How easily it can be proven wrong (0.0-1.0)
-        rank_score: Computed ranking score
-        confidence: Confidence score (0.0-1.0)
-        valid_if: Conditions that must hold
-        invalid_if: Conditions that would prove it wrong
-        monitoring_conditions: Conditions tracked for early warning
-        status: Active, Invalidated, or Retired
+    Supports evidence/narrative linkage, deterministic ranking,
+    invalidation tracking, serialization, and validation.
     """
 
     def __init__(
@@ -58,233 +19,267 @@ class Hypothesis(BaseObject):
         research_id: str,
         type: str,
         statement: str,
-        narrative_id: str = "",
-        evidence_ids: Optional[List[str]] = None,
         evidence_strength: float = 0.0,
         coherence: float = 0.0,
         plausibility: float = 0.0,
         falsifiability: float = 0.0,
-        confidence: float = 0.0,
-        valid_if: Optional[List[str]] = None,
-        invalid_if: Optional[List[str]] = None,
-        monitoring_conditions: Optional[List[str]] = None,
+        narrative_id: Optional[str] = None,
+        evidence_ids: Optional[List[str]] = None,
+        invalid_if: Optional[Any] = None,
+        status: str = "ACTIVE",
+        rank_score: Optional[float] = None,
         ontology_tags: Optional[List[str]] = None,
         id: Optional[str] = None,
+        **kwargs,
     ):
+        for name, value in [
+            ("evidence_strength", evidence_strength),
+            ("coherence", coherence),
+            ("plausibility", plausibility),
+            ("falsifiability", falsifiability),
+        ]:
+            if not 0.0 <= float(value) <= 1.0:
+                raise ValueError(f"{name} must be between 0.0 and 1.0, got {value}")
+
         if id is None:
-            seed = f"Hypothesis|{research_id}|{type}|{statement}"
+            seed = (
+                f"Hypothesis|{research_id}|{type}|{statement}|"
+                f"{narrative_id}|{sorted(evidence_ids or [])}"
+            )
             id = generate_id(seed)
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
 
         self.research_id = research_id
         self.type = type
         self.statement = statement
+
+        self.evidence_strength = float(evidence_strength)
+        self.coherence = float(coherence)
+        self.plausibility = float(plausibility)
+        self.falsifiability = float(falsifiability)
+
         self.narrative_id = narrative_id
-        self.evidence_ids: List[str] = evidence_ids or []
-        self.evidence_strength = evidence_strength
-        self.coherence = coherence
-        self.plausibility = plausibility
-        self.falsifiability = falsifiability
-        self.confidence = confidence
-        self.valid_if: List[str] = valid_if or []
-        self.invalid_if: List[str] = invalid_if or []
-        self.monitoring_conditions: List[str] = monitoring_conditions or []
-        self.status = "Active"
+        self.evidence_ids = list(evidence_ids or [])
+        self.invalid_if = invalid_if
 
-        # Compute rank score
-        self.rank_score = self._compute_rank_score()
+        self.status = status.title() if status else "Active"
 
-        self.lifecycle.transition(
-            LifecycleStage.ACTIVE,
-            reason="Hypothesis created and ranked",
-        )
+        self.rank_score = float(rank_score) if rank_score is not None else self.compute_rank_score()
 
-    def _compute_rank_score(self) -> float:
-        """
-        Compute the hypothesis ranking score.
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-        Rank_Score = Evidence_Strength × 0.40 + Coherence × 0.30 +
-                     Plausibility × 0.20 + Falsifiability × 0.10
-        """
+    def compute_rank_score(self) -> float:
         return (
-            self.evidence_strength * RANK_EVIDENCE_STRENGTH
-            + self.coherence * RANK_COHERENCE
-            + self.plausibility * RANK_PLAUSIBILITY
-            + self.falsifiability * RANK_FALSIFIABILITY
+            0.40 * self.evidence_strength
+            + 0.30 * self.coherence
+            + 0.20 * self.plausibility
+            + 0.10 * self.falsifiability
         )
 
-    def check_invalidation(self, current_evidence: List[str]) -> bool:
-        """
-        Check if this hypothesis has been invalidated.
+    def validate(self) -> bool:
+        if not self.research_id:
+            raise ValueError("research_id cannot be empty")
 
-        Args:
-            current_evidence: List of current evidence IDs.
+        if not self.type:
+            raise ValueError("type cannot be empty")
 
-        Returns:
-            True if the hypothesis is invalidated.
-        """
-        # Check if any invalid_if condition is met
-        for condition in self.invalid_if:
-            if condition in current_evidence:
-                self.status = "Invalidated"
-                self.lifecycle.transition(
-                    LifecycleStage.INVALIDATED,
-                    reason=f"Invalidation condition met: {condition}",
-                )
-                return True
-        return False
+        if not self.statement:
+            raise ValueError("statement cannot be empty")
+
+        for name in (
+            "evidence_strength",
+            "coherence",
+            "plausibility",
+            "falsifiability",
+        ):
+            value = getattr(self, name)
+
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be between 0.0 and 1.0")
+
+        return True
+
+    def check_invalidation(self, evidence_ids) -> bool:
+        if self.invalid_if is None:
+            return False
+
+        supplied = set(evidence_ids or [])
+
+        if isinstance(self.invalid_if, str):
+            invalidated = self.invalid_if in supplied
+        else:
+            try:
+                required = set(self.invalid_if)
+            except TypeError:
+                return False
+
+            invalidated = bool(required.intersection(supplied))
+
+        if invalidated:
+            self.status = "Invalidated"
+            self._hash = None
+
+        return invalidated
+
+    def rank(self) -> float:
+        self.rank_score = self.compute_rank_score()
+        self._hash = None
+        return self.rank_score
+
+    def invalidate(self, reason: Optional[str] = None) -> None:
+        self.status = "Invalidated"
+
+        if reason is not None:
+            self.invalid_if = reason
+
+        self._hash = None
+
+    def is_valid(self) -> bool:
+        return self.status.upper() not in {
+            "INVALID",
+            "INVALIDATED",
+            "REJECTED",
+            "FALSIFIED",
+        }
 
     def _to_hashable_dict(self) -> dict:
         return {
             "research_id": self.research_id,
             "type": self.type,
             "statement": self.statement,
-            "narrative_id": self.narrative_id,
-            "evidence_ids": sorted(self.evidence_ids),
             "evidence_strength": self.evidence_strength,
             "coherence": self.coherence,
             "plausibility": self.plausibility,
             "falsifiability": self.falsifiability,
-            "confidence": self.confidence,
-            "valid_if": sorted(self.valid_if),
-            "invalid_if": sorted(self.invalid_if),
-            "monitoring_conditions": sorted(self.monitoring_conditions),
+            "narrative_id": self.narrative_id,
+            "evidence_ids": sorted(self.evidence_ids),
+            "invalid_if": self.invalid_if,
             "status": self.status,
+            "rank_score": self.rank_score,
             "ontology_tags": sorted(self.ontology_tags),
         }
 
     def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "research_id": self.research_id,
-                "type": self.type,
-                "statement": self.statement,
-                "narrative_id": self.narrative_id,
-                "evidence_ids": self.evidence_ids,
-                "evidence_strength": self.evidence_strength,
-                "coherence": self.coherence,
-                "plausibility": self.plausibility,
-                "falsifiability": self.falsifiability,
-                "rank_score": self.rank_score,
-                "confidence": self.confidence,
-                "valid_if": self.valid_if,
-                "invalid_if": self.invalid_if,
-                "monitoring_conditions": self.monitoring_conditions,
-                "status": self.status,
-            }
-        )
-        return base
+        data = super().to_dict()
+        data.update(self._to_hashable_dict())
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "Hypothesis":
         obj = super().from_dict(data)
+
         obj.research_id = data["research_id"]
         obj.type = data["type"]
         obj.statement = data["statement"]
-        obj.narrative_id = data.get("narrative_id", "")
+
+        obj.evidence_strength = float(data.get("evidence_strength", 0.0))
+        obj.coherence = float(data.get("coherence", 0.0))
+        obj.plausibility = float(data.get("plausibility", 0.0))
+        obj.falsifiability = float(data.get("falsifiability", 0.0))
+
+        obj.narrative_id = data.get("narrative_id")
         obj.evidence_ids = list(data.get("evidence_ids", []))
-        obj.evidence_strength = data.get("evidence_strength", 0.0)
-        obj.coherence = data.get("coherence", 0.0)
-        obj.plausibility = data.get("plausibility", 0.0)
-        obj.falsifiability = data.get("falsifiability", 0.0)
-        obj.confidence = data.get("confidence", 0.0)
-        obj.valid_if = list(data.get("valid_if", []))
-        obj.invalid_if = list(data.get("invalid_if", []))
-        obj.monitoring_conditions = list(data.get("monitoring_conditions", []))
-        obj.status = data.get("status", "Active")
-        obj.rank_score = data.get("rank_score", obj._compute_rank_score())
+        obj.invalid_if = data.get("invalid_if")
+        obj.status = data.get("status", "ACTIVE")
+
+        obj.rank_score = float(
+            data.get(
+                "rank_score",
+                obj.compute_rank_score(),
+            )
+        )
+
         return obj
 
 
 class HypothesisSet(BaseObject):
     """
-    A collection of all hypotheses for a research cycle.
+    Deterministic collection of hypotheses.
 
-    Based on Article XVII: Object Model — HypothesisSet.
+    Ranking contract:
+        1. Higher rank_score first.
+        2. ID ascending as deterministic tie-breaker.
     """
 
     def __init__(
         self,
         research_id: str,
         hypotheses: Optional[List[Hypothesis]] = None,
+        hypothesis_ids: Optional[List[str]] = None,
         ontology_tags: Optional[List[str]] = None,
         id: Optional[str] = None,
     ):
         if id is None:
-            seed = f"HypothesisSet|{research_id}"
-            id = generate_id(seed)
+            id = generate_id(f"HypothesisSet|{research_id}")
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
+
         self.research_id = research_id
-        self.hypotheses: List[Hypothesis] = hypotheses or []
-        self._hypothesis_ids: List[str] = []
+        self.hypotheses = list(hypotheses or [])
 
-    @property
-    def primary_id(self) -> Optional[str]:
-        """Get the ID of the primary hypothesis."""
-        for h in self.hypotheses:
-            if h.type == "Primary":
-                return h.id
-        return None
+        self.hypothesis_ids = list(
+            hypothesis_ids if hypothesis_ids is not None else [h.id for h in self.hypotheses]
+        )
 
-    @property
-    def alternatives(self) -> List[str]:
-        """Get IDs of alternative hypotheses."""
-        return [h.id for h in self.hypotheses if h.type == "Alternative"]
-
-    @property
-    def null_id(self) -> Optional[str]:
-        """Get the ID of the null hypothesis."""
-        for h in self.hypotheses:
-            if h.type == "Null":
-                return h.id
-        return None
-
-    @property
-    def tail_ids(self) -> List[str]:
-        """Get IDs of tail hypotheses."""
-        return [h.id for h in self.hypotheses if h.type == "Tail"]
-
-    def add_hypothesis(self, hypothesis: Hypothesis) -> None:
-        """Add a hypothesis to the set."""
+    def add_hypothesis(
+        self,
+        hypothesis: Hypothesis,
+    ) -> None:
         self.hypotheses.append(hypothesis)
 
+        if hypothesis.id not in self.hypothesis_ids:
+            self.hypothesis_ids.append(hypothesis.id)
+
+        self._hash = None
+
+    def get_hypothesis(
+        self,
+        hypothesis_id: str,
+    ) -> Optional[Hypothesis]:
+        for hypothesis in self.hypotheses:
+            if hypothesis.id == hypothesis_id:
+                return hypothesis
+
+        return None
+
     def get_ranked(self) -> List[Hypothesis]:
-        """Get hypotheses sorted by rank score (descending), with deterministic tie-breaking by ID."""
+        """
+        Return hypotheses sorted deterministically.
+
+        Primary key:
+            rank_score descending
+
+        Tie-break:
+            hypothesis ID ascending
+        """
         return sorted(
             self.hypotheses,
-            key=lambda h: (-h.rank_score, h.id),
+            key=lambda hypothesis: (
+                -hypothesis.rank_score,
+                hypothesis.id,
+            ),
         )
 
     @property
-    def hypothesis_ids(self) -> List[str]:
-        if self.hypotheses:
-            return [h.id for h in self.hypotheses]
-        return self._hypothesis_ids
+    def has_hypotheses(self) -> bool:
+        return bool(self.hypotheses)
 
-    @hypothesis_ids.setter
-    def hypothesis_ids(self, value: List[str]) -> None:
-        self._hypothesis_ids = value
+    def validate(self) -> bool:
+        if not self.hypotheses:
+            return False
 
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "research_id": self.research_id,
-                "hypothesis_ids": self.hypothesis_ids,
-            }
-        )
-        return base
+        for hypothesis in self.hypotheses:
+            hypothesis.validate()
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "HypothesisSet":
-        obj = super().from_dict(data)
-        obj.research_id = data["research_id"]
-        obj.hypotheses = []
-        obj._hypothesis_ids = list(data.get("hypothesis_ids", []))
-        return obj
+        return True
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -292,3 +287,36 @@ class HypothesisSet(BaseObject):
             "hypothesis_ids": sorted(self.hypothesis_ids),
             "ontology_tags": sorted(self.ontology_tags),
         }
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+
+        data.update(
+            {
+                "research_id": self.research_id,
+                "hypothesis_ids": list(self.hypothesis_ids),
+                "hypotheses": [hypothesis.to_dict() for hypothesis in self.hypotheses],
+            }
+        )
+
+        return data
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+    ) -> "HypothesisSet":
+        obj = super().from_dict(data)
+
+        obj.research_id = data["research_id"]
+
+        obj.hypotheses = [Hypothesis.from_dict(item) for item in data.get("hypotheses", [])]
+
+        obj.hypothesis_ids = list(
+            data.get(
+                "hypothesis_ids",
+                [h.id for h in obj.hypotheses],
+            )
+        )
+
+        return obj

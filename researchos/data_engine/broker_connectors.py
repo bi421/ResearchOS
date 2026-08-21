@@ -14,7 +14,6 @@ except ImportError:
 # --- TradingView (SECONDARY / FUTURE COMPARISON) ---
 TV_AVAILABLE = False
 try:
-
     TV_AVAILABLE = True
 except ImportError:
     pass
@@ -24,7 +23,6 @@ except Exception:
 # --- yfinance (FALLBACK / FUTURE COMPARISON) ---
 YF_AVAILABLE = False
 try:
-
     YF_AVAILABLE = True
 except ImportError:
     pass

@@ -50,16 +50,16 @@ pip install pytest pytest-cov pytest-xdist
 def deterministic_hash(data: dict) -> str:
     """
     Compute deterministic SHA-256 hash of data.
-    
+
     Args:
         data: Dictionary to hash (must be JSON-serializable)
-    
+
     Returns:
         SHA-256 hex digest
-    
+
     Raises:
         TypeError: If data is not JSON-serializable
-    
+
     Examples:
         >>> h1 = deterministic_hash({"x": 1})
         >>> h2 = deterministic_hash({"x": 1})
@@ -67,6 +67,7 @@ def deterministic_hash(data: dict) -> str:
     """
     import json
     from hashlib import sha256
+
     payload = json.dumps(data, sort_keys=True)
     return sha256(payload.encode()).hexdigest()
 ```
@@ -127,7 +128,7 @@ The following are immutable and protected by architecture guards. Do not modify 
 
 Verify with:
 ```bash
-python -c "import ast; code = open('your_file.py').read(); tree = ast.parse(code); 
+python -c "import ast; code = open('your_file.py').read(); tree = ast.parse(code);
 imports = [n.names[0].name for n in ast.walk(tree) if isinstance(n, ast.Import)]
 assert 'ccxt' not in imports, 'ccxt import forbidden in core'"
 ```
@@ -181,18 +182,18 @@ test(validation): add edge case tests for walk-forward splitter
    ```markdown
    ## Description
    Brief description of changes.
-   
+
    ## Related Issues
    Closes #123
-   
+
    ## Changes
    - List major changes
    - Organized by module
-   
+
    ## Testing
    - Describe tests added
    - Coverage: X% → Y%
-   
+
    ## Breaking Changes
    - None (or list if applicable)
    ```
@@ -261,6 +262,7 @@ Use this to understand where to focus new tests:
 1. Profile before/after:
    ```python
    import timeit
+
    time_before = timeit.timeit(lambda: old_function(), number=1000)
    time_after = timeit.timeit(lambda: new_function(), number=1000)
    ```
@@ -316,5 +318,5 @@ ResearchOS is committed to scientific integrity and professional collaboration:
 
 ---
 
-**Last Updated:** 2026-08-16  
+**Last Updated:** 2026-08-16
 **Version:** v1.0.0

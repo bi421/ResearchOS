@@ -1,9 +1,11 @@
-﻿"""
+"""
 Trading strategy framework.
 """
+
 from abc import ABC, abstractmethod
 from typing import List
 from dataclasses import dataclass
+
 
 @dataclass
 class Signal:
@@ -13,10 +15,12 @@ class Signal:
     strength: float  # 0.0 to 1.0
     reason: str
 
+
 class BaseStrategy(ABC):
     @abstractmethod
     def generate_signals(self, prices: List[float]) -> List[Signal]:
         pass
+
 
 class RSIStrategy(BaseStrategy):
     def __init__(self, period=14, oversold=30, overbought=70):
@@ -26,6 +30,7 @@ class RSIStrategy(BaseStrategy):
 
     def generate_signals(self, prices: List[float]) -> List[Signal]:
         from researchos.quant_engine.indicators import calculate_rsi
+
         rsi_values = calculate_rsi(prices, self.period)
         signals = []
         for i, rsi in enumerate(rsi_values):
@@ -33,10 +38,15 @@ class RSIStrategy(BaseStrategy):
             if idx >= len(prices):
                 break
             if rsi < self.oversold:
-                signals.append(Signal(idx, "BUY", prices[idx], 1.0 - rsi/100, f"RSI={rsi:.1f} oversold"))
+                signals.append(
+                    Signal(idx, "BUY", prices[idx], 1.0 - rsi / 100, f"RSI={rsi:.1f} oversold")
+                )
             elif rsi > self.overbought:
-                signals.append(Signal(idx, "SELL", prices[idx], rsi/100, f"RSI={rsi:.1f} overbought"))
+                signals.append(
+                    Signal(idx, "SELL", prices[idx], rsi / 100, f"RSI={rsi:.1f} overbought")
+                )
         return signals
+
 
 class MACDStrategy(BaseStrategy):
     def __init__(self, fast=12, slow=26, signal=9):
@@ -46,16 +56,18 @@ class MACDStrategy(BaseStrategy):
 
     def generate_signals(self, prices: List[float]) -> List[Signal]:
         from researchos.quant_engine.indicators import calculate_macd
+
         macd, signal_line, histogram = calculate_macd(prices, self.fast, self.slow, self.signal)
         signals = []
         for i in range(1, len(histogram)):
-            if histogram[i] > 0 and histogram[i-1] <= 0:
+            if histogram[i] > 0 and histogram[i - 1] <= 0:
                 idx = len(prices) - len(histogram) + i
                 signals.append(Signal(idx, "BUY", prices[idx], 0.8, "MACD crossover"))
-            elif histogram[i] < 0 and histogram[i-1] >= 0:
+            elif histogram[i] < 0 and histogram[i - 1] >= 0:
                 idx = len(prices) - len(histogram) + i
                 signals.append(Signal(idx, "SELL", prices[idx], 0.8, "MACD crossunder"))
         return signals
+
 
 class BollingerStrategy(BaseStrategy):
     def __init__(self, period=20, std_dev=2.0):
@@ -64,6 +76,7 @@ class BollingerStrategy(BaseStrategy):
 
     def generate_signals(self, prices: List[float]) -> List[Signal]:
         from researchos.quant_engine.indicators import calculate_bollinger_bands
+
         upper, middle, lower = calculate_bollinger_bands(prices, self.period, self.std_dev)
         signals = []
         for i in range(len(lower)):

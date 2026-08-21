@@ -148,6 +148,21 @@ class Evidence(BaseObject):
         """
         return self.quality * (1.0 - self.uncertainty)
 
+    VALID_DIRECTIONS = ("Supporting", "Contradicting", "Neutral")
+
+    def validate(self) -> bool:
+        """
+        Validate this evidence's direction.
+
+        Raises:
+            ValueError: If direction is not one of Supporting/Contradicting/Neutral.
+        """
+        if self.direction not in self.VALID_DIRECTIONS:
+            raise ValueError(
+                f"Evidence direction must be one of {self.VALID_DIRECTIONS}, got {self.direction!r}"
+            )
+        return True
+
     def age_days(self, reference_time: Optional[datetime] = None) -> int:
         """Days since the observation was made."""
         ref = reference_time or utc_now()

@@ -1,15 +1,18 @@
 """
 Instrument metadata registry: symbol -> asset class, currency, annualization days, etc.
 """
+
 from typing import Dict, Optional, NamedTuple
+
 
 class InstrumentMetadata(NamedTuple):
     symbol: str
-    asset_class: str   # "equity", "forex", "metal", "commodity", "crypto", "bond"
+    asset_class: str  # "equity", "forex", "metal", "commodity", "crypto", "bond"
     currency: str
     tick_size: float
     session_calendar: str  # e.g., "US", "24/7", "FX"
     annualization_days: int  # number of trading days per year
+
 
 class InstrumentMetadataRegistry:
     """Singleton registry for instrument metadata."""

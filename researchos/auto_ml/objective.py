@@ -45,7 +45,9 @@ class Objective:
         keep_cols = ["ret1", "rsi", "macd", "macd_signal", "macd_diff", "bb_pos", "volatility"]
         if selected_cols:
             keep_cols = [c for c in keep_cols if c in selected_cols] + [
-                f"ret_lag_{lag}" for lag in [1, 2, 3, 5, 10, 20] if f"ret_lag_{lag}" in selected_cols
+                f"ret_lag_{lag}"
+                for lag in [1, 2, 3, 5, 10, 20]
+                if f"ret_lag_{lag}" in selected_cols
             ]
         else:
             keep_cols = keep_cols + [f"ret_lag_{lag}" for lag in [1, 2, 3, 5, 10, 20]]

@@ -1,0 +1,41 @@
+﻿name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: check --select E,F,W
+  import-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - run: python -c "import researchos; print(f'v{researchos.__version__}')"
+  test:
+    runs-on: ubuntu-latest
+    needs: [lint, import-check]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e . && pip install pytest
+      - run: python -m pytest researchos/tests/ -v --tb=short
+  constitution-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No forbidden files
+        run: |
+          if find . -name "*_fixed*" -o -name "*.BACKUP" -o -name "*.BROKEN*" | grep -q .; then echo "REJECTED"; exit 1; fi
+          echo "Root is clean"

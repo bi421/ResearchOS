@@ -1,4 +1,4 @@
-﻿"""
+"""
 CppQuantBackendWrapper â€” Python adapter implementing QuantComputationInterface.
 
 This wrapper delegates all numerical computation to the C++20 backend
@@ -251,4 +251,3 @@ class CppQuantBackendWrapper(QuantComputationInterface):
         result.result_hash = result.compute_result_hash()
 
         return result
-
