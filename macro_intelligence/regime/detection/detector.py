@@ -157,14 +157,7 @@ class RegimeDetector:
         )
 
         # Collect all evidence refs
-        all_evidence_refs = (
-            inflation.evidence_refs
-            + growth.evidence_refs
-            + monetary.evidence_refs
-            + liquidity.evidence_refs
-            + employment.evidence_refs
-            + risk.evidence_refs
-        )
+        all_evidence_refs = inflation.evidence_refs + growth.evidence_refs + monetary.evidence_refs + liquidity.evidence_refs + employment.evidence_refs + risk.evidence_refs
 
         return RegimeAssessment(
             assessment_time=datetime.now(timezone.utc),

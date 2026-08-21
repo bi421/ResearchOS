@@ -34,9 +34,7 @@ def generate_id(seed: str) -> str:
         ValueError: If seed is None or empty.
     """
     if not seed:
-        raise ValueError(
-            "generate_id() requires a deterministic seed. ResearchOS does not allow random identity generation. Provide a content-based seed string."
-        )
+        raise ValueError("generate_id() requires a deterministic seed. ResearchOS does not allow random identity generation. Provide a content-based seed string.")
     namespace = uuid.NAMESPACE_DNS
     return str(uuid.uuid5(namespace, seed))
 

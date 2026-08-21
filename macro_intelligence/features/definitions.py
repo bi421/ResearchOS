@@ -104,9 +104,7 @@ class FeatureDefinition:
             description=data.get("description", ""),
             unit=data.get("unit", ""),
             metadata=data.get("metadata", {}),
-            created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
-            ),
+            created_at=TimeNormalizer.parse_deterministic_timestamp(data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))),
         )
 
     def to_json(self) -> str:
@@ -237,9 +235,7 @@ class FeatureValue:
             is_valid=data.get("is_valid", True),
             evidence_ids=data.get("evidence_ids", []),
             calculation_version=data.get("calculation_version", "calc/v1"),
-            created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
-            ),
+            created_at=TimeNormalizer.parse_deterministic_timestamp(data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))),
             version=data.get("version", "feat/val/v1"),
         )
 
@@ -335,9 +331,7 @@ class FeatureVector:
             features=data.get("features", {}),
             version=data.get("version", "feat/vec/v1"),
             calculation_version=data.get("calculation_version", "calc/v1"),
-            created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
-            ),
+            created_at=TimeNormalizer.parse_deterministic_timestamp(data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))),
         )
 
     def to_json(self) -> str:

@@ -106,12 +106,7 @@ class DatasetStatistics:
         )
 
     def __repr__(self) -> str:
-        return (
-            f"DatasetStatistics({self.record_count} records, "
-            f"missing={self.missing_percentage:.2f}%, "
-            f"gaps={self.gap_count}, dups={self.duplicate_count}, "
-            f"coverage={self.daily_coverage:.2f})"
-        )
+        return f"DatasetStatistics({self.record_count} records, missing={self.missing_percentage:.2f}%, gaps={self.gap_count}, dups={self.duplicate_count}, coverage={self.daily_coverage:.2f})"
 
 
 def _record_timestamp(record: DataRecord) -> datetime | None:

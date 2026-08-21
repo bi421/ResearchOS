@@ -105,12 +105,7 @@ class Hypothesis(BaseObject):
         Rank_Score = Evidence_Strength × 0.40 + Coherence × 0.30 +
                      Plausibility × 0.20 + Falsifiability × 0.10
         """
-        return (
-            self.evidence_strength * RANK_EVIDENCE_STRENGTH
-            + self.coherence * RANK_COHERENCE
-            + self.plausibility * RANK_PLAUSIBILITY
-            + self.falsifiability * RANK_FALSIFIABILITY
-        )
+        return self.evidence_strength * RANK_EVIDENCE_STRENGTH + self.coherence * RANK_COHERENCE + self.plausibility * RANK_PLAUSIBILITY + self.falsifiability * RANK_FALSIFIABILITY
 
     def check_invalidation(self, current_evidence: list[str]) -> bool:
         """

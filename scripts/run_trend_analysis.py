@@ -158,13 +158,7 @@ for name in combined_df.columns:
 evidence_items = []
 
 for name, trend_info in trend_results.items():
-    direction = (
-        ProbabilityOutcome.BULLISH
-        if trend_info["trend"] == "BULLISH"
-        else ProbabilityOutcome.BEARISH
-        if trend_info["trend"] == "BEARISH"
-        else ProbabilityOutcome.NEUTRAL
-    )
+    direction = ProbabilityOutcome.BULLISH if trend_info["trend"] == "BULLISH" else ProbabilityOutcome.BEARISH if trend_info["trend"] == "BEARISH" else ProbabilityOutcome.NEUTRAL
     strength = trend_info["strength"]
 
     item = EvidenceItem(

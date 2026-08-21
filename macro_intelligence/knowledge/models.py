@@ -153,13 +153,7 @@ class KnowledgeProvenance:
         A knowledge object must reference at least one upstream artifact.
         Empty provenance is not allowed for valid knowledge objects.
         """
-        return (
-            bool(self.evidence_ids)
-            or bool(self.feature_vector_ids)
-            or bool(self.relationship_ids)
-            or bool(self.regime_classification_id)
-            or bool(self.transition_id)
-        )
+        return bool(self.evidence_ids) or bool(self.feature_vector_ids) or bool(self.relationship_ids) or bool(self.regime_classification_id) or bool(self.transition_id)
 
 
 # =============================================================================

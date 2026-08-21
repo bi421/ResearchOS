@@ -47,15 +47,7 @@ def mle_log_normal(samples: Sequence[float]) -> DistributionFit:
 
 
 def _student_t_ll(df: float, samples: Sequence[float], mu: float, sigma: float) -> float:
-    return sum(
-        math.log(
-            math.gamma((df + 1.0) / 2.0)
-            / (math.sqrt(df * math.pi) * math.gamma(df / 2.0))
-            * (1.0 + ((s - mu) / sigma) ** 2 / df) ** (-(df + 1.0) / 2.0)
-        )
-        / sigma
-        for s in samples
-    )
+    return sum(math.log(math.gamma((df + 1.0) / 2.0) / (math.sqrt(df * math.pi) * math.gamma(df / 2.0)) * (1.0 + ((s - mu) / sigma) ** 2 / df) ** (-(df + 1.0) / 2.0)) / sigma for s in samples)
 
 
 def mle_student_t(

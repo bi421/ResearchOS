@@ -120,13 +120,7 @@ for name in combined_df.columns:
 evidence_items = []
 
 for name, info in trend_results.items():
-    direction = (
-        ProbabilityOutcome.BULLISH
-        if info["trend"] == "BULLISH"
-        else ProbabilityOutcome.BEARISH
-        if info["trend"] == "BEARISH"
-        else ProbabilityOutcome.NEUTRAL
-    )
+    direction = ProbabilityOutcome.BULLISH if info["trend"] == "BULLISH" else ProbabilityOutcome.BEARISH if info["trend"] == "BEARISH" else ProbabilityOutcome.NEUTRAL
     item = EvidenceItem(
         source=EvidenceSource.QUANT_ENGINE,
         source_id=f"{name}_trend",

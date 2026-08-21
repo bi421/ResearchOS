@@ -356,14 +356,7 @@ class CognitiveAssessment(BaseObject):
                   Reflection × 0.15 + Learning_Progress × 0.15
         """
         bias_penalty = min(0.5, len(self.bias_profile) * 0.05)
-        overall = (
-            self.knowledge_score * 0.25
-            + self.reasoning_score * 0.25
-            + (1.0 - bias_penalty) * 0.10
-            + self.discipline_score * 0.15
-            + self.reflection_score * 0.15
-            + self.learning_progress * 0.10
-        )
+        overall = self.knowledge_score * 0.25 + self.reasoning_score * 0.25 + (1.0 - bias_penalty) * 0.10 + self.discipline_score * 0.15 + self.reflection_score * 0.15 + self.learning_progress * 0.10
         self.overall_score = min(1.0, max(0.0, overall))
         return self.overall_score
 

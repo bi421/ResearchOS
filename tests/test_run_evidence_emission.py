@@ -270,10 +270,7 @@ class TestProgressTracking:
         return _make_repo()
 
     def test_acceptance_identical_runs_identical_hash(self):
-        assert (
-            build_run_envelope(_make_run(), experiment_hash="exp-hash-1").artifact_hash
-            == build_run_envelope(_make_run(), experiment_hash="exp-hash-1").artifact_hash
-        )
+        assert build_run_envelope(_make_run(), experiment_hash="exp-hash-1").artifact_hash == build_run_envelope(_make_run(), experiment_hash="exp-hash-1").artifact_hash
 
     def test_acceptance_changed_logical_input_diff_hash(self):
         e1 = build_run_envelope(_make_run(params={"lookback": 20}), experiment_hash="exp-hash-1")
@@ -283,9 +280,7 @@ class TestProgressTracking:
     def test_acceptance_runtime_timing_no_effect(self):
         r1 = _make_run_with_timing(duration=1.0)
         r2 = _make_run_with_timing(duration=500.0)
-        assert (
-            build_run_envelope(r1, experiment_hash="exp-hash-1").artifact_hash == build_run_envelope(r2, experiment_hash="exp-hash-1").artifact_hash
-        )
+        assert build_run_envelope(r1, experiment_hash="exp-hash-1").artifact_hash == build_run_envelope(r2, experiment_hash="exp-hash-1").artifact_hash
 
     def test_acceptance_experiment_to_run_lineage(self):
         repo = _make_repo()

@@ -133,9 +133,7 @@ def _assert_floats_bit_exact(name: str, python_val: float, cpp_val: float) -> No
     cpp_bytes = struct.pack(">d", cpp_val)
 
     if py_bytes != cpp_bytes:
-        pytest.fail(
-            f"BIT EXACT MISMATCH in {name}: Python={python_val!r} (hex={_float_to_hex(python_val)}) vs C++={cpp_val!r} (hex={_float_to_hex(cpp_val)})"
-        )
+        pytest.fail(f"BIT EXACT MISMATCH in {name}: Python={python_val!r} (hex={_float_to_hex(python_val)}) vs C++={cpp_val!r} (hex={_float_to_hex(cpp_val)})")
 
 
 # ---------------------------------------------------------------------------

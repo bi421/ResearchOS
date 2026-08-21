@@ -136,9 +136,7 @@ class TestSmallParity:
 
     def test_result_hash_self_consistent_both(self, python_backend, cpp_backend):
         prices = make_prices(_ROLLING_MIN)
-        assert python_backend.run_simulation(make_request(), prices).result_hash == (
-            python_backend.run_simulation(make_request(), prices).compute_result_hash()
-        )
+        assert python_backend.run_simulation(make_request(), prices).result_hash == (python_backend.run_simulation(make_request(), prices).compute_result_hash())
         cpp_result = cpp_backend.run_simulation(make_request(), prices)
         assert cpp_result.result_hash == cpp_result.compute_result_hash()
 

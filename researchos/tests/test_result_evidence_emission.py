@@ -302,8 +302,7 @@ class TestProgressTracking:
         r1 = _make_result_with_telemetry(time_ms=1.0)
         r2 = _make_result_with_telemetry(time_ms=500.0)
         assert (
-            build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
-            == build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
+            build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash == build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
         )
 
     def test_acceptance_run_to_result_lineage(self):

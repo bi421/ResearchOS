@@ -121,9 +121,7 @@ print(
 if not df_res.empty:
     best = df_res.loc[df_res["winrate"].idxmax()]
     print("\n?? ??????? ????:")
-    print(
-        f"   {best['timeframe']} / {best['strategy']}: Winrate {best['winrate']:.2f}% (CI: {best['winrate_ci_low']:.1f}-{best['winrate_ci_high']:.1f}%), Trades {best['trades']}"
-    )
+    print(f"   {best['timeframe']} / {best['strategy']}: Winrate {best['winrate']:.2f}% (CI: {best['winrate_ci_low']:.1f}-{best['winrate_ci_high']:.1f}%), Trades {best['trades']}")
 
 # CSV ????????
 df_res.to_csv("analysis_results.csv", index=False)

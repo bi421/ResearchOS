@@ -63,6 +63,4 @@ print("----------|--------|---------|--------|--------|--------")
 for th in thresholds:
     strategy = FastMLStrategy(model, scaler, feature_names, threshold=th)
     result = engine.run(prices, strategy)
-    print(
-        f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%}"
-    )
+    print(f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%}")

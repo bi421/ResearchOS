@@ -98,9 +98,7 @@ for h in horizons:
                 }
             )
 
-            print(
-                f"  h={h:2d}, t={t:.4f} | Equity: ${result.final_equity:,.2f} | Return: {result.total_return_pct:.2f}% | Trades: {result.num_trades}"
-            )
+            print(f"  h={h:2d}, t={t:.4f} | Equity: ${result.final_equity:,.2f} | Return: {result.total_return_pct:.2f}% | Trades: {result.num_trades}")
 
         except Exception as e:
             print(f"  h={h:2d}, t={t:.4f} | ❌ Алдаа: {e}")

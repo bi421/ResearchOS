@@ -230,9 +230,7 @@ class TestCsvLoaderTradingView:
         assert len(candles) == 4
 
     def test_tradingview_symbol_column(self):
-        csv_text = "time,symbol,open,high,low,close,volume\n" + "\n".join(
-            f"{t},XAU/USD,2000.0,2010.0,1995.0,2005.0,1000.0" for t in (1704096000, 1704099600)
-        )
+        csv_text = "time,symbol,open,high,low,close,volume\n" + "\n".join(f"{t},XAU/USD,2000.0,2010.0,1995.0,2005.0,1000.0" for t in (1704096000, 1704099600))
         loader = CsvLoader()
         candles = loader.load_tradingview_candles_from_text(csv_text, "XAU/USD")
         assert all(c.symbol == "XAU/USD" for c in candles)

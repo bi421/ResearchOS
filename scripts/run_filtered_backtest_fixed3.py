@@ -194,9 +194,7 @@ if X_val.shape[0] > 0:
         if result.num_trades >= 20 and result.sharpe_ratio > best_sharpe:
             best_sharpe = result.sharpe_ratio
             best_th = th
-        print(
-            f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%}"
-        )
+        print(f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%}")
     print(f"Best threshold: {best_th}")
 else:
     print("No validation data – using default threshold 0.55")

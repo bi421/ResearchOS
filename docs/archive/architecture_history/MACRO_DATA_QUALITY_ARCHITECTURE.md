@@ -1223,12 +1223,7 @@ class QualityScoreEngine:
         Compute weighted composite score.
         """
         weights = self.WEIGHTS
-        composite = (
-            source_reliability * weights["source_reliability"]
-            + completeness * weights["completeness"]
-            + freshness * weights["freshness"]
-            + anomaly * weights["anomaly"]
-        )
+        composite = source_reliability * weights["source_reliability"] + completeness * weights["completeness"] + freshness * weights["freshness"] + anomaly * weights["anomaly"]
         return round(composite, 3)
 ```
 

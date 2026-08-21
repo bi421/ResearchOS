@@ -191,21 +191,13 @@ def _register_builtins() -> None:
     register_indicator("WMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.wma(bars, period))
     register_indicator("HMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.hma(bars, period))
     register_indicator("VWMA", IndicatorCategory.TREND, {"period": 20})(lambda bars, period: ind.vwma(bars, period))
-    register_indicator("SuperTrend", IndicatorCategory.TREND, {"period": 10, "multiplier": 3.0})(
-        lambda bars, period, multiplier: ind.supertrend(bars, period, multiplier)
-    )
+    register_indicator("SuperTrend", IndicatorCategory.TREND, {"period": 10, "multiplier": 3.0})(lambda bars, period, multiplier: ind.supertrend(bars, period, multiplier))
     register_indicator(
         "Ichimoku",
         IndicatorCategory.TREND,
         {"tenkan_period": 9, "kijun_period": 26, "senkou_b_period": 52, "displacement": 26},
-    )(
-        lambda bars, tenkan_period, kijun_period, senkou_b_period, displacement: ind.ichimoku_cloud(
-            bars, tenkan_period, kijun_period, senkou_b_period, displacement
-        )
-    )
-    register_indicator("PSAR", IndicatorCategory.TREND, {"af_step": 0.02, "af_max": 0.2})(
-        lambda bars, af_step, af_max: ind.parabolic_sar(bars, af_step, af_max)
-    )
+    )(lambda bars, tenkan_period, kijun_period, senkou_b_period, displacement: ind.ichimoku_cloud(bars, tenkan_period, kijun_period, senkou_b_period, displacement))
+    register_indicator("PSAR", IndicatorCategory.TREND, {"af_step": 0.02, "af_max": 0.2})(lambda bars, af_step, af_max: ind.parabolic_sar(bars, af_step, af_max))
 
     # Momentum
     register_indicator("RSI", IndicatorCategory.MOMENTUM, {"period": 14})(lambda bars, period: ind.rsi(bars, period))
@@ -218,9 +210,7 @@ def _register_builtins() -> None:
 
     # Volatility
     register_indicator("ATR", IndicatorCategory.VOLATILITY, {"period": 14})(lambda bars, period: ind.atr(bars, period))
-    register_indicator("Bollinger", IndicatorCategory.VOLATILITY, {"period": 20, "std_dev": 2.0})(
-        lambda bars, period, std_dev: ind.bollinger_bands(bars, period, std_dev)
-    )
+    register_indicator("Bollinger", IndicatorCategory.VOLATILITY, {"period": 20, "std_dev": 2.0})(lambda bars, period, std_dev: ind.bollinger_bands(bars, period, std_dev))
     register_indicator("Keltner", IndicatorCategory.VOLATILITY, {"period": 20, "atr_period": 10, "multiplier": 2.0})(
         lambda bars, period, atr_period, multiplier: ind.keltner_channel(bars, period, atr_period, multiplier)
     )
@@ -238,9 +228,7 @@ def _register_builtins() -> None:
     register_indicator("DMI", IndicatorCategory.TREND_STRENGTH, {"period": 14})(lambda bars, period: ind.dmi(bars, period))
 
     # MACD family
-    register_indicator("MACD", IndicatorCategory.MACD, {"fast": 12, "slow": 26, "signal": 9})(
-        lambda bars, fast, slow, signal: ind.macd(bars, fast, slow, signal)
-    )
+    register_indicator("MACD", IndicatorCategory.MACD, {"fast": 12, "slow": 26, "signal": 9})(lambda bars, fast, slow, signal: ind.macd(bars, fast, slow, signal))
 
 
 _register_builtins()

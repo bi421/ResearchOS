@@ -119,11 +119,7 @@ class TestCertifiedPerformanceProfile:
         assert profile.measured() == 0
 
     def test_faster_than(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("Fast", "op", DatasetSizeClass.LARGE, PerformanceStat(5.0))
-            .add("Slow", "op", DatasetSizeClass.LARGE, PerformanceStat(50.0))
-        )
+        profile = CertifiedPerformanceProfile().add("Fast", "op", DatasetSizeClass.LARGE, PerformanceStat(5.0)).add("Slow", "op", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is True
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Slow", "Fast") is False
 
@@ -132,11 +128,7 @@ class TestCertifiedPerformanceProfile:
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is False
 
     def test_roundtrip(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(2.5))
-            .add("B", "run_simulation", DatasetSizeClass.LARGE, PerformanceStat(50.0))
-        )
+        profile = CertifiedPerformanceProfile().add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(2.5)).add("B", "run_simulation", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         restored = CertifiedPerformanceProfile.from_dict(profile.to_dict())
         assert restored.version == profile.version
         assert restored.source == profile.source
@@ -174,9 +166,7 @@ class TestCertifiedPerformanceProfile:
                 error_code="ok",
             )
         )
-        profile = CertifiedPerformanceProfile(version="1.0.0", source="benchmark").add(
-            "A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(4.0, count=2)
-        )
+        profile = CertifiedPerformanceProfile(version="1.0.0", source="benchmark").add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(4.0, count=2))
         new_profile = profile.recalibrate(history)
         assert new_profile.version == "1.0.0.1"
         assert new_profile is not profile
@@ -204,9 +194,7 @@ class TestBackendScheduler:
 
     def test_profile_selects_fastest(self):
         profile = (
-            CertifiedPerformanceProfile()
-            .add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0))
-            .add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
+            CertifiedPerformanceProfile().add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)).add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         )
         scheduler = BackendScheduler(profile=profile)
         decision = scheduler.decide(
@@ -250,11 +238,7 @@ class TestBackendScheduler:
         assert restored == decision
 
     def test_deterministic_decision(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("A", "op", DatasetSizeClass.MEDIUM, PerformanceStat(1.0))
-            .add("B", "op", DatasetSizeClass.MEDIUM, PerformanceStat(2.0))
-        )
+        profile = CertifiedPerformanceProfile().add("A", "op", DatasetSizeClass.MEDIUM, PerformanceStat(1.0)).add("B", "op", DatasetSizeClass.MEDIUM, PerformanceStat(2.0))
         scheduler = BackendScheduler(profile=profile)
         inputs = {"prices": [1.0] * 5_000}
         d1 = scheduler.decide("op", inputs, [("A", object()), ("B", object())])

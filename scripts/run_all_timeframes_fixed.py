@@ -75,9 +75,7 @@ print(f"\n{'Цаг.хүрээ':<10} {'Candle':<10} {'Арилжаа':<10} {'Winr
 print("-" * 80)
 
 for r in results:
-    print(
-        f"{r['timeframe']:<10} {r['candles']:<10} {r['trades']:<10} {r['winrate']:<10.2f} {r['total_return']:<12.2f} {r['sharpe']:<10.2f} {r['profit_factor']:<8.2f}"
-    )
+    print(f"{r['timeframe']:<10} {r['candles']:<10} {r['trades']:<10} {r['winrate']:<10.2f} {r['total_return']:<12.2f} {r['sharpe']:<10.2f} {r['profit_factor']:<8.2f}")
 
 # 4. Дүгнэлт
 print("\n" + "=" * 80)

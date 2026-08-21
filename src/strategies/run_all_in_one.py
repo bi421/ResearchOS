@@ -104,9 +104,7 @@ best_sharpe, best_th = -999, 0.55
 for th, res in results:
     if res["num_trades"] >= 20 and res["sharpe"] > best_sharpe:
         best_sharpe, best_th = res["sharpe"], th
-    print(
-        f"{th:5.2f}     | {res['num_trades']:6d} | {res['total_return']:7.2%} | {res['sharpe']:6.2f} | {res['max_drawdown']:6.2%} | {res['win_rate']:7.2%}"
-    )
+    print(f"{th:5.2f}     | {res['num_trades']:6d} | {res['total_return']:7.2%} | {res['sharpe']:6.2f} | {res['max_drawdown']:6.2%} | {res['win_rate']:7.2%}")
 print(f"Best: {best_th} (Sharpe={best_sharpe:.2f})")
 
 # Test
@@ -121,7 +119,5 @@ for i, idx in enumerate(test_df.index):
             signals.append(("SELL", price))
 res = vectorized_backtest(test_df["close"].tolist(), signals)
 print("\n📊 OUT-OF-SAMPLE TEST (2025-2026)")
-print(
-    f"Trades: {res['num_trades']}\nReturn: {res['total_return']:.2%}\nSharpe: {res['sharpe']:.2f}\nMax DD: {res['max_drawdown']:.2%}\nWin Rate: {res['win_rate']:.2%}"
-)
+print(f"Trades: {res['num_trades']}\nReturn: {res['total_return']:.2%}\nSharpe: {res['sharpe']:.2f}\nMax DD: {res['max_drawdown']:.2%}\nWin Rate: {res['win_rate']:.2%}")
 print("✅ SUCCESS" if res["num_trades"] >= 30 and res["sharpe"] > 0.5 else "❌ FAILED")

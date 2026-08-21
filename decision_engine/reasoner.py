@@ -159,10 +159,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=1,
-            description=(
-                f"Collected {score.evidence_count} evidence items from "
-                f"{len(source_counts)} sources: " + ", ".join(f"{k}={v}" for k, v in sorted(source_counts.items()))
-            ),
+            description=(f"Collected {score.evidence_count} evidence items from {len(source_counts)} sources: " + ", ".join(f"{k}={v}" for k, v in sorted(source_counts.items()))),
             inputs=[context.id],
             outputs=[score.id],
             rule="EvidenceCollection",
@@ -211,11 +208,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=3,
-            description=(
-                f"Market Memory contribution: {len(mm_items)} evidence items "
-                f"from {match_count} historical matches. "
-                f"Score={score.market_memory_score:.4f}"
-            ),
+            description=(f"Market Memory contribution: {len(mm_items)} evidence items from {match_count} historical matches. Score={score.market_memory_score:.4f}"),
             inputs=context.historical_scenario_ids,
             outputs=[],
             rule="MarketMemoryEvidence",
@@ -251,9 +244,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=5,
-            description=(
-                f"Macro Intelligence contribution: {len(macro_items)} items. Regime={context.market_regime_id}, Score={score.macro_score:.4f}"
-            ),
+            description=(f"Macro Intelligence contribution: {len(macro_items)} items. Regime={context.market_regime_id}, Score={score.macro_score:.4f}"),
             inputs=[context.macro_state_id] if context.macro_state_id else [],
             outputs=[],
             rule="MacroEvidence",
@@ -369,11 +360,7 @@ class DecisionReasoner:
         """Step 11: Limitations identification."""
         return ReasoningStep(
             order=11,
-            description=(
-                f"Identified {len(probability.limitations)} limitations: " + "; ".join(probability.limitations)
-                if probability.limitations
-                else "No significant limitations identified."
-            ),
+            description=(f"Identified {len(probability.limitations)} limitations: " + "; ".join(probability.limitations) if probability.limitations else "No significant limitations identified."),
             inputs=[probability.id],
             outputs=[],
             rule="LimitationsIdentification",

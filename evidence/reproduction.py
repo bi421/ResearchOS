@@ -316,11 +316,7 @@ class ReproductionEngine:
         if chain.result is None:
             missing.append("Result")
         if missing:
-            raise MissingArtifact(
-                f"Cannot reproduce {result_hash}: missing chain artifacts "
-                f"{missing}. Ensure all required artifacts are stored in the "
-                f"evidence repository."
-            )
+            raise MissingArtifact(f"Cannot reproduce {result_hash}: missing chain artifacts {missing}. Ensure all required artifacts are stored in the evidence repository.")
 
     # ── reconstruction helpers ───────────────────────────────────────────
 

@@ -134,8 +134,4 @@ class Quote(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"Quote({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, "
-            f"B={self.bid:.4f}×{self.bid_size:.0f} "
-            f"A={self.ask:.4f}×{self.ask_size:.0f})"
-        )
+        return f"Quote({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, B={self.bid:.4f}×{self.bid_size:.0f} A={self.ask:.4f}×{self.ask_size:.0f})"

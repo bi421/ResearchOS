@@ -88,9 +88,7 @@ for th in thresholds:
         ci_low, ci_high = 0.0, 0.0
 
     val_results.append((th, result))
-    print(
-        f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%} | {ci_low:13.2f} | {ci_high:13.2f}"
-    )
+    print(f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%} | {ci_low:13.2f} | {ci_high:13.2f}")
 
 # 6. Хамгийн сайн threshold-г сонгох (Validation дээрх Sharpe дээр үндэслэн, түүврийн хэмжээ ≥ 30 байх ёстой)
 valid_thresholds = [(th, res) for th, res in val_results if res.num_trades >= 30]
@@ -109,9 +107,7 @@ print("----------|--------|---------|--------|--------|--------")
 test_prices = test_df["close"].tolist()
 strategy_final = MLStrategy(model, scaler, feature_names, threshold=best_th)
 test_result = engine.run(test_prices, strategy_final)
-print(
-    f"{best_th:5.2f}     | {test_result.num_trades:6d} | {test_result.total_return:7.2%} | {test_result.sharpe_ratio:6.2f} | {test_result.max_drawdown:6.2%} | {test_result.win_rate:7.2%}"
-)
+print(f"{best_th:5.2f}     | {test_result.num_trades:6d} | {test_result.total_return:7.2%} | {test_result.sharpe_ratio:6.2f} | {test_result.max_drawdown:6.2%} | {test_result.win_rate:7.2%}")
 
 print("\n" + "=" * 50)
 print("🔬 FINAL VERDICT")

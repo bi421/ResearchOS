@@ -32,9 +32,7 @@ if passed_fdr_count > 0:
     print("✅ FDR-ээр давсан хослолууд:")
     for r in results:
         if r["sig_fdr"]:
-            print(
-                f"  h={r['horizon']:2d}, t={r['threshold']:.4f} | Model: {r['model_acc']:.4f} vs Base: {r['baseline_acc']:.4f} | p(FDR): {r['p_value_fdr_corrected']:.5f}"
-            )
+            print(f"  h={r['horizon']:2d}, t={r['threshold']:.4f} | Model: {r['model_acc']:.4f} vs Base: {r['baseline_acc']:.4f} | p(FDR): {r['p_value_fdr_corrected']:.5f}")
 else:
     print("⚠️ FDR-ээр ч гэсэн ямар ч хослол дахисангүй.")
     print("   Дүгнэлт: Загварт бодит таамаглах чадвар байхгүй, өгөгдлийг бүрэн өөрчлөх (Feature Engineering) шаардлагатай.")

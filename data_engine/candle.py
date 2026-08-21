@@ -205,9 +205,4 @@ class Candle(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"Candle({self.symbol}, {self.timeframe}, "
-            f"{self.timestamp.strftime('%Y-%m-%d %H:%M')}, "
-            f"O={self.open:.2f} H={self.high:.2f} "
-            f"L={self.low:.2f} C={self.close:.2f} V={self.volume:.0f})"
-        )
+        return f"Candle({self.symbol}, {self.timeframe}, {self.timestamp.strftime('%Y-%m-%d %H:%M')}, O={self.open:.2f} H={self.high:.2f} L={self.low:.2f} C={self.close:.2f} V={self.volume:.0f})"

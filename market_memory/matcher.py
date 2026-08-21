@@ -225,8 +225,6 @@ class ScenarioMatcher:
             "weight_sum": sum(self.feature_weights.values()),
             "calculation_method": "WeightedFeatureComparison",
             "description": (
-                "Weighted sum of normalized feature differences. "
-                "Each feature is normalized to [0,1] and multiplied by its weight. "
-                "Weights must sum to 1.0. Higher scores indicate greater similarity."
+                "Weighted sum of normalized feature differences. Each feature is normalized to [0,1] and multiplied by its weight. Weights must sum to 1.0. Higher scores indicate greater similarity."
             ),
         }

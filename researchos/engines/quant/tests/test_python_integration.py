@@ -249,9 +249,7 @@ def test_simulation_identical_results(python_backend, cpp_backend, sample_prices
 
     # Compare equity curves
     for i in range(len(py_result.equity_curve)):
-        assert abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10, (
-            f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
-        )
+        assert abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10, f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
 
     # Compare metrics
     for key in py_result.metrics:

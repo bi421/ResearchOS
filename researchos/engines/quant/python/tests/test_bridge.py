@@ -167,11 +167,7 @@ class TestCanonicalSerialization:
 
     def test_candle_canonical(self):
         c = Candle(timestamp="2026-01-01T00:00:00", open=1.0, high=2.0, low=0.5, close=1.5, volume=10.0)
-        assert c.to_canonical() == (
-            '{"close":1.5000000000,"high":2.0000000000,"low":0.5000000000,'
-            '"open":1.0000000000,"timeframe":"M1","timestamp":"2026-01-01T00:00:00",'
-            '"volume":10.0000000000}'
-        )
+        assert c.to_canonical() == ('{"close":1.5000000000,"high":2.0000000000,"low":0.5000000000,"open":1.0000000000,"timeframe":"M1","timestamp":"2026-01-01T00:00:00","volume":10.0000000000}')
 
 
 # ── BaseObject round-trips ──────────────────────────────────────────────────

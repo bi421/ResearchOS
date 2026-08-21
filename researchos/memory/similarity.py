@@ -73,13 +73,7 @@ def compare_snapshots(
         "volatility": 0.15,
     }
 
-    score = (
-        weights["range"] * range_sim
-        + weights["body"] * body_sim
-        + weights["trend"] * trend_sim
-        + weights["position"] * pos_sim
-        + weights["volatility"] * vol_sim
-    )
+    score = weights["range"] * range_sim + weights["body"] * body_sim + weights["trend"] * trend_sim + weights["position"] * pos_sim + weights["volatility"] * vol_sim
 
     return max(0.0, min(1.0, score))
 

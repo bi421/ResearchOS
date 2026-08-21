@@ -124,9 +124,7 @@ for h in horizons:
                 }
             )
 
-            print(
-                f"  h={h:2d}min, t={t * 100:.2f}% | Return: {result.total_return_pct:+.2f}% | Trades: {result.num_trades:,} | DD: {result.max_drawdown_pct:.2f}% | Time: {bt_time:.2f}s"
-            )
+            print(f"  h={h:2d}min, t={t * 100:.2f}% | Return: {result.total_return_pct:+.2f}% | Trades: {result.num_trades:,} | DD: {result.max_drawdown_pct:.2f}% | Time: {bt_time:.2f}s")
 
         except Exception as e:
             print(f"  h={h:2d}min, t={t * 100:.2f}% | ❌ Алдаа: {e}")

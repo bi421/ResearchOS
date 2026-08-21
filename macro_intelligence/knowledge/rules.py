@@ -178,10 +178,7 @@ RULES: dict[str, KnowledgeRule] = {
         rule_id="KNOW-007",
         rule_version=KNOWLEDGE_RULES_VERSION,
         description=(
-            "IF risk regime is risk-off "
-            "AND risk confidence >= RISK_OFF_MIN_CONFIDENCE "
-            "AND abs(safe-haven correlation) >= RISK_OFF_MIN_ABS_SAFE_HAVEN_CORR "
-            "THEN RISK_OFF_SAFE_HAVEN knowledge"
+            "IF risk regime is risk-off AND risk confidence >= RISK_OFF_MIN_CONFIDENCE AND abs(safe-haven correlation) >= RISK_OFF_MIN_ABS_SAFE_HAVEN_CORR THEN RISK_OFF_SAFE_HAVEN knowledge"
         ),
         parameters={
             "min_confidence": RISK_OFF_MIN_CONFIDENCE,
@@ -191,12 +188,7 @@ RULES: dict[str, KnowledgeRule] = {
     "TIGHTENING_VOLATILITY": KnowledgeRule(
         rule_id="KNOW-008",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF monetary regime is tightening "
-            "AND volatility is elevated "
-            "AND tightening confidence >= TIGHTENING_VOL_MIN_CONFIDENCE "
-            "THEN TIGHTENING_VOLATILITY knowledge"
-        ),
+        description=("IF monetary regime is tightening AND volatility is elevated AND tightening confidence >= TIGHTENING_VOL_MIN_CONFIDENCE THEN TIGHTENING_VOLATILITY knowledge"),
         parameters={
             "min_confidence": TIGHTENING_VOL_MIN_CONFIDENCE,
         },

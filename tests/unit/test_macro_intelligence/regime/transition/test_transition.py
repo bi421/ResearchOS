@@ -619,9 +619,7 @@ class TestTransitionProbabilityEngine:
         from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
-        original_probs = engine.get_all_transition_probabilities(
-            __import__("macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]).MacroRegime.GOLDILOCKS
-        )
+        original_probs = engine.get_all_transition_probabilities(__import__("macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]).MacroRegime.GOLDILOCKS)
 
         engine.update_with_observations(
             [
@@ -632,9 +630,7 @@ class TestTransitionProbabilityEngine:
         )
 
         # Probabilities should have updated
-        new_probs = engine.get_all_transition_probabilities(
-            __import__("macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]).MacroRegime.GOLDILOCKS
-        )
+        new_probs = engine.get_all_transition_probabilities(__import__("macro_intelligence.regime.classification.taxonomy", fromlist=["MacroRegime"]).MacroRegime.GOLDILOCKS)
 
         assert engine.observation_count == 3
         # The probability of staying in goldilocks should have decreased

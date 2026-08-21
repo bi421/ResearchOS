@@ -124,11 +124,7 @@ class PatternDetector:
         if continuation_probability < REGIME_PERSISTENCE_MIN_CONTINUATION:
             return None
 
-        statement = (
-            f"{regime_name} regime persistence detected with "
-            f"{regime_confidence:.2f} confidence over {persistence_periods} periods "
-            f"(continuation probability {continuation_probability:.2f})."
-        )
+        statement = f"{regime_name} regime persistence detected with {regime_confidence:.2f} confidence over {persistence_periods} periods (continuation probability {continuation_probability:.2f})."
         return PatternFinding(
             pattern_type=KnowledgeType.REGIME_PERSISTENCE,
             statement=statement,
@@ -200,11 +196,7 @@ class PatternDetector:
         if sample_size < PERSISTENT_RELATIONSHIP_MIN_SAMPLE:
             return None
 
-        statement = (
-            f"Persistent relationship detected between {series_a} and {series_b}: "
-            f"correlation {overall_correlation:.2f} stable over time "
-            f"(rolling std {rolling_stability:.4f})."
-        )
+        statement = f"Persistent relationship detected between {series_a} and {series_b}: correlation {overall_correlation:.2f} stable over time (rolling std {rolling_stability:.4f})."
         confidence = round(
             min(1.0, abs(overall_correlation) + (1.0 - rolling_stability)),
             4,
@@ -387,11 +379,7 @@ class PatternDetector:
         if best_pair is None:
             return None
 
-        statement = (
-            f"Risk-off conditions detected (regime {risk_regime}, confidence "
-            f"{risk_confidence:.2f}) with safe-haven relationship {best_pair} "
-            f"(|correlation| {best_abs:.2f})."
-        )
+        statement = f"Risk-off conditions detected (regime {risk_regime}, confidence {risk_confidence:.2f}) with safe-haven relationship {best_pair} (|correlation| {best_abs:.2f})."
         return PatternFinding(
             pattern_type=KnowledgeType.RISK_OFF_SAFE_HAVEN,
             statement=statement,
@@ -432,11 +420,7 @@ class PatternDetector:
         if monetary_confidence < TIGHTENING_VOL_MIN_CONFIDENCE:
             return None
 
-        statement = (
-            f"Tightening volatility conditions detected: monetary regime "
-            f"{monetary_regime} (confidence {monetary_confidence:.2f}) with "
-            f"elevated volatility."
-        )
+        statement = f"Tightening volatility conditions detected: monetary regime {monetary_regime} (confidence {monetary_confidence:.2f}) with elevated volatility."
         return PatternFinding(
             pattern_type=KnowledgeType.TIGHTENING_VOLATILITY,
             statement=statement,

@@ -12,9 +12,7 @@ if load_dotenv is not None:
 def _get_env(name: str) -> str:
     value = os.getenv(name, "").strip()
     if not value:
-        raise RuntimeError(
-            f"Missing required environment variable: {name}. Set it in your shell or a local .env file before starting the trading bot."
-        )
+        raise RuntimeError(f"Missing required environment variable: {name}. Set it in your shell or a local .env file before starting the trading bot.")
     return value
 
 

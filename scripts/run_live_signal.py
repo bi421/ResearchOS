@@ -186,13 +186,9 @@ class LiveTradingSignal:
         print(f"📈 MACD Hist: {s['macd_hist']:.2f}")
         print(f"📊 ATR: {s['atr']:.2f}")
         if s["stop_loss"]:
-            print(
-                f"🛑 Stop-Loss: ${s['stop_loss']:.2f} ({'-' if s['signal'] == 'SELL' else '+'}{(abs(s['current_price'] - s['stop_loss']) / s['current_price'] * 100):.2f}%)"
-            )
+            print(f"🛑 Stop-Loss: ${s['stop_loss']:.2f} ({'-' if s['signal'] == 'SELL' else '+'}{(abs(s['current_price'] - s['stop_loss']) / s['current_price'] * 100):.2f}%)")
         if s["take_profit"]:
-            print(
-                f"🎯 Take-Profit: ${s['take_profit']:.2f} ({'+' if s['signal'] == 'BUY' else '-'}{(abs(s['current_price'] - s['take_profit']) / s['current_price'] * 100):.2f}%)"
-            )
+            print(f"🎯 Take-Profit: ${s['take_profit']:.2f} ({'+' if s['signal'] == 'BUY' else '-'}{(abs(s['current_price'] - s['take_profit']) / s['current_price'] * 100):.2f}%)")
         print(f"📊 Позицийн хэмжээ: {s['position_size'] * 100:.1f}%")
         print("=" * 50)
 

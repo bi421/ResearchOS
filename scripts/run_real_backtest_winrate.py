@@ -85,11 +85,7 @@ class RealBacktestWinrate:
             winrate = (df_trades["pnl"] > 0).sum() / len(df_trades) * 100
             avg_win = df_trades[df_trades["pnl"] > 0]["pnl"].mean() if (df_trades["pnl"] > 0).sum() > 0 else 0
             avg_loss = df_trades[df_trades["pnl"] < 0]["pnl"].mean() if (df_trades["pnl"] < 0).sum() > 0 else 0
-            profit_factor = (
-                abs((df_trades[df_trades["pnl"] > 0]["pnl"].sum()) / (df_trades[df_trades["pnl"] < 0]["pnl"].sum()))
-                if (df_trades["pnl"] < 0).sum() > 0
-                else np.inf
-            )
+            profit_factor = abs((df_trades[df_trades["pnl"] > 0]["pnl"].sum()) / (df_trades[df_trades["pnl"] < 0]["pnl"].sum())) if (df_trades["pnl"] < 0).sum() > 0 else np.inf
             total_return = (1 + df_trades["pnl"]).prod() - 1
             sharpe = df_trades["pnl"].mean() / df_trades["pnl"].std() * np.sqrt(252) if df_trades["pnl"].std() != 0 else 0
 

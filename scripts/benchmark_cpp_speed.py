@@ -39,20 +39,8 @@ def benchmark(arr, name):
     return elapsed_ms
 
 
-close_h1 = (
-    df.group_by_dynamic("ts_utc", every="1h")
-    .agg(pl.col("close").last())
-    .sort("ts_utc")
-    .filter(pl.col("ts_utc").dt.year() == 2025)["close"]
-    .to_numpy()
-)
-close_d1 = (
-    df.group_by_dynamic("ts_utc", every="1d")
-    .agg(pl.col("close").last())
-    .sort("ts_utc")
-    .filter(pl.col("ts_utc").dt.year() == 2025)["close"]
-    .to_numpy()
-)
+close_h1 = df.group_by_dynamic("ts_utc", every="1h").agg(pl.col("close").last()).sort("ts_utc").filter(pl.col("ts_utc").dt.year() == 2025)["close"].to_numpy()
+close_d1 = df.group_by_dynamic("ts_utc", every="1d").agg(pl.col("close").last()).sort("ts_utc").filter(pl.col("ts_utc").dt.year() == 2025)["close"].to_numpy()
 
 benchmark(close_d1, "D1 2025 ")
 benchmark(close_h1, "H1 2025 ")

@@ -373,17 +373,11 @@ def generate_decision_report(
     for item in score.evidence_items:
         src = item.source.value
         source_counts[src] = source_counts.get(src, 0) + 1
-    evidence_summary = f"Total evidence: {score.evidence_count} items from {len(source_counts)} sources. " + ", ".join(
-        f"{k}: {v}" for k, v in sorted(source_counts.items())
-    )
+    evidence_summary = f"Total evidence: {score.evidence_count} items from {len(source_counts)} sources. " + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items()))
 
     # Human-readable summary
     directional_label = (
-        "Bullish"
-        if probability.bullish_probability > probability.bearish_probability
-        else "Bearish"
-        if probability.bearish_probability > probability.bullish_probability
-        else "Neutral"
+        "Bullish" if probability.bullish_probability > probability.bearish_probability else "Bearish" if probability.bearish_probability > probability.bullish_probability else "Neutral"
     )
     summary = (
         f"{directional_label} bias for {context.asset} ({context.timeframe}) "

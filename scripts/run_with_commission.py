@@ -119,9 +119,7 @@ for h in timeframes:
             result.update({"timeframe": f"{h}min", "strategy": name, "commission": c, "spread": spread})
             all_results.append(result)
 
-            print(
-                f"   {name} | c={c * 100:.2f}% | Winrate: {result['winrate']:.2f}%, Trades: {result['trades']}, Return: {result['total_return']:.2f}%"
-            )
+            print(f"   {name} | c={c * 100:.2f}% | Winrate: {result['winrate']:.2f}%, Trades: {result['trades']}, Return: {result['total_return']:.2f}%")
 
 sweep_time = time.time() - sweep_start
 print(f"\n✅ Нийт хугацаа: {sweep_time:.2f} сек")

@@ -108,11 +108,7 @@ def _validate_payload(payload: Any) -> None:
         return
     if isinstance(payload, (str, int, float, bool)) or payload is None:
         return
-    raise TypeError(
-        f"payload value {payload!r} of type {type(payload).__name__} is not "
-        "a deterministic JSON-compatible primitive. Allowed: dict, list, str, "
-        "int, float, bool, None."
-    )
+    raise TypeError(f"payload value {payload!r} of type {type(payload).__name__} is not a deterministic JSON-compatible primitive. Allowed: dict, list, str, int, float, bool, None.")
 
 
 def _canonical_json(payload: Any) -> str:

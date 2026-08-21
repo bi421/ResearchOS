@@ -210,9 +210,7 @@ def validation_payload(
         "fold_count": int(getattr(validation, "fold_count", 0)),
     }
 
-    version = str(
-        getattr(validation, "version", "") or metadata.get("validation_version", VALIDATION_EVIDENCE_VERSION) or VALIDATION_EVIDENCE_VERSION
-    )
+    version = str(getattr(validation, "version", "") or metadata.get("validation_version", VALIDATION_EVIDENCE_VERSION) or VALIDATION_EVIDENCE_VERSION)
 
     payload: dict[str, Any] = {
         "validation_hash": vh,

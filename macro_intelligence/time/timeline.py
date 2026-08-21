@@ -218,9 +218,7 @@ class CalendarEvent:
             source=data.get("source", ""),
             confidence=data.get("confidence", 0.0),
             metadata=data.get("metadata", {}),
-            created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
-            ),
+            created_at=TimeNormalizer.parse_deterministic_timestamp(data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))),
             version=data.get("version", "time/timeline/v1"),
         )
 

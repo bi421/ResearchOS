@@ -211,10 +211,7 @@ class TestProgressTracking:
         assert build_dataset_envelope(_make_dataset()).artifact_hash == build_dataset_envelope(_make_dataset()).artifact_hash
 
     def test_acceptance_changed_dataset_diff_hash(self):
-        assert (
-            build_dataset_envelope(_make_dataset(labels=[0, 1, 0])).artifact_hash
-            != build_dataset_envelope(_make_dataset(labels=[1, 0, 1])).artifact_hash
-        )
+        assert build_dataset_envelope(_make_dataset(labels=[0, 1, 0])).artifact_hash != build_dataset_envelope(_make_dataset(labels=[1, 0, 1])).artifact_hash
 
     def test_acceptance_retrievable_from_repo(self):
         repo = self._make_repo()

@@ -27,19 +27,7 @@ df.columns = [c.lower() for c in df.columns]
 df["ts_raw"] = df["date"].astype(str) + df["time"].astype(str)
 
 # Векторчилсон string slicing (1.7 сая мөрөнд ~0.3 секунд зарцуулна)
-df["iso_ts"] = (
-    df["ts_raw"].str[:4]
-    + "-"
-    + df["ts_raw"].str[4:6]
-    + "-"
-    + df["ts_raw"].str[6:8]
-    + "T"
-    + df["ts_raw"].str[8:10]
-    + ":"
-    + df["ts_raw"].str[10:12]
-    + ":"
-    + df["ts_raw"].str[12:14]
-)
+df["iso_ts"] = df["ts_raw"].str[:4] + "-" + df["ts_raw"].str[4:6] + "-" + df["ts_raw"].str[6:8] + "T" + df["ts_raw"].str[8:10] + ":" + df["ts_raw"].str[10:12] + ":" + df["ts_raw"].str[12:14]
 
 # NaN утгуудыг цэвэрлэх
 df = df.dropna(subset=["iso_ts", "open", "high", "low", "close"])
@@ -128,9 +116,7 @@ for h in horizons:
                 }
             )
 
-            print(
-                f"  h={h:2d}m, t={t * 100:.2f}% | Return: {result.total_return_pct:+.2f}% | Trades: {result.num_trades:,} | DD: {result.max_drawdown_pct:.2f}% | C++ Time: {bt_time:.2f}s"
-            )
+            print(f"  h={h:2d}m, t={t * 100:.2f}% | Return: {result.total_return_pct:+.2f}% | Trades: {result.num_trades:,} | DD: {result.max_drawdown_pct:.2f}% | C++ Time: {bt_time:.2f}s")
 
         except Exception as e:
             print(f"  h={h:2d}m, t={t * 100:.2f}% | ❌ Алдаа: {e}")

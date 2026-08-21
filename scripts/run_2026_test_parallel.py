@@ -115,9 +115,7 @@ for th, res in results:
     if res["num_trades"] >= 20 and res["sharpe"] > best_sharpe:
         best_sharpe = res["sharpe"]
         best_th = th
-    print(
-        f"{th:5.2f}     | {res['num_trades']:6d} | {res['total_return']:7.2%} | {res['sharpe']:6.2f} | {res['max_drawdown']:6.2%} | {res['win_rate']:7.2%}"
-    )
+    print(f"{th:5.2f}     | {res['num_trades']:6d} | {res['total_return']:7.2%} | {res['sharpe']:6.2f} | {res['max_drawdown']:6.2%} | {res['win_rate']:7.2%}")
 print(f"Best threshold: {best_th} (Sharpe={best_sharpe:.2f})")
 print(f"⏱️ Grid search time: {time.time() - start:.2f}s")
 

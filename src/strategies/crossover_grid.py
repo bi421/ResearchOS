@@ -91,9 +91,7 @@ print("\n📊 PARAMETER COMPARISON")
 print("Fast | Slow | ADX | Trades | Return  | Sharpe | MaxDD  | WinRate")
 print("-----|------|-----|--------|---------|--------|--------|--------")
 for r in results:
-    print(
-        f"{r['fast']:4d} | {r['slow']:4d} | {str(r['adx']):3s} | {r['trades']:6d} | {r['return']:7.2%} | {r['sharpe']:6.2f} | {r['dd']:7.2%} | {r['win']:6.2%}"
-    )
+    print(f"{r['fast']:4d} | {r['slow']:4d} | {str(r['adx']):3s} | {r['trades']:6d} | {r['return']:7.2%} | {r['sharpe']:6.2f} | {r['dd']:7.2%} | {r['win']:6.2%}")
 
 # Find best by Sharpe (with trades >= 30)
 best = max([r for r in results if r["trades"] >= 30], key=lambda x: x["sharpe"], default=None)

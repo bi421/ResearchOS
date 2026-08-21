@@ -746,9 +746,7 @@ class BackendRouter:
         inputs: Mapping[str, Any] | None = None,
     ) -> None:
         """Append an observational telemetry record to ``history``."""
-        thresholds = (
-            self._scheduler.profile.thresholds if self._scheduler is not None and self._scheduler.profile is not None else DEFAULT_SIZE_THRESHOLDS
-        )
+        thresholds = self._scheduler.profile.thresholds if self._scheduler is not None and self._scheduler.profile is not None else DEFAULT_SIZE_THRESHOLDS
         size_class = classify_size(
             _estimate_dataset_size(inputs) if inputs is not None else None,
             thresholds,

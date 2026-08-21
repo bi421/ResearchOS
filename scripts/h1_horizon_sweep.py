@@ -118,9 +118,7 @@ if results:
     results.sort(key=lambda x: x["improvement"], reverse=True)
     print("\n🥇 ШИЛДЭГ H1 ҮР ДҮНГҮҮД (2026 оны бодит өгөгдөл):")
     for r in results[:5]:
-        print(
-            f"  ✅ h={r['horizon']:2d}, t={r['threshold']:.4f} | Model: {r['model_acc']:.4f} vs Base: {r['baseline_acc']:.4f} (Improvement: +{r['improvement']:.4f}) | p={r['p_value']:.5f}"
-        )
+        print(f"  ✅ h={r['horizon']:2d}, t={r['threshold']:.4f} | Model: {r['model_acc']:.4f} vs Base: {r['baseline_acc']:.4f} (Improvement: +{r['improvement']:.4f}) | p={r['p_value']:.5f}")
 else:
     print("\n⚠️ H1 өгөгдөл дээр ч гэсэн 1%-иас дээш давуу тал (edge) олдсонгүй.")
     print("   Дүгнэлт: Random Forest + стандарт индикаторууд XAUUSD H1 дээр чиглэл таамаглах хангалттай мэдээлэл агуулаагүй байна.")
