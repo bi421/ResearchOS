@@ -19,7 +19,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -57,13 +57,13 @@ class QuantHypothesis(BaseObject):
         alternative_hypothesis: str,
         hypothesis_type: str = "Directional",
         significance_level: float = 0.05,
-        expected_effect: Optional[float] = None,
-        parameters: Optional[Dict[str, Any]] = None,
-        metric_definitions: Optional[List[MetricDefinition]] = None,
-        tags: Optional[List[str]] = None,
+        expected_effect: float | None = None,
+        parameters: dict[str, Any] | None = None,
+        metric_definitions: list[MetricDefinition] | None = None,
+        tags: list[str] | None = None,
         hypothesis_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"QuantHypothesis|{research_question}|{null_hypothesis}|{alternative_hypothesis}"
@@ -77,9 +77,9 @@ class QuantHypothesis(BaseObject):
         self.hypothesis_type = hypothesis_type
         self.significance_level = significance_level
         self.expected_effect = expected_effect
-        self.parameters: Dict[str, Any] = parameters or {}
-        self.metric_definitions: List[MetricDefinition] = metric_definitions or []
-        self.tags: List[str] = tags or []
+        self.parameters: dict[str, Any] = parameters or {}
+        self.metric_definitions: list[MetricDefinition] = metric_definitions or []
+        self.tags: list[str] = tags or []
         self.hypothesis_trace = hypothesis_trace
         self.status = HypothesisStatus.FORMULATED
 
@@ -117,12 +117,10 @@ class QuantHypothesis(BaseObject):
         self.status = HypothesisStatus.INCONCLUSIVE
         self.lifecycle.transition(
             LifecycleStage.ANALYZED,
-            reason=f"QuantHypothesis inconclusive: {reason}"
-            if reason
-            else "QuantHypothesis inconclusive",
+            reason=f"QuantHypothesis inconclusive: {reason}" if reason else "QuantHypothesis inconclusive",
         )
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "research_question": self.research_question,
             "null_hypothesis": self.null_hypothesis,
@@ -141,7 +139,7 @@ class QuantHypothesis(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -161,7 +159,7 @@ class QuantHypothesis(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "QuantHypothesis":
+    def from_dict(cls, data: dict[str, Any]) -> QuantHypothesis:
         obj = super().from_dict(data)
         obj.research_question = data["research_question"]
         obj.null_hypothesis = data["null_hypothesis"]
@@ -170,9 +168,7 @@ class QuantHypothesis(BaseObject):
         obj.significance_level = float(data.get("significance_level", 0.05))
         obj.expected_effect = data.get("expected_effect")
         obj.parameters = dict(data.get("parameters", {}))
-        obj.metric_definitions = [
-            MetricDefinition.from_dict(m) for m in data.get("metric_definitions", [])
-        ]
+        obj.metric_definitions = [MetricDefinition.from_dict(m) for m in data.get("metric_definitions", [])]
         obj.tags = list(data.get("tags", []))
         obj.hypothesis_trace = data.get("hypothesis_trace", "")
         obj.status = HypothesisStatus(data.get("status", "Formulated"))

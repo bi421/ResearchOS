@@ -10,8 +10,6 @@ MIL-ECM-008: Econometrics owns Engle-Granger.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.descriptive import mean
 from macro_intelligence.statistics.provenance import StatisticalProvenance
@@ -26,16 +24,16 @@ _EG_CRITICAL = {
 }
 
 
-def _first_difference(values: List[float]) -> List[float]:
+def _first_difference(values: list[float]) -> list[float]:
     return [values[i] - values[i - 1] for i in range(1, len(values))]
 
 
 def engle_granger(
-    y: List[float],
-    x: List[float],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    y: list[float],
+    x: list[float],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Engle-Granger two-step cointegration test.

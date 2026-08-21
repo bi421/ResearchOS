@@ -10,7 +10,7 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from math import sqrt
-from typing import List, NamedTuple, Optional
+from typing import NamedTuple
 
 from macro_intelligence.statistics.descriptive import mean
 
@@ -24,7 +24,7 @@ class RegressionResult(NamedTuple):
     standard_error: float
 
 
-def slope(x: List[float], y: List[float]) -> float:
+def slope(x: list[float], y: list[float]) -> float:
     """
     Calculate slope of linear regression.
 
@@ -51,7 +51,7 @@ def slope(x: List[float], y: List[float]) -> float:
     return numerator / denominator
 
 
-def intercept(x: List[float], y: List[float]) -> float:
+def intercept(x: list[float], y: list[float]) -> float:
     """
     Calculate intercept of linear regression.
 
@@ -73,7 +73,7 @@ def intercept(x: List[float], y: List[float]) -> float:
     return y_mean - slope_coef * x_mean
 
 
-def r_squared(x: List[float], y: List[float]) -> float:
+def r_squared(x: list[float], y: list[float]) -> float:
     """
     Calculate R-squared (coefficient of determination).
 
@@ -105,8 +105,8 @@ def r_squared(x: List[float], y: List[float]) -> float:
 
 
 def linear_regression(
-    x: List[float],
-    y: List[float],
+    x: list[float],
+    y: list[float],
 ) -> RegressionResult:
     """
     Perform linear regression.
@@ -145,10 +145,10 @@ def linear_regression(
 
 
 def predict(
-    x: List[float],
+    x: list[float],
     slope: float,
     intercept: float,
-) -> List[float]:
+) -> list[float]:
     """
     Predict y values from linear regression.
 
@@ -164,10 +164,10 @@ def predict(
 
 
 def residual_sum_of_squares(
-    x: List[float],
-    y: List[float],
-    slope: Optional[float] = None,
-    intercept: Optional[float] = None,
+    x: list[float],
+    y: list[float],
+    slope: float | None = None,
+    intercept: float | None = None,
 ) -> float:
     """
     Calculate residual sum of squares.
@@ -190,8 +190,8 @@ def residual_sum_of_squares(
 
 
 def standard_error_of_estimate(
-    x: List[float],
-    y: List[float],
+    x: list[float],
+    y: list[float],
 ) -> float:
     """
     Calculate standard error of estimate.

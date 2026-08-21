@@ -3,11 +3,12 @@ Regression test for C++ backtest engine.
 Ensures that SMA 20/50 strategy produces consistent winrate on XAUUSD 1D data.
 """
 
-import pytest
-import sys
-import pandas as pd
 import glob
+import sys
 from pathlib import Path
+
+import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "cpp_quant" / "python"))
 
@@ -42,9 +43,7 @@ def load_xauusd_1d() -> pd.DataFrame:
         pytest.skip("No XAUUSD CSV files found")
     df = pd.concat(dfs).sort_index()
     df_d = (
-        df.resample("1D")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
+        df.resample("1D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     )
     return df_d
 

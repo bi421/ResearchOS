@@ -1,5 +1,6 @@
-import yfinance as yf
 from datetime import datetime, timedelta
+
+import yfinance as yf
 
 
 class LiveCandleValidator:
@@ -53,11 +54,7 @@ class LiveCandleValidator:
     def compare_candles(self, live: dict, historical: dict) -> dict:
         if live is None or historical is None:
             return {"status": "ERROR", "message": "Candle data missing"}
-        diff_pct = (
-            (live["close"] - historical["close"]) / historical["close"] * 100
-            if historical["close"] != 0
-            else 0
-        )
+        diff_pct = (live["close"] - historical["close"]) / historical["close"] * 100 if historical["close"] != 0 else 0
         volume_ratio = live["volume"] / historical["volume"] if historical["volume"] != 0 else 0
         verification = {"status": "VERIFIED", "message": "Candles are consistent"}
         if abs(diff_pct) > 5:
@@ -130,8 +127,6 @@ if __name__ == "__main__":
         print("\n✅ Validation report saved: candle_validation_report.md")
         print(f"📊 Status: {comparison['verification']['status']}")
         print(f"📝 Message: {comparison['verification']['message']}")
-        print(
-            f"💹 Live Close: ${live['close']:.2f} vs Historical Close: ${historical['close']:.2f}"
-        )
+        print(f"💹 Live Close: ${live['close']:.2f} vs Historical Close: ${historical['close']:.2f}")
     else:
         print("❌ Failed to get candle data")

@@ -16,7 +16,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -59,14 +59,14 @@ class ExperimentReport(BaseObject):
         hypothesis_id: str,
         title: str = "",
         summary: str = "",
-        run_ids: Optional[List[str]] = None,
-        best_run_id: Optional[str] = None,
-        metrics_summary: Optional[Dict[str, Any]] = None,
-        validation_summary: Optional[Dict[str, Any]] = None,
-        learning_summary: Optional[Dict[str, Any]] = None,
+        run_ids: list[str] | None = None,
+        best_run_id: str | None = None,
+        metrics_summary: dict[str, Any] | None = None,
+        validation_summary: dict[str, Any] | None = None,
+        learning_summary: dict[str, Any] | None = None,
         report_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ExperimentReport|{experiment_id}|{title}"
@@ -78,11 +78,11 @@ class ExperimentReport(BaseObject):
         self.hypothesis_id = hypothesis_id
         self.title = title
         self.summary = summary
-        self.run_ids: List[str] = run_ids or []
+        self.run_ids: list[str] = run_ids or []
         self.best_run_id = best_run_id
-        self.metrics_summary: Dict[str, Any] = metrics_summary or {}
-        self.validation_summary: Dict[str, Any] = validation_summary or {}
-        self.learning_summary: Dict[str, Any] = learning_summary or {}
+        self.metrics_summary: dict[str, Any] = metrics_summary or {}
+        self.validation_summary: dict[str, Any] = validation_summary or {}
+        self.learning_summary: dict[str, Any] = learning_summary or {}
         self.num_runs: int = 0
         self.num_passed_runs: int = 0
         self.num_failed_runs: int = 0
@@ -109,7 +109,7 @@ class ExperimentReport(BaseObject):
         content = self._to_hashable_dict()
         self.report_hash = deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "experiment_id": self.experiment_id,
             "hypothesis_id": self.hypothesis_id,
@@ -117,15 +117,9 @@ class ExperimentReport(BaseObject):
             "summary": self.summary,
             "run_ids": sorted(self.run_ids),
             "best_run_id": self.best_run_id or "",
-            "metrics_summary": dict(sorted(self.metrics_summary.items()))
-            if self.metrics_summary
-            else {},
-            "validation_summary": dict(sorted(self.validation_summary.items()))
-            if self.validation_summary
-            else {},
-            "learning_summary": dict(sorted(self.learning_summary.items()))
-            if self.learning_summary
-            else {},
+            "metrics_summary": dict(sorted(self.metrics_summary.items())) if self.metrics_summary else {},
+            "validation_summary": dict(sorted(self.validation_summary.items())) if self.validation_summary else {},
+            "learning_summary": dict(sorted(self.learning_summary.items())) if self.learning_summary else {},
             "num_runs": self.num_runs,
             "num_passed_runs": self.num_passed_runs,
             "num_failed_runs": self.num_failed_runs,
@@ -134,7 +128,7 @@ class ExperimentReport(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -158,7 +152,7 @@ class ExperimentReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExperimentReport":
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentReport:
         obj = super().from_dict(data)
         obj.experiment_id = data["experiment_id"]
         obj.hypothesis_id = data["hypothesis_id"]

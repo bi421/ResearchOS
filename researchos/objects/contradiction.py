@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, List
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 
@@ -16,20 +14,18 @@ class Contradiction(BaseObject):
         research_id: str = "",
         type: str = "Internal",
         description: str = "",
-        sides: Optional[List[dict]] = None,
-        evidence_id_a: Optional[str] = None,
-        evidence_id_b: Optional[str] = None,
-        severity: Optional[float] = None,
-        resolution: Optional[str] = None,
+        sides: list[dict] | None = None,
+        evidence_id_a: str | None = None,
+        evidence_id_b: str | None = None,
+        severity: float | None = None,
+        resolution: str | None = None,
         status: str = "UNRESOLVED",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
         **kwargs,
     ):
         if id is None:
-            id = generate_id(
-                f"Contradiction|{research_id}|{type}|{description}|{evidence_id_a}|{evidence_id_b}"
-            )
+            id = generate_id(f"Contradiction|{research_id}|{type}|{description}|{evidence_id_a}|{evidence_id_b}")
 
         super().__init__(
             id=id,
@@ -75,8 +71,8 @@ class Contradiction(BaseObject):
 
     def resolve(
         self,
-        resolution: Optional[str] = None,
-        reason: Optional[str] = None,
+        resolution: str | None = None,
+        reason: str | None = None,
     ):
         if resolution is None:
             resolution = "Resolved"
@@ -122,7 +118,7 @@ class Contradiction(BaseObject):
     def from_dict(
         cls,
         data: dict,
-    ) -> "Contradiction":
+    ) -> Contradiction:
         obj = super().from_dict(data)
 
         obj.research_id = data.get(
@@ -161,10 +157,10 @@ class ContradictionReport(BaseObject):
     def __init__(
         self,
         research_id: str,
-        contradictions: Optional[List[Contradiction]] = None,
-        contradiction_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        contradictions: list[Contradiction] | None = None,
+        contradiction_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             id = generate_id(f"ContradictionReport|{research_id}")
@@ -178,9 +174,7 @@ class ContradictionReport(BaseObject):
         self.contradictions = list(contradictions or [])
 
         self.contradiction_ids = list(
-            contradiction_ids
-            if contradiction_ids is not None
-            else [c.id for c in self.contradictions]
+            contradiction_ids if contradiction_ids is not None else [c.id for c in self.contradictions]
         )
 
     def add_contradiction(
@@ -228,7 +222,7 @@ class ContradictionReport(BaseObject):
     def from_dict(
         cls,
         data: dict,
-    ) -> "ContradictionReport":
+    ) -> ContradictionReport:
         obj = super().from_dict(data)
 
         obj.research_id = data["research_id"]

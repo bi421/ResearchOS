@@ -14,14 +14,14 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Dict, Sequence
+from collections.abc import Sequence
 
 from .contracts import BaselineResult
 
 
-def _class_frequencies(labels: Sequence[float]) -> Dict[str, float]:
+def _class_frequencies(labels: Sequence[float]) -> dict[str, float]:
     """Return per-class frequency of labels in [−1, 0, 1]."""
-    counts: Dict[str, int] = {"-1": 0, "0": 0, "1": 0}
+    counts: dict[str, int] = {"-1": 0, "0": 0, "1": 0}
     for label in labels:
         if label is None:
             continue

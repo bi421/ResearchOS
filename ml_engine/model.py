@@ -2,11 +2,11 @@
 Train and predict using ML models.
 """
 
+import joblib
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
-import joblib
+from sklearn.preprocessing import StandardScaler
 
 
 def train_model(
@@ -28,9 +28,7 @@ def train_model(
     X_test_scaled = scaler.transform(X_test)
 
     if model_type == "random_forest":
-        model = RandomForestClassifier(
-            n_estimators=150, max_depth=10, min_samples_split=10, random_state=random_state
-        )
+        model = RandomForestClassifier(n_estimators=150, max_depth=10, min_samples_split=10, random_state=random_state)
     elif model_type == "xgboost":
         try:
             from xgboost import XGBClassifier

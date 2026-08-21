@@ -13,10 +13,10 @@ Requires:
 
 import random
 import time
-from typing import Callable, List, Tuple
+from collections.abc import Callable
 
 
-def generate_prices(n: int = 1000) -> List[float]:
+def generate_prices(n: int = 1000) -> list[float]:
     """Generate random price series for benchmarking."""
     random.seed(42)
     price = 100.0
@@ -27,13 +27,13 @@ def generate_prices(n: int = 1000) -> List[float]:
     return prices
 
 
-def generate_returns(n: int = 1000) -> List[float]:
+def generate_returns(n: int = 1000) -> list[float]:
     """Generate random return series for benchmarking."""
     random.seed(42)
     return [random.gauss(0.001, 0.02) for _ in range(n)]
 
 
-def generate_equity_curve(returns: List[float], initial: float = 100000.0) -> List[float]:
+def generate_equity_curve(returns: list[float], initial: float = 100000.0) -> list[float]:
     """Generate equity curve from returns."""
     equity = [initial]
     for r in returns:
@@ -46,7 +46,7 @@ def benchmark_op(
     py_fn: Callable,
     cpp_fn: Callable,
     iterations: int = 10000,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Benchmark a single operation.
 

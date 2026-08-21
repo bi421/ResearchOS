@@ -15,7 +15,6 @@ import struct
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Python reference implementation of run_ml_backtest_cpp
 # This is a line-by-line translation of cpp_quant/src/backtest.cpp
@@ -170,8 +169,7 @@ def _require_cpp_engine():
 
     if not hasattr(cpp_quant, "run_ml_backtest_cpp"):
         pytest.fail(
-            "C++ engine module loaded but missing run_ml_backtest_cpp. "
-            "This is a CRITICAL determinism violation."
+            "C++ engine module loaded but missing run_ml_backtest_cpp. This is a CRITICAL determinism violation."
         )
 
     return cpp_quant.run_ml_backtest_cpp

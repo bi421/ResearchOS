@@ -55,7 +55,7 @@ from __future__ import annotations
 import hashlib
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.experiments.experiment import Experiment
 from researchos.experiments.result import ExperimentResult, ExperimentRun
@@ -99,7 +99,7 @@ class AbstractExperimentRunner(ABC):
         self,
         experiment: Experiment,
         dataset: Any,
-    ) -> Tuple[ExperimentRun, ExperimentResult]:
+    ) -> tuple[ExperimentRun, ExperimentResult]:
         """
         Execute an experiment against a dataset.
 
@@ -120,9 +120,9 @@ class AbstractExperimentRunner(ABC):
         self,
         experiment: Experiment,
         dataset: Any,
-        parameter_overrides: Dict[str, Any],
+        parameter_overrides: dict[str, Any],
         run_number: int = 1,
-    ) -> Tuple[ExperimentRun, ExperimentResult]:
+    ) -> tuple[ExperimentRun, ExperimentResult]:
         """
         Execute an experiment with parameter overrides.
 
@@ -144,7 +144,7 @@ class AbstractExperimentRunner(ABC):
         dataset: Any,
         window_size: int = 252,
         step_size: int = 63,
-    ) -> List[Tuple[ExperimentRun, ExperimentResult]]:
+    ) -> list[tuple[ExperimentRun, ExperimentResult]]:
         """
         Execute a walk-forward analysis.
 
@@ -165,8 +165,8 @@ class AbstractExperimentRunner(ABC):
         experiment: Experiment,
         dataset: Any,
         num_simulations: int = 1000,
-        seed: Optional[int] = None,
-    ) -> List[Tuple[ExperimentRun, ExperimentResult]]:
+        seed: int | None = None,
+    ) -> list[tuple[ExperimentRun, ExperimentResult]]:
         """
         Execute Monte Carlo simulations.
 
@@ -203,8 +203,8 @@ class BaseExperimentRunner(AbstractExperimentRunner):
 
     def __init__(
         self,
-        backend: Optional[QuantComputationInterface] = None,
-        router: Optional[BackendRouter] = None,
+        backend: QuantComputationInterface | None = None,
+        router: BackendRouter | None = None,
     ) -> None:
         """
         Initialize the runner.
@@ -235,15 +235,14 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         """Ensure the experiment is in Ready status before running."""
         if experiment.status.value != "Ready" and experiment.status.value != "Running":
             raise RuntimeError(
-                f"Cannot run experiment in status '{experiment.status.value}'. "
-                "Mark experiment as Ready first."
+                f"Cannot run experiment in status '{experiment.status.value}'. Mark experiment as Ready first."
             )
 
     def run(
         self,
         experiment: Experiment,
         dataset: Any,
-    ) -> Tuple[ExperimentRun, ExperimentResult]:
+    ) -> tuple[ExperimentRun, ExperimentResult]:
         """Execute an experiment against a dataset."""
         self._ensure_ready(experiment)
 
@@ -277,9 +276,9 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         self,
         experiment: Experiment,
         dataset: Any,
-        parameter_overrides: Dict[str, Any],
+        parameter_overrides: dict[str, Any],
         run_number: int = 1,
-    ) -> Tuple[ExperimentRun, ExperimentResult]:
+    ) -> tuple[ExperimentRun, ExperimentResult]:
         """Execute an experiment with parameter overrides."""
         self._ensure_ready(experiment)
 
@@ -319,11 +318,11 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         dataset: Any,
         window_size: int = 252,
         step_size: int = 63,
-    ) -> List[Tuple[ExperimentRun, ExperimentResult]]:
+    ) -> list[tuple[ExperimentRun, ExperimentResult]]:
         """Execute a walk-forward analysis."""
         self._ensure_ready(experiment)
 
-        results: List[Tuple[ExperimentRun, ExperimentResult]] = []
+        results: list[tuple[ExperimentRun, ExperimentResult]] = []
         num_windows = self._estimate_windows(dataset, window_size, step_size)
 
         for i in range(num_windows):
@@ -366,13 +365,13 @@ class BaseExperimentRunner(AbstractExperimentRunner):
         experiment: Experiment,
         dataset: Any,
         num_simulations: int = 1000,
-        seed: Optional[int] = None,
-    ) -> List[Tuple[ExperimentRun, ExperimentResult]]:
+        seed: int | None = None,
+    ) -> list[tuple[ExperimentRun, ExperimentResult]]:
         """Execute Monte Carlo simulations."""
         self._ensure_ready(experiment)
 
         base_seed = seed if seed is not None else experiment.simulation_config.seed
-        results: List[Tuple[ExperimentRun, ExperimentResult]] = []
+        results: list[tuple[ExperimentRun, ExperimentResult]] = []
 
         for i in range(num_simulations):
             run = ExperimentRun(
@@ -601,7 +600,7 @@ class BaseExperimentRunner(AbstractExperimentRunner):
 
 
 # Default runner instance
-_default_runner: Optional[BaseExperimentRunner] = None
+_default_runner: BaseExperimentRunner | None = None
 
 
 def get_runner() -> BaseExperimentRunner:

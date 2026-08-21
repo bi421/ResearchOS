@@ -123,11 +123,9 @@ class ConfidenceCalculator:
         contribution = (
             self._weights["evidence_quality"] * self._clamp(components.evidence_quality)
             + self._weights["feature_quality"] * self._clamp(components.feature_quality)
-            + self._weights["relationship_stability"]
-            * self._clamp(components.relationship_stability)
+            + self._weights["relationship_stability"] * self._clamp(components.relationship_stability)
             + self._weights["regime_confidence"] * self._clamp(components.regime_confidence)
-            + self._weights["historical_consistency"]
-            * self._clamp(components.historical_consistency)
+            + self._weights["historical_consistency"] * self._clamp(components.historical_consistency)
         )
         return round(contribution, 4)
 

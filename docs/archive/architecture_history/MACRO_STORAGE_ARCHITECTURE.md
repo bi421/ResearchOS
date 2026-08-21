@@ -153,41 +153,43 @@ See docs/DOCUMENTATION_INVENTORY_REPORT.md
 
 from pyarrow import schema, field, date32, timestamp, float64, string, int64, struct
 
-SERIES_SCHEMA = schema([
-    # Core identification
-    field("series_id", string()),           # SER_YYYYMMDD_NNN
-    field("source", string()),              # FRED, BLS, ICE, etc.
-    field("timestamp", timestamp("us", "UTC")),  # Record creation time
-    
-    # Time dimensions
-    field("observation_period", date32()),  # The period observed
-    field("release_time", timestamp("us", "UTC")),  # Official release (nullable)
-    field("available_time", timestamp("us", "UTC")),  # Available in MIL
-    
-    # Data
-    field("value", float64()),              # Observed value (nullable)
-    field("unit", string()),                # percent, index, basis_points, etc.
-    field("frequency", string()),           # daily, weekly, monthly, quarterly, ad_hoc
-    
-    # Revision tracking
-    field("revision_id", string()),         # REV_YYYYMMDD_NNN (nullable)
-    field("revision_number", int64()),      # 0 = initial, 1+ = revisions
-    field("quality_score", float64()),      # 0.0 - 1.0
-    
-    # Provenance
-    field("metadata", struct([
-        field("source_url", string()),
-        field("source_record_id", string()),
-        field("original_value", float64()),
-        field("original_unit", string()),
-        field("transformation_log", string()),  # JSON array
-        field("validation_checks", string()),   # JSON array
-    ])),
-    
-    # Partition keys (for efficient querying)
-    field("year", int32()),                 # Extracted from observation_period
-    field("month", int32()),                # Extracted from observation_period
-])
+SERIES_SCHEMA = schema(
+    [
+        # Core identification
+        field("series_id", string()),  # SER_YYYYMMDD_NNN
+        field("source", string()),  # FRED, BLS, ICE, etc.
+        field("timestamp", timestamp("us", "UTC")),  # Record creation time
+        # Time dimensions
+        field("observation_period", date32()),  # The period observed
+        field("release_time", timestamp("us", "UTC")),  # Official release (nullable)
+        field("available_time", timestamp("us", "UTC")),  # Available in MIL
+        # Data
+        field("value", float64()),  # Observed value (nullable)
+        field("unit", string()),  # percent, index, basis_points, etc.
+        field("frequency", string()),  # daily, weekly, monthly, quarterly, ad_hoc
+        # Revision tracking
+        field("revision_id", string()),  # REV_YYYYMMDD_NNN (nullable)
+        field("revision_number", int64()),  # 0 = initial, 1+ = revisions
+        field("quality_score", float64()),  # 0.0 - 1.0
+        # Provenance
+        field(
+            "metadata",
+            struct(
+                [
+                    field("source_url", string()),
+                    field("source_record_id", string()),
+                    field("original_value", float64()),
+                    field("original_unit", string()),
+                    field("transformation_log", string()),  # JSON array
+                    field("validation_checks", string()),  # JSON array
+                ]
+            ),
+        ),
+        # Partition keys (for efficient querying)
+        field("year", int32()),  # Extracted from observation_period
+        field("month", int32()),  # Extracted from observation_period
+    ]
+)
 ```
 
 #### 2.1.2 Partition Strategy
@@ -216,11 +218,11 @@ Example:
 #### 2.1.3 Compression Settings
 
 ```python
-COMPRESSION = "zstd"           # Best compression ratio
-COMPRESSION_LEVEL = 3          # Balanced speed/ratio
+COMPRESSION = "zstd"  # Best compression ratio
+COMPRESSION_LEVEL = 3  # Balanced speed/ratio
 DICTIONARY_SIZE = 1024 * 1024  # 1MB dictionary
-BLOOM_FILTER = True            # Enable for string columns
-STATISTICS = "FULL"            # Full column statistics
+BLOOM_FILTER = True  # Enable for string columns
+STATISTICS = "FULL"  # Full column statistics
 ```
 
 #### 2.1.4 File Naming Convention
@@ -241,68 +243,72 @@ Examples:
 ```python
 class ParquetStore(BaseStore):
     """Immutable, append-only Parquet storage."""
-    
+
     def append_series(self, series: NormalizedSeries) -> Path:
         """
         Append a single series observation.
-        
+
         Returns:
             Path to the written parquet file
         """
         # 1. Determine partition path
         partition_path = self._get_partition_path(series)
-        
+
         # 2. Check if file exists
         existing_file = self._find_existing_file(partition_path, series)
-        
+
         # 3. If file exists, merge; otherwise create new
         if existing_file:
             return self._append_to_existing(existing_file, series)
         else:
             return self._create_new_file(partition_path, series)
-    
+
     def _append_to_existing(self, existing: Path, series: NormalizedSeries) -> Path:
         """Append to existing parquet file (immutable append)."""
         # Read existing
         df_existing = pq.read_table(existing)
-        
+
         # Append new row
-        df_new = pa.table({
-            "series_id": [series.series_id],
-            "source": [series.source],
-            "timestamp": [series.timestamp],
-            # ... all fields
-        })
-        
+        df_new = pa.table(
+            {
+                "series_id": [series.series_id],
+                "source": [series.source],
+                "timestamp": [series.timestamp],
+                # ... all fields
+            }
+        )
+
         df_merged = pa.concat_tables([df_existing, df_new])
-        
+
         # Write to new file (append-only semantics)
         new_path = self._generate_new_path(existing)
         pq.write_table(df_merged, new_path, compression=COMPRESSION)
-        
+
         # Update index
         self._update_indexes(series.series_id, new_path)
-        
+
         # Delete old file (with audit log)
         self._audit_delete(existing, "appended")
-        
+
         return new_path
-    
+
     def _create_new_file(self, partition_path: Path, series: NormalizedSeries) -> Path:
         """Create new parquet file for partition."""
-        df = pa.table({
-            "series_id": [series.series_id],
-            "source": [series.source],
-            "timestamp": [series.timestamp],
-            # ... all fields
-        })
-        
+        df = pa.table(
+            {
+                "series_id": [series.series_id],
+                "source": [series.source],
+                "timestamp": [series.timestamp],
+                # ... all fields
+            }
+        )
+
         file_path = partition_path / f"{series.series_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_INIT.parquet"
         pq.write_table(df, file_path, compression=COMPRESSION)
-        
+
         # Update indexes
         self._update_indexes(series.series_id, file_path)
-        
+
         return file_path
 ```
 
@@ -321,18 +327,18 @@ def _audit_delete(self, path: Path, reason: str) -> None:
         "timestamp": datetime.utcnow().isoformat(),
         "user": "system",  # Always system-initiated
     }
-    
+
     # Write to audit log
     audit_path = Path(".agnes/data/macro/audit") / datetime.utcnow().strftime("%Y/%m")
     audit_path.mkdir(parents=True, exist_ok=True)
-    
+
     audit_file = audit_path / f"audit_{datetime.utcnow().strftime('%Y%m%d')}.log"
     with open(audit_file, "a") as f:
         f.write(json.dumps(audit_entry) + "\n")
-    
+
     # Remove from index
     self._remove_from_indexes(path)
-    
+
     # Physically delete
     path.unlink(missing_ok=True)
 ```
@@ -342,7 +348,7 @@ def _audit_delete(self, path: Path, reason: str) -> None:
 ```python
 class ParquetStore(BaseStore):
     """Immutable, append-only Parquet storage."""
-    
+
     def query_series(
         self,
         series_id: str,
@@ -352,72 +358,69 @@ class ParquetStore(BaseStore):
     ) -> list[NormalizedSeries]:
         """
         Query series with date range.
-        
+
         Returns:
             List of NormalizedSeries ordered by observation_period
         """
         # Determine partition paths
         partitions = self._get_partitions(series_id, start, end)
-        
+
         # Read and merge
         tables = []
         for partition in partitions:
             for file in partition.glob("*.parquet"):
                 table = pq.read_table(file)
                 tables.append(table)
-        
+
         if not tables:
             return []
-        
+
         merged = pa.concat_tables(tables)
-        
+
         # Filter by date range
-        mask = (
-            (merged.column("observation_period").to_pylist() >= start) &
-            (merged.column("observation_period").to_pylist() <= end)
+        mask = (merged.column("observation_period").to_pylist() >= start) & (
+            merged.column("observation_period").to_pylist() <= end
         )
         filtered = merged.filter(mask)
-        
+
         # Apply revision filter
         if not include_revisions:
             filtered = self._get_latest_revision(filtered)
-        
+
         # Sort by observation_period
-        sorted_idx = pa.compute.sort_indices(
-            filtered.column("observation_period")
-        )
+        sorted_idx = pa.compute.sort_indices(filtered.column("observation_period"))
         sorted_table = filtered.take(sorted_idx)
-        
+
         # Convert to NormalizedSeries objects
         return [self._table_to_series(row) for row in sorted_table.to_pylist()]
-    
+
     def query_latest(self, series_id: str) -> NormalizedSeries | None:
         """Get the latest observation for a series."""
         # Use index for fast lookup
         latest_file = self._get_latest_file(series_id)
-        
+
         if not latest_file:
             return None
-        
+
         table = pq.read_table(latest_file)
         if table.num_rows == 0:
             return None
-        
+
         # Get last row
         last_row = table.slice(table.num_rows - 1).to_pylist()[0]
         return self._table_to_series(last_row)
-    
+
     def query_by_date(self, date: date) -> dict[str, NormalizedSeries]:
         """Get all series observations for a specific date."""
         # Use date index for fast lookup
         series_ids = self._get_series_for_date(date)
-        
+
         result = {}
         for series_id in series_ids:
             latest = self.query_latest(series_id)
             if latest and latest.observation_period == date:
                 result[series_id] = latest
-        
+
         return result
 ```
 
@@ -455,26 +458,33 @@ SER_20260730_001 (Initial: 2.4%)
 
 ```python
 # Parquet Schema for Revision Tracking
-REVISION_SCHEMA = schema([
-    field("revision_id", string()),        # REV_YYYYMMDD_NNN
-    field("original_evidence_id", string()), # Reference to original
-    field("series_id", string()),          # Series being revised
-    field("observation_period", date32()), # Period observed
-    field("revision_number", int64()),     # 0 = initial, 1+ = revisions
-    field("revision_time", timestamp("us", "UTC")),
-    field("revision_reason", string()),
-    field("original_value", float64()),
-    field("revised_value", float64()),
-    field("change_bps", float64()),
-    field("quality_score", float64()),
-    field("superseded_by", string()),      # Nullable
-    field("metadata", struct([
-        field("source", string()),
-        field("source_url", string()),
-        field("revision_notice", string()),
-        field("impact_assessment", string()),
-    ])),
-])
+REVISION_SCHEMA = schema(
+    [
+        field("revision_id", string()),  # REV_YYYYMMDD_NNN
+        field("original_evidence_id", string()),  # Reference to original
+        field("series_id", string()),  # Series being revised
+        field("observation_period", date32()),  # Period observed
+        field("revision_number", int64()),  # 0 = initial, 1+ = revisions
+        field("revision_time", timestamp("us", "UTC")),
+        field("revision_reason", string()),
+        field("original_value", float64()),
+        field("revised_value", float64()),
+        field("change_bps", float64()),
+        field("quality_score", float64()),
+        field("superseded_by", string()),  # Nullable
+        field(
+            "metadata",
+            struct(
+                [
+                    field("source", string()),
+                    field("source_url", string()),
+                    field("revision_notice", string()),
+                    field("impact_assessment", string()),
+                ]
+            ),
+        ),
+    ]
+)
 ```
 
 ### 3.4 Revision Engine Operations
@@ -484,10 +494,10 @@ class RevisionEngine:
     """
     Manages revision chains for all time-series data.
     """
-    
+
     def __init__(self, store: ParquetStore):
         self.store = store
-    
+
     def create_revision(
         self,
         original_evidence_id: str,
@@ -499,20 +509,20 @@ class RevisionEngine:
     ) -> str:
         """
         Create a new revision for existing evidence.
-        
+
         Returns:
             New revision_id
         """
         # 1. Get original evidence
         original = self.store.get_evidence(original_evidence_id)
-        
+
         # 2. Generate revision ID
         revision_id = self._generate_revision_id()
-        
+
         # 3. Calculate change
         original_value = original.value
         change_bps = (new_value - original_value) * 10000  # Convert to bps
-        
+
         # 4. Create revision record
         revision = RevisionRecord(
             revision_id=revision_id,
@@ -532,34 +542,34 @@ class RevisionEngine:
                 "source_url": original.provenance.original_source_url,
                 "revision_notice": reason,
                 "impact_assessment": self._assess_impact(series_id, change_bps),
-            }
+            },
         )
-        
+
         # 5. Store revision
         self.store.append_revision(revision)
-        
+
         # 6. Update original to point to this revision
         self._link_revision(original_evidence_id, revision_id)
-        
+
         # 7. Create new evidence record with revised value
         new_evidence = self._create_revised_evidence(original, new_value, revision_id)
         self.store.append_evidence(new_evidence)
-        
+
         return revision_id
-    
+
     def get_revision_chain(self, series_id: str, observation_period: date) -> list[RevisionRecord]:
         """
         Get full revision chain for a series and period.
-        
+
         Returns:
             List of revisions ordered chronologically
         """
         return self.store.query_revisions(series_id, observation_period)
-    
+
     def get_latest_value(self, series_id: str, observation_period: date) -> float:
         """
         Get the latest (most recent) value for a series and period.
-        
+
         Returns:
             Latest value or None if not found
         """
@@ -567,32 +577,32 @@ class RevisionEngine:
         if not chain:
             return None
         return chain[-1].revised_value
-    
+
     def reconstruct_historical(self, series_id: str, observation_period: date, as_of_date: date) -> float:
         """
         Reconstruct what the value was as of a historical date.
-        
+
         Args:
             series_id: Series identifier
             observation_period: The period being observed
             as_of_date: The date to reconstruct to
-        
+
         Returns:
             Value as it was known on as_of_date
         """
         chain = self.get_revision_chain(series_id, observation_period)
-        
+
         # Find the latest revision that existed before as_of_date
         for revision in reversed(chain):
             if revision.revision_time <= as_of_date:
                 return revision.revised_value
-        
+
         # If no revisions existed, return initial value
         if chain:
             return chain[0].original_value
-        
+
         return None
-    
+
     def _assess_impact(self, series_id: str, change_bps: float) -> str:
         """
         Assess the market impact of a revision.
@@ -647,7 +657,7 @@ EVIDENCE_SCHEMA = {
         "previous",
         "revision",
         "confidence",
-        "provenance"
+        "provenance",
     ],
     "properties": {
         "evidence_id": {"type": "string", "pattern": "^EV_[0-9]{14}_[a-z0-9]{12}$"},
@@ -668,8 +678,8 @@ EVIDENCE_SCHEMA = {
                 "revision_number": {"type": "integer"},
                 "revision_time": {"type": "string", "format": "date-time"},
                 "revision_reason": {"type": "string"},
-                "superseded": {"type": "boolean"}
-            }
+                "superseded": {"type": "boolean"},
+            },
         },
         "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
         "provenance": {
@@ -686,9 +696,9 @@ EVIDENCE_SCHEMA = {
                             "timestamp": {"type": "string", "format": "date-time"},
                             "operation": {"type": "string"},
                             "input": {"type": "object"},
-                            "output": {"type": "object"}
-                        }
-                    }
+                            "output": {"type": "object"},
+                        },
+                    },
                 },
                 "verification_checks": {
                     "type": "array",
@@ -697,13 +707,13 @@ EVIDENCE_SCHEMA = {
                         "properties": {
                             "check": {"type": "string"},
                             "result": {"type": "string"},
-                            "timestamp": {"type": "string", "format": "date-time"}
-                        }
-                    }
-                }
-            }
-        }
-    }
+                            "timestamp": {"type": "string", "format": "date-time"},
+                        },
+                    },
+                },
+            },
+        },
+    },
 }
 ```
 
@@ -714,36 +724,36 @@ class EvidenceRepository:
     """
     Immutable evidence storage with full provenance.
     """
-    
+
     def __init__(self, store: ParquetStore, json_store: JsonStore):
         self.store = store
         self.json_store = json_store
-    
+
     def append_evidence(self, evidence: EvidenceObject) -> Path:
         """
         Append evidence to storage (immutable).
-        
+
         Returns:
             Path to stored evidence file
         """
         # 1. Write to JSON store
         json_path = self.json_store.append_evidence(evidence)
-        
+
         # 2. Write to Parquet store for analytics
         parquet_path = self.store.append_evidence_parquet(evidence)
-        
+
         # 3. Update indexes
         self._update_indexes(evidence.evidence_id, evidence.series_reference, json_path)
-        
+
         # 4. Log to audit
         self._audit_append(evidence.evidence_id, json_path, parquet_path)
-        
+
         return json_path
-    
+
     def get_evidence(self, evidence_id: str) -> EvidenceObject | None:
         """
         Retrieve evidence by ID.
-        
+
         Returns:
             EvidenceObject or None
         """
@@ -751,39 +761,35 @@ class EvidenceRepository:
         evidence = self.json_store.get_evidence(evidence_id)
         if evidence:
             return evidence
-        
+
         # Fallback to Parquet
         return self.store.get_evidence_parquet(evidence_id)
-    
+
     def get_evidence_for_series(self, series_id: str, date: date) -> list[EvidenceObject]:
         """
         Get all evidence for a series on a date.
-        
+
         Returns:
             List of EvidenceObjects (may include revisions)
         """
         # Query by series_id and date
         evidence_ids = self._get_evidence_ids(series_id, date)
-        
-        return [
-            self.get_evidence(eid)
-            for eid in evidence_ids
-            if eid
-        ]
-    
+
+        return [self.get_evidence(eid) for eid in evidence_ids if eid]
+
     def get_evidence_chain(self, evidence_id: str) -> list[EvidenceObject]:
         """
         Get full revision chain for evidence.
-        
+
         Returns:
             List of EvidenceObjects in revision order
         """
         evidence = self.get_evidence(evidence_id)
         if not evidence:
             return []
-        
+
         chain = [evidence]
-        
+
         # Follow revision chain
         current = evidence
         while current.revision and not current.revision.superseded:
@@ -793,25 +799,31 @@ class EvidenceRepository:
                 current = next_evidence
             else:
                 break
-        
+
         return chain
-    
+
     def _update_indexes(self, evidence_id: str, series_id: str, path: Path) -> None:
         """Update lookup indexes."""
         # Series index
-        self.json_store.append_to_index("by_series", {
-            "evidence_id": evidence_id,
-            "series_id": series_id,
-            "path": str(path),
-        })
-        
+        self.json_store.append_to_index(
+            "by_series",
+            {
+                "evidence_id": evidence_id,
+                "series_id": series_id,
+                "path": str(path),
+            },
+        )
+
         # Date index
-        self.json_store.append_to_index("by_date", {
-            "evidence_id": evidence_id,
-            "series_id": series_id,
-            "date": evidence_id.observation_time.date().isoformat(),
-            "path": str(path),
-        })
+        self.json_store.append_to_index(
+            "by_date",
+            {
+                "evidence_id": evidence_id,
+                "series_id": series_id,
+                "date": evidence_id.observation_time.date().isoformat(),
+                "path": str(path),
+            },
+        )
 ```
 
 ### 4.4 Evidence Immutability Guarantees
@@ -821,11 +833,11 @@ class EvidenceRepository:
     """
     Immutable evidence storage with full provenance.
     """
-    
+
     def append_evidence(self, evidence: EvidenceObject) -> Path:
         """
         Append evidence to storage (immutable).
-        
+
         IMMutability Guarantees:
         1. Evidence object is frozen (dataclass frozen=True)
         2. Storage is append-only (no updates)
@@ -860,7 +872,7 @@ SOURCE_REGISTRY_SCHEMA = {
                         "name": {"type": "string"},
                         "type": {
                             "type": "string",
-                            "enum": ["fred", "bls", "cftc", "fed", "cboe", "treasury", "ism", "wgc"]
+                            "enum": ["fred", "bls", "cftc", "fed", "cboe", "treasury", "ism", "wgc"],
                         },
                         "enabled": {"type": "boolean"},
                         "polling_interval_minutes": {"type": "integer"},
@@ -870,8 +882,8 @@ SOURCE_REGISTRY_SCHEMA = {
                             "type": "object",
                             "properties": {
                                 "api_key": {"type": "string", "encrypted": True},
-                                "secret": {"type": "string", "encrypted": True}
-                            }
+                                "secret": {"type": "string", "encrypted": True},
+                            },
                         },
                         "health": {
                             "type": "object",
@@ -879,8 +891,8 @@ SOURCE_REGISTRY_SCHEMA = {
                                 "status": {"type": "string", "enum": ["healthy", "degraded", "unhealthy"]},
                                 "last_check": {"type": "string", "format": "date-time"},
                                 "last_success": {"type": "string", "format": "date-time"},
-                                "last_error": {"type": "string"}
-                            }
+                                "last_error": {"type": "string"},
+                            },
                         },
                         "supported_series": {"type": "array", "items": {"type": "string"}},
                         "rate_limit": {
@@ -888,14 +900,14 @@ SOURCE_REGISTRY_SCHEMA = {
                             "properties": {
                                 "requests_per_minute": {"type": "integer"},
                                 "remaining": {"type": "integer"},
-                                "reset_time": {"type": "string", "format": "date-time"}
-                            }
-                        }
-                    }
+                                "reset_time": {"type": "string", "format": "date-time"},
+                            },
+                        },
+                    },
                 }
-            }
+            },
         }
-    }
+    },
 }
 ```
 
@@ -906,18 +918,18 @@ class SourceRegistry:
     """
     Registry of all external data sources.
     """
-    
+
     def __init__(self, store: JsonStore):
         self.store = store
         self._lock = threading.Lock()
-    
+
     def register_source(self, source: SourceConfig) -> None:
         """Register a new data source."""
         with self._lock:
             registry = self._load_registry()
             registry["sources"][source.source_id] = source.to_dict()
             self._save_registry(registry)
-    
+
     def update_health(self, source_id: str, health: HealthStatus) -> None:
         """Update source health status."""
         with self._lock:
@@ -925,7 +937,7 @@ class SourceRegistry:
             if source_id in registry["sources"]:
                 registry["sources"][source_id]["health"] = health.to_dict()
                 self._save_registry(registry)
-    
+
     def get_source(self, source_id: str) -> SourceConfig | None:
         """Get source configuration."""
         registry = self._load_registry()
@@ -933,16 +945,12 @@ class SourceRegistry:
         if not source_data:
             return None
         return SourceConfig.from_dict(source_data)
-    
+
     def get_enabled_sources(self) -> list[SourceConfig]:
         """Get all enabled sources."""
         registry = self._load_registry()
-        return [
-            SourceConfig.from_dict(data)
-            for data in registry["sources"].values()
-            if data.get("enabled", False)
-        ]
-    
+        return [SourceConfig.from_dict(data) for data in registry["sources"].values() if data.get("enabled", False)]
+
     def get_supported_series(self) -> dict[str, list[str]]:
         """Get mapping of source to supported series."""
         registry = self._load_registry()
@@ -988,21 +996,22 @@ class SourceRegistry:
 ```python
 class BaseValidator(ABC):
     """Base class for all validators."""
-    
+
     @abstractmethod
     def validate(self, data: Any) -> ValidationResult:
         """
         Validate data and return result.
-        
+
         Returns:
             ValidationResult with pass/fail status
         """
         ...
-    
+
     @abstractmethod
     def get_name(self) -> str:
         """Return validator name."""
         ...
+
 
 @dataclass(frozen=True)
 class ValidationResult:
@@ -1019,33 +1028,33 @@ class ValidationResult:
 ```python
 class SchemaValidator(BaseValidator):
     """Validates data against Pydantic schemas."""
-    
+
     def validate(self, series: NormalizedSeries) -> ValidationResult:
         """
         Validate NormalizedSeries against schema.
-        
+
         Returns:
             ValidationResult
         """
         errors = []
         warnings = []
-        
+
         # Validate series_id format
         if not re.match(r"^SER_\d{8}_\d+$", series.series_id):
             errors.append(f"Invalid series_id format: {series.series_id}")
-        
+
         # Validate source is registered
         if series.source not in VALID_SOURCES:
             warnings.append(f"Unknown source: {series.source}")
-        
+
         # Validate timestamp is UTC
         if series.timestamp.tzinfo != UTC:
             errors.append("timestamp must be UTC")
-        
+
         # Validate observation_period is valid date
         if not isinstance(series.observation_period, date):
             errors.append("observation_period must be a date")
-        
+
         # Validate value is in valid range for series type
         if series.value is not None:
             valid_range = SERIES_RANGES.get(series.series_id)
@@ -1053,18 +1062,18 @@ class SchemaValidator(BaseValidator):
                 min_val, max_val = valid_range
                 if not (min_val <= series.value <= max_val):
                     warnings.append(f"Value {series.value} outside expected range [{min_val}, {max_val}]")
-        
+
         # Validate quality_score
         if not (0.0 <= series.quality_score <= 1.0):
             errors.append("quality_score must be between 0.0 and 1.0")
-        
+
         return ValidationResult(
             is_valid=len(errors) == 0,
             validator_name="SchemaValidator",
             errors=errors,
             warnings=warnings,
         )
-    
+
     def get_name(self) -> str:
         return "SchemaValidator"
 ```
@@ -1074,7 +1083,7 @@ class SchemaValidator(BaseValidator):
 ```python
 class RangeValidator(BaseValidator):
     """Validates data values are within plausible ranges."""
-    
+
     # Plausible ranges for each series type
     RANGES: dict[str, tuple[float, float]] = {
         "DXY": (80.0, 160.0),
@@ -1102,21 +1111,21 @@ class RangeValidator(BaseValidator):
         "VIX": (10.0, 200.0),
         "MOVE": (50.0, 500.0),
     }
-    
+
     def validate(self, series: NormalizedSeries) -> ValidationResult:
         """
         Validate value is within plausible range.
         """
         errors = []
         warnings = []
-        
+
         if series.value is None:
             return ValidationResult(
                 is_valid=True,
                 validator_name="RangeValidator",
                 warnings=["Value is null (missing data)"],
             )
-        
+
         valid_range = self.RANGES.get(series.series_id)
         if valid_range:
             min_val, max_val = valid_range
@@ -1124,17 +1133,17 @@ class RangeValidator(BaseValidator):
                 errors.append(f"Value {series.value} below minimum {min_val}")
             elif series.value > max_val:
                 errors.append(f"Value {series.value} above maximum {max_val}")
-        
+
         # Check for sudden jumps (anomalous changes)
         # This would require access to previous value, handled in pipeline
-        
+
         return ValidationResult(
             is_valid=len(errors) == 0,
             validator_name="RangeValidator",
             errors=errors,
             warnings=warnings,
         )
-    
+
     def get_name(self) -> str:
         return "RangeValidator"
 ```
@@ -1146,7 +1155,7 @@ class ValidationPipeline:
     """
     Pipeline that runs all validators in sequence.
     """
-    
+
     def __init__(self):
         self.validators: list[BaseValidator] = [
             SchemaValidator(),
@@ -1154,28 +1163,28 @@ class ValidationPipeline:
             FreshnessValidator(),
             ReconciliationValidator(),
         ]
-    
+
     def validate(self, series: NormalizedSeries) -> PipelineResult:
         """
         Run all validators in sequence.
-        
+
         Returns:
             PipelineResult with aggregate validation status
         """
         all_errors = []
         all_warnings = []
         validator_results = []
-        
+
         for validator in self.validators:
             result = validator.validate(series)
             validator_results.append(result)
-            
+
             all_errors.extend(result.errors)
             all_warnings.extend(result.warnings)
-        
+
         is_valid = len(all_errors) == 0
         is_quarantined = len([e for e in all_errors if "CRITICAL" in e]) > 0
-        
+
         return PipelineResult(
             is_valid=is_valid,
             is_quarantined=is_quarantined,
@@ -1183,7 +1192,7 @@ class ValidationPipeline:
             warnings=all_warnings,
             validator_results=validator_results,
         )
-    
+
     def validate_batch(self, series_list: list[NormalizedSeries]) -> list[PipelineResult]:
         """
         Run validation on a batch of series.
@@ -1198,21 +1207,21 @@ class QuarantineManager:
     """
     Manages quarantined data that failed validation.
     """
-    
+
     def __init__(self, store: JsonStore):
         self.store = store
         self.quarantine_path = Path(".agnes/data/macro/quarantine")
         self.quarantine_path.mkdir(parents=True, exist_ok=True)
-    
+
     def quarantine(self, series: NormalizedSeries, result: PipelineResult) -> Path:
         """
         Move failed series to quarantine.
-        
+
         Returns:
             Path to quarantined file
         """
         quarantine_file = self.quarantine_path / f"{series.series_id}_{series.timestamp.isoformat()}.json"
-        
+
         quarantine_record = {
             "series": series.to_dict(),
             "validation_result": {
@@ -1225,32 +1234,32 @@ class QuarantineManager:
             "quarantined_at": datetime.utcnow().isoformat(),
             "quarantine_reason": "; ".join(result.errors) if result.errors else "Unknown",
         }
-        
+
         with open(quarantine_file, "w") as f:
             json.dump(quarantine_record, f, indent=2)
-        
+
         # Log to audit
         self._log_quarantine(series.series_id, result)
-        
+
         return quarantine_file
-    
+
     def release(self, quarantine_id: str) -> bool:
         """
         Release quarantined data (with warning).
         """
         quarantine_file = self.quarantine_path / f"{quarantine_id}.json"
-        
+
         if not quarantine_file.exists():
             return False
-        
+
         # Read and re-validate
         with open(quarantine_file) as f:
             record = json.load(f)
-        
+
         series = NormalizedSeries.from_dict(record["series"])
         pipeline = ValidationPipeline()
         result = pipeline.validate(series)
-        
+
         if result.is_valid:
             # Move to main storage
             # ... implementation
@@ -1258,7 +1267,7 @@ class QuarantineManager:
             return True
         else:
             return False
-    
+
     def _log_quarantine(self, series_id: str, result: PipelineResult) -> None:
         """Log quarantine event to audit."""
         audit_entry = {
@@ -1401,11 +1410,11 @@ class AuditCompliance:
     """
     Ensures storage meets audit and compliance requirements.
     """
-    
+
     def verify_integrity(self) -> dict:
         """
         Verify storage integrity.
-        
+
         Returns:
             Dict with integrity check results
         """
@@ -1417,22 +1426,22 @@ class AuditCompliance:
             "total_records": self._count_records(),
             "last_verification": datetime.utcnow().isoformat(),
         }
-    
+
     def _check_parquet_integrity(self) -> bool:
         """Check all parquet files are readable."""
         # Implementation
         return True
-    
+
     def _check_json_integrity(self) -> bool:
         """Check all JSON files are valid."""
         # Implementation
         return True
-    
+
     def _check_index_consistency(self) -> bool:
         """Check indexes match actual files."""
         # Implementation
         return True
-    
+
     def _check_audit_trail(self) -> bool:
         """Check audit trail is complete."""
         # Implementation
@@ -1474,20 +1483,17 @@ def query_parallel(self, series_id: str, start: date, end: date) -> list[Normali
     Query series with parallel partition reading.
     """
     partitions = self._get_partitions(series_id, start, end)
-    
+
     # Use thread pool for parallel reads
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [
-            executor.submit(self._read_partition, partition)
-            for partition in partitions
-        ]
+        futures = [executor.submit(self._read_partition, partition) for partition in partitions]
         results = [f.result() for f in futures]
-    
+
     # Merge and sort
     all_series = []
     for result in results:
         all_series.extend(result)
-    
+
     return sorted(all_series, key=lambda x: x.observation_period)
 ```
 

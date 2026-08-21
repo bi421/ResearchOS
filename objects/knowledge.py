@@ -10,8 +10,6 @@ pattern recognition. It is the long-term memory of the ResearchOS system.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
@@ -52,10 +50,10 @@ class Knowledge(BaseObject):
         object: str,
         confidence: float = 0.0,
         evidence_count: int = 0,
-        source_references: Optional[List[str]] = None,
+        source_references: list[str] | None = None,
         knowledge_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Knowledge|{type}|{subject}|{predicate}|{object}"
@@ -69,7 +67,7 @@ class Knowledge(BaseObject):
         self.object = object
         self.confidence = confidence
         self.evidence_count = evidence_count
-        self.source_references: List[str] = source_references or []
+        self.source_references: list[str] = source_references or []
         self.knowledge_trace = knowledge_trace
 
         self.lifecycle.transition(
@@ -116,7 +114,7 @@ class Knowledge(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Knowledge":
+    def from_dict(cls, data: dict) -> Knowledge:
         obj = super().from_dict(data)
         obj.type = data.get("type") or data.get("pattern_type") or data.get("knowledge_type", "")
         obj.subject = data.get("subject", "")
@@ -162,16 +160,16 @@ class Pattern(BaseObject):
         self,
         type: str,
         description: str,
-        trigger_conditions: Optional[List[str]] = None,
+        trigger_conditions: list[str] | None = None,
         outcome: str = "",
         historical_accuracy: float = 0.0,
         sample_size: int = 0,
-        confidence_interval: Optional[dict] = None,
-        supporting_evidence: Optional[List[str]] = None,
-        contradicting_evidence: Optional[List[str]] = None,
+        confidence_interval: dict | None = None,
+        supporting_evidence: list[str] | None = None,
+        contradicting_evidence: list[str] | None = None,
         pattern_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Pattern|{type}|{description}"
@@ -181,13 +179,13 @@ class Pattern(BaseObject):
 
         self.type = type
         self.description = description
-        self.trigger_conditions: List[str] = trigger_conditions or []
+        self.trigger_conditions: list[str] = trigger_conditions or []
         self.outcome = outcome
         self.historical_accuracy = historical_accuracy
         self.sample_size = sample_size
         self.confidence_interval = confidence_interval or {"lower": 0.0, "upper": 1.0}
-        self.supporting_evidence: List[str] = supporting_evidence or []
-        self.contradicting_evidence: List[str] = contradicting_evidence or []
+        self.supporting_evidence: list[str] = supporting_evidence or []
+        self.contradicting_evidence: list[str] = contradicting_evidence or []
         self.pattern_trace = pattern_trace
 
         self.lifecycle.transition(
@@ -229,7 +227,7 @@ class Pattern(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Pattern":
+    def from_dict(cls, data: dict) -> Pattern:
         obj = super().from_dict(data)
         obj.type = data["type"]
         obj.description = data["description"]
@@ -276,11 +274,11 @@ class Lesson(BaseObject):
         recommendation: str = "",
         severity: float = 0.0,
         frequency: int = 0,
-        affected_articles: Optional[List[str]] = None,
-        supporting_evidence: Optional[List[str]] = None,
+        affected_articles: list[str] | None = None,
+        supporting_evidence: list[str] | None = None,
         lesson_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Lesson|{type}|{description}"
@@ -293,8 +291,8 @@ class Lesson(BaseObject):
         self.recommendation = recommendation
         self.severity = severity
         self.frequency = frequency
-        self.affected_articles: List[str] = affected_articles or []
-        self.supporting_evidence: List[str] = supporting_evidence or []
+        self.affected_articles: list[str] = affected_articles or []
+        self.supporting_evidence: list[str] = supporting_evidence or []
         self.lesson_trace = lesson_trace
 
         self.lifecycle.transition(
@@ -332,7 +330,7 @@ class Lesson(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Lesson":
+    def from_dict(cls, data: dict) -> Lesson:
         obj = super().from_dict(data)
         obj.type = data["type"]
         obj.description = data["description"]

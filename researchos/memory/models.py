@@ -17,7 +17,7 @@ Objects:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -64,10 +64,10 @@ class MarketSnapshot(BaseObject):
         volatility: float = 0.0,
         trend_state: str = "",
         market_regime: str = "",
-        indicators: Optional[Dict[str, float]] = None,
+        indicators: dict[str, float] | None = None,
         confidence: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketSnapshot|{asset}|{timestamp.isoformat()}|{timeframe}|{close}"
@@ -86,10 +86,10 @@ class MarketSnapshot(BaseObject):
         self.volatility = volatility
         self.trend_state = trend_state
         self.market_regime = market_regime
-        self.indicators: Dict[str, float] = indicators or {}
+        self.indicators: dict[str, float] = indicators or {}
         self.confidence = confidence
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "asset": self.asset,
             "timestamp": self.timestamp.isoformat(),
@@ -107,7 +107,7 @@ class MarketSnapshot(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -129,7 +129,7 @@ class MarketSnapshot(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketSnapshot":
+    def from_dict(cls, data: dict) -> MarketSnapshot:
         obj = super().from_dict(data)
         obj.asset = data["asset"]
         obj.timestamp = parse_timestamp(data["timestamp"])
@@ -174,13 +174,13 @@ class MarketRegime(BaseObject):
         asset: str,
         timestamp: datetime,
         confidence: float = 0.0,
-        snapshot_ids: Optional[List[str]] = None,
+        snapshot_ids: list[str] | None = None,
         volatility_level: float = 0.0,
         trend_strength: float = 0.0,
         duration_bars: int = 0,
         notes: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketRegime|{regime}|{asset}|{timestamp.isoformat()}"
@@ -192,13 +192,13 @@ class MarketRegime(BaseObject):
         self.asset = asset
         self.timestamp = timestamp
         self.confidence = confidence
-        self.snapshot_ids: List[str] = snapshot_ids or []
+        self.snapshot_ids: list[str] = snapshot_ids or []
         self.volatility_level = volatility_level
         self.trend_strength = trend_strength
         self.duration_bars = duration_bars
         self.notes = notes
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "regime": self.regime,
             "asset": self.asset,
@@ -212,7 +212,7 @@ class MarketRegime(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -230,7 +230,7 @@ class MarketRegime(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketRegime":
+    def from_dict(cls, data: dict) -> MarketRegime:
         obj = super().from_dict(data)
         obj.regime = data["regime"]
         obj.asset = data["asset"]
@@ -284,11 +284,11 @@ class MacroContextSnapshot(BaseObject):
         cpi: float = 0.0,
         fed_event: str = "",
         nfp: float = 0.0,
-        geopolitical_events: Optional[List[str]] = None,
+        geopolitical_events: list[str] | None = None,
         overall_assessment: str = "",
         confidence: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MacroState|{geography}|{timestamp.isoformat()}|{dxy}|{cpi}"
@@ -303,11 +303,11 @@ class MacroContextSnapshot(BaseObject):
         self.cpi = cpi
         self.fed_event = fed_event
         self.nfp = nfp
-        self.geopolitical_events: List[str] = geopolitical_events or []
+        self.geopolitical_events: list[str] = geopolitical_events or []
         self.overall_assessment = overall_assessment
         self.confidence = confidence
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp.isoformat(),
             "geography": self.geography,
@@ -322,7 +322,7 @@ class MacroContextSnapshot(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         # Legacy serialization pin — object_type stays "MacroState" so that
         # renamed-class dicts remain byte-identical with stored mirror data.
@@ -344,7 +344,7 @@ class MacroContextSnapshot(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroContextSnapshot":
+    def from_dict(cls, data: dict) -> MacroContextSnapshot:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data["timestamp"])
         obj.geography = data.get("geography", "US")
@@ -396,9 +396,9 @@ class HistoricalScenario(BaseObject):
         self,
         name: str,
         description: str = "",
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        snapshot_ids: Optional[List[str]] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        snapshot_ids: list[str] | None = None,
         regime_id: str = "",
         macro_id: str = "",
         outcome: str = "",
@@ -406,11 +406,11 @@ class HistoricalScenario(BaseObject):
         volatility_outcome: float = 0.0,
         max_favorable_movement: float = 0.0,
         max_adverse_movement: float = 0.0,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         dataset_source: str = "",
         similarity_score: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"HistoricalScenario|{name}|{description[:50]}"
@@ -422,7 +422,7 @@ class HistoricalScenario(BaseObject):
         self.description = description
         self.start_time = start_time
         self.end_time = end_time
-        self.snapshot_ids: List[str] = snapshot_ids or []
+        self.snapshot_ids: list[str] = snapshot_ids or []
         self.regime_id = regime_id
         self.macro_id = macro_id
         self.outcome = outcome
@@ -430,11 +430,11 @@ class HistoricalScenario(BaseObject):
         self.volatility_outcome = volatility_outcome
         self.max_favorable_movement = max_favorable_movement
         self.max_adverse_movement = max_adverse_movement
-        self.tags: List[str] = tags or []
+        self.tags: list[str] = tags or []
         self.dataset_source = dataset_source
         self.similarity_score = similarity_score
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -454,7 +454,7 @@ class HistoricalScenario(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -478,7 +478,7 @@ class HistoricalScenario(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "HistoricalScenario":
+    def from_dict(cls, data: dict) -> HistoricalScenario:
         obj = super().from_dict(data)
         obj.name = data["name"]
         obj.description = data.get("description", "")

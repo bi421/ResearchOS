@@ -93,9 +93,7 @@ def detect_inflation(features: FeatureVector) -> DetectionEvidence:
 
     # Combine signals (deterministic voting)
     signal = _combine_inflation_signals(level_score, trend_score, momentum_score)
-    confidence = _compute_inflation_confidence(
-        level_score, trend_score, momentum_score, z_score, percentile
-    )
+    confidence = _compute_inflation_confidence(level_score, trend_score, momentum_score, z_score, percentile)
 
     return _build_evidence(signal, confidence, factors, primary_value)
 

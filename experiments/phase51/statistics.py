@@ -23,7 +23,7 @@ Guarantees:
 from __future__ import annotations
 
 import math
-from typing import List, Sequence
+from collections.abc import Sequence
 
 from researchos.quant_engine.probability.statistics import confidence_interval_mean
 
@@ -46,23 +46,19 @@ def _binomial_tail_ge(n: int, k: int, p: float) -> float:
     log_fact = _log_factorials(n)
     total = 0.0
     for c in range(k, n + 1):
-        log_pmf = (
-            log_fact[n] - log_fact[c] - log_fact[n - c] + c * math.log(p) + (n - c) * math.log1p(-p)
-        )
+        log_pmf = log_fact[n] - log_fact[c] - log_fact[n - c] + c * math.log(p) + (n - c) * math.log1p(-p)
         total += math.exp(log_pmf)
     return min(1.0, max(0.0, total))
 
 
-def _log_factorials(n: int) -> List[float]:
+def _log_factorials(n: int) -> list[float]:
     log_fact = [0.0] * (n + 1)
     for i in range(1, n + 1):
         log_fact[i] = log_fact[i - 1] + math.log(i)
     return log_fact
 
 
-def _paired_sign_test(
-    model_pred: Sequence[int], base_pred: Sequence[int], actuals: Sequence[float]
-):
+def _paired_sign_test(model_pred: Sequence[int], base_pred: Sequence[int], actuals: Sequence[float]):
     """Deterministic McNemar-style paired sign test of model vs baseline.
 
     Returns (n_discordant, n_model_better, n_baseline_better, p_one_sided).
@@ -103,9 +99,7 @@ def evaluate_significance(
         actuals: True labels.
         significance_level: Alpha for the significance decision.
     """
-    n_disc, n_mb, n_bb, p_value = _paired_sign_test(
-        model_predictions, baseline_predictions, actuals
-    )
+    n_disc, n_mb, n_bb, p_value = _paired_sign_test(model_predictions, baseline_predictions, actuals)
     hu = sum(1 for a in actuals if int(a) == 1)
     hd = sum(1 for a in actuals if int(a) == -1)
     hn = sum(1 for a in actuals if int(a) == 0)

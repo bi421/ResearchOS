@@ -20,9 +20,9 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
-FEATURE_NAMES: Tuple[str, ...] = (
+FEATURE_NAMES: tuple[str, ...] = (
     "returns",
     "log_returns",
     "rolling_mean_20",
@@ -47,15 +47,15 @@ FEATURE_NAMES: Tuple[str, ...] = (
 # A feature may safely be selected for the estimator.  We permit all available
 # features; the experiment may restrict to a fixed topographic subset by
 # passing ``feature_indices``.
-DEFAULT_FEATURE_INDICES: Tuple[int, ...] = tuple(range(len(FEATURE_NAMES)))
+DEFAULT_FEATURE_INDICES: tuple[int, ...] = tuple(range(len(FEATURE_NAMES)))
 
 
 def _bins_for_feature(
-    values: Sequence[Optional[float]],
+    values: Sequence[float | None],
     n_bins: int,
-    floor: Optional[float] = None,
-    cap: Optional[float] = None,
-) -> Tuple[float, float, float]:
+    floor: float | None = None,
+    cap: float | None = None,
+) -> tuple[float, float, float]:
     """Return (floor, width, cap) covering the observed non-None values.
 
     If ``floor``/``cap`` are given they clamp the range.  The width is the
@@ -76,7 +76,7 @@ def _bins_for_feature(
     return lo, width, hi
 
 
-def _bin_index(value: Optional[float], lo: float, width: float, n_bins: int) -> int:
+def _bin_index(value: float | None, lo: float, width: float, n_bins: int) -> int:
     """Return the bin index for a value, clamping to [0, n_bins-1]."""
     if value is None or value != value:  # NaN
         return 0
@@ -99,23 +99,23 @@ class EmpiricalProbabilityEstimator:
     def __init__(
         self,
         n_bins: int = 10,
-        feature_indices: Optional[Sequence[int]] = None,
+        feature_indices: Sequence[int] | None = None,
     ) -> None:
         self.n_bins = int(n_bins)
-        self.feature_indices: Tuple[int, ...] = tuple(
+        self.feature_indices: tuple[int, ...] = tuple(
             feature_indices if feature_indices is not None else DEFAULT_FEATURE_INDICES
         )
         if not self.feature_indices:
             raise ValueError("At least one feature must be selected")
-        self._boundaries: Dict[int, Tuple[float, float, float]] = {}
-        self._histograms: Dict[int, Dict[int, List[int]]] = {}
+        self._boundaries: dict[int, tuple[float, float, float]] = {}
+        self._histograms: dict[int, dict[int, list[int]]] = {}
         self._trained = False
 
     def fit(
         self,
-        features: Sequence[Sequence[Optional[float]]],
+        features: Sequence[Sequence[float | None]],
         labels: Sequence[float],
-    ) -> "EmpiricalProbabilityEstimator":
+    ) -> EmpiricalProbabilityEstimator:
         """Fit bin boundaries + conditional histograms from the training window.
 
         Args:
@@ -130,7 +130,7 @@ class EmpiricalProbabilityEstimator:
             lo, width, hi = _bins_for_feature(col, self.n_bins)
             self._boundaries[idx] = (lo, width, hi)
             # hist[cls] is a list over bins of counts
-            table: Dict[int, List[int]] = {
+            table: dict[int, list[int]] = {
                 1: [0] * self.n_bins,
                 0: [0] * self.n_bins,
                 -1: [0] * self.n_bins,
@@ -146,7 +146,7 @@ class EmpiricalProbabilityEstimator:
         self._trained = True
         return self
 
-    def predict_class(self, feature_row: Sequence[Optional[float]]) -> int:
+    def predict_class(self, feature_row: Sequence[float | None]) -> int:
         """Predict the class (1 / 0 / −1) for a single feature row.
 
         Uses the *first* selected feature's conditional frequency.  To keep the
@@ -172,7 +172,7 @@ class EmpiricalProbabilityEstimator:
                 best_cls = cls
         return best_cls
 
-    def predict_proba(self, feature_row: Sequence[Optional[float]]) -> Dict[int, float]:
+    def predict_proba(self, feature_row: Sequence[float | None]) -> dict[int, float]:
         """Return empirical per-class probabilities for a feature row."""
         if not self._trained:
             raise ValueError("Estimator not fitted")

@@ -29,8 +29,9 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 from researchos.quant_engine.backend_hash import (
     canonicalize,
@@ -39,7 +40,7 @@ from researchos.quant_engine.backend_hash import (
 )
 
 #: Canonical analytical operations exposed by ResearchComputationInterface.
-RESEARCH_OPERATIONS: Tuple[str, ...] = (
+RESEARCH_OPERATIONS: tuple[str, ...] = (
     "research_technical",
     "research_probabilistic_fit",
     "research_probabilistic_hypothesis",
@@ -83,7 +84,7 @@ class ResearchResult:
     version: str = ""
     methodology_version: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible mapping."""
         return {
             "operation": self.operation,
@@ -98,7 +99,7 @@ class ResearchResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ResearchResult":
+    def from_dict(cls, data: Mapping[str, Any]) -> ResearchResult:
         """Reconstruct from a ``to_dict()`` mapping."""
         return cls(
             operation=str(data["operation"]),
@@ -186,27 +187,21 @@ class ResearchComputationInterface:
         ``technical.contracts.IndicatorSpec``."""
         raise NotImplementedError
 
-    def research_probabilistic_fit(
-        self, samples: Sequence[float], distribution: str, **params: Any
-    ) -> ResearchResult:
+    def research_probabilistic_fit(self, samples: Sequence[float], distribution: str, **params: Any) -> ResearchResult:
         """Fit a probability distribution to samples (deterministic)."""
         raise NotImplementedError
 
-    def research_probabilistic_hypothesis(
-        self, samples: Sequence[float], test: str, **params: Any
-    ) -> ResearchResult:
+    def research_probabilistic_hypothesis(self, samples: Sequence[float], test: str, **params: Any) -> ResearchResult:
         """Run a deterministic hypothesis test."""
         raise NotImplementedError
 
     def research_portfolio_metrics(
-        self, portfolio: Any, benchmark_returns: Optional[Sequence[float]] = None, **params: Any
+        self, portfolio: Any, benchmark_returns: Sequence[float] | None = None, **params: Any
     ) -> ResearchResult:
         """Compute deterministic portfolio analytics."""
         raise NotImplementedError
 
-    def research_historical(
-        self, returns: Sequence[float], metric: str, **params: Any
-    ) -> ResearchResult:
+    def research_historical(self, returns: Sequence[float], metric: str, **params: Any) -> ResearchResult:
         """Compute deterministic historical analytics."""
         raise NotImplementedError
 
@@ -214,9 +209,7 @@ class ResearchComputationInterface:
         """Compute deterministic fundamental/macro analytics."""
         raise NotImplementedError
 
-    def research_econometric_analysis(
-        self, values: Sequence[float], model: str, **params: Any
-    ) -> ResearchResult:
+    def research_econometric_analysis(self, values: Sequence[float], model: str, **params: Any) -> ResearchResult:
         """Run a deterministic econometric analysis."""
         raise NotImplementedError
 

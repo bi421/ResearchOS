@@ -11,10 +11,11 @@ knowledge — never executable behavior.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Dict, Mapping
+from typing import Any
 
 from researchos.intelligence.contracts import EvidenceError
 
@@ -29,7 +30,7 @@ class Relationship(str, Enum):
     DEPENDS_ON = "depends_on"
 
     @classmethod
-    def from_string(cls, value: str) -> "Relationship":
+    def from_string(cls, value: str) -> Relationship:
         """Parse a relationship from a string, case-insensitive."""
         mapping = {
             "used_by": cls.USED_BY,
@@ -44,9 +45,7 @@ class Relationship(str, Enum):
         }
         normalized = str(value).lower().strip()
         if normalized not in mapping:
-            raise ValueError(
-                f"Unknown relationship {value!r}. Valid options: {[r.value for r in cls]}"
-            )
+            raise ValueError(f"Unknown relationship {value!r}. Valid options: {[r.value for r in cls]}")
         return mapping[normalized]
 
     def matches(self, relationship: str) -> bool:
@@ -119,7 +118,7 @@ class EvidenceEdge:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "edge_id": self.edge_id,
@@ -131,7 +130,7 @@ class EvidenceEdge:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceEdge":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvidenceEdge:
         """Reconstruct an ``EvidenceEdge`` from a ``to_dict()`` mapping."""
         return cls(
             edge_id=str(data["edge_id"]),

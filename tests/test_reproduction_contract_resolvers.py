@@ -290,10 +290,7 @@ class TestAcceptanceCriteria:
             version="1.0.0",
         )
         restored = ResearchDataset.from_payload(research_dataset_payload(ds))
-        assert (
-            build_dataset_envelope(ds).artifact_hash
-            == build_dataset_envelope(restored).artifact_hash
-        )
+        assert build_dataset_envelope(ds).artifact_hash == build_dataset_envelope(restored).artifact_hash
 
     def test_acceptance_backward_compatible_snapshots(self):
         # A legacy SimulationConfig snapshot with only seed present.

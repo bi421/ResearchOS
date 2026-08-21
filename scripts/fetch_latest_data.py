@@ -1,6 +1,7 @@
-import yfinance as yf
-from pathlib import Path
 import warnings
+from pathlib import Path
+
+import yfinance as yf
 
 warnings.filterwarnings("ignore")
 
@@ -50,8 +51,6 @@ else:
     print(f"   📁 Цагийн (H1): {file_h1.name}")
     print(f"      → Нийт мөр: {len(df_h1)} | Сүүлийн огноо: {df_h1['datetime'].max()}")
 
-    print(
-        f"\n🔍 Сүүлийн бичлэг (H1): {df_h1.iloc[-1]['datetime']} | Close: {df_h1.iloc[-1]['close']:.2f}"
-    )
+    print(f"\n🔍 Сүүлийн бичлэг (H1): {df_h1.iloc[-1]['datetime']} | Close: {df_h1.iloc[-1]['close']:.2f}")
 
 print("=" * 60)

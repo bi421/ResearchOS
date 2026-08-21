@@ -10,7 +10,6 @@ any random split.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Tuple
 
 from .contracts import ValidationError
 
@@ -36,11 +35,11 @@ class Fold:
     validation_end: int
 
     @property
-    def train_range(self) -> Tuple[int, int]:
+    def train_range(self) -> tuple[int, int]:
         return (self.train_start, self.train_end)
 
     @property
-    def validation_range(self) -> Tuple[int, int]:
+    def validation_range(self) -> tuple[int, int]:
         return (self.validation_start, self.validation_end)
 
     @property
@@ -84,7 +83,7 @@ class WalkForwardSplitter:
         if not isinstance(dataset_length, int) or dataset_length < 0:
             raise ValidationError("dataset_length must be a non-negative integer")
 
-    def split(self, dataset_length: int) -> List[Fold]:
+    def split(self, dataset_length: int) -> list[Fold]:
         """Return the chronological folds for a dataset of the given length.
 
         Raises:
@@ -93,15 +92,14 @@ class WalkForwardSplitter:
         """
         self._validate_length(dataset_length)
 
-        folds: List[Fold] = []
+        folds: list[Fold] = []
 
         # Guarantee at least one complete validation window fits.  A dataset
         # that cannot satisfy this is rejected rather than silently producing
         # zero (empty) folds.
         if dataset_length < self.train_size + self.validation_size:
             raise ValidationError(
-                "dataset too small: need at least train_size + validation_size "
-                "samples to form a single fold"
+                "dataset too small: need at least train_size + validation_size samples to form a single fold"
             )
 
         for k in range(DEFAULT_MAX_FOLDS):

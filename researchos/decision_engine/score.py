@@ -24,7 +24,7 @@ Pipeline:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -82,11 +82,11 @@ class EvidenceScore(BaseObject):
         confidence_score: float = 0.0,
         uncertainty_score: float = 0.0,
         evidence_count: int = 0,
-        evidence_items: Optional[List[DecisionEvidenceItem]] = None,
+        evidence_items: list[DecisionEvidenceItem] | None = None,
         weighting_version: str = "WEIGHT_V1",
         scoring_version: str = "SCORE_V1",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"EvidenceScore|{context_id}"
@@ -108,7 +108,7 @@ class EvidenceScore(BaseObject):
         self.confidence_score = confidence_score
         self.uncertainty_score = uncertainty_score
         self.evidence_count = evidence_count
-        self.evidence_items: List[DecisionEvidenceItem] = evidence_items or []
+        self.evidence_items: list[DecisionEvidenceItem] = evidence_items or []
         self.weighting_version = weighting_version
         self.scoring_version = scoring_version
         self._score_hash: str = ""
@@ -132,7 +132,7 @@ class EvidenceScore(BaseObject):
         content = self._to_hashable_dict()
         self._score_hash = deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "context_id": self.context_id,
             "total_score": self.total_score,
@@ -154,7 +154,7 @@ class EvidenceScore(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -181,7 +181,7 @@ class EvidenceScore(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvidenceScore":
+    def from_dict(cls, data: dict[str, Any]) -> EvidenceScore:
         obj = super().from_dict(data)
         obj.context_id = data["context_id"]
         obj.total_score = float(data.get("total_score", 0.0))
@@ -197,9 +197,7 @@ class EvidenceScore(BaseObject):
         obj.confidence_score = float(data.get("confidence_score", 0.0))
         obj.uncertainty_score = float(data.get("uncertainty_score", 0.0))
         obj.evidence_count = int(data.get("evidence_count", 0))
-        obj.evidence_items = [
-            DecisionEvidenceItem.from_dict(e) for e in data.get("evidence_items", [])
-        ]
+        obj.evidence_items = [DecisionEvidenceItem.from_dict(e) for e in data.get("evidence_items", [])]
         obj.weighting_version = data.get("weighting_version", "WEIGHT_V1")
         obj.scoring_version = data.get("scoring_version", "SCORE_V1")
         obj._score_hash = data.get("score_hash", "")
@@ -208,7 +206,7 @@ class EvidenceScore(BaseObject):
 
 def compute_evidence_score(
     context_id: str,
-    evidence_items: List[DecisionEvidenceItem],
+    evidence_items: list[DecisionEvidenceItem],
     weight_config: WeightConfiguration,
     scoring_version: str = "SCORE_V1",
 ) -> EvidenceScore:
@@ -236,8 +234,8 @@ def compute_evidence_score(
         )
 
     # Separate evidence by source and direction
-    source_scores: Dict[str, Dict[str, float]] = {}
-    source_confidences: Dict[str, float] = {}
+    source_scores: dict[str, dict[str, float]] = {}
+    source_confidences: dict[str, float] = {}
     total_items = len(evidence_items)
 
     # Map source types to weight config attributes
@@ -336,9 +334,7 @@ def compute_evidence_score(
     )
 
     # Confidence score: average of source confidences
-    confidence_score = (
-        sum(source_confidences.values()) / len(source_confidences) if source_confidences else 0.0
-    )
+    confidence_score = sum(source_confidences.values()) / len(source_confidences) if source_confidences else 0.0
 
     # Uncertainty score: disagreement between sources
     # Higher when sources disagree on direction

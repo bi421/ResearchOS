@@ -4,12 +4,13 @@ import warnings
 warnings.filterwarnings("ignore")
 sys.path.insert(0, "cpp_quant")
 
-import pandas as pd
-import numpy as np
 import glob
+
+import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
-from xgboost import XGBRegressor  # ⬅️ Regressor
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor  # ⬅️ Regressor
 
 print("=" * 60)
 print("🚀 REGRESSION TARGET: XAUUSD 4h")
@@ -21,21 +22,12 @@ print("=" * 60)
 print("Loading XAUUSD data...")
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 print(f"Data: {len(df_h)} bars (4h)")
 
 
@@ -63,9 +55,7 @@ def add_new_features(df):
     df["price_vs_low_24h"] = close / rolling_low - 1
 
     # ATR харьцаа
-    tr = np.maximum(
-        high - low, np.maximum((high - close.shift()).abs(), (low - close.shift()).abs())
-    )
+    tr = np.maximum(high - low, np.maximum((high - close.shift()).abs(), (low - close.shift()).abs()))
     atr = tr.rolling(14).mean()
     df["atr_ratio"] = atr / close
 

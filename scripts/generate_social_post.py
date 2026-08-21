@@ -1,9 +1,9 @@
-import numpy as np
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 
 plt.style.use("dark_background")
 fig = plt.figure(figsize=(9, 16), facecolor="#0a0a0a")

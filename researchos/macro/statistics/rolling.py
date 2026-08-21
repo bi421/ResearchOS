@@ -10,16 +10,14 @@ MIL-STAT-004: All outputs preserve provenance.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
 from researchos.macro.statistics.descriptive import mean, std, variance
 
 
 def rolling_mean(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling mean.
 
@@ -49,10 +47,10 @@ def rolling_mean(
 
 
 def rolling_std(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling standard deviation.
 
@@ -82,10 +80,10 @@ def rolling_std(
 
 
 def rolling_variance(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling variance.
 
@@ -115,10 +113,10 @@ def rolling_variance(
 
 
 def rolling_zscore(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling z-score.
 
@@ -153,11 +151,11 @@ def rolling_zscore(
 
 
 def rolling_percentile(
-    values: List[float],
+    values: list[float],
     window: int,
     percentile: float,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling percentile.
 
@@ -188,10 +186,10 @@ def rolling_percentile(
 
 
 def rolling_statistics(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Dict[str, Optional[float]]]:
+    min_periods: int | None = None,
+) -> list[dict[str, float | None]]:
     """
     Calculate complete rolling statistics.
 
@@ -247,7 +245,7 @@ def rolling_statistics(
     return result
 
 
-def expanding_mean(values: List[float]) -> List[float]:
+def expanding_mean(values: list[float]) -> list[float]:
     """
     Calculate expanding mean.
 
@@ -263,7 +261,7 @@ def expanding_mean(values: List[float]) -> List[float]:
     return result
 
 
-def expanding_std(values: List[float]) -> List[float]:
+def expanding_std(values: list[float]) -> list[float]:
     """
     Calculate expanding standard deviation.
 

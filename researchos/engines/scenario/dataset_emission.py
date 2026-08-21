@@ -32,7 +32,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from researchos.engines.scenario.envelope import (
     HASH_SCHEME_VERSION,
@@ -48,7 +49,7 @@ DATASET_ARTIFACT_TYPE = "Dataset"
 DATASET_EVIDENCE_VERSION = "1.0.0"
 
 
-def _metadata_to_primitives(metadata: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
+def _metadata_to_primitives(metadata: Mapping[str, Any] | None) -> dict[str, Any]:
     """Recursively convert dataset metadata to a primitives-only mapping.
 
     Mappings and sequences are flattened to plain ``dict`` / ``list`` of
@@ -58,7 +59,7 @@ def _metadata_to_primitives(metadata: Optional[Mapping[str, Any]]) -> Dict[str, 
     """
     if not metadata:
         return {}
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
 
     def _convert(value: Any) -> Any:
         if isinstance(value, Mapping):
@@ -72,7 +73,7 @@ def _metadata_to_primitives(metadata: Optional[Mapping[str, Any]]) -> Dict[str, 
     return out
 
 
-def research_dataset_payload(dataset: Any) -> Dict[str, Any]:
+def research_dataset_payload(dataset: Any) -> dict[str, Any]:
     """Build a deterministic, primitives-only payload from a ``ResearchDataset``.
 
     Uses the frozen ``ResearchDataset`` attributes without mutating them.
@@ -102,7 +103,7 @@ def build_dataset_envelope(
     dataset: Any,
     version: str = DATASET_EVIDENCE_VERSION,
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
+    parent_hashes: Sequence[str] | None = None,
 ) -> EvidenceEnvelope:
     """Build a scheme-2 ``EvidenceEnvelope`` for a ``ResearchDataset``.
 
@@ -136,7 +137,7 @@ def make_dataset_envelope_from_payload(
     payload: Mapping[str, Any],
     version: str = DATASET_EVIDENCE_VERSION,
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
+    parent_hashes: Sequence[str] | None = None,
 ) -> EvidenceEnvelope:
     """Build a Dataset envelope directly from a primitives-only payload.
 
@@ -153,7 +154,7 @@ def make_dataset_envelope_from_payload(
 
 def emit_dataset(
     envelope: EvidenceEnvelope,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
 ) -> EvidenceEnvelope:
     """Persist a Dataset envelope to an ``EvidenceRepository`` (append-only).
 
@@ -168,9 +169,7 @@ def emit_dataset(
         ValueError: If the envelope is not a Dataset artifact or fails verify().
     """
     if envelope.artifact_type != DATASET_ARTIFACT_TYPE:
-        raise ValueError(
-            f"emit_dataset() expects artifact_type='Dataset', got '{envelope.artifact_type}'"
-        )
+        raise ValueError(f"emit_dataset() expects artifact_type='Dataset', got '{envelope.artifact_type}'")
     if not envelope.verify():
         raise ValueError(f"Dataset evidence lineage mismatch for {envelope.artifact_hash}")
     repo = repository or EvidenceRepository()

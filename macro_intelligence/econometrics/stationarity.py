@@ -11,8 +11,6 @@ MIL-ECM-007: Econometrics owns ADF and KPSS.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
 from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 
@@ -45,12 +43,12 @@ _KPSS_CRITICAL_TREND = {
 }
 
 
-def _first_difference(values: List[float]) -> List[float]:
+def _first_difference(values: list[float]) -> list[float]:
     """First differences of a series."""
     return [values[i] - values[i - 1] for i in range(1, len(values))]
 
 
-def _estimate_p_value(stat: float, critical: Dict[float, float]) -> float:
+def _estimate_p_value(stat: float, critical: dict[float, float]) -> float:
     """
     Approximate a p-value from a test statistic against critical values via
     linear interpolation in the normal-probability domain.
@@ -72,12 +70,12 @@ def _estimate_p_value(stat: float, critical: Dict[float, float]) -> float:
 
 
 def augmented_dickey_fuller(
-    values: List[float],
+    values: list[float],
     max_lag: int = 1,
     trend: str = "c",
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Augmented Dickey-Fuller test for a unit root.
@@ -136,10 +134,7 @@ def augmented_dickey_fuller(
         beta = solve(XtX, [row[0] for row in Xty])
     except ValueError:
         ridge = 1e-8
-        XtX_ridge = [
-            [XtX[i][j] + (ridge if i == j else 0.0) for j in range(len(XtX))]
-            for i in range(len(XtX))
-        ]
+        XtX_ridge = [[XtX[i][j] + (ridge if i == j else 0.0) for j in range(len(XtX))] for i in range(len(XtX))]
         beta = solve(XtX_ridge, [row[0] for row in Xty])
 
     # The coefficient of y_{t-1} is beta[1] for "c" and beta[2] for "ct".
@@ -173,9 +168,9 @@ def augmented_dickey_fuller(
 
 
 def _coefficient_se(
-    X: List[List[float]],
-    y: List[float],
-    beta: List[float],
+    X: list[list[float]],
+    y: list[float],
+    beta: list[float],
     idx: int,
 ) -> float:
     """Standard error of a coefficient in an OLS regression."""
@@ -200,11 +195,11 @@ def _coefficient_se(
 
 
 def kpss(
-    values: List[float],
+    values: list[float],
     trend: str = "c",
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     KPSS test for stationarity.

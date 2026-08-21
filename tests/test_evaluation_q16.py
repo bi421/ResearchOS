@@ -10,7 +10,6 @@ import hashlib
 import json
 import unittest
 from dataclasses import FrozenInstanceError
-from typing import Dict, List, Optional, Tuple
 
 from researchos.evaluation import (
     EVALUATION_VERSION,
@@ -85,7 +84,7 @@ def _make_training_model() -> TrainingModelContract:
     )
 
 
-def _make_training(metrics: Optional[Dict[str, float]] = None) -> TrainingResult:
+def _make_training(metrics: dict[str, float] | None = None) -> TrainingResult:
     return TrainingResult(
         model=_make_training_model(),
         metrics=metrics or {"accuracy": 0.85, "precision": 0.80},
@@ -97,7 +96,7 @@ def _make_training(metrics: Optional[Dict[str, float]] = None) -> TrainingResult
     )
 
 
-def _make_fold(fold_id: int, metrics: Optional[Dict[str, float]] = None) -> FoldResult:
+def _make_fold(fold_id: int, metrics: dict[str, float] | None = None) -> FoldResult:
     return FoldResult(
         fold_id=fold_id,
         train_range=(0, 80),
@@ -109,7 +108,7 @@ def _make_fold(fold_id: int, metrics: Optional[Dict[str, float]] = None) -> Fold
 
 def _make_validation(
     fold_count: int = 3,
-    fold_metrics: Optional[List[Dict[str, float]]] = None,
+    fold_metrics: list[dict[str, float]] | None = None,
 ) -> ValidationResult:
     if fold_metrics is None:
         fold_metrics = [{"accuracy": 0.85, "loss": 0.15}] * fold_count
@@ -127,10 +126,10 @@ def _make_validation(
 def _make_report(
     pipeline_id: str = "test_pipeline",
     status: PipelineStatus = PipelineStatus.COMPLETED,
-    validation: Optional[ValidationResult] = None,
-    training: Optional[TrainingResult] = None,
-    nodes: Tuple[EvidenceNodeDescriptor, ...] = (),
-    edges: Tuple[EvidenceEdgeDescriptor, ...] = (),
+    validation: ValidationResult | None = None,
+    training: TrainingResult | None = None,
+    nodes: tuple[EvidenceNodeDescriptor, ...] = (),
+    edges: tuple[EvidenceEdgeDescriptor, ...] = (),
 ) -> PipelineReport:
     return PipelineReport(
         pipeline_id=pipeline_id,
@@ -150,7 +149,7 @@ def _make_report(
     )
 
 
-def _make_repo(reports: List[PipelineReport]) -> PipelineRepository:
+def _make_repo(reports: list[PipelineReport]) -> PipelineRepository:
     repo = PipelineRepository()
     for report in reports:
         repo.save(report)
@@ -277,18 +276,12 @@ class TestEvaluationReportContract(unittest.TestCase):
             report.pipeline_id = "x"  # type: ignore
 
     def test_hashable(self):
-        r1 = EvaluationReport(
-            self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-        )
-        r2 = EvaluationReport(
-            self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-        )
+        r1 = EvaluationReport(self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
+        r2 = EvaluationReport(self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
         self.assertEqual(hash(r1), hash(r2))
 
     def test_to_dict_from_dict_roundtrip(self):
-        original = EvaluationReport(
-            self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-        )
+        original = EvaluationReport(self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
         d = original.to_dict()
         restored = EvaluationReport.from_dict(d)
         self.assertEqual(original, restored)
@@ -309,9 +302,7 @@ class TestEvaluationReportContract(unittest.TestCase):
             )
 
     def test_serializable(self):
-        report = EvaluationReport(
-            self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION
-        )
+        report = EvaluationReport(self.eid, "p1", self.score, "2024-01-01T00:00:00Z", EVALUATION_VERSION)
         text = json.dumps(report.to_dict(), sort_keys=True)
         restored = EvaluationReport.from_dict(json.loads(text))
         self.assertEqual(report, restored)
@@ -686,7 +677,7 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
                 if not fn.endswith(".py"):
                     continue
                 path = os.path.join(root, fn)
-                with open(path, "r", encoding="utf-8") as fh:
+                with open(path, encoding="utf-8") as fh:
                     tree = ast.parse(fh.read(), filename=path)
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
@@ -724,7 +715,7 @@ class TestEvaluationDependencyAudit(unittest.TestCase):
                 if not fn.endswith(".py"):
                     continue
                 path = os.path.join(root, fn)
-                with open(path, "r", encoding="utf-8") as fh:
+                with open(path, encoding="utf-8") as fh:
                     tree = ast.parse(fh.read(), filename=path)
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):

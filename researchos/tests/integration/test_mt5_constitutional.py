@@ -1,10 +1,8 @@
-from pathlib import Path
 import re
-
+from pathlib import Path
 
 FORBIDDEN_TRADING_APIS = re.compile(
-    r"order_send|order_modify|order_close|order_delete|"
-    r"OrderSend|OrderModify|OrderClose|OrderDelete"
+    r"order_send|order_modify|order_close|order_delete|" r"OrderSend|OrderModify|OrderClose|OrderDelete"
 )
 
 

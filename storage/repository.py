@@ -4,7 +4,7 @@ import sqlite3
 import threading
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash
@@ -57,7 +57,7 @@ BUSY_TIMEOUT_MS = 5000
 MAX_WRITE_RETRIES = 5
 
 
-OBJECT_REGISTRY: Dict[str, type] = {
+OBJECT_REGISTRY: dict[str, type] = {
     "Observation": Observation,
     "MarketState": MarketState,
     "MacroState": MacroState,
@@ -118,8 +118,8 @@ class _TransactionContext:
 
     def __init__(self, repo: "ResearchRepository"):
         self.repo = repo
-        self.cursor: Optional[sqlite3.Cursor] = None
-        self.conn: Optional[sqlite3.Connection] = None
+        self.cursor: sqlite3.Cursor | None = None
+        self.conn: sqlite3.Connection | None = None
         self._locked = False
 
     def _acquire_lock(self):
@@ -132,7 +132,7 @@ class _TransactionContext:
             self._locked = False
 
     def __enter__(self) -> sqlite3.Cursor:
-        last_exc: Optional[Exception] = None
+        last_exc: Exception | None = None
         for attempt in range(MAX_WRITE_RETRIES):
             self._acquire_lock()
             try:
@@ -152,14 +152,10 @@ class _TransactionContext:
                 self._release_lock()
                 raise
         self._release_lock()
-        raise sqlite3.OperationalError(
-            f"Could not acquire read lock after {MAX_WRITE_RETRIES} retries"
-        ) from last_exc
+        raise sqlite3.OperationalError(f"Could not acquire read lock after {MAX_WRITE_RETRIES} retries") from last_exc
 
-    def __exit__(
-        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[object]
-    ) -> bool:
-        last_exc: Optional[Exception] = None
+    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: object | None) -> bool:
+        last_exc: Exception | None = None
         try:
             for attempt in range(MAX_WRITE_RETRIES):
                 try:
@@ -179,9 +175,7 @@ class _TransactionContext:
                         continue
                     raise
             if last_exc is not None:
-                raise sqlite3.OperationalError(
-                    f"Could not commit after {MAX_WRITE_RETRIES} retries"
-                ) from last_exc
+                raise sqlite3.OperationalError(f"Could not commit after {MAX_WRITE_RETRIES} retries") from last_exc
         finally:
             self._release_lock()
         return False
@@ -190,7 +184,7 @@ class _TransactionContext:
 class ResearchRepository(RepositoryInterface[BaseObject]):
     def __init__(self, db_path: str = "researchos.db"):
         self.db_path = db_path
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
         self._lock = threading.Lock()
         self._closed = False
         self._init_db()
@@ -215,9 +209,9 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[object],
+        exc_type: type | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None,
     ) -> bool:
         self.close()
         return False
@@ -318,15 +312,13 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             ON lineage(child_hash)
         """)
 
-    MIGRATIONS: Dict[int, Any] = {
+    MIGRATIONS: dict[int, Any] = {
         2: _migrate_v1_to_v2,
         3: _migrate_v2_to_v3,
     }
 
     def _get_schema_version(self, cursor: sqlite3.Cursor) -> int:
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS _schema_version (key TEXT PRIMARY KEY, version INTEGER)"
-        )
+        cursor.execute("CREATE TABLE IF NOT EXISTS _schema_version (key TEXT PRIMARY KEY, version INTEGER)")
         cursor.execute("SELECT version FROM _schema_version WHERE key = ?", (SCHEMA_VERSION_KEY,))
         row = cursor.fetchone()
         return row[0] if row else 0
@@ -422,7 +414,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
                 (obj.id, object_type, created_at, json.dumps(data, ensure_ascii=False)),
             )
 
-    def load_by_id(self, object_id: str) -> Optional[Dict[str, Any]]:
+    def load_by_id(self, object_id: str) -> dict[str, Any] | None:
         """
         Load any object by its deterministic ID.
 
@@ -440,7 +432,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             return json.loads(row[0])
         return None
 
-    def load_by_type(self, object_type: str) -> List[Dict[str, Any]]:
+    def load_by_type(self, object_type: str) -> list[dict[str, Any]]:
         """
         Load all objects of a given type.
 
@@ -465,7 +457,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         cursor.execute("DELETE FROM objects WHERE id = ?", (object_id,))
         conn.commit()
 
-    def object_count(self, object_type: Optional[str] = None) -> int:
+    def object_count(self, object_type: str | None = None) -> int:
         """Count objects, optionally filtered by type."""
         conn = self._get_conn()
         cursor = conn.cursor()
@@ -482,7 +474,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
     # Object rehydration (Phase 2 — from_dict support)
     # ------------------------------------------------------------------
 
-    def load_object(self, object_id: str) -> Optional[BaseObject]:
+    def load_object(self, object_id: str) -> BaseObject | None:
         """
         Load and reconstruct an object by ID using from_dict().
 
@@ -502,12 +494,11 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         cls = OBJECT_REGISTRY.get(object_type)
         if cls is None:
             raise ValueError(
-                f"No registered class for object_type '{object_type}'. "
-                "Register the class in OBJECT_REGISTRY."
+                f"No registered class for object_type '{object_type}'. Register the class in OBJECT_REGISTRY."
             )
         return cls.from_dict(data)
 
-    def load_objects_by_type(self, object_type: str) -> List[BaseObject]:
+    def load_objects_by_type(self, object_type: str) -> list[BaseObject]:
         """
         Load and reconstruct all objects of a given type.
 
@@ -523,8 +514,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         cls = OBJECT_REGISTRY.get(object_type)
         if cls is None:
             raise ValueError(
-                f"No registered class for object_type '{object_type}'. "
-                "Register the class in OBJECT_REGISTRY."
+                f"No registered class for object_type '{object_type}'. Register the class in OBJECT_REGISTRY."
             )
         dicts = self.load_by_type(object_type)
         return [cls.from_dict(d) for d in dicts]
@@ -543,7 +533,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             cursor.execute("DELETE FROM objects WHERE id = ?", (id,))
             return cursor.rowcount > 0
 
-    def find_by_tag(self, tag: str) -> List[BaseObject]:
+    def find_by_tag(self, tag: str) -> list[BaseObject]:
         """
         RepositoryInterface-compatible find_by_tag.
 
@@ -555,7 +545,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         Returns:
             List of matching objects.
         """
-        result: List[BaseObject] = []
+        result: list[BaseObject] = []
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute("SELECT data FROM objects ORDER BY created_at")
@@ -592,7 +582,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             self.save_object(obj)
         return obj
 
-    def get(self, id: str) -> Optional[BaseObject]:
+    def get(self, id: str) -> BaseObject | None:
         """
         RepositoryInterface-compatible get.
 
@@ -600,7 +590,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         """
         return self.load_object(id)
 
-    def get_all(self) -> List[BaseObject]:
+    def get_all(self) -> list[BaseObject]:
         """
         RepositoryInterface-compatible get_all.
 
@@ -609,7 +599,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute("SELECT data FROM objects ORDER BY created_at")
-        result: List[BaseObject] = []
+        result: list[BaseObject] = []
         for row in cursor.fetchall():
             data = json.loads(row[0])
             object_type = data.get("object_type")
@@ -633,16 +623,14 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
                     cycle.id,
                     cycle.created_at.isoformat() if hasattr(cycle, "created_at") else "",
                     getattr(cycle, "research_id", ""),
-                    cycle.lifecycle.current_stage.value
-                    if hasattr(cycle, "lifecycle")
-                    else "created",
+                    cycle.lifecycle.current_stage.value if hasattr(cycle, "lifecycle") else "created",
                     json.dumps(cycle.to_dict(), ensure_ascii=False),
                 ),
             )
         # Also save to objects table for load_object/get discoverability
         self.save_object(cycle)
 
-    def load_cycle(self, cycle_id: str) -> Optional[dict]:
+    def load_cycle(self, cycle_id: str) -> dict | None:
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute("SELECT data FROM cycles WHERE id = ?", (cycle_id,))
@@ -669,9 +657,10 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
             txn.execute(
                 """
                 INSERT INTO audit_logs
-                (id, timestamp, actor, action, object_id, object_type, before_state, after_state, previous_entry, entry_hash, reasoning_chain_id, ontology_tags)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
+(id, timestamp, actor, action, object_id, object_type, before_state,
+ after_state, previous_entry, entry_hash, reasoning_chain_id, ontology_tags)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+""",
                 (
                     entry.id,
                     entry.timestamp.isoformat(),
@@ -764,7 +753,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
 
         return True
 
-    def detect_tampering(self) -> List[Dict[str, Any]]:
+    def detect_tampering(self) -> list[dict[str, Any]]:
         """
         Detect and report any tampering in the audit chain.
 
@@ -785,7 +774,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         """)
         rows = cursor.fetchall()
 
-        issues: List[Dict[str, Any]] = []
+        issues: list[dict[str, Any]] = []
 
         if not rows:
             return issues
@@ -862,7 +851,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
 
         return issues
 
-    def verify_dual_storage_consistency(self) -> List[str]:
+    def verify_dual_storage_consistency(self) -> list[str]:
         """
         Verify consistency between objects and audit_logs for AuditEntry objects.
 
@@ -881,7 +870,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
         cursor.execute("SELECT id FROM objects WHERE object_type = 'AuditEntry'")
         object_ids = {row[0] for row in cursor.fetchall()}
 
-        issues: List[str] = []
+        issues: list[str] = []
         missing_in_objects = audit_ids - object_ids
         for oid in sorted(missing_in_objects):
             issues.append(f"AuditEntry {oid} exists in audit_logs but not in objects")
@@ -892,7 +881,7 @@ class ResearchRepository(RepositoryInterface[BaseObject]):
 
         return issues
 
-    def load_audit_entries(self) -> List[AuditEntry]:
+    def load_audit_entries(self) -> list[AuditEntry]:
         """Load all audit entries from the audit_logs table."""
         conn = self._get_conn()
         cursor = conn.cursor()

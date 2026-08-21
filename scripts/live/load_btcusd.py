@@ -7,10 +7,12 @@ Any trading decision based on ResearchOS output is made exclusively by a human o
 See docs/constitutional/article_II_scope.md for the full responsibility matrix.
 """
 
-import yfinance as yf
 from datetime import datetime
-from researchos.engines.data.dataset import HistoricalDataset
+
+import yfinance as yf
+
 from researchos.engines.data.candle import Candle
+from researchos.engines.data.dataset import HistoricalDataset
 from researchos.engines.data.repository import SqliteDatasetRepository
 
 # Download BTCUSD data

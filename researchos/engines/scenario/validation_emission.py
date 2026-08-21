@@ -72,7 +72,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from researchos.engines.scenario.envelope import (
     HASH_SCHEME_VERSION,
@@ -138,7 +139,7 @@ def validation_hash(validation: Any) -> str:
     return deterministic_hash(_to_primitives(data))
 
 
-def _fold_statistics(fold_results: Any) -> Dict[str, Any]:
+def _fold_statistics(fold_results: Any) -> dict[str, Any]:
     """Project per-fold results into a statistics mapping (primitives)."""
 
     folds = [dict(getattr(f, "to_dict", lambda: {})()) for f in (fold_results or ())]
@@ -152,8 +153,8 @@ def validation_payload(
     run_hash: str = "",
     experiment_hash: str = "",
     method: str = "",
-    evaluation_config: Optional[Mapping[str, Any]] = None,
-) -> Dict[str, Any]:
+    evaluation_config: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a deterministic, primitives-only payload from a ``ValidationResult``.
 
 
@@ -202,7 +203,7 @@ def validation_payload(
 
     # Validation parameters derived from the ValidationResult contract.
 
-    parameters: Dict[str, Any] = {
+    parameters: dict[str, Any] = {
         "train_size": int(getattr(validation, "train_size", 0)),
         "validation_size": int(getattr(validation, "validation_size", 0)),
         "test_size": int(getattr(validation, "test_size", 0)),
@@ -215,7 +216,7 @@ def validation_payload(
         or VALIDATION_EVIDENCE_VERSION
     )
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "validation_hash": vh,
         "method": method,
         "version": version,
@@ -240,10 +241,10 @@ def build_validation_envelope(
     run_hash: str = "",
     experiment_hash: str = "",
     method: str = "",
-    evaluation_config: Optional[Mapping[str, Any]] = None,
+    evaluation_config: Mapping[str, Any] | None = None,
     version: str = VALIDATION_EVIDENCE_VERSION,
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
+    parent_hashes: Sequence[str] | None = None,
 ) -> EvidenceEnvelope:
     """Build a scheme-2 ``EvidenceEnvelope`` for a ``ValidationResult``.
 
@@ -351,7 +352,7 @@ def attach_result_parent(
 
 def emit_validation(
     envelope: EvidenceEnvelope,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
 ) -> EvidenceEnvelope:
     """Persist a Validation envelope to an ``EvidenceRepository`` (append-only).
 
@@ -382,9 +383,7 @@ def emit_validation(
     """
 
     if envelope.artifact_type != VALIDATION_ARTIFACT_TYPE:
-        raise ValueError(
-            f"emit_validation() expects artifact_type='Validation', got '{envelope.artifact_type}'"
-        )
+        raise ValueError(f"emit_validation() expects artifact_type='Validation', got '{envelope.artifact_type}'")
 
     if not envelope.verify():
         raise ValueError(f"Validation evidence lineage mismatch for {envelope.artifact_hash}")
@@ -397,11 +396,11 @@ def emit_validation(
 def emit_validation_for_result(
     validation: Any,
     result_hash: str,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
     run_hash: str = "",
     experiment_hash: str = "",
     method: str = "",
-    evaluation_config: Optional[Mapping[str, Any]] = None,
+    evaluation_config: Mapping[str, Any] | None = None,
     version: str = VALIDATION_EVIDENCE_VERSION,
     created_at: str = "",
 ) -> EvidenceEnvelope:

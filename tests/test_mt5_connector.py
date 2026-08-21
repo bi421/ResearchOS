@@ -1,8 +1,9 @@
 import sys
 
 sys.path.insert(0, ".")
-from researchos.data_engine.broker_connectors import MT5Connector
 from datetime import datetime, timedelta
+
+from researchos.data_engine.broker_connectors import MT5Connector
 
 print("=" * 60)
 print("🔌 MT5 CONNECTOR TEST")

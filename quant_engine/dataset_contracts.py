@@ -18,10 +18,10 @@ This is a COMPUTATION LAYER helper — NOT trading or execution logic.
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 
-def extract_prices(dataset: Any) -> List[float]:
+def extract_prices(dataset: Any) -> list[float]:
     """Normalize a dataset contract into a deterministic close-price series.
 
     Args:

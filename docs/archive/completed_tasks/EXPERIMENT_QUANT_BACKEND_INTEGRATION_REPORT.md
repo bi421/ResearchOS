@@ -135,8 +135,8 @@ The following guarantees are now enforced by tests:
 ### 3.1 Same dataset + same config = identical result
 
 ```python
-runner.run(exp, _prices())   # run 1
-runner.run(exp, _prices())   # run 2
+runner.run(exp, _prices())  # run 1
+runner.run(exp, _prices())  # run 2
 
 assert result1.result_hash == result2.result_hash
 assert result1.metrics == result2.metrics
@@ -150,7 +150,7 @@ Verified at three levels:
 ### 3.2 Different dataset = different result
 
 ```python
-_, result_up   = runner.run(exp, _prices(drift=+0.001))
+_, result_up = runner.run(exp, _prices(drift=+0.001))
 _, result_down = runner.run(exp, _prices(drift=-0.001))
 
 assert result_up.result_hash != result_down.result_hash
@@ -231,4 +231,3 @@ Total: 218 passed in 1.28s
 5. **`execution_timestamp` is intentionally non-deterministic** (wall-clock)
    and is **excluded from `result_hash`** (`compute_result_hash` does not
    include it), preserving deterministic hashing while retaining auditability.
-

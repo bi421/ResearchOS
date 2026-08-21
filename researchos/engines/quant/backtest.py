@@ -2,8 +2,9 @@
 Backtest engine for strategies.
 """
 
-from typing import List, Any
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -14,13 +15,11 @@ class BacktestResult:
     max_drawdown: float  # Хамгийн их уналт (жишээ нь -0.25 → -25%)
     win_rate: float  # Ялалтын хувь (0-1)
     num_trades: int  # Нийт арилжааны тоо
-    signals: List[Any]  # Дохионууд
+    signals: list[Any]  # Дохионууд
 
 
 class BacktestEngine:
-    def __init__(
-        self, initial_capital: float = 100000.0, commission: float = 0.001, slippage: float = 0.0005
-    ):
+    def __init__(self, initial_capital: float = 100000.0, commission: float = 0.001, slippage: float = 0.0005):
         """
         :param initial_capital: Эхний хөрөнгө
         :param commission: Нэг арилжааны шимтгэл (хувь, 0.001 = 0.1%)
@@ -30,7 +29,7 @@ class BacktestEngine:
         self.commission = commission
         self.slippage = slippage
 
-    def run(self, prices: List[float], strategy) -> BacktestResult:
+    def run(self, prices: list[float], strategy) -> BacktestResult:
         """
         Бэктест ажиллуулах.
         :param prices: Үнийн жагсаалт (жишээ нь өдрийн хаалтын үнэ)

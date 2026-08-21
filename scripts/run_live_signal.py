@@ -1,7 +1,8 @@
-import yfinance as yf
-import pandas as pd
-from datetime import datetime
 import json
+from datetime import datetime
+
+import pandas as pd
+import yfinance as yf
 
 
 class LiveTradingSignal:
@@ -178,9 +179,7 @@ class LiveTradingSignal:
         print("=" * 50)
         print(f"🕐 Цаг: {s['timestamp']}")
         print(f"💰 Үнэ: ${s['current_price']:.2f}")
-        print(
-            f"📈 Шийдвэр: {'🟢 BUY' if s['signal'] == 'BUY' else '🔴 SELL' if s['signal'] == 'SELL' else '🟡 HOLD'}"
-        )
+        print(f"📈 Шийдвэр: {'🟢 BUY' if s['signal'] == 'BUY' else '🔴 SELL' if s['signal'] == 'SELL' else '🟡 HOLD'}")
         print(f"🎯 Итгэл: {s['confidence'] * 100:.0f}%")
         print(f"📊 Trend Score: {s['trend_score']}")
         print(f"📉 RSI: {s['rsi']:.1f}")

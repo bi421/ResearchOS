@@ -1,26 +1,21 @@
-import pandas as pd
 import glob
+
+import pandas as pd
+
 from researchos.ml_engine.features import create_features
-from researchos.quant_engine.backtest import BacktestEngine
 from researchos.ml_engine.strategy import MLStrategy
+from researchos.quant_engine.backtest import BacktestEngine
 
 # 1. Өгөгдөл ачаалах
 print("Loading data...")
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("1h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
-)
+df_h = df.resample("1h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
 print(f"Data loaded: {len(df_h)} bars")
 
 # 2. Цаг хугацаагаар хуваах (2021-2023 train, 2023-2024 validation, 2024-2025 test)

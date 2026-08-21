@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class IndicatorCategory(str, Enum):
@@ -70,11 +70,11 @@ class Bars:
     deterministic computations cannot be corrupted by aliasing.
     """
 
-    open: List[float] = field(default_factory=list)
-    high: List[float] = field(default_factory=list)
-    low: List[float] = field(default_factory=list)
-    close: List[float] = field(default_factory=list)
-    volume: List[float] = field(default_factory=list)
+    open: list[float] = field(default_factory=list)
+    high: list[float] = field(default_factory=list)
+    low: list[float] = field(default_factory=list)
+    close: list[float] = field(default_factory=list)
+    volume: list[float] = field(default_factory=list)
 
     @property
     def length(self) -> int:
@@ -99,10 +99,10 @@ class IndicatorSpec:
     """
 
     name: str
-    params: Dict[str, Any] = field(default_factory=dict)
-    category: Optional[IndicatorCategory] = None
+    params: dict[str, Any] = field(default_factory=dict)
+    category: IndicatorCategory | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "params": dict(sorted(self.params.items())),
@@ -124,12 +124,12 @@ class IndicatorOutput:
     """
 
     name: str
-    values: List[Optional[float]]
-    aux: Dict[str, List[Optional[float]]] = field(default_factory=dict)
-    category: Optional[IndicatorCategory] = None
-    params: Dict[str, Any] = field(default_factory=dict)
+    values: list[float | None]
+    aux: dict[str, list[float | None]] = field(default_factory=dict)
+    category: IndicatorCategory | None = None
+    params: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "values": self.values,
@@ -150,11 +150,11 @@ class IndicatorBatch:
         computation_version: Version of the computation methodology.
     """
 
-    outputs: Dict[str, IndicatorOutput] = field(default_factory=dict)
+    outputs: dict[str, IndicatorOutput] = field(default_factory=dict)
     bar_count: int = 0
     computation_version: str = "TECHNICAL_V1"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "outputs": {k: v.to_dict() for k, v in self.outputs.items()},
             "bar_count": self.bar_count,

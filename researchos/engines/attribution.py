@@ -15,7 +15,7 @@ existing audit chain and serialization framework.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.objects.attribution import (
@@ -44,7 +44,7 @@ from researchos.objects.validation import Validation
 from researchos.repository.interface import RepositoryInterface
 
 # Type-based traversal rules: mapping conclusion types to their parent/input fields
-TRAVERSAL_RULES: Dict[str, List[str]] = {
+TRAVERSAL_RULES: dict[str, list[str]] = {
     "Hypothesis": ["research_id", "evidence_ids", "narrative_id"],
     "Scenario": ["hypothesis_id", "supporting_evidence", "dependencies"],
     "Interpretation": ["evidence_ids", "supporting_evidence", "contradicting_evidence"],
@@ -93,7 +93,7 @@ class ResearchAttributionEngine:
         self,
         conclusion_id: str,
         conclusion_type: str,
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Attribution:
         """Create a complete attribution record for a conclusion.
 
@@ -134,9 +134,7 @@ class ResearchAttributionEngine:
         trace = self._build_trace(reasoning_path)
 
         # Compute confidence from chain completeness
-        confidence = self._compute_chain_confidence(
-            conclusion_id, reasoning_object_ids, evidence_ids, observation_ids
-        )
+        confidence = self._compute_chain_confidence(conclusion_id, reasoning_object_ids, evidence_ids, observation_ids)
 
         # Determine status
         status = self._determine_status(confidence, reasoning_object_ids)
@@ -167,7 +165,7 @@ class ResearchAttributionEngine:
     # Chain tracing
     # ------------------------------------------------------------------
 
-    def trace_conclusion(self, conclusion_id: str, conclusion_type: str) -> Dict[str, Any]:
+    def trace_conclusion(self, conclusion_id: str, conclusion_type: str) -> dict[str, Any]:
         """Trace the full reasoning chain for a conclusion without creating an Attribution.
 
         Args:
@@ -193,7 +191,7 @@ class ResearchAttributionEngine:
             "trace": trace,
         }
 
-    def get_evidence_chain(self, conclusion_id: str) -> List[str]:
+    def get_evidence_chain(self, conclusion_id: str) -> list[str]:
         """Get all evidence IDs upstream of a conclusion."""
         obj = self.repo.get(conclusion_id)
         if obj is None:
@@ -202,7 +200,7 @@ class ResearchAttributionEngine:
         _, object_ids = self._trace_chain(conclusion_id, obj_type)
         return self._collect_evidence_ids(object_ids)
 
-    def get_observation_chain(self, conclusion_id: str) -> List[str]:
+    def get_observation_chain(self, conclusion_id: str) -> list[str]:
         """Get all observation IDs upstream of a conclusion."""
         evidence_ids = self.get_evidence_chain(conclusion_id)
         obj = self.repo.get(conclusion_id)
@@ -214,7 +212,7 @@ class ResearchAttributionEngine:
     # Market memory linking
     # ------------------------------------------------------------------
 
-    def link_market_memory(self, attribution_id: str, memory_ids: List[str]) -> Attribution:
+    def link_market_memory(self, attribution_id: str, memory_ids: list[str]) -> Attribution:
         """Link MarketMemory objects to an existing attribution.
 
         Args:
@@ -249,7 +247,7 @@ class ResearchAttributionEngine:
         self,
         attribution_id: str,
         max_results: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Find similar past market patterns linked to this attribution.
 
         Scans the attribution's market_memory_ids and returns matching
@@ -266,7 +264,7 @@ class ResearchAttributionEngine:
         if obj is None or not isinstance(obj, Attribution):
             return []
 
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
         for mem_id in obj.market_memory_ids:
             mem_obj = self.repo.get(mem_id)
             if mem_obj is None:
@@ -279,9 +277,7 @@ class ResearchAttributionEngine:
 
             if isinstance(mem_obj, (MarketStructure, LiquidityEvent, MarketEvent)):
                 entry["asset"] = getattr(mem_obj, "asset", "")
-                entry["event_type"] = getattr(mem_obj, "event_type", "") or getattr(
-                    mem_obj, "structure_type", ""
-                )
+                entry["event_type"] = getattr(mem_obj, "event_type", "") or getattr(mem_obj, "structure_type", "")
                 entry["direction"] = getattr(mem_obj, "direction", "")
                 entry["price_level"] = getattr(mem_obj, "price_level", 0.0)
 
@@ -310,7 +306,7 @@ class ResearchAttributionEngine:
     def create_attribution_graph(
         self,
         research_id: str,
-        attribution_ids: Optional[List[str]] = None,
+        attribution_ids: list[str] | None = None,
     ) -> AttributionGraph:
         """Create an AttributionGraph for a research cycle.
 
@@ -360,12 +356,10 @@ class ResearchAttributionEngine:
                 graph.add_attribution(attr)
 
         self.repo.save(graph)
-        self._audit(
-            "GRAPH_CREATED", graph.id, f"Attribution graph for research {research_id[:8]}..."
-        )
+        self._audit("GRAPH_CREATED", graph.id, f"Attribution graph for research {research_id[:8]}...")
         return graph
 
-    def get_attribution_report(self, research_id: str) -> Dict[str, Any]:
+    def get_attribution_report(self, research_id: str) -> dict[str, Any]:
         """Get a full attribution report for a research cycle.
 
         Args:
@@ -378,27 +372,23 @@ class ResearchAttributionEngine:
         if research is None:
             return {"research_id": research_id, "error": "Research not found"}
 
-        graphs: List[AttributionGraph] = []
+        graphs: list[AttributionGraph] = []
         for obj in self.repo.get_all():
             if isinstance(obj, AttributionGraph) and obj.research_id == research_id:
                 graphs.append(obj)
 
-        all_attributions: List[Attribution] = []
+        all_attributions: list[Attribution] = []
         for g in graphs:
             all_attributions.extend(g.attributions)
 
         # Also find standalone attributions not in a graph
         for obj in self.repo.get_all():
-            if isinstance(obj, Attribution) and obj.conclusion_id not in {
-                a.conclusion_id for a in all_attributions
-            }:
+            if isinstance(obj, Attribution) and obj.conclusion_id not in {a.conclusion_id for a in all_attributions}:
                 # Check if it belongs to this research via chain
                 chain = self._trace_chain(obj.conclusion_id, obj.conclusion_type)
                 for oid in chain[1]:
                     ref = self.repo.get(oid)
-                    if isinstance(ref, (Hypothesis, Scenario, Narrative)) and hasattr(
-                        ref, "research_id"
-                    ):
+                    if isinstance(ref, (Hypothesis, Scenario, Narrative)) and hasattr(ref, "research_id"):
                         if ref.research_id == research_id:
                             all_attributions.append(obj)
                             break
@@ -436,7 +426,7 @@ class ResearchAttributionEngine:
     # Integrity verification
     # ------------------------------------------------------------------
 
-    def verify_attribution(self, attribution_id: str) -> Dict[str, Any]:
+    def verify_attribution(self, attribution_id: str) -> dict[str, Any]:
         """Verify that all references in an attribution exist.
 
         Args:
@@ -462,7 +452,7 @@ class ResearchAttributionEngine:
             **report,
         }
 
-    def verify_graph(self, graph_id: str) -> Dict[str, Any]:
+    def verify_graph(self, graph_id: str) -> dict[str, Any]:
         """Verify integrity of all attributions in a graph.
 
         Args:
@@ -511,9 +501,7 @@ class ResearchAttributionEngine:
         _, reasoning_object_ids = self._trace_chain(conclusion_id, conclusion_type)
         evidence_ids = self._collect_evidence_ids(reasoning_object_ids)
         observation_ids = self._collect_observation_ids(evidence_ids, reasoning_object_ids)
-        return self._compute_chain_confidence(
-            conclusion_id, reasoning_object_ids, evidence_ids, observation_ids
-        )
+        return self._compute_chain_confidence(conclusion_id, reasoning_object_ids, evidence_ids, observation_ids)
 
     # ------------------------------------------------------------------
     # Internal: chain traversal
@@ -523,9 +511,9 @@ class ResearchAttributionEngine:
         self,
         object_id: str,
         object_type: str,
-        visited: Optional[set] = None,
+        visited: set | None = None,
         depth: int = 0,
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Recursively trace the reasoning chain upstream from an object.
 
         Args:
@@ -540,8 +528,8 @@ class ResearchAttributionEngine:
         if visited is None:
             visited = set()
 
-        path: List[str] = []
-        ids: List[str] = []
+        path: list[str] = []
+        ids: list[str] = []
 
         if object_id in visited or depth > 20:
             return path, ids
@@ -565,7 +553,7 @@ class ResearchAttributionEngine:
             if raw is None:
                 continue
 
-            refs: List[str] = []
+            refs: list[str] = []
             if isinstance(raw, list):
                 refs = raw
             elif isinstance(raw, str) and raw:
@@ -617,7 +605,7 @@ class ResearchAttributionEngine:
         else:
             return f"{obj.id[:16]}..."
 
-    def _collect_evidence_ids(self, object_ids: List[str]) -> List[str]:
+    def _collect_evidence_ids(self, object_ids: list[str]) -> list[str]:
         """Collect all unique evidence IDs from a list of object IDs."""
         evidence_set: set = set()
         for oid in object_ids:
@@ -635,9 +623,9 @@ class ResearchAttributionEngine:
 
     def _collect_observation_ids(
         self,
-        evidence_ids: List[str],
-        object_ids: List[str],
-    ) -> List[str]:
+        evidence_ids: list[str],
+        object_ids: list[str],
+    ) -> list[str]:
         """Collect all unique observation IDs from evidence and direct references."""
         obs_set: set = set()
         for eid in evidence_ids:
@@ -653,9 +641,9 @@ class ResearchAttributionEngine:
     def _compute_chain_confidence(
         self,
         conclusion_id: str,
-        reasoning_object_ids: List[str],
-        evidence_ids: List[str],
-        observation_ids: List[str],
+        reasoning_object_ids: list[str],
+        evidence_ids: list[str],
+        observation_ids: list[str],
     ) -> float:
         """Compute confidence from chain completeness and evidence quality.
 
@@ -694,7 +682,7 @@ class ResearchAttributionEngine:
     def _determine_status(
         self,
         confidence: float,
-        reasoning_object_ids: List[str],
+        reasoning_object_ids: list[str],
     ) -> str:
         """Determine attribution status from confidence and chain completeness."""
         if not reasoning_object_ids:
@@ -706,11 +694,11 @@ class ResearchAttributionEngine:
         else:
             return "Broken"
 
-    def _build_trace(self, reasoning_path: List[str]) -> str:
+    def _build_trace(self, reasoning_path: list[str]) -> str:
         """Build a human-readable trace from the reasoning path."""
         return "\n".join(f"  {i}. {step}" for i, step in enumerate(reasoning_path, 1))
 
-    def _get_child_ids(self, obj: BaseObject) -> List[str]:
+    def _get_child_ids(self, obj: BaseObject) -> list[str]:
         """Get child object IDs from a container object."""
         if isinstance(obj, HypothesisSet):
             return obj.hypothesis_ids
@@ -724,7 +712,7 @@ class ResearchAttributionEngine:
             return obj.contradiction_ids
         return []
 
-    def _get_outcomes_for_event(self, event_id: str) -> List[MarketOutcome]:
+    def _get_outcomes_for_event(self, event_id: str) -> list[MarketOutcome]:
         """Get all MarketOutcome records for a given event ID."""
         results = []
         for obj in self.repo.get_all():

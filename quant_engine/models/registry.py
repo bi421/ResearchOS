@@ -13,8 +13,6 @@ Performance:
 
 from __future__ import annotations
 
-from typing import Dict, Tuple
-
 from .contracts import ModelContract
 
 MODEL_REGISTRY_VERSION = "1.0.0"
@@ -48,7 +46,7 @@ class ModelRegistry:
     """
 
     def __init__(self) -> None:
-        self._models: Dict[str, ModelContract] = {}
+        self._models: dict[str, ModelContract] = {}
 
     def register(self, model: ModelContract) -> None:
         """Register a model contract.
@@ -74,7 +72,7 @@ class ModelRegistry:
         except KeyError:
             raise ModelNotFoundError(model_id) from None
 
-    def list_models(self) -> Tuple[ModelContract, ...]:
+    def list_models(self) -> tuple[ModelContract, ...]:
         """Return all registered contracts in deterministic order.
 
         The ordering is stable: contracts are sorted by ``model_id``.
@@ -111,7 +109,7 @@ class ModelRegistry:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ModelRegistry":
+    def from_dict(cls, data: dict) -> ModelRegistry:
         """Reconstruct a registry from a ``to_dict()`` mapping."""
         registry = cls()
         for item in data.get("models", []):

@@ -2,12 +2,13 @@
 ResearchOS Complete System – Бүх стратеги, бүх цагийн хүрээ, бодит комисс/spread
 """
 
-import sys
-import time
-import pandas as pd
 import glob
 import json
+import sys
+import time
 from datetime import datetime
+
+import pandas as pd
 
 print("=" * 70)
 print("🚀 RESEARCHOS COMPLETE SYSTEM – БҮХ СТРАТЕГИ + БОДИТ КОМИСС")
@@ -176,13 +177,9 @@ for h in timeframes:
     for name, strategy in strategies:
         for c in commissions:
             result = strategy(df_h)
-            result.update(
-                {"timeframe": f"{h}min", "strategy": name, "commission": c, "spread": spread}
-            )
+            result.update({"timeframe": f"{h}min", "strategy": name, "commission": c, "spread": spread})
             all_results.append(result)
-            print(
-                f"  {name}: c={c * 100:.2f}% | Winrate: {result['winrate']:.2f}%, Trades: {result['trades']}"
-            )
+            print(f"  {name}: c={c * 100:.2f}% | Winrate: {result['winrate']:.2f}%, Trades: {result['trades']}")
 
 sweep_time = time.time() - sweep_start
 print(f"\n✅ Нийт хугацаа: {sweep_time:.2f} сек")

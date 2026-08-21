@@ -15,14 +15,15 @@ nothing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Tuple
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - annotation-only import
     from researchos.engines.quant.interface import QuantComputationInterface
 
 #: The canonical operations exposed by ``QuantComputationInterface``.
-QUANT_OPERATIONS: Tuple[str, ...] = (
+QUANT_OPERATIONS: tuple[str, ...] = (
     "calculate_returns",
     "calculate_volatility",
     "calculate_drawdown",
@@ -61,7 +62,7 @@ class BackendCapabilities:
 
     backend_name: str
     version: str
-    supported_operations: Tuple[str, ...]
+    supported_operations: tuple[str, ...]
     deterministic: bool = True
     stateless: bool = True
     no_timestamps: bool = True
@@ -82,7 +83,7 @@ class BackendCapabilities:
         """Return whether ``operation`` is advertised as supported."""
         return operation in self.supported_operations
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible mapping."""
         return {
             "backend_name": self.backend_name,
@@ -96,7 +97,7 @@ class BackendCapabilities:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "BackendCapabilities":
+    def from_dict(cls, data: Mapping[str, Any]) -> BackendCapabilities:
         """Reconstruct a ``BackendCapabilities`` from a ``to_dict()`` mapping."""
         return cls(
             backend_name=str(data["backend_name"]),

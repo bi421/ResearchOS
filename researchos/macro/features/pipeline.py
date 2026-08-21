@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.macro.features.definitions import (
     FeatureDefinition,
@@ -27,11 +27,11 @@ class FeatureCalculationResult:
 
     feature_id: str
     timestamp: datetime
-    value: Optional[float]
+    value: float | None
     quality_score: float
     calculation_time_ms: float
-    evidence_ids: List[str]
-    errors: List[str] = field(default_factory=list)
+    evidence_ids: list[str]
+    errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
@@ -67,7 +67,7 @@ class FeatureExtractor:
     """
 
     def __init__(self):
-        self.extractors: Dict[str, FeatureCategory] = {}
+        self.extractors: dict[str, FeatureCategory] = {}
 
     def register_extractor(
         self,
@@ -80,7 +80,7 @@ class FeatureExtractor:
     def extract(
         self,
         definition: FeatureDefinition,
-        evidence: Dict[str, Any],
+        evidence: dict[str, Any],
         timestamp: datetime,
     ) -> FeatureCalculationResult:
         """
@@ -111,7 +111,7 @@ class FeatureValidator:
         self,
         feature: FeatureValue,
         definition: FeatureDefinition,
-    ) -> tuple[bool, List[str]]:
+    ) -> tuple[bool, list[str]]:
         """
         Validate a feature value.
 
@@ -149,7 +149,7 @@ class FeatureNormalizer:
         self,
         feature: FeatureValue,
         method: str = "zscore",
-        history: List[float] = None,
+        history: list[float] = None,
     ) -> FeatureValue:
         """
         Normalize a feature value.
@@ -182,8 +182,8 @@ class FeaturePipeline:
 
     def run(
         self,
-        definitions: List[FeatureDefinition],
-        evidence: Dict[str, Any],
+        definitions: list[FeatureDefinition],
+        evidence: dict[str, Any],
         timestamp: datetime,
     ) -> FeatureVector:
         """
@@ -228,8 +228,8 @@ class FeaturePipeline:
 
     def get_dependency_graph(
         self,
-        definitions: List[FeatureDefinition],
-    ) -> Dict[str, List[str]]:
+        definitions: list[FeatureDefinition],
+    ) -> dict[str, list[str]]:
         """
         Get dependency graph for feature definitions.
 
@@ -245,8 +245,8 @@ class FeaturePipeline:
 
     def get_topological_order(
         self,
-        definitions: List[FeatureDefinition],
-    ) -> List[str]:
+        definitions: list[FeatureDefinition],
+    ) -> list[str]:
         """
         Get topological order for feature calculation.
 

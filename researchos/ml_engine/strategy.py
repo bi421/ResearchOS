@@ -2,9 +2,11 @@
 ML-based strategy with BUY and SELL signals.
 """
 
-from typing import List, Any
 from dataclasses import dataclass
+from typing import Any
+
 import pandas as pd
+
 from .features import create_features
 from .model import predict
 
@@ -23,7 +25,7 @@ class MLStrategy:
         self.feature_names = feature_names
         self.threshold = threshold
 
-    def generate_signals(self, prices: List[float]) -> List[Signal]:
+    def generate_signals(self, prices: list[float]) -> list[Signal]:
         if len(prices) < 50:
             return []
 

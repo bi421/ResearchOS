@@ -1,4 +1,5 @@
 import subprocess
+
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
@@ -31,9 +32,7 @@ def run_backtest_and_create_evidence():
         return
 
     # Create EvidenceItem
-    direction = (
-        ProbabilityOutcome.BULLISH if metrics["total_return"] > 20 else ProbabilityOutcome.NEUTRAL
-    )
+    direction = ProbabilityOutcome.BULLISH if metrics["total_return"] > 20 else ProbabilityOutcome.NEUTRAL
     strength = min(metrics["total_return"] / 200, 1.0)
 
     item = EvidenceItem(

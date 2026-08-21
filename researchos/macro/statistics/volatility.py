@@ -10,18 +10,18 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from math import sqrt
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.macro.statistics.descriptive import std
 from researchos.macro.statistics.rolling import rolling_std
 
 
 def rolling_volatility(
-    values: List[float],
+    values: list[float],
     window: int = 20,
     annualize: bool = False,
     periods_per_year: int = 252,
-) -> List[Optional[float]]:
+) -> list[float | None]:
     """
     Calculate rolling volatility.
 
@@ -44,11 +44,11 @@ def rolling_volatility(
 
 
 def realized_volatility(
-    returns: List[float],
+    returns: list[float],
     window: int = 20,
     annualize: bool = True,
     periods_per_year: int = 252,
-) -> Optional[float]:
+) -> float | None:
     """
     Calculate realized volatility over a window.
 
@@ -74,10 +74,10 @@ def realized_volatility(
 
 
 def volatility_analysis(
-    values: List[float],
+    values: list[float],
     window: int = 20,
     annualize: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Complete volatility analysis.
 
@@ -139,12 +139,12 @@ def volatility_analysis(
 
 
 def garch_simplified(
-    returns: List[float],
+    returns: list[float],
     omega: float = 0.00001,
     alpha: float = 0.1,
     beta: float = 0.85,
     iterations: int = 100,
-) -> List[float]:
+) -> list[float]:
     """
     Simplified GARCH(1,1) volatility estimation.
 
@@ -171,7 +171,7 @@ def garch_simplified(
     return [sqrt(s) for s in sigma2]
 
 
-def variance(returns: List[float]) -> float:
+def variance(returns: list[float]) -> float:
     """
     Calculate variance of returns.
 

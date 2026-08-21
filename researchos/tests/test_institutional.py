@@ -268,9 +268,7 @@ NON_DEFAULT_SAMPLES: list[tuple[str, Any]] = [
     ("Observation", Observation(source="FX:USDJPY", timestamp=ts(2025, 6, 15), value=150.25)),
     (
         "Evidence",
-        Evidence(
-            observation_id="o_custom", hypothesis_id="h_custom", interpretation="custom interp"
-        ),
+        Evidence(observation_id="o_custom", hypothesis_id="h_custom", interpretation="custom interp"),
     ),
     (
         "Scenario",
@@ -371,9 +369,7 @@ class TestLongAuditChain:
 
         n = 1000
         for i in range(n):
-            e = AuditEntry(
-                actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest"
-            )
+            e = AuditEntry(actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest")
             repo.save_audit_entry(e)
 
         assert repo.verify_audit_chain()
@@ -388,9 +384,7 @@ class TestLongAuditChain:
 
         n = 10_000
         for i in range(n):
-            e = AuditEntry(
-                actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest"
-            )
+            e = AuditEntry(actor="perf", action=f"OP_{i}", object_id=f"o{i}", object_type="PerfTest")
             repo.save_audit_entry(e)
 
         start = time.monotonic()
@@ -484,9 +478,7 @@ class TestDeterministicHashing:
         """AuditEntry's _to_hashable_dict uses sorted(ontology_tags)."""
         from researchos.objects.process import AuditEntry
 
-        e = AuditEntry(
-            actor="sys", action="TEST", object_id="o1", object_type="T", ontology_tags=["z", "a"]
-        )
+        e = AuditEntry(actor="sys", action="TEST", object_id="o1", object_type="T", ontology_tags=["z", "a"])
         h = e._to_hashable_dict()
         assert h["ontology_tags"] == sorted(h["ontology_tags"])
 
@@ -495,9 +487,9 @@ class TestDeterministicHashing:
         for _, obj in OBJECT_SAMPLES:
             h = obj._to_hashable_dict()
             if "ontology_tags" in h and isinstance(h["ontology_tags"], list):
-                assert h["ontology_tags"] == sorted(h["ontology_tags"]), (
-                    f"{type(obj).__name__} ontology_tags not sorted in hashable dict"
-                )
+                assert h["ontology_tags"] == sorted(
+                    h["ontology_tags"]
+                ), f"{type(obj).__name__} ontology_tags not sorted in hashable dict"
 
     def test_object_hash_matches_across_round_trip(self):
         for _, obj in OBJECT_SAMPLES:
@@ -575,9 +567,7 @@ class TestDualStorageConsistency:
         assert cursor.fetchone()[0] == 1
 
         # Check objects table
-        cursor.execute(
-            "SELECT COUNT(*) FROM objects WHERE id = ? AND object_type = 'AuditEntry'", (e.id,)
-        )
+        cursor.execute("SELECT COUNT(*) FROM objects WHERE id = ? AND object_type = 'AuditEntry'", (e.id,))
         assert cursor.fetchone()[0] == 1
 
     def test_dual_storage_consistency_check(self, tmp_path):

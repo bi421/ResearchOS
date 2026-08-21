@@ -10,9 +10,10 @@ the feature matrix, labels, and metadata into a deterministic
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any
 
 DATASET_VERSION = "1.0.0"
 BUILDER_VERSION = "1.0.0"
@@ -56,14 +57,14 @@ class ResearchDataset:
         version: Dataset version string.
     """
 
-    feature_names: Tuple[str, ...]
-    features: Tuple[Tuple[float, ...], ...]
-    labels: Tuple[float, ...]
+    feature_names: tuple[str, ...]
+    features: tuple[tuple[float, ...], ...]
+    labels: tuple[float, ...]
     metadata: Mapping[str, Any] = field(default_factory=dict)
     sample_count: int = 0
     feature_count: int = 0
     label_name: str = ""
-    created_at: Optional[str] = None
+    created_at: str | None = None
     version: str = DATASET_VERSION
 
     def __post_init__(self) -> None:
@@ -86,7 +87,7 @@ class ResearchDataset:
         )
 
     @classmethod
-    def from_payload(cls, payload: Mapping[str, Any]) -> "ResearchDataset":
+    def from_payload(cls, payload: Mapping[str, Any]) -> ResearchDataset:
         """Reconstruct a ``ResearchDataset`` from a dataset evidence payload.
 
         This is the deterministic inverse of the Dataset evidence emission
@@ -145,20 +146,14 @@ class ResearchDataset:
         version = str(payload["version"])
 
         if sample_count != len(labels):
-            raise ValueError(
-                f"payload sample_count={sample_count} does not match len(labels)={len(labels)}"
-            )
+            raise ValueError(f"payload sample_count={sample_count} does not match len(labels)={len(labels)}")
         if feature_count != len(feature_names):
             raise ValueError(
-                f"payload feature_count={feature_count} does not match "
-                f"len(feature_names)={len(feature_names)}"
+                f"payload feature_count={feature_count} does not match len(feature_names)={len(feature_names)}"
             )
         if features and any(len(row) != feature_count for row in features):
             row_lengths = {len(row) for row in features}
-            raise ValueError(
-                f"payload feature rows have inconsistent widths {row_lengths}, "
-                f"expected {feature_count}"
-            )
+            raise ValueError(f"payload feature rows have inconsistent widths {row_lengths}, expected {feature_count}")
 
         return cls(
             feature_names=feature_names,

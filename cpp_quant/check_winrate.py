@@ -2,9 +2,11 @@ import sys
 
 sys.path.insert(0, "python")
 sys.path.insert(0, "build/Release")
-from cpp_quant import CppQuant
-import pandas as pd
 import glob
+
+import pandas as pd
+
+from cpp_quant import CppQuant
 
 df = pd.concat(
     [
@@ -22,11 +24,7 @@ df = pd.concat(
     ]
 ).sort_index()
 
-df_d = (
-    df.resample("1D")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
-)
+df_d = df.resample("1D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 print("1D Candle:", len(df_d))
 
 engine = CppQuant()

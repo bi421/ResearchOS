@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from researchos.macro.audit.log import AuditEntry, AuditLog, IntegrityCheck
 from researchos.macro.revision.enums import IntegrityLevel
@@ -33,7 +33,7 @@ class AuditResult:
     checks_failed: int
 
     # Revision tracking
-    revision_id: Optional[str] = None
+    revision_id: str | None = None
 
     # Details
     errors: list[str] = field(default_factory=list)
@@ -241,9 +241,7 @@ class AuditEngine:
         for rev in chain.revisions:
             if rev.parent_revision_id:
                 # Parent should exist
-                parent_exists = any(
-                    r.revision_id == rev.parent_revision_id for r in chain.revisions
-                )
+                parent_exists = any(r.revision_id == rev.parent_revision_id for r in chain.revisions)
                 if not parent_exists:
                     lineage_valid = False
                     errors.append(f"Missing parent revision: {rev.parent_revision_id}")
@@ -272,7 +270,7 @@ class AuditEngine:
         self,
         chain: RevisionChain,
         target_revision_number: int,
-    ) -> Optional[RevisionRecord]:
+    ) -> RevisionRecord | None:
         """
         Reconstruct historical state at a specific revision.
 

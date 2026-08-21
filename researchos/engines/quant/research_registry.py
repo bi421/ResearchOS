@@ -24,8 +24,6 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from researchos.engines.quant.backend import PythonQuantBackend
 from researchos.engines.quant.interface import QuantComputationInterface
 from researchos.engines.quant.research_engine import PythonResearchBackend, ResearchEngine
@@ -33,7 +31,7 @@ from researchos.engines.quant.research_interface import RESEARCH_OPERATIONS
 from researchos.engines.quant.router import BackendRouter
 
 
-def _get_cpp_backend() -> Optional[QuantComputationInterface]:
+def _get_cpp_backend() -> QuantComputationInterface | None:
     """Attempt to load the C++ research backend. Return None if unavailable."""
     try:
         from researchos.engines.quant.cpp_quant import run_ml_backtest_cpp  # noqa: F401
@@ -57,7 +55,7 @@ def register_research_backend(router: BackendRouter, backend: QuantComputationIn
 
 
 def create_research_router(
-    reference_backend: Optional[QuantComputationInterface] = None,
+    reference_backend: QuantComputationInterface | None = None,
     register_cpp: bool = True,
 ) -> BackendRouter:
     """Create a ``BackendRouter`` with the research analytical surface registered.
@@ -81,7 +79,7 @@ def create_research_router(
 
 
 def create_research_engine(
-    backend: Optional[QuantComputationInterface] = None,
+    backend: QuantComputationInterface | None = None,
     use_cpp: bool = False,
 ) -> ResearchEngine:
     """Create a ``ResearchEngine`` over a research backend.

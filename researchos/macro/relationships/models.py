@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from researchos.macro.statistics.provenance import StatisticalProvenance
 
@@ -70,7 +70,7 @@ class CorrelationResult:
     observation_end: str = ""
     algorithm_version: str = ALGORITHM_VERSION
     evidence_refs: list[str] = field(default_factory=list)
-    provenance: Optional[StatisticalProvenance] = None
+    provenance: StatisticalProvenance | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -104,9 +104,7 @@ class CorrelationResult:
             sample_size=data.get("sample_size", 0),
             method=data.get("method", "pearson"),
             relationship_type=data.get("relationship_type", RelationshipType.NEUTRAL.value),
-            relationship_strength=data.get(
-                "relationship_strength", RelationshipStrength.NEGLIGIBLE.value
-            ),
+            relationship_strength=data.get("relationship_strength", RelationshipStrength.NEGLIGIBLE.value),
             observation_start=data.get("observation_start", ""),
             observation_end=data.get("observation_end", ""),
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
@@ -135,9 +133,7 @@ class CorrelationResult:
             "correlation": self.correlation,
             "method": self.method,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -151,7 +147,7 @@ class RollingCorrelationResult:
     timestamps: list[str] = field(default_factory=list)
     stability: float = 0.0  # Standard deviation of correlations
     algorithm_version: str = ALGORITHM_VERSION
-    provenance: Optional[StatisticalProvenance] = None
+    provenance: StatisticalProvenance | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -193,9 +189,7 @@ class RollingCorrelationResult:
             "window_size": self.window_size,
             "stability": self.stability,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -210,7 +204,7 @@ class LagRelationship:
     confidence: float = 0.0
     algorithm_version: str = ALGORITHM_VERSION
     evidence_refs: list[str] = field(default_factory=list)
-    provenance: Optional[StatisticalProvenance] = None
+    provenance: StatisticalProvenance | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -254,9 +248,7 @@ class LagRelationship:
             "optimal_lag": self.optimal_lag,
             "lag_correlation": self.lag_correlation,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -270,7 +262,7 @@ class RegimeRelationship:
     sample_size: int = 0
     confidence: float = 0.0
     algorithm_version: str = ALGORITHM_VERSION
-    provenance: Optional[StatisticalProvenance] = None
+    provenance: StatisticalProvenance | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -312,9 +304,7 @@ class RegimeRelationship:
             "regime": self.regime,
             "correlation": self.correlation,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -329,7 +319,7 @@ class StructuralBreak:
     correlation_after: float
     confidence: float = 0.0
     algorithm_version: str = ALGORITHM_VERSION
-    provenance: Optional[StatisticalProvenance] = None
+    provenance: StatisticalProvenance | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = {
@@ -373,9 +363,7 @@ class StructuralBreak:
             "break_point": self.break_point,
             "break_type": self.break_type,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -392,7 +380,7 @@ class RelationshipResult:
     algorithm_version: str = ALGORITHM_VERSION
     analysis_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     evidence_refs: list[str] = field(default_factory=list)
-    provenance: Optional[StatisticalProvenance] = None
+    provenance: StatisticalProvenance | None = None
 
     def to_dict(self) -> dict[str, Any]:
         result = {
@@ -418,24 +406,12 @@ class RelationshipResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RelationshipResult:
-        overall = (
-            CorrelationResult.from_dict(data["overall_correlation"])
-            if data.get("overall_correlation")
-            else None
-        )
+        overall = CorrelationResult.from_dict(data["overall_correlation"]) if data.get("overall_correlation") else None
         rolling = (
-            RollingCorrelationResult.from_dict(data["rolling_correlation"])
-            if data.get("rolling_correlation")
-            else None
+            RollingCorrelationResult.from_dict(data["rolling_correlation"]) if data.get("rolling_correlation") else None
         )
-        lag = (
-            LagRelationship.from_dict(data["lag_relationship"])
-            if data.get("lag_relationship")
-            else None
-        )
-        regime_rels = [
-            RegimeRelationship.from_dict(r) for r in data.get("regime_relationships", [])
-        ]
+        lag = LagRelationship.from_dict(data["lag_relationship"]) if data.get("lag_relationship") else None
+        regime_rels = [RegimeRelationship.from_dict(r) for r in data.get("regime_relationships", [])]
         breaks = [StructuralBreak.from_dict(b) for b in data.get("structural_breaks", [])]
         prov = None
         if data.get("provenance"):
@@ -473,11 +449,7 @@ class RelationshipResult:
             "series_a": self.series_a,
             "series_b": self.series_b,
             "algorithm_version": self.algorithm_version,
-            "overall_corr_hash": (
-                self.overall_correlation.compute_hash() if self.overall_correlation else None
-            ),
+            "overall_corr_hash": (self.overall_correlation.compute_hash() if self.overall_correlation else None),
             "lag_hash": self.lag_relationship.compute_hash() if self.lag_relationship else None,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

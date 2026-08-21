@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from researchos.macro.time.enums import (
     EventCategory,
@@ -159,13 +159,13 @@ class CalendarEvent:
 
     # Timing
     scheduled_time: datetime
-    actual_time: Optional[datetime] = None
-    duration: Optional[timedelta] = None
+    actual_time: datetime | None = None
+    duration: timedelta | None = None
 
     # Recurrence
     is_recurring: bool = False
-    recurrence_pattern: Optional[str] = None
-    recurrence_end: Optional[datetime] = None
+    recurrence_pattern: str | None = None
+    recurrence_end: datetime | None = None
 
     # Metadata
     title: str = ""
@@ -185,18 +185,12 @@ class CalendarEvent:
             "event_id": self.event_id,
             "event_type": self.event_type.value,
             "scheduled_time": TimeNormalizer.get_deterministic_timestamp(self.scheduled_time),
-            "actual_time": (
-                TimeNormalizer.get_deterministic_timestamp(self.actual_time)
-                if self.actual_time
-                else None
-            ),
+            "actual_time": (TimeNormalizer.get_deterministic_timestamp(self.actual_time) if self.actual_time else None),
             "duration": self.duration.total_seconds() if self.duration else None,
             "is_recurring": self.is_recurring,
             "recurrence_pattern": self.recurrence_pattern,
             "recurrence_end": (
-                TimeNormalizer.get_deterministic_timestamp(self.recurrence_end)
-                if self.recurrence_end
-                else None
+                TimeNormalizer.get_deterministic_timestamp(self.recurrence_end) if self.recurrence_end else None
             ),
             "title": self.title,
             "description": self.description,
@@ -216,9 +210,7 @@ class CalendarEvent:
             event_type=EventCategory(data["event_type"]),
             scheduled_time=TimeNormalizer.parse_deterministic_timestamp(data["scheduled_time"]),
             actual_time=(
-                TimeNormalizer.parse_deterministic_timestamp(data["actual_time"])
-                if data.get("actual_time")
-                else None
+                TimeNormalizer.parse_deterministic_timestamp(data["actual_time"]) if data.get("actual_time") else None
             ),
             duration=timedelta(seconds=data["duration"]) if data.get("duration") else None,
             is_recurring=data.get("is_recurring", False),
@@ -235,9 +227,7 @@ class CalendarEvent:
             confidence=data.get("confidence", 0.0),
             metadata=data.get("metadata", {}),
             created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get(
-                    "created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC))
-                )
+                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
             ),
             version=data.get("version", "time/timeline/v1"),
         )
@@ -268,11 +258,7 @@ class CalendarEvent:
             "event_id": self.event_id,
             "event_type": self.event_type.value,
             "scheduled_time": TimeNormalizer.get_deterministic_timestamp(self.scheduled_time),
-            "actual_time": (
-                TimeNormalizer.get_deterministic_timestamp(self.actual_time)
-                if self.actual_time
-                else None
-            ),
+            "actual_time": (TimeNormalizer.get_deterministic_timestamp(self.actual_time) if self.actual_time else None),
             "is_recurring": self.is_recurring,
             "title": self.title,
             "series_ids": sorted(self.series_ids),
@@ -346,9 +332,7 @@ class EventTimeline:
             )
 
             if next_event.scheduled_time < current_end:
-                raise ValueError(
-                    f"Overlapping events: {current.event_id} and {next_event.event_id}"
-                )
+                raise ValueError(f"Overlapping events: {current.event_id} and {next_event.event_id}")
 
     def add_event(self, event: CalendarEvent) -> EventTimeline:
         """
@@ -364,7 +348,7 @@ class EventTimeline:
             window_spec=self.window_spec,
         )
 
-    def get_event(self, event_id: str) -> Optional[CalendarEvent]:
+    def get_event(self, event_id: str) -> CalendarEvent | None:
         """Get event by ID."""
         for event in self.events:
             if event.event_id == event_id:

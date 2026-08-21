@@ -39,8 +39,9 @@ decisions and performs no execution.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 from researchos.engines.scenario.envelope import EvidenceEnvelope
 from researchos.engines.scenario.repository import EvidenceRepository
@@ -66,7 +67,7 @@ class LineageNode:
     verified: bool
 
     @classmethod
-    def from_envelope(cls, envelope: EvidenceEnvelope) -> "LineageNode":
+    def from_envelope(cls, envelope: EvidenceEnvelope) -> LineageNode:
         return cls(
             artifact=envelope,
             artifact_hash=envelope.artifact_hash,
@@ -74,7 +75,7 @@ class LineageNode:
             verified=envelope.verify(),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "artifact_hash": self.artifact_hash,
             "artifact_type": self.artifact_type,
@@ -97,11 +98,11 @@ class LineageExplanation:
 
     artifact: EvidenceEnvelope
     artifact_type: str
-    parents: Tuple[LineageNode, ...]
-    children: Tuple[LineageNode, ...]
-    lineage_path: Tuple[str, ...]
+    parents: tuple[LineageNode, ...]
+    children: tuple[LineageNode, ...]
+    lineage_path: tuple[str, ...]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "artifact_hash": self.artifact.artifact_hash,
             "artifact_type": self.artifact_type,
@@ -122,18 +123,14 @@ class LineageTreeNode:
     """
 
     node: LineageNode
-    parents: Tuple["LineageTreeNode", ...] = field(default_factory=tuple)
-    children: Tuple["LineageTreeNode", ...] = field(default_factory=tuple)
+    parents: tuple[LineageTreeNode, ...] = field(default_factory=tuple)
+    children: tuple[LineageTreeNode, ...] = field(default_factory=tuple)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "node": self.node.to_dict(),
-            "parents": [
-                p.to_dict() for p in sorted(self.parents, key=lambda n: n.node.artifact_hash)
-            ],
-            "children": [
-                c.to_dict() for c in sorted(self.children, key=lambda n: n.node.artifact_hash)
-            ],
+            "parents": [p.to_dict() for p in sorted(self.parents, key=lambda n: n.node.artifact_hash)],
+            "children": [c.to_dict() for c in sorted(self.children, key=lambda n: n.node.artifact_hash)],
         }
 
 
@@ -144,14 +141,14 @@ class FullChain:
     Each member is ``None`` when not resolvable for the queried artifact.
     """
 
-    dataset: Optional[EvidenceEnvelope] = None
-    experiment: Optional[EvidenceEnvelope] = None
-    run: Optional[EvidenceEnvelope] = None
-    result: Optional[EvidenceEnvelope] = None
-    validation: Optional[EvidenceEnvelope] = None
+    dataset: EvidenceEnvelope | None = None
+    experiment: EvidenceEnvelope | None = None
+    run: EvidenceEnvelope | None = None
+    result: EvidenceEnvelope | None = None
+    validation: EvidenceEnvelope | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        def _h(e: Optional[EvidenceEnvelope]) -> Optional[str]:
+    def to_dict(self) -> dict[str, Any]:
+        def _h(e: EvidenceEnvelope | None) -> str | None:
             return e.artifact_hash if e is not None else None
 
         return {
@@ -163,7 +160,7 @@ class FullChain:
         }
 
 
-def _sorted_hashes(hashes: Sequence[str]) -> List[str]:
+def _sorted_hashes(hashes: Sequence[str]) -> list[str]:
     """Return a deterministically sorted list of hashes."""
     return sorted(list(hashes))
 
@@ -171,23 +168,23 @@ def _sorted_hashes(hashes: Sequence[str]) -> List[str]:
 class LineageQueryEngine:
     """Read-only lineage query facade over an ``EvidenceRepository``."""
 
-    def __init__(self, repository: Optional[EvidenceRepository] = None) -> None:
+    def __init__(self, repository: EvidenceRepository | None = None) -> None:
         self._repo = repository or EvidenceRepository()
 
     # ── primitive accessors ────────────────────────────────────────────
 
-    def _get(self, artifact_hash: str) -> Optional[EvidenceEnvelope]:
+    def _get(self, artifact_hash: str) -> EvidenceEnvelope | None:
         return self._repo.get_artifact(artifact_hash)
 
-    def _parents_of(self, artifact_hash: str) -> List[str]:
+    def _parents_of(self, artifact_hash: str) -> list[str]:
         return _sorted_hashes(self._repo.get_parents(artifact_hash))
 
-    def _children_of(self, artifact_hash: str) -> List[str]:
+    def _children_of(self, artifact_hash: str) -> list[str]:
         return _sorted_hashes(self._repo.get_children(artifact_hash))
 
     # ── ancestors / descendants (recursive, cycle-safe) ────────────────
 
-    def ancestors(self, artifact_hash: str) -> Tuple[EvidenceEnvelope, ...]:
+    def ancestors(self, artifact_hash: str) -> tuple[EvidenceEnvelope, ...]:
         """Return all parent artifacts recursively (upstream, deterministic).
 
         The result is a tuple of envelopes ordered by ``artifact_hash``.
@@ -197,8 +194,8 @@ class LineageQueryEngine:
         if self._get(artifact_hash) is None:
             return ()
         visited: set = set()
-        result: Dict[str, EvidenceEnvelope] = {}
-        queue: List[str] = list(self._parents_of(artifact_hash))
+        result: dict[str, EvidenceEnvelope] = {}
+        queue: list[str] = list(self._parents_of(artifact_hash))
         while queue:
             current = queue.pop(0)
             if current in visited:
@@ -210,13 +207,13 @@ class LineageQueryEngine:
                 queue.extend(self._parents_of(current))
         return tuple(result[h] for h in _sorted_hashes(result.keys()))
 
-    def descendants(self, artifact_hash: str) -> Tuple[EvidenceEnvelope, ...]:
+    def descendants(self, artifact_hash: str) -> tuple[EvidenceEnvelope, ...]:
         """Return all child artifacts recursively (downstream, deterministic)."""
         if self._get(artifact_hash) is None:
             return ()
         visited: set = set()
-        result: Dict[str, EvidenceEnvelope] = {}
-        queue: List[str] = list(self._children_of(artifact_hash))
+        result: dict[str, EvidenceEnvelope] = {}
+        queue: list[str] = list(self._children_of(artifact_hash))
         while queue:
             current = queue.pop(0)
             if current in visited:
@@ -230,7 +227,7 @@ class LineageQueryEngine:
 
     # ── lineage path (BFS shortest through the graph) ──────────────────
 
-    def path(self, parent_hash: str, child_hash: str) -> Tuple[str, ...]:
+    def path(self, parent_hash: str, child_hash: str) -> tuple[str, ...]:
         """Return a lineage path (list of hashes) between two artifacts.
 
         The path is found via BFS over the undirected edge set (so it works
@@ -243,7 +240,7 @@ class LineageQueryEngine:
         if parent_hash == child_hash:
             return (parent_hash,)
         # Build adjacency from both directions.
-        adj: Dict[str, List[str]] = {}
+        adj: dict[str, list[str]] = {}
 
         def _add(u: str, v: str) -> None:
             adj.setdefault(u, []).append(v)
@@ -261,7 +258,7 @@ class LineageQueryEngine:
                 if n not in visited_seed:
                     frontier.append(n)
         # BFS from parent_hash to child_hash.
-        prev: Dict[str, str] = {}
+        prev: dict[str, str] = {}
         seen: set = {parent_hash}
         queue = [parent_hash]
         while queue:
@@ -281,7 +278,7 @@ class LineageQueryEngine:
 
     # ── explain ────────────────────────────────────────────────────────
 
-    def explain(self, artifact_hash: str) -> Optional[LineageExplanation]:
+    def explain(self, artifact_hash: str) -> LineageExplanation | None:
         """Return a complete provenance explanation for an artifact.
 
         Returns ``None`` when the artifact is not present in the store.
@@ -289,12 +286,8 @@ class LineageQueryEngine:
         env = self._get(artifact_hash)
         if env is None:
             return None
-        parents = tuple(
-            LineageNode.from_envelope(self._get(h)) for h in self._parents_of(artifact_hash)
-        )
-        children = tuple(
-            LineageNode.from_envelope(self._get(h)) for h in self._children_of(artifact_hash)
-        )
+        parents = tuple(LineageNode.from_envelope(self._get(h)) for h in self._parents_of(artifact_hash))
+        children = tuple(LineageNode.from_envelope(self._get(h)) for h in self._children_of(artifact_hash))
         lineage_path = self._lineage_path_hashes(artifact_hash)
         return LineageExplanation(
             artifact=env,
@@ -304,24 +297,20 @@ class LineageQueryEngine:
             lineage_path=lineage_path,
         )
 
-    def _lineage_path_hashes(self, artifact_hash: str) -> Tuple[str, ...]:
+    def _lineage_path_hashes(self, artifact_hash: str) -> tuple[str, ...]:
         """Return the canonical lineage path for an artifact.
 
         The path is the sorted list of ancestors (including the artifact
         itself last), ordered deterministically by artifact type then hash.
         """
-        ancestors: Dict[str, EvidenceEnvelope] = {
-            a.artifact_hash: a for a in self.ancestors(artifact_hash)
-        }
+        ancestors: dict[str, EvidenceEnvelope] = {a.artifact_hash: a for a in self.ancestors(artifact_hash)}
         self_env = self._get(artifact_hash)
         if self_env is not None:
             ancestors[artifact_hash] = self_env
         ordered = sorted(
             ancestors.values(),
             key=lambda e: (
-                _CHAIN_ORDER.index(e.artifact_type)
-                if e.artifact_type in _CHAIN_ORDER
-                else len(_CHAIN_ORDER),
+                _CHAIN_ORDER.index(e.artifact_type) if e.artifact_type in _CHAIN_ORDER else len(_CHAIN_ORDER),
                 e.artifact_hash,
             ),
         )
@@ -329,7 +318,7 @@ class LineageQueryEngine:
 
     # ── lineage_tree ───────────────────────────────────────────────────
 
-    def lineage_tree(self, artifact_hash: str) -> Optional[LineageTreeNode]:
+    def lineage_tree(self, artifact_hash: str) -> LineageTreeNode | None:
         """Return a structured recursive lineage tree rooted at ``artifact_hash``.
 
         The tree contains both parents (upstream) and children (downstream),
@@ -347,8 +336,8 @@ class LineageQueryEngine:
         self,
         hashes: Sequence[str],
         visited: set,
-    ) -> Tuple[LineageTreeNode, ...]:
-        out: List[LineageTreeNode] = []
+    ) -> tuple[LineageTreeNode, ...]:
+        out: list[LineageTreeNode] = []
         for h in _sorted_hashes(hashes):
             if h in visited:
                 continue
@@ -365,7 +354,7 @@ class LineageQueryEngine:
 
     # ── resolve_reference ──────────────────────────────────────────────
 
-    def resolve_reference(self, artifact_hash: str) -> Dict[str, Any]:
+    def resolve_reference(self, artifact_hash: str) -> dict[str, Any]:
         """Resolve the payload references of an artifact.
 
         Given an artifact, scan its payload for the reference keys
@@ -391,7 +380,7 @@ class LineageQueryEngine:
         payload = env.payload
         if not isinstance(payload, Mapping):
             return {}
-        out: Dict[str, Any] = {}
+        out: dict[str, Any] = {}
         # A Dataset artifact carries its version under the "version" key;
         # expose that as the derived "dataset_version" reference.
         if env.artifact_type == "Dataset" and "version" in payload:
@@ -422,9 +411,7 @@ class LineageQueryEngine:
                         out[key] = direct
                         continue
                 # 2) Resolve through lineage edges by artifact type.
-                out[key] = self._find_reference_by_type(
-                    env, target_type, upstream=target_type != "Validation"
-                )
+                out[key] = self._find_reference_by_type(env, target_type, upstream=target_type != "Validation")
             elif key == "dataset_version":
                 if key not in out:
                     raw = payload.get(key)
@@ -433,7 +420,7 @@ class LineageQueryEngine:
 
     def _find_reference_by_type(
         self, env: EvidenceEnvelope, target_type: str, upstream: bool
-    ) -> Optional[EvidenceEnvelope]:
+    ) -> EvidenceEnvelope | None:
         """Find a reference envelope of ``target_type`` among the artifact's
         lineage neighbors (upstream parents or downstream children)."""
         if upstream:
@@ -456,7 +443,7 @@ class LineageQueryEngine:
 
     # ── resolve_full_chain ─────────────────────────────────────────────
 
-    def resolve_full_chain(self, result_hash: str) -> Optional[FullChain]:
+    def resolve_full_chain(self, result_hash: str) -> FullChain | None:
         """Resolve the Dataset → Experiment → Run → Result → Validation chain.
 
         Starting from a ``Result`` artifact hash, walk upstream via lineage
@@ -475,12 +462,12 @@ class LineageQueryEngine:
         run = self._find_parent_of_type(result_hash, "Run")
 
         # Experiment: parent(s) of the Run with artifact_type "Experiment".
-        experiment: Optional[EvidenceEnvelope] = None
+        experiment: EvidenceEnvelope | None = None
         if run is not None:
             experiment = self._find_parent_of_type(run.artifact_hash, "Experiment")
 
         # Dataset: parent(s) of the Experiment with artifact_type "Dataset".
-        dataset: Optional[EvidenceEnvelope] = None
+        dataset: EvidenceEnvelope | None = None
         if experiment is not None:
             dataset = self._find_parent_of_type(experiment.artifact_hash, "Dataset")
 
@@ -495,9 +482,7 @@ class LineageQueryEngine:
             validation=validation,
         )
 
-    def _find_parent_of_type(
-        self, artifact_hash: str, artifact_type: str
-    ) -> Optional[EvidenceEnvelope]:
+    def _find_parent_of_type(self, artifact_hash: str, artifact_type: str) -> EvidenceEnvelope | None:
         for parent_hash in self._parents_of(artifact_hash):
             env = self._get(parent_hash)
             if env is not None and env.artifact_type == artifact_type:
@@ -508,9 +493,7 @@ class LineageQueryEngine:
                 return anc
         return None
 
-    def _find_child_of_type(
-        self, artifact_hash: str, artifact_type: str
-    ) -> Optional[EvidenceEnvelope]:
+    def _find_child_of_type(self, artifact_hash: str, artifact_type: str) -> EvidenceEnvelope | None:
         for child_hash in self._children_of(artifact_hash):
             env = self._get(child_hash)
             if env is not None and env.artifact_type == artifact_type:

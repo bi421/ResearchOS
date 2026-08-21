@@ -2,8 +2,9 @@
 Backtest engine with proper trade recording.
 """
 
-from typing import List, Any
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 
@@ -14,7 +15,7 @@ class BacktestResult:
     max_drawdown: float
     win_rate: float
     num_trades: int
-    signals: List[Any]
+    signals: list[Any]
 
 
 class BacktestEngine:
@@ -23,7 +24,7 @@ class BacktestEngine:
         self.commission = commission
         self.slippage = slippage
 
-    def run(self, prices: List[float], strategy) -> BacktestResult:
+    def run(self, prices: list[float], strategy) -> BacktestResult:
         signals = strategy.generate_signals(prices)
         if not signals:
             return BacktestResult(0.0, 0.0, 0.0, 0.0, 0, signals)

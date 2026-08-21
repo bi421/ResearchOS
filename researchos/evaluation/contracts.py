@@ -12,9 +12,10 @@ Design rules:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping
+from typing import Any
 
 EVALUATION_VERSION = "1.0.0"
 
@@ -147,7 +148,7 @@ class EvaluationScore:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "pipeline_id": self.pipeline_id,
@@ -160,7 +161,7 @@ class EvaluationScore:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvaluationScore":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvaluationScore:
         """Reconstruct an ``EvaluationScore`` from a ``to_dict()`` mapping.
 
         Raises:
@@ -237,7 +238,7 @@ class EvaluationReport:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "evaluation_id": self.evaluation_id,
@@ -248,7 +249,7 @@ class EvaluationReport:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvaluationReport":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvaluationReport:
         """Reconstruct an ``EvaluationReport`` from a ``to_dict()`` mapping.
 
         Raises:

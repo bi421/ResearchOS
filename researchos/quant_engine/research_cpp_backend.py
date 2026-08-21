@@ -32,7 +32,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from researchos.quant_engine.backend_hash import canonicalize
 from researchos.quant_engine.capabilities import BackendCapabilities, default_capabilities
@@ -88,7 +89,7 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
             return f"cpp_research_{self._cpp_adapter.get_version()}"
         return "python_fallback_research_1.0.0"
 
-    def cpp_engine_version(self) -> Optional[str]:
+    def cpp_engine_version(self) -> str | None:
         """Return the underlying C++ engine version, or None when inactive."""
         if self._cpp_adapter is not None:
             return str(self._cpp_adapter.get_version())
@@ -111,17 +112,17 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
 
     def calculate_returns(
         self,
-        prices: List[float],
+        prices: list[float],
         return_type: str = "percentage",
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         if self._cpp_adapter is not None:
             return self._cpp_adapter.calculate_returns(prices, return_type, calculation_version)
         return self._python.calculate_returns(prices, return_type, calculation_version)
 
     def calculate_volatility(
         self,
-        returns: List[float],
+        returns: list[float],
         method: str = "standard_deviation",
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
@@ -131,18 +132,18 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
 
     def calculate_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if self._cpp_adapter is not None:
             return self._cpp_adapter.calculate_drawdown(equity_curve, calculation_version)
         return self._python.calculate_drawdown(equity_curve, calculation_version)
 
     def calculate_statistics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if self._cpp_adapter is not None:
             return self._cpp_adapter.calculate_statistics(returns, calculation_version)
         return self._python.calculate_statistics(returns, calculation_version)
@@ -159,24 +160,20 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
 
     def calculate_metrics(
         self,
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         if self._cpp_adapter is not None:
-            return self._cpp_adapter.calculate_metrics(
-                returns, equity_curve, risk_free_rate, calculation_version
-            )
-        return self._python.calculate_metrics(
-            returns, equity_curve, risk_free_rate, calculation_version
-        )
+            return self._cpp_adapter.calculate_metrics(returns, equity_curve, risk_free_rate, calculation_version)
+        return self._python.calculate_metrics(returns, equity_curve, risk_free_rate, calculation_version)
 
     def calculate_performance_analytics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if self._cpp_adapter is not None:
             return self._cpp_adapter.calculate_performance_analytics(returns, calculation_version)
         return self._python.calculate_performance_analytics(returns, calculation_version)
@@ -191,9 +188,7 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
             dict(params),
         )
 
-    def research_probabilistic_fit(
-        self, samples: Sequence[float], distribution: str, **params: Any
-    ) -> ResearchResult:
+    def research_probabilistic_fit(self, samples: Sequence[float], distribution: str, **params: Any) -> ResearchResult:
         result = self._python.research_probabilistic_fit(samples, distribution, **params)
         return self._delegate(
             "research_probabilistic_fit",
@@ -202,44 +197,30 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
             dict(params, distribution=distribution),
         )
 
-    def research_probabilistic_hypothesis(
-        self, samples: Sequence[float], test: str, **params: Any
-    ) -> ResearchResult:
+    def research_probabilistic_hypothesis(self, samples: Sequence[float], test: str, **params: Any) -> ResearchResult:
         result = self._python.research_probabilistic_hypothesis(samples, test, **params)
-        return self._delegate(
-            "research_probabilistic_hypothesis", "probability", result, dict(params, test=test)
-        )
+        return self._delegate("research_probabilistic_hypothesis", "probability", result, dict(params, test=test))
 
     def research_portfolio_metrics(
         self,
         portfolio: Any,
-        benchmark_returns: Optional[Sequence[float]] = None,
+        benchmark_returns: Sequence[float] | None = None,
         **params: Any,
     ) -> ResearchResult:
         result = self._python.research_portfolio_metrics(portfolio, benchmark_returns, **params)
         return self._delegate("research_portfolio_metrics", "portfolio", result, dict(params))
 
-    def research_historical(
-        self, returns: Sequence[float], metric: str, **params: Any
-    ) -> ResearchResult:
+    def research_historical(self, returns: Sequence[float], metric: str, **params: Any) -> ResearchResult:
         result = self._python.research_historical(returns, metric, **params)
-        return self._delegate(
-            "research_historical", "historical", result, dict(params, metric=metric)
-        )
+        return self._delegate("research_historical", "historical", result, dict(params, metric=metric))
 
     def research_fundamental(self, analytics: str, inputs: Any, **params: Any) -> ResearchResult:
         result = self._python.research_fundamental(analytics, inputs, **params)
-        return self._delegate(
-            "research_fundamental", "fundamental", result, dict(params, analytics=analytics)
-        )
+        return self._delegate("research_fundamental", "fundamental", result, dict(params, analytics=analytics))
 
-    def research_econometric_analysis(
-        self, values: Sequence[float], model: str, **params: Any
-    ) -> ResearchResult:
+    def research_econometric_analysis(self, values: Sequence[float], model: str, **params: Any) -> ResearchResult:
         result = self._python.research_econometric_analysis(values, model, **params)
-        return self._delegate(
-            "research_econometric_analysis", "econometrics", result, dict(params, model=model)
-        )
+        return self._delegate("research_econometric_analysis", "econometrics", result, dict(params, model=model))
 
     def research_validation(
         self,
@@ -249,9 +230,7 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
         step_size: int,
         **params: Any,
     ) -> ResearchResult:
-        result = self._python.research_validation(
-            dataset, train_size, validation_size, step_size, **params
-        )
+        result = self._python.research_validation(dataset, train_size, validation_size, step_size, **params)
         return self._delegate(
             "research_validation",
             "validation",
@@ -266,9 +245,7 @@ class ResearchCppBackend(ResearchComputationInterface, QuantComputationInterface
 
     # ── internal ────────────────────────────────────────────────────────
 
-    def _delegate(
-        self, operation: str, domain: str, reference: ResearchResult, parameters: Any
-    ) -> ResearchResult:
+    def _delegate(self, operation: str, domain: str, reference: ResearchResult, parameters: Any) -> ResearchResult:
         """Re-brand the Python reference result as this candidate's certified
         output, preserving the deterministic hashes but recording the
         candidate backend identity.

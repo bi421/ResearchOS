@@ -1,31 +1,26 @@
-import pandas as pd
-import numpy as np
 import glob
 import sys
 import time
+
+import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 
 sys.path.insert(0, ".")
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
+
 from researchos.quant_engine.vectorized_backtest import vectorized_backtest
 
 print("Loading data...")
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
 print(f"Data: {len(df_h)} bars (4h)")
 
 # Train: 2021-2023, Val: 2024, Test: 2025-2026
@@ -113,9 +108,7 @@ print("\n🔍 Validation grid search (parallel)")
 print("Threshold | Trades | Return  | Sharpe | MaxDD  | WinRate")
 print("----------|--------|---------|--------|--------|--------")
 start = time.time()
-results = Parallel(n_jobs=-1)(
-    delayed(evaluate_threshold)(th, model, scaler, val_df, feature_cols) for th in thresholds
-)
+results = Parallel(n_jobs=-1)(delayed(evaluate_threshold)(th, model, scaler, val_df, feature_cols) for th in thresholds)
 best_sharpe = -999
 best_th = 0.55
 for th, res in results:

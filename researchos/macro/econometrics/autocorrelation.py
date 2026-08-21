@@ -13,8 +13,6 @@ MIL-ECM-006: Econometrics owns ACF/PACF.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.macro.econometrics.matrix import solve
 from researchos.macro.econometrics.models import (
     TestResult,
@@ -26,7 +24,7 @@ ACF_VERSION = "ecm/acf/v1"
 PACF_VERSION = "ecm/pacf/v1"
 
 
-def _autocovariance(values: List[float], lag: int) -> float:
+def _autocovariance(values: list[float], lag: int) -> float:
     """Sample autocovariance at the given lag (mean-centered)."""
     n = len(values)
     if n <= lag:
@@ -39,11 +37,11 @@ def _autocovariance(values: List[float], lag: int) -> float:
 
 
 def autocorrelation(
-    values: List[float],
+    values: list[float],
     max_lag: int = 10,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Compute the autocorrelation function (ACF) up to ``max_lag``.
@@ -91,11 +89,11 @@ def autocorrelation(
 
 
 def partial_autocorrelation(
-    values: List[float],
+    values: list[float],
     max_lag: int = 10,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Compute the partial autocorrelation function (PACF) up to ``max_lag``.

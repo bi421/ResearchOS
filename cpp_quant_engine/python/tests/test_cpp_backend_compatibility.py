@@ -12,7 +12,6 @@ The perf test is gated behind the RESEARCHOS_PERF=1 environment variable.
 import math
 import os
 import time
-from typing import List
 
 import pytest
 
@@ -26,9 +25,7 @@ from researchos.quant_engine.cpp_backend import CppQuantAdapter, has_cpp_engine
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import CalculationVersion, SimulationRequest, SimulationResult
 
-pytestmark = pytest.mark.skipif(
-    not has_cpp_engine(), reason="compiled C++ quant engine not available"
-)
+pytestmark = pytest.mark.skipif(not has_cpp_engine(), reason="compiled C++ quant engine not available")
 
 _V1 = CalculationVersion.CALCULATION_V1
 
@@ -36,7 +33,7 @@ _V1 = CalculationVersion.CALCULATION_V1
 _ROLLING_MIN = 60
 
 
-def make_prices(n: int, base: float = 100.0) -> List[float]:
+def make_prices(n: int, base: float = 100.0) -> list[float]:
     return [base + 30.0 * math.sin(i / 4.0) + 0.5 * (i % 7) for i in range(n)]
 
 
@@ -65,7 +62,7 @@ def cpp_backend() -> CppQuantAdapter:
     return CppQuantAdapter()
 
 
-def build_equity(returns: List[float], initial_capital: float = 100000.0) -> List[float]:
+def build_equity(returns: list[float], initial_capital: float = 100000.0) -> list[float]:
     equity = [initial_capital]
     for r in returns:
         equity.append(equity[-1] * (1.0 + r))
@@ -74,9 +71,7 @@ def build_equity(returns: List[float], initial_capital: float = 100000.0) -> Lis
 
 class TestSmallParity:
     def test_full_parity(self, python_backend, cpp_backend):
-        report = verify_backend_parity(
-            python_backend, cpp_backend, make_prices(_ROLLING_MIN), make_request()
-        )
+        report = verify_backend_parity(python_backend, cpp_backend, make_prices(_ROLLING_MIN), make_request())
         assert report.matched is True
         assert report.hash_parity is True
         report.assert_matches()
@@ -106,9 +101,7 @@ class TestSmallParity:
         prices = make_prices(_ROLLING_MIN)
         py_result = python_backend.run_simulation(make_request(), prices)
         cpp_result = cpp_backend.run_simulation(make_request(), prices)
-        assert py_result.metrics["max_drawdown"] == pytest.approx(
-            cpp_result.metrics["max_drawdown"], abs=0.0
-        )
+        assert py_result.metrics["max_drawdown"] == pytest.approx(cpp_result.metrics["max_drawdown"], abs=0.0)
         # Both use the ResearchOS 8dp rounding of max_drawdown.
         assert cpp_result.metrics["max_drawdown"] == round(py_result.metrics["max_drawdown"], 8)
 
@@ -116,9 +109,7 @@ class TestSmallParity:
         prices = make_prices(_ROLLING_MIN)
         py_result = python_backend.run_simulation(make_request(), prices)
         cpp_result = cpp_backend.run_simulation(make_request(), prices)
-        assert cpp_result.metrics["calmar_ratio"] == pytest.approx(
-            py_result.metrics["calmar_ratio"], rel=1e-12
-        )
+        assert cpp_result.metrics["calmar_ratio"] == pytest.approx(py_result.metrics["calmar_ratio"], rel=1e-12)
 
     def test_metrics_within_tolerance(self, python_backend, cpp_backend):
         prices = make_prices(_ROLLING_MIN)
@@ -126,9 +117,7 @@ class TestSmallParity:
         cpp_result = cpp_backend.run_simulation(make_request(), prices)
         assert set(py_result.metrics) == set(cpp_result.metrics)
         for key in py_result.metrics:
-            assert cpp_result.metrics[key] == pytest.approx(
-                py_result.metrics[key], rel=1e-9, abs=1e-12
-            )
+            assert cpp_result.metrics[key] == pytest.approx(py_result.metrics[key], rel=1e-9, abs=1e-12)
 
     def test_input_hash_and_sim_id_match(self, python_backend, cpp_backend):
         prices = make_prices(_ROLLING_MIN)
@@ -178,9 +167,7 @@ class TestSmallParity:
 
 class TestReport:
     def test_report_to_dict(self, python_backend, cpp_backend):
-        report = verify_backend_parity(
-            python_backend, cpp_backend, make_prices(_ROLLING_MIN), make_request()
-        )
+        report = verify_backend_parity(python_backend, cpp_backend, make_prices(_ROLLING_MIN), make_request())
         data = report.to_dict()
         assert data["matched"] is True
         assert data["hash_parity"] is True
@@ -189,9 +176,7 @@ class TestReport:
             assert diff["matched"] is True
 
     def test_report_versions(self, python_backend, cpp_backend):
-        report = verify_backend_parity(
-            python_backend, cpp_backend, make_prices(_ROLLING_MIN), make_request()
-        )
+        report = verify_backend_parity(python_backend, cpp_backend, make_prices(_ROLLING_MIN), make_request())
         assert report.backend_versions["cpp"].startswith("1.")
         assert report.backend_versions["python"] == "PythonQuantBackend"
 
@@ -206,9 +191,7 @@ class TestReport:
             def calculate_returns(self, prices, return_type="percentage", calculation_version=_V1):
                 return self._delegate.calculate_returns(prices, return_type, calculation_version)
 
-            def calculate_volatility(
-                self, returns, method="standard_deviation", calculation_version=_V1
-            ):
+            def calculate_volatility(self, returns, method="standard_deviation", calculation_version=_V1):
                 return self._delegate.calculate_volatility(returns, method, calculation_version)
 
             def calculate_drawdown(self, equity_curve, calculation_version=_V1):
@@ -219,12 +202,8 @@ class TestReport:
                 stats["mean"] = stats["mean"] + 1.0
                 return stats
 
-            def calculate_metrics(
-                self, returns, equity_curve, risk_free_rate=0.0, calculation_version=_V1
-            ):
-                metrics = self._delegate.calculate_metrics(
-                    returns, equity_curve, risk_free_rate, calculation_version
-                )
+            def calculate_metrics(self, returns, equity_curve, risk_free_rate=0.0, calculation_version=_V1):
+                metrics = self._delegate.calculate_metrics(returns, equity_curve, risk_free_rate, calculation_version)
                 metrics["sharpe_ratio"] = metrics["sharpe_ratio"] + 100.0
                 return metrics
 
@@ -288,10 +267,7 @@ class TestPerf:
 
         # Generous wall-clock gate (environment thermal noise varies widely).
         assert cpp_elapsed < 45.0, f"C++ backend too slow: {cpp_elapsed:.2f}s"
-        print(
-            f"\n1M prices: python={py_elapsed:.2f}s cpp={cpp_elapsed:.2f}s "
-            f"speedup={py_elapsed / cpp_elapsed:.2f}x"
-        )
+        print(f"\n1M prices: python={py_elapsed:.2f}s cpp={cpp_elapsed:.2f}s speedup={py_elapsed / cpp_elapsed:.2f}x")
 
 
 class TestValidationParity:

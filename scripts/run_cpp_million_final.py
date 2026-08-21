@@ -1,10 +1,12 @@
 import sys
 
 sys.path.append("cpp_quant/python")
-from cpp_quant import CppQuant
-import pandas as pd
 import glob
 import time
+
+import pandas as pd
+
+from cpp_quant import CppQuant
 
 print("1 сая Candle – C++ бэкендээр шинжилгээ")
 print("=" * 50)
@@ -33,9 +35,7 @@ print(f"   {df.index[0]} -> {df.index[-1]}")
 # 2. 5 минут болгон агрегацлах
 print("\n5 минут болгон агрегацлаж байна...")
 df_5min = (
-    df.resample("5min")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
+    df.resample("5min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 )
 print(f"   {len(df_5min):,} candle (5 минут)")
 

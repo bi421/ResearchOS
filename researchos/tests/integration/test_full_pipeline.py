@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+
 from researchos import (
     Confidence,
     ConfidenceReport,
@@ -73,9 +74,7 @@ def test_deterministic():
 
 def test_contradiction():
     obs_up = Observation(source="A", timestamp="2024-01-01T00:00:00+00:00", value=100.0, unit="usd")
-    obs_down = Observation(
-        source="B", timestamp="2024-01-01T00:00:00+00:00", value=100.0, unit="usd"
-    )
+    obs_down = Observation(source="B", timestamp="2024-01-01T00:00:00+00:00", value=100.0, unit="usd")
     ev_up = Evidence(
         observation_id=obs_up.id,
         hypothesis_id="h1",
@@ -88,9 +87,7 @@ def test_contradiction():
         interpretation="Bearish",
         direction="Contradicting",
     )
-    contra = Contradiction(
-        evidence_id_a=ev_up.id, evidence_id_b=ev_down.id, description="Bull vs Bear", severity=0.8
-    )
+    contra = Contradiction(evidence_id_a=ev_up.id, evidence_id_b=ev_down.id, description="Bull vs Bear", severity=0.8)
     contra.validate()
     report = ContradictionReport(research_id="r1")
     report.add(contra)

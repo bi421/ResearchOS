@@ -22,7 +22,7 @@ All tests are skipped when the compiled C++ engine is not available.
 from __future__ import annotations
 
 import math
-from typing import Any, List
+from typing import Any
 
 import pytest
 
@@ -37,9 +37,7 @@ from researchos.quant_engine.cpp_backend import (
 from researchos.quant_engine.models import CalculationVersion, SimulationRequest
 from researchos.quant_engine.router import BackendRouter
 
-pytestmark = pytest.mark.skipif(
-    not has_cpp_engine(), reason="compiled C++ quant engine not available"
-)
+pytestmark = pytest.mark.skipif(not has_cpp_engine(), reason="compiled C++ quant engine not available")
 
 _V1 = CalculationVersion.CALCULATION_V1
 
@@ -47,7 +45,7 @@ _V1 = CalculationVersion.CALCULATION_V1
 _ROLLING_MIN = 60
 
 
-def _prices(n: int, base: float = 100.0) -> List[float]:
+def _prices(n: int, base: float = 100.0) -> list[float]:
     """Deterministic, non-trivial price series (identical to parity suite)."""
     return [base + 30.0 * math.sin(i / 4.0) + 0.5 * (i % 7) for i in range(n)]
 
@@ -133,9 +131,7 @@ class TestNumericalEquivalence:
         returns = python_backend.calculate_returns(_prices(_ROLLING_MIN))
         for method in ("standard_deviation", "rolling", "change"):
             cpp = router.execute("calculate_volatility", {"returns": returns, "method": method})
-            assert cpp.output == pytest.approx(
-                python_backend.calculate_volatility(returns, method), rel=1e-9
-            )
+            assert cpp.output == pytest.approx(python_backend.calculate_volatility(returns, method), rel=1e-9)
 
     def test_drawdown_equivalence(self, router, python_backend):
         returns = python_backend.calculate_returns(_prices(_ROLLING_MIN))
@@ -219,7 +215,7 @@ class TestRouterValidationMetadata:
 class TestAutomaticFallback:
     def test_failing_candidate_falls_back(self):
         class _Broken(CppQuantAdapter):
-            def calculate_returns(self, *args: Any, **kwargs: Any) -> List[float]:
+            def calculate_returns(self, *args: Any, **kwargs: Any) -> list[float]:
                 raise RuntimeError("broken candidate")
 
         router = BackendRouter(candidates=[_Broken()])

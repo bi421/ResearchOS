@@ -8,14 +8,14 @@ for empty / degenerate inputs (returning ``0.0`` when undefined).
 from __future__ import annotations
 
 import math
-from typing import List, Sequence
+from collections.abc import Sequence
 
 
-def _as_floats(values: Sequence) -> List[float]:
+def _as_floats(values: Sequence) -> list[float]:
     return [float(v) for v in values]
 
 
-def _invalid(y_true: List[float], y_pred: List[float]) -> bool:
+def _invalid(y_true: list[float], y_pred: list[float]) -> bool:
     return not y_true or len(y_true) != len(y_pred)
 
 

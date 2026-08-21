@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class EvidenceSource(str, Enum):
@@ -108,9 +108,9 @@ class DecisionEvidenceItem:
     weight: float
     confidence: float
     description: str
-    supporting_ids: List[str] = field(default_factory=list)
+    supporting_ids: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "source": self.source.value,
             "source_id": self.source_id,
@@ -123,7 +123,7 @@ class DecisionEvidenceItem:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DecisionEvidenceItem":
+    def from_dict(cls, data: dict[str, Any]) -> DecisionEvidenceItem:
         return cls(
             source=EvidenceSource(data["source"]),
             source_id=data["source_id"],
@@ -168,7 +168,7 @@ class WeightConfiguration:
     quant_weight: float = 0.15
     weighting_version: str = "WEIGHT_V1"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "macro_weight": self.macro_weight,
             "market_memory_weight": self.market_memory_weight,
@@ -179,7 +179,7 @@ class WeightConfiguration:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "WeightConfiguration":
+    def from_dict(cls, data: dict[str, Any]) -> WeightConfiguration:
         return cls(
             macro_weight=float(data.get("macro_weight", 0.25)),
             market_memory_weight=float(data.get("market_memory_weight", 0.25)),

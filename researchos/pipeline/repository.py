@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from typing import Iterator, Mapping, Optional, Tuple
+from collections.abc import Iterator, Mapping
 
 from researchos.orchestration.contracts import PipelineReport, PipelineStatus
 
@@ -61,7 +61,7 @@ class PipelineRepository:
 
     VERSION = PIPELINE_REPOSITORY_VERSION
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: str | None = None) -> None:
         self._path = path or DEFAULT_PATH
         self._records: dict = {}
 
@@ -94,9 +94,7 @@ class PipelineRepository:
                 ``PipelineReport``.
         """
         if not isinstance(report, PipelineReport):
-            raise InvalidPipelineRecordError(
-                f"expected a PipelineReport, got {type(report).__name__}"
-            )
+            raise InvalidPipelineRecordError(f"expected a PipelineReport, got {type(report).__name__}")
         pipeline_id = _report_id(report)
         self._records[pipeline_id] = PipelineRecord(
             pipeline_id=pipeline_id,
@@ -119,9 +117,9 @@ class PipelineRepository:
 
     def list(
         self,
-        limit: Optional[int] = None,
-        status: Optional[str] = None,
-    ) -> Tuple[PipelineRecord, ...]:
+        limit: int | None = None,
+        status: str | None = None,
+    ) -> tuple[PipelineRecord, ...]:
         """Return stored records, optionally filtered.
 
         Args:
@@ -166,8 +164,7 @@ class PipelineRepository:
     # ------------------------------------------------------------------
 
     def __iter__(self) -> Iterator[PipelineRecord]:
-        for record in self.list():
-            yield record
+        yield from self.list()
 
     def __len__(self) -> int:
         return self.count()
@@ -188,7 +185,7 @@ class PipelineRepository:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping) -> "PipelineRepository":
+    def from_dict(cls, data: Mapping) -> PipelineRepository:
         """Reconstruct a repository from a ``to_dict()`` mapping.
 
         Raises:
@@ -219,7 +216,7 @@ class PipelineRepository:
         return _canonical_json(self.to_dict())
 
     @classmethod
-    def deserialize(cls, text: str) -> "PipelineRepository":
+    def deserialize(cls, text: str) -> PipelineRepository:
         """Reconstruct a repository from a ``serialize()`` string.
 
         Raises:
@@ -235,7 +232,7 @@ class PipelineRepository:
     # disk persistence (stdlib only)
     # ------------------------------------------------------------------
 
-    def save_to_disk(self, path: Optional[str] = None) -> str:
+    def save_to_disk(self, path: str | None = None) -> str:
         """Write the repository to ``path`` (or the default path).
 
         Returns:
@@ -248,9 +245,7 @@ class PipelineRepository:
         return target
 
     @classmethod
-    def load_from_disk(
-        cls, path: Optional[str] = None, *, missing_ok: bool = False
-    ) -> "PipelineRepository":
+    def load_from_disk(cls, path: str | None = None, *, missing_ok: bool = False) -> PipelineRepository:
         """Read a repository from ``path`` (or the default path).
 
         Args:
@@ -268,7 +263,7 @@ class PipelineRepository:
             if missing_ok:
                 return cls(path=path)
             raise FileNotFoundError(target)
-        with open(target, "r", encoding="utf-8") as handle:
+        with open(target, encoding="utf-8") as handle:
             text = handle.read()
         return cls.from_dict(cls.deserialize(text).to_dict())
 

@@ -8,8 +8,6 @@ This module enforces referential integrity without modifying
 any object model classes.
 """
 
-from typing import List
-
 from researchos.repository.interface import RepositoryInterface
 
 
@@ -45,13 +43,10 @@ class ReferenceValidator:
             raise ValueError(f"{label} ID is empty — cannot validate reference")
         obj = self._repo.get(obj_id)
         if obj is None:
-            raise ValueError(
-                f"{label} with ID '{obj_id}' not found in repository — "
-                "create it before referencing it"
-            )
+            raise ValueError(f"{label} with ID '{obj_id}' not found in repository — create it before referencing it")
         return obj_id
 
-    def require_all_exist(self, ids: List[str], label: str = "object") -> List[str]:
+    def require_all_exist(self, ids: list[str], label: str = "object") -> list[str]:
         """
         Verify all IDs in a list exist in the repository.
 

@@ -1,7 +1,15 @@
-import yfinance as yf
-import pandas as pd
+import base64
+import io
+import sys
+import time
+import warnings
 from datetime import datetime, timedelta
-from researchos.quant_engine.backend import PythonQuantBackend
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import yfinance as yf
+
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
@@ -9,13 +17,7 @@ from researchos.decision_engine.contracts import (
     WeightConfiguration,
 )
 from researchos.decision_engine.score import compute_evidence_score
-import sys
-import time
-import seaborn as sns
-import matplotlib.pyplot as plt
-import io
-import base64
-import warnings
+from researchos.quant_engine.backend import PythonQuantBackend
 
 warnings.filterwarnings("ignore")
 
@@ -113,9 +115,7 @@ def compute_metrics(series):
     equity = (1 + pd.Series(returns)).cumprod() * 10000.0
     backend = PythonQuantBackend()
     try:
-        return backend.calculate_metrics(
-            returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0
-        )
+        return backend.calculate_metrics(returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0)
     except Exception:
         return None
 
@@ -195,19 +195,13 @@ if "XAUUSD" in combined_df.columns:
             if not pd.isna(corr):
                 macro_corr[macro_name] = corr
                 if macro_name == "DXY":
-                    direction = (
-                        ProbabilityOutcome.BULLISH if corr < -0.3 else ProbabilityOutcome.NEUTRAL
-                    )
+                    direction = ProbabilityOutcome.BULLISH if corr < -0.3 else ProbabilityOutcome.NEUTRAL
                     strength = min(abs(corr), 1.0)
                 elif macro_name == "US10Y":
-                    direction = (
-                        ProbabilityOutcome.BEARISH if corr > 0.3 else ProbabilityOutcome.NEUTRAL
-                    )
+                    direction = ProbabilityOutcome.BEARISH if corr > 0.3 else ProbabilityOutcome.NEUTRAL
                     strength = min(abs(corr), 1.0)
                 elif macro_name == "VIX":
-                    direction = (
-                        ProbabilityOutcome.BULLISH if corr > 0.3 else ProbabilityOutcome.NEUTRAL
-                    )
+                    direction = ProbabilityOutcome.BULLISH if corr > 0.3 else ProbabilityOutcome.NEUTRAL
                     strength = min(abs(corr), 1.0)
                 else:
                     direction = ProbabilityOutcome.NEUTRAL

@@ -20,7 +20,7 @@ import csv
 import io
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import CandleField, LoaderConfig, Timeframe
@@ -49,9 +49,9 @@ class CsvLoader:
         candles = loader.load_candles("data.csv", symbol="XAU/USD", timeframe="1h")
     """
 
-    def __init__(self, config: Optional[LoaderConfig] = None):
+    def __init__(self, config: LoaderConfig | None = None):
         self.config = config or LoaderConfig()
-        self._stats: Dict[str, Any] = {
+        self._stats: dict[str, Any] = {
             "total_rows": 0,
             "loaded_rows": 0,
             "skipped_rows": 0,
@@ -60,7 +60,7 @@ class CsvLoader:
         }
 
     @property
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """Get loading statistics."""
         return dict(self._stats)
 
@@ -69,8 +69,8 @@ class CsvLoader:
         file_path: str,
         symbol: str,
         timeframe: str,
-        field_mapping: Optional[CandleField] = None,
-    ) -> List[Candle]:
+        field_mapping: CandleField | None = None,
+    ) -> list[Candle]:
         """
         Load OHLCV candles from a CSV file.
 
@@ -96,8 +96,8 @@ class CsvLoader:
         text: str,
         symbol: str,
         timeframe: str,
-        field_mapping: Optional[CandleField] = None,
-    ) -> List[Candle]:
+        field_mapping: CandleField | None = None,
+    ) -> list[Candle]:
         """
         Load OHLCV candles from a CSV string.
 
@@ -118,9 +118,9 @@ class CsvLoader:
         self,
         file_path: str,
         symbol: str,
-        timeframe: Optional[str] = None,
-        timezone: Optional[str] = None,
-    ) -> List[Candle]:
+        timeframe: str | None = None,
+        timezone: str | None = None,
+    ) -> list[Candle]:
         """
         Load OHLCV candles from an MT5 exported CSV file.
 
@@ -145,9 +145,9 @@ class CsvLoader:
         self,
         text: str,
         symbol: str,
-        timeframe: Optional[str] = None,
-        timezone: Optional[str] = None,
-    ) -> List[Candle]:
+        timeframe: str | None = None,
+        timezone: str | None = None,
+    ) -> list[Candle]:
         """Load MT5 candles from a CSV string."""
         rows = self._parse_csv_text(text)
         return self._parse_mt5_rows(rows, symbol, timeframe, timezone)
@@ -156,10 +156,10 @@ class CsvLoader:
         self,
         file_path: str,
         symbol: str,
-        timeframe: Optional[str] = None,
-        timezone: Optional[str] = None,
+        timeframe: str | None = None,
+        timezone: str | None = None,
         remove_duplicates: bool = True,
-    ) -> List[Candle]:
+    ) -> list[Candle]:
         """
         Load OHLCV candles from a TradingView exported CSV file.
 
@@ -184,10 +184,10 @@ class CsvLoader:
         self,
         text: str,
         symbol: str,
-        timeframe: Optional[str] = None,
-        timezone: Optional[str] = None,
+        timeframe: str | None = None,
+        timezone: str | None = None,
         remove_duplicates: bool = True,
-    ) -> List[Candle]:
+    ) -> list[Candle]:
         """Load TradingView candles from a CSV string."""
         rows = self._parse_csv_text(text)
         return self._parse_tradingview_rows(rows, symbol, timeframe, timezone, remove_duplicates)
@@ -196,9 +196,9 @@ class CsvLoader:
         self,
         file_path: str,
         symbol: str,
-        timeframe: Optional[str] = None,
-        timezone: Optional[str] = None,
-    ) -> List[Candle]:
+        timeframe: str | None = None,
+        timezone: str | None = None,
+    ) -> list[Candle]:
         """
         Load candles from any supported CSV format with auto-detection.
 
@@ -225,14 +225,14 @@ class CsvLoader:
         self,
         text: str,
         symbol: str,
-        timeframe: Optional[str] = None,
-        timezone: Optional[str] = None,
-    ) -> List[Candle]:
+        timeframe: str | None = None,
+        timezone: str | None = None,
+    ) -> list[Candle]:
         """Load candles from a CSV string with auto-detection."""
         rows = self._parse_csv_text(text)
         return self._parse_auto(rows, symbol, timeframe, timezone)
 
-    def detect_format(self, header: List[str]) -> str:
+    def detect_format(self, header: list[str]) -> str:
         """
         Detect the CSV format from a header row.
 
@@ -246,7 +246,7 @@ class CsvLoader:
             return FORMAT_TRADINGVIEW
         return FORMAT_GENERIC
 
-    def detect_candle_columns(self, header: List[str]) -> CandleField:
+    def detect_candle_columns(self, header: list[str]) -> CandleField:
         """
         Automatically map columns to CandleField from a header row.
 
@@ -284,7 +284,7 @@ class CsvLoader:
             mapping.symbol = symbol
         return mapping
 
-    def detect_timeframe(self, timestamps: List[datetime]) -> str:
+    def detect_timeframe(self, timestamps: list[datetime]) -> str:
         """
         Detect a timeframe from a list of timestamps.
 
@@ -314,18 +314,15 @@ class CsvLoader:
         candidates = {tf.to_seconds(): tf.value for tf in Timeframe if tf.to_seconds() > 0}
         if median in candidates:
             return candidates[median]
-        raise ValueError(
-            f"Cannot auto-detect timeframe from median interval "
-            f"{median:.0f}s; pass timeframe explicitly"
-        )
+        raise ValueError(f"Cannot auto-detect timeframe from median interval {median:.0f}s; pass timeframe explicitly")
 
     def _parse_mt5_rows(
         self,
-        rows: List[Dict[str, str]],
+        rows: list[dict[str, str]],
         symbol: str,
-        timeframe: Optional[str],
-        source_timezone: Optional[str],
-    ) -> List[Candle]:
+        timeframe: str | None,
+        source_timezone: str | None,
+    ) -> list[Candle]:
         """Parse MT5 exported rows into Candle objects."""
         if not rows:
             return []
@@ -337,9 +334,7 @@ class CsvLoader:
         low_col = self._find_column(norm, ("low", "l"))
         close_col = self._find_column(norm, ("close", "c"))
         if not (date_col and time_col and open_col and high_col and low_col and close_col):
-            raise ValueError(
-                "MT5 CSV missing required columns (Date, Time, Open, High, Low, Close)"
-            )
+            raise ValueError("MT5 CSV missing required columns (Date, Time, Open, High, Low, Close)")
         tick_volume_col = self._find_column(norm, ("tick_volume", "tickvol", "tv"))
         real_volume_col = self._find_column(norm, ("real_volume", "volume", "vol"))
         spread_col = self._find_column(norm, ("spread",))
@@ -355,7 +350,7 @@ class CsvLoader:
         if timeframe is None:
             timeframe = self.detect_timeframe(timestamps)
 
-        candles: List[Candle] = []
+        candles: list[Candle] = []
         for i, row in enumerate(rows):
             self._stats["total_rows"] += 1
             try:
@@ -396,12 +391,12 @@ class CsvLoader:
 
     def _parse_tradingview_rows(
         self,
-        rows: List[Dict[str, str]],
+        rows: list[dict[str, str]],
         symbol: str,
-        timeframe: Optional[str],
-        source_timezone: Optional[str],
+        timeframe: str | None,
+        source_timezone: str | None,
         remove_duplicates: bool,
-    ) -> List[Candle]:
+    ) -> list[Candle]:
         """Parse TradingView exported rows into Candle objects."""
         if not rows:
             return []
@@ -412,9 +407,7 @@ class CsvLoader:
         low_col = self._find_column(norm, ("low", "l"))
         close_col = self._find_column(norm, ("close", "c"))
         if not (time_col and open_col and high_col and low_col and close_col):
-            raise ValueError(
-                "TradingView CSV missing required columns (time, open, high, low, close)"
-            )
+            raise ValueError("TradingView CSV missing required columns (time, open, high, low, close)")
         volume_col = self._find_column(norm, ("volume", "vol"))
         symbol_col = self._find_column(norm, ("symbol", "ticker"))
         tz = source_timezone or self.config.timezone
@@ -434,7 +427,7 @@ class CsvLoader:
         if timeframe is None:
             timeframe = self.detect_timeframe(timestamps)
 
-        candles: List[Candle] = []
+        candles: list[Candle] = []
         seen = set()
         for i, row in enumerate(rows):
             self._stats["total_rows"] += 1
@@ -471,11 +464,11 @@ class CsvLoader:
 
     def _parse_auto(
         self,
-        rows: List[Dict[str, str]],
+        rows: list[dict[str, str]],
         symbol: str,
-        timeframe: Optional[str],
-        source_timezone: Optional[str],
-    ) -> List[Candle]:
+        timeframe: str | None,
+        source_timezone: str | None,
+    ) -> list[Candle]:
         """Parse rows using automatic format/column/timeframe detection."""
         if not rows:
             return []
@@ -489,9 +482,7 @@ class CsvLoader:
             timestamps = []
             for row in rows:
                 try:
-                    timestamps.append(
-                        self._parse_timestamp(row[mapping.timestamp], source_timezone)
-                    )
+                    timestamps.append(self._parse_timestamp(row[mapping.timestamp], source_timezone))
                 except Exception:
                     timestamps.append(None)
             timeframe = self.detect_timeframe(timestamps)
@@ -526,7 +517,7 @@ class CsvLoader:
         return dt
 
     @staticmethod
-    def _find_column(header_norm: Dict[str, str], aliases: Tuple[str, ...]) -> Optional[str]:
+    def _find_column(header_norm: dict[str, str], aliases: tuple[str, ...]) -> str | None:
         """Find the actual column name matching one of the aliases."""
         for alias in aliases:
             if alias in header_norm:
@@ -537,7 +528,7 @@ class CsvLoader:
         self,
         file_path: str,
         symbol: str,
-    ) -> List[Tick]:
+    ) -> list[Tick]:
         """
         Load ticks from a CSV file.
 
@@ -557,7 +548,7 @@ class CsvLoader:
         self,
         file_path: str,
         symbol: str,
-    ) -> List[Quote]:
+    ) -> list[Quote]:
         """
         Load quotes from a CSV file.
 
@@ -577,7 +568,7 @@ class CsvLoader:
         self,
         file_path: str,
         symbol: str,
-    ) -> List[Trade]:
+    ) -> list[Trade]:
         """
         Load trades from a CSV file.
 
@@ -595,14 +586,14 @@ class CsvLoader:
 
     def _parse_candles(
         self,
-        rows: List[Dict[str, str]],
+        rows: list[dict[str, str]],
         symbol: str,
         timeframe: str,
         mapping: CandleField,
-        source_timezone: Optional[str] = None,
-    ) -> List[Candle]:
+        source_timezone: str | None = None,
+    ) -> list[Candle]:
         """Parse rows into Candle objects."""
-        candles: List[Candle] = []
+        candles: list[Candle] = []
         required = {mapping.timestamp, mapping.open, mapping.high, mapping.low, mapping.close}
 
         for row in rows:
@@ -636,9 +627,9 @@ class CsvLoader:
 
         return candles
 
-    def _parse_ticks(self, rows: List[Dict[str, str]], symbol: str) -> List[Tick]:
+    def _parse_ticks(self, rows: list[dict[str, str]], symbol: str) -> list[Tick]:
         """Parse rows into Tick objects."""
-        ticks: List[Tick] = []
+        ticks: list[Tick] = []
 
         for row in rows:
             self._stats["total_rows"] += 1
@@ -665,9 +656,9 @@ class CsvLoader:
 
         return ticks
 
-    def _parse_quotes(self, rows: List[Dict[str, str]], symbol: str) -> List[Quote]:
+    def _parse_quotes(self, rows: list[dict[str, str]], symbol: str) -> list[Quote]:
         """Parse rows into Quote objects."""
-        quotes: List[Quote] = []
+        quotes: list[Quote] = []
 
         for row in rows:
             self._stats["total_rows"] += 1
@@ -693,9 +684,9 @@ class CsvLoader:
 
         return quotes
 
-    def _parse_trades(self, rows: List[Dict[str, str]], symbol: str) -> List[Trade]:
+    def _parse_trades(self, rows: list[dict[str, str]], symbol: str) -> list[Trade]:
         """Parse rows into Trade objects."""
-        trades: List[Trade] = []
+        trades: list[Trade] = []
 
         for row in rows:
             self._stats["total_rows"] += 1
@@ -720,7 +711,7 @@ class CsvLoader:
 
         return trades
 
-    def _parse_timestamp(self, value: str, source_timezone: Optional[str] = None) -> datetime:
+    def _parse_timestamp(self, value: str, source_timezone: str | None = None) -> datetime:
         """Parse a timestamp string, with timezone normalization."""
         # Try ISO format first
         try:
@@ -733,19 +724,19 @@ class CsvLoader:
 
         return dt
 
-    def _read_csv(self, file_path: str) -> List[Dict[str, str]]:
+    def _read_csv(self, file_path: str) -> list[dict[str, str]]:
         """Read a CSV file and return rows as dicts."""
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"CSV file not found: {file_path}")
 
-        with open(file_path, "r", encoding="utf-8-sig") as f:
+        with open(file_path, encoding="utf-8-sig") as f:
             return self._parse_csv_reader(f)
 
-    def _parse_csv_text(self, text: str) -> List[Dict[str, str]]:
+    def _parse_csv_text(self, text: str) -> list[dict[str, str]]:
         """Parse CSV text and return rows as dicts."""
         return self._parse_csv_reader(io.StringIO(text))
 
-    def _parse_csv_reader(self, source) -> List[Dict[str, str]]:
+    def _parse_csv_reader(self, source) -> list[dict[str, str]]:
         """Parse CSV from a reader source."""
         reader = csv.DictReader(source, delimiter=self.config.delimiter)
         rows = []
@@ -759,7 +750,7 @@ class CsvLoader:
         self,
         text: str,
         symbol: str,
-    ) -> List[Tick]:
+    ) -> list[Tick]:
         """
         Load ticks from a CSV string.
 
@@ -777,7 +768,7 @@ class CsvLoader:
         self,
         text: str,
         symbol: str,
-    ) -> List[Quote]:
+    ) -> list[Quote]:
         """
         Load quotes from a CSV string.
 
@@ -795,7 +786,7 @@ class CsvLoader:
         self,
         text: str,
         symbol: str,
-    ) -> List[Trade]:
+    ) -> list[Trade]:
         """
         Load trades from a CSV string.
 

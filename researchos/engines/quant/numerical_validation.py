@@ -28,9 +28,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Mapping, Sequence, Tuple, Union
+from typing import Any, Union
 
 from researchos.engines.quant.backend_hash import canonicalize
 
@@ -84,7 +85,7 @@ class NumericalValidationResult:
         """Convenience alias for ``status == PASSED``."""
         return self.status == ValidationStatus.PASSED
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible mapping."""
         return {
             "status": self.status.value,
@@ -100,7 +101,7 @@ class NumericalValidationResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "NumericalValidationResult":
+    def from_dict(cls, data: Mapping[str, Any]) -> NumericalValidationResult:
         """Reconstruct from a ``to_dict()`` mapping."""
         return cls(
             status=ValidationStatus(str(data["status"])),
@@ -120,7 +121,7 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def _as_float_rows(value: Any) -> Tuple[Tuple[float, ...], ...]:
+def _as_float_rows(value: Any) -> tuple[tuple[float, ...], ...]:
     """Normalize a scalar / vector / matrix to nested tuples of floats.
 
     Raises:
@@ -306,14 +307,12 @@ class NumericalComparator:
             "atol": atol,
             "rtol": rtol,
         }
-        return hashlib.sha256(
-            json.dumps(canonicalize(payload), sort_keys=True).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(canonicalize(payload), sort_keys=True).encode("utf-8")).hexdigest()
 
     def _compare_rows(
         self,
-        expected_rows: Tuple[Tuple[float, ...], ...],
-        actual_rows: Tuple[Tuple[float, ...], ...],
+        expected_rows: tuple[tuple[float, ...], ...],
+        actual_rows: tuple[tuple[float, ...], ...],
         atol: float,
         rtol: float,
     ) -> NumericalValidationResult:
@@ -354,25 +353,25 @@ class NumericalComparator:
 
     @staticmethod
     def _shape_matches(
-        expected_rows: Tuple[Tuple[float, ...], ...],
-        actual_rows: Tuple[Tuple[float, ...], ...],
+        expected_rows: tuple[tuple[float, ...], ...],
+        actual_rows: tuple[tuple[float, ...], ...],
     ) -> bool:
         if len(expected_rows) != len(actual_rows):
             return False
         return all(len(a) == len(b) for a, b in zip(expected_rows, actual_rows))
 
     @staticmethod
-    def _contains_nan(rows: Tuple[Tuple[float, ...], ...]) -> bool:
+    def _contains_nan(rows: tuple[tuple[float, ...], ...]) -> bool:
         return any(math.isnan(x) for row in rows for x in row)
 
     @staticmethod
-    def _contains_inf(rows: Tuple[Tuple[float, ...], ...]) -> bool:
+    def _contains_inf(rows: tuple[tuple[float, ...], ...]) -> bool:
         return any(math.isinf(x) for row in rows for x in row)
 
     @staticmethod
     def _compute_repeat_hash(
-        expected_rows: Tuple[Tuple[float, ...], ...],
-        actual_rows: Tuple[Tuple[float, ...], ...],
+        expected_rows: tuple[tuple[float, ...], ...],
+        actual_rows: tuple[tuple[float, ...], ...],
         atol: float,
         rtol: float,
     ) -> str:
@@ -383,9 +382,7 @@ class NumericalComparator:
             "atol": atol,
             "rtol": rtol,
         }
-        return hashlib.sha256(
-            json.dumps(canonicalize(payload), sort_keys=True).encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(canonicalize(payload), sort_keys=True).encode("utf-8")).hexdigest()
 
 
 def _relative_error(expected: float, actual: float) -> float:

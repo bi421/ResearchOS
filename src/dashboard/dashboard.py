@@ -1,13 +1,14 @@
-import os
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 import glob
+import os
+import traceback
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import uvicorn
-import traceback
 
 app = FastAPI()
 os.makedirs("templates", exist_ok=True)
@@ -83,31 +84,21 @@ async def dashboard(request: Request):
 
         # Charts
         fig_equity = go.Figure()
-        fig_equity.add_trace(
-            go.Scatter(x=result.index, y=result["equity"], mode="lines", name="Equity")
-        )
-        fig_equity.update_layout(
-            title="Equity Curve", xaxis_title="Date", yaxis_title="Equity ($)", height=400
-        )
+        fig_equity.add_trace(go.Scatter(x=result.index, y=result["equity"], mode="lines", name="Equity"))
+        fig_equity.update_layout(title="Equity Curve", xaxis_title="Date", yaxis_title="Equity ($)", height=400)
         equity_html = fig_equity.to_html(full_html=False, include_plotlyjs="cdn")
 
         fig_sma = go.Figure()
         fig_sma.add_trace(go.Scatter(x=result.index, y=result["close"], mode="lines", name="Price"))
-        fig_sma.add_trace(
-            go.Scatter(x=result.index, y=result["SMA_short"], mode="lines", name="SMA 20")
-        )
-        fig_sma.add_trace(
-            go.Scatter(x=result.index, y=result["SMA_long"], mode="lines", name="SMA 50")
-        )
+        fig_sma.add_trace(go.Scatter(x=result.index, y=result["SMA_short"], mode="lines", name="SMA 20"))
+        fig_sma.add_trace(go.Scatter(x=result.index, y=result["SMA_long"], mode="lines", name="SMA 50"))
         fig_sma.update_layout(title="Price & SMA", xaxis_title="Date", height=400)
         sma_html = fig_sma.to_html(full_html=False, include_plotlyjs="cdn")
 
         # Drawdown
         dd = (result["equity"].cummax() - result["equity"]) / result["equity"].cummax() * 100
         fig_dd = go.Figure()
-        fig_dd.add_trace(
-            go.Scatter(x=result.index, y=dd, mode="lines", fill="tozeroy", name="Drawdown")
-        )
+        fig_dd.add_trace(go.Scatter(x=result.index, y=dd, mode="lines", fill="tozeroy", name="Drawdown"))
         fig_dd.update_layout(title="Drawdown", xaxis_title="Date", yaxis_title="%", height=300)
         dd_html = fig_dd.to_html(full_html=False, include_plotlyjs="cdn")
 
@@ -115,9 +106,7 @@ async def dashboard(request: Request):
         returns = result["strategy_returns"].dropna()
         winrate = (returns > 0).sum() / returns.count() * 100 if returns.count() > 0 else 0
         total_return = (result["equity"].iloc[-1] / 10000 - 1) * 100
-        sharpe = (
-            returns.mean() / returns.std() * (252 * 6.5 * 12) ** 0.5 if returns.std() != 0 else 0
-        )
+        sharpe = returns.mean() / returns.std() * (252 * 6.5 * 12) ** 0.5 if returns.std() != 0 else 0
         max_dd = dd.max()
 
         stats = {

@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
+
 import pytest
-from researchos import Observation, Hypothesis, Research, Scenario, ScenarioSet
+
+from researchos import Hypothesis, Observation, Research, Scenario, ScenarioSet
 
 
 @pytest.fixture

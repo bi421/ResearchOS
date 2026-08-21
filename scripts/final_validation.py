@@ -1,10 +1,11 @@
 import sys
 
 sys.path.insert(0, ".")
-import yfinance as yf
 import pandas as pd
-from researchos.quant_engine.ensemble_strategy import EnsembleStrategy
+import yfinance as yf
+
 from researchos.quant_engine.advanced_backtest import AdvancedBacktestEngine
+from researchos.quant_engine.ensemble_strategy import EnsembleStrategy
 
 print("=" * 70)
 print("  RESEARCHOS: БҮРЭН END-TO-END БАТАЛГААЖУУЛАЛТ")

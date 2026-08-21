@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 import glob
+
+import numpy as np
+import pandas as pd
 
 print("=" * 60)
 print("📈 RULE-BASED STRATEGY: SMA CROSSOVER + ADX FILTER")
@@ -9,21 +10,12 @@ print("=" * 60)
 # 1. Өгөгдөл ачаалах
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 print(f"Data: {len(df_h)} bars (4h)")
 
 # 2. SMA 50 and 200

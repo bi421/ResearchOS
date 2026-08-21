@@ -3,17 +3,18 @@ Run first XAUUSD backtest using cpp_quant_engine.BacktestEngine
 with real data from researchos.db.
 """
 
-import sys
 import os
+import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "cpp_quant_engine", "python"))
 
-from researchos.data_engine.repository import SqliteDatasetRepository
-
 from cpp_quant_engine.backend import BacktestEngine
-from cpp_quant_engine.models import MarketData, Candle as CQCandle
+from cpp_quant_engine.models import Candle as CQCandle
+from cpp_quant_engine.models import MarketData
+
+from researchos.data_engine.repository import SqliteDatasetRepository
 
 # 1. Load XAUUSD D1 candles from researchos.db
 repo = SqliteDatasetRepository("researchos.db")

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import ast
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 # Layer tiers in dependency order (lower -> higher). Mirrors audit_mil.py.
 TIERS = [
@@ -84,7 +84,7 @@ def _milk_root() -> str:
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def _python_files(base: str) -> List[str]:
+def _python_files(base: str) -> list[str]:
     """Yield all ``.py`` files under ``base`` (recursively)."""
     files = []
     for r, _dirs, fs in os.walk(base):
@@ -114,7 +114,7 @@ def _top_level_pkg(module: str) -> str:
     return parts[0]
 
 
-def _imports(path: str) -> List[Tuple[str, str]]:
+def _imports(path: str) -> list[tuple[str, str]]:
     """Return list of (module, imported_name) for a file."""
     results = []
     try:
@@ -131,7 +131,7 @@ def _imports(path: str) -> List[Tuple[str, str]]:
     return results
 
 
-def check_no_reverse_dependency() -> List[Tuple[str, str]]:
+def check_no_reverse_dependency() -> list[tuple[str, str]]:
     """
     Return list of (source_module, target_module) reverse-dependency
     violations. A violation is a lower-tier module importing a higher-tier
@@ -156,7 +156,7 @@ def check_no_reverse_dependency() -> List[Tuple[str, str]]:
     return violations
 
 
-def check_no_forbidden_import() -> List[Tuple[str, str]]:
+def check_no_forbidden_import() -> list[tuple[str, str]]:
     """Return list of (source_module, target_module) forbidden imports."""
     hits = []
     for path in _python_files(_milk_root()):
@@ -171,7 +171,7 @@ def check_no_forbidden_import() -> List[Tuple[str, str]]:
     return hits
 
 
-def check_no_runtime_random_in_hash() -> List[Tuple[str, str]]:
+def check_no_runtime_random_in_hash() -> list[tuple[str, str]]:
     """
     Return list of (module, function) where a hash-like function calls
     a non-deterministic runtime source (random/uuid4/utcnow/now/secrets).
@@ -200,7 +200,7 @@ def check_no_runtime_random_in_hash() -> List[Tuple[str, str]]:
     return hits
 
 
-def check_persistent_id_determinism() -> List[Tuple[str, str]]:
+def check_persistent_id_determinism() -> list[tuple[str, str]]:
     """
     Return list of (module, function) where a persistent-id generator uses a
     non-content-derived source (uuid4/random/utcnow/now) in its ID string.
@@ -238,7 +238,7 @@ def check_persistent_id_determinism() -> List[Tuple[str, str]]:
     return hits
 
 
-def check_econometric_single_owner() -> List[Tuple[str, str]]:
+def check_econometric_single_owner() -> list[tuple[str, str]]:
     """
     Return list of (module, function) where an econometric algorithm is
     implemented outside the ``econometrics`` tier.
@@ -271,7 +271,7 @@ def check_econometric_single_owner() -> List[Tuple[str, str]]:
     return violations
 
 
-def run_all() -> Dict[str, Any]:
+def run_all() -> dict[str, Any]:
     """Run every guard and return a structured report."""
     return {
         "reverse_dependencies": check_no_reverse_dependency(),
@@ -282,7 +282,7 @@ def run_all() -> Dict[str, Any]:
     }
 
 
-def is_clean(report: Dict[str, Any] | None = None) -> bool:
+def is_clean(report: dict[str, Any] | None = None) -> bool:
     """Return True if every guard passes (no violations)."""
     if report is None:
         report = run_all()

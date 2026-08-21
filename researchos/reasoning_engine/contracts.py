@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Tuple
+from typing import Any
 
 # --------------------------------------------------------------------------- #
 # Enumerations
@@ -93,20 +93,16 @@ def _require_evidence_type(value: Any) -> EvidenceType:
             raise InvalidEvidenceTypeError(
                 f"evidence_type {value!r} is not a valid EvidenceType; allowed values: {valid}"
             ) from None
-    raise InvalidEvidenceTypeError(
-        f"evidence_type must be an EvidenceType or str, got {type(value).__name__}"
-    )
+    raise InvalidEvidenceTypeError(f"evidence_type must be an EvidenceType or str, got {type(value).__name__}")
 
 
-def _require_str_tuple(value: Any, name: str) -> Tuple[str, ...]:
+def _require_str_tuple(value: Any, name: str) -> tuple[str, ...]:
     """Normalise a sequence of identifiers into an immutable tuple of strings."""
     if value is None:
         return ()
     if isinstance(value, (list, tuple)):
         return tuple(str(item) for item in value)
-    raise InvalidIdentifierError(
-        f"{name} must be a list or tuple of strings, got {type(value).__name__}"
-    )
+    raise InvalidIdentifierError(f"{name} must be a list or tuple of strings, got {type(value).__name__}")
 
 
 # --------------------------------------------------------------------------- #
@@ -155,7 +151,7 @@ class ReasoningEvidence:
             _require_score(self.reliability_score, "reliability_score"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "id": self.id,
@@ -166,7 +162,7 @@ class ReasoningEvidence:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ReasoningEvidence":
+    def from_dict(cls, data: dict[str, Any]) -> ReasoningEvidence:
         """Reconstruct a :class:`ReasoningEvidence` from a ``to_dict()`` mapping."""
         return cls(
             id=str(data["id"]),
@@ -203,7 +199,7 @@ class Fact:
     """
 
     statement: str
-    evidence_ids: Tuple[str, ...]
+    evidence_ids: tuple[str, ...]
 
     def __post_init__(self) -> None:
         """Enforce construction-time invariants."""
@@ -218,7 +214,7 @@ class Fact:
             _require_str_tuple(self.evidence_ids, "evidence_ids"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "statement": self.statement,
@@ -226,7 +222,7 @@ class Fact:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Fact":
+    def from_dict(cls, data: dict[str, Any]) -> Fact:
         """Reconstruct a :class:`Fact` from a ``to_dict()`` mapping."""
         return cls(
             statement=str(data["statement"]),
@@ -253,7 +249,7 @@ class Hypothesis:
     """
 
     statement: str
-    supporting_facts: Tuple[str, ...]
+    supporting_facts: tuple[str, ...]
     confidence: float
 
     def __post_init__(self) -> None:
@@ -274,7 +270,7 @@ class Hypothesis:
             _require_score(self.confidence, "confidence"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "statement": self.statement,
@@ -283,7 +279,7 @@ class Hypothesis:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Hypothesis":
+    def from_dict(cls, data: dict[str, Any]) -> Hypothesis:
         """Reconstruct a :class:`Hypothesis` from a ``to_dict()`` mapping."""
         return cls(
             statement=str(data["statement"]),

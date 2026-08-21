@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 DEFAULT_CALCULATION_VERSION = "CALCULATION_V1"
 
@@ -34,7 +34,7 @@ def canonical_float(v: float) -> str:
 
 
 def canonical_json_escape(s: str) -> str:
-    out: List[str] = []
+    out: list[str] = []
     for ch in s:
         o = ord(ch)
         if ch == '"':
@@ -62,17 +62,17 @@ def _q(s: str) -> str:
     return '"' + canonical_json_escape(s) + '"'
 
 
-def canonical_object(fields: Dict[str, str]) -> str:
+def canonical_object(fields: dict[str, str]) -> str:
     items = sorted(fields.items())
     body = ",".join(f"{_q(k)}:{v}" for k, v in items)
     return "{" + body + "}"
 
 
-def canonical_float_array(values: List[float]) -> str:
+def canonical_float_array(values: list[float]) -> str:
     return "[" + ",".join(canonical_float(v) for v in values) + "]"
 
 
-def canonical_double_map(m: Dict[str, float]) -> str:
+def canonical_double_map(m: dict[str, float]) -> str:
     body = ",".join(f"{_q(k)}:{canonical_float(v)}" for k, v in sorted(m.items()))
     return "{" + body + "}"
 
@@ -107,7 +107,7 @@ class Candle:
             }
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp,
             "open": self.open,
@@ -119,7 +119,7 @@ class Candle:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "Candle":
+    def from_base_object(cls, d: dict[str, Any]) -> Candle:
         return cls(
             timestamp=str(d.get("timestamp", "")),
             open=float(d.get("open", 0.0)),
@@ -131,11 +131,11 @@ class Candle:
         )
 
 
-def _candles_canonical(candles: List[Candle]) -> str:
+def _candles_canonical(candles: list[Candle]) -> str:
     return "[" + ",".join(c.to_canonical() for c in candles) + "]"
 
 
-def _candles_to_dict(candles: List[Candle]) -> List[Dict[str, Any]]:
+def _candles_to_dict(candles: list[Candle]) -> list[dict[str, Any]]:
     return [c.to_base_object() for c in candles]
 
 
@@ -146,7 +146,7 @@ def _candles_to_dict(candles: List[Candle]) -> List[Dict[str, Any]]:
 class MarketDataRequest:
     symbol: str = ""
     timeframe: str = "M1"
-    candles: List[Candle] = field(default_factory=list)
+    candles: list[Candle] = field(default_factory=list)
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
@@ -161,7 +161,7 @@ class MarketDataRequest:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -170,7 +170,7 @@ class MarketDataRequest:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "MarketDataRequest":
+    def from_base_object(cls, d: dict[str, Any]) -> MarketDataRequest:
         return cls(
             symbol=str(d.get("symbol", "")),
             timeframe=str(d.get("timeframe", "M1")),
@@ -213,7 +213,7 @@ class MarketDataResult:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -230,7 +230,7 @@ class MarketDataResult:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "MarketDataResult":
+    def from_base_object(cls, d: dict[str, Any]) -> MarketDataResult:
         return cls(
             symbol=str(d.get("symbol", "")),
             timeframe=str(d.get("timeframe", "M1")),
@@ -253,7 +253,7 @@ class MarketData:
 
     symbol: str
     timeframe: str = "M1"
-    candles: List[Candle] = field(default_factory=list)
+    candles: list[Candle] = field(default_factory=list)
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def to_request(self) -> MarketDataRequest:
@@ -267,11 +267,11 @@ class MarketData:
     def compute_input_hash(self) -> str:
         return self.to_request().compute_input_hash()
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return self.to_request().to_base_object()
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "MarketData":
+    def from_base_object(cls, d: dict[str, Any]) -> MarketData:
         req = MarketDataRequest.from_base_object(d)
         return cls(
             symbol=req.symbol,
@@ -286,7 +286,7 @@ class MarketData:
 
 @dataclass
 class StatisticsRequest:
-    data: List[float] = field(default_factory=list)
+    data: list[float] = field(default_factory=list)
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def compute_input_hash(self) -> str:
@@ -299,14 +299,14 @@ class StatisticsRequest:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "data": self.data,
             "calculation_version": self.calculation_version,
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "StatisticsRequest":
+    def from_base_object(cls, d: dict[str, Any]) -> StatisticsRequest:
         return cls(
             data=[float(x) for x in d.get("data", [])],
             calculation_version=str(d.get("calculation_version", DEFAULT_CALCULATION_VERSION)),
@@ -359,7 +359,7 @@ class StatisticsResult:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "count": self.count,
             "sum": self.sum,
@@ -382,7 +382,7 @@ class StatisticsResult:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "StatisticsResult":
+    def from_base_object(cls, d: dict[str, Any]) -> StatisticsResult:
         return cls(
             count=int(d.get("count", 0)),
             sum=float(d.get("sum", 0.0)),
@@ -410,8 +410,8 @@ class StatisticsResult:
 
 @dataclass
 class RiskRequest:
-    returns: List[float] = field(default_factory=list)
-    equity_curve: List[float] = field(default_factory=list)
+    returns: list[float] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
     risk_free_rate: float = 0.0
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
@@ -427,7 +427,7 @@ class RiskRequest:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "returns": self.returns,
             "equity_curve": self.equity_curve,
@@ -436,7 +436,7 @@ class RiskRequest:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "RiskRequest":
+    def from_base_object(cls, d: dict[str, Any]) -> RiskRequest:
         return cls(
             returns=[float(x) for x in d.get("returns", [])],
             equity_curve=[float(x) for x in d.get("equity_curve", [])],
@@ -485,7 +485,7 @@ class RiskResult:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "var_95": self.var_95,
             "var_99": self.var_99,
@@ -505,7 +505,7 @@ class RiskResult:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "RiskResult":
+    def from_base_object(cls, d: dict[str, Any]) -> RiskResult:
         return cls(
             var_95=float(d.get("var_95", 0.0)),
             var_99=float(d.get("var_99", 0.0)),
@@ -538,7 +538,7 @@ class SimulationRequest:
     seed: int = 42
     start_time: str = ""
     end_time: str = ""
-    prices: List[float] = field(default_factory=list)
+    prices: list[float] = field(default_factory=list)
 
     def compute_input_hash(self) -> str:
         return _sha256(
@@ -557,7 +557,7 @@ class SimulationRequest:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "dataset_reference": self.dataset_reference,
             "dataset_version": self.dataset_version,
@@ -571,7 +571,7 @@ class SimulationRequest:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "SimulationRequest":
+    def from_base_object(cls, d: dict[str, Any]) -> SimulationRequest:
         return cls(
             dataset_reference=str(d.get("dataset_reference", "")),
             dataset_version=str(d.get("dataset_version", "1.0.0")),
@@ -596,11 +596,11 @@ class SimulationResult:
     input_hash: str = ""
     result_hash: str = ""
     execution_timestamp: str = ""
-    returns: List[float] = field(default_factory=list)
-    equity_curve: List[float] = field(default_factory=list)
-    metrics: Dict[str, float] = field(default_factory=dict)
-    statistics: Dict[str, float] = field(default_factory=dict)
-    performance: Dict[str, float] = field(default_factory=dict)
+    returns: list[float] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
+    metrics: dict[str, float] = field(default_factory=dict)
+    statistics: dict[str, float] = field(default_factory=dict)
+    performance: dict[str, float] = field(default_factory=dict)
     engine_version: str = ""
     bridge_version: str = ""
 
@@ -626,7 +626,7 @@ class SimulationResult:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "simulation_id": self.simulation_id,
             "dataset_reference": self.dataset_reference,
@@ -647,7 +647,7 @@ class SimulationResult:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "SimulationResult":
+    def from_base_object(cls, d: dict[str, Any]) -> SimulationResult:
         return cls(
             simulation_id=str(d.get("simulation_id", "")),
             dataset_reference=str(d.get("dataset_reference", "")),
@@ -675,7 +675,7 @@ class SimulationResult:
 class BacktestRequest:
     symbol: str = ""
     timeframe: str = "M1"
-    candles: List[Candle] = field(default_factory=list)
+    candles: list[Candle] = field(default_factory=list)
     initial_capital: float = 100_000.0
     commission_pct: float = 0.001
     slippage_pct: float = 0.0005
@@ -700,7 +700,7 @@ class BacktestRequest:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -714,7 +714,7 @@ class BacktestRequest:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "BacktestRequest":
+    def from_base_object(cls, d: dict[str, Any]) -> BacktestRequest:
         return cls(
             symbol=str(d.get("symbol", "")),
             timeframe=str(d.get("timeframe", "M1")),
@@ -730,8 +730,8 @@ class BacktestRequest:
 
 @dataclass
 class BacktestResult:
-    equity_curve: List[float] = field(default_factory=list)
-    drawdown_curve: List[float] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
+    drawdown_curve: list[float] = field(default_factory=list)
     final_equity: float = 0.0
     total_return_pct: float = 0.0
     max_drawdown_pct: float = 0.0
@@ -764,7 +764,7 @@ class BacktestResult:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "equity_curve": self.equity_curve,
             "drawdown_curve": self.drawdown_curve,
@@ -782,7 +782,7 @@ class BacktestResult:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "BacktestResult":
+    def from_base_object(cls, d: dict[str, Any]) -> BacktestResult:
         return cls(
             equity_curve=[float(x) for x in d.get("equity_curve", [])],
             drawdown_curve=[float(x) for x in d.get("drawdown_curve", [])],
@@ -805,8 +805,8 @@ class BacktestResult:
 
 @dataclass
 class PerformanceRequest:
-    equity_curve: List[float] = field(default_factory=list)
-    bars: List[Candle] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
+    bars: list[Candle] = field(default_factory=list)
     initial_capital: float = 100_000.0
     trading_days_per_year: float = 252.0
     calculation_version: str = DEFAULT_CALCULATION_VERSION
@@ -824,7 +824,7 @@ class PerformanceRequest:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "equity_curve": self.equity_curve,
             "bars": _candles_to_dict(self.bars),
@@ -834,7 +834,7 @@ class PerformanceRequest:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "PerformanceRequest":
+    def from_base_object(cls, d: dict[str, Any]) -> PerformanceRequest:
         return cls(
             equity_curve=[float(x) for x in d.get("equity_curve", [])],
             bars=[Candle.from_base_object(c) for c in d.get("bars", [])],
@@ -886,16 +886,12 @@ class PerformanceResult:
                     "calculation_version": _q(self.calculation_version),
                     "cvar_95": canonical_float(self.cvar_95),
                     "cvar_99": canonical_float(self.cvar_99),
-                    "downside_deviation_annualized": canonical_float(
-                        self.downside_deviation_annualized
-                    ),
+                    "downside_deviation_annualized": canonical_float(self.downside_deviation_annualized),
                     "engine_version": _q(self.engine_version),
                     "input_hash": _q(self.input_hash),
                     "losing_trades": canonical_float(float(self.losing_trades)),
                     "max_drawdown_pct": canonical_float(self.max_drawdown_pct),
-                    "max_drawdown_recovery_bars": canonical_float(
-                        float(self.max_drawdown_recovery_bars)
-                    ),
+                    "max_drawdown_recovery_bars": canonical_float(float(self.max_drawdown_recovery_bars)),
                     "num_drawdown_periods": canonical_float(float(self.num_drawdown_periods)),
                     "num_monthly_periods": canonical_float(float(self.num_monthly_periods)),
                     "num_yearly_periods": canonical_float(float(self.num_yearly_periods)),
@@ -914,7 +910,7 @@ class PerformanceResult:
             )
         )
 
-    def to_base_object(self) -> Dict[str, Any]:
+    def to_base_object(self) -> dict[str, Any]:
         return {
             "total_return": self.total_return,
             "total_return_pct": self.total_return_pct,
@@ -947,7 +943,7 @@ class PerformanceResult:
         }
 
     @classmethod
-    def from_base_object(cls, d: Dict[str, Any]) -> "PerformanceResult":
+    def from_base_object(cls, d: dict[str, Any]) -> PerformanceResult:
         return cls(
             total_return=float(d.get("total_return", 0.0)),
             total_return_pct=float(d.get("total_return_pct", 0.0)),

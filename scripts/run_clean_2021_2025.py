@@ -1,6 +1,7 @@
 import math
 from datetime import datetime
 from pathlib import Path
+
 import polars as pl
 
 PROJECT_ROOT = Path("C:/Users/User/Desktop/ResearchOS")
@@ -21,18 +22,10 @@ df_h1 = (
     .group_by_dynamic("ts_utc", every="1h")
     .agg(
         [
-            pl.col("Open").first().alias("open")
-            if "Open" in df.columns
-            else pl.col("open").first().alias("open"),
-            pl.col("High").max().alias("high")
-            if "High" in df.columns
-            else pl.col("high").max().alias("high"),
-            pl.col("Low").min().alias("low")
-            if "Low" in df.columns
-            else pl.col("low").min().alias("low"),
-            pl.col("Close").last().alias("close")
-            if "Close" in df.columns
-            else pl.col("close").last().alias("close"),
+            pl.col("Open").first().alias("open") if "Open" in df.columns else pl.col("open").first().alias("open"),
+            pl.col("High").max().alias("high") if "High" in df.columns else pl.col("high").max().alias("high"),
+            pl.col("Low").min().alias("low") if "Low" in df.columns else pl.col("low").min().alias("low"),
+            pl.col("Close").last().alias("close") if "Close" in df.columns else pl.col("close").last().alias("close"),
         ]
     )
     .filter(pl.col("close").is_not_null())
@@ -48,9 +41,7 @@ df_h1 = df_h1.with_columns(
     ]
 )
 df_h1 = df_h1.with_columns((pl.col("close") / pl.col("close").shift(1) - 1).alias("ret"))
-df_h1 = df_h1.with_columns(
-    (pl.when(pl.col("sma50") > pl.col("sma200")).then(1).otherwise(0)).alias("pos")
-)
+df_h1 = df_h1.with_columns((pl.when(pl.col("sma50") > pl.col("sma200")).then(1).otherwise(0)).alias("pos"))
 df_h1 = df_h1.with_columns((pl.col("pos").shift(1) * pl.col("ret")).alias("strat_ret"))
 df_h1 = df_h1.filter(pl.col("sma200").is_not_null())
 

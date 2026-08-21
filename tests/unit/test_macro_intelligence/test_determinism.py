@@ -330,9 +330,7 @@ class TestMILDET001Invariant:
         # All should have the same hash
         first_hash = instances[0].compute_hash()
         for instance in instances[1:]:
-            assert instance.compute_hash() == first_hash, (
-                f"Runtime metadata affected hash: {instance.created_at}"
-            )
+            assert instance.compute_hash() == first_hash, f"Runtime metadata affected hash: {instance.created_at}"
 
     def test_semantic_changes_reflected_in_hash(self):
         """Verify that semantic changes are reflected in hash."""

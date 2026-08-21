@@ -39,7 +39,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from researchos.evidence.envelope import (
     HASH_SCHEME_VERSION,
@@ -73,7 +74,7 @@ def _to_primitives(value: Any) -> Any:
     return value
 
 
-def _config_to_dict(config: Any) -> Dict[str, Any]:
+def _config_to_dict(config: Any) -> dict[str, Any]:
     """Serialize a config object (DatasetConfig / SimulationConfig) to a dict.
 
     Returns an empty mapping when the config is absent or has no ``to_dict``.
@@ -89,8 +90,8 @@ def _config_to_dict(config: Any) -> Dict[str, Any]:
 def run_payload(
     run: Any,
     experiment_hash: str = "",
-    backend_identity: Optional[Mapping[str, Any]] = None,
-) -> Dict[str, Any]:
+    backend_identity: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a deterministic, primitives-only payload from an ``ExperimentRun``.
 
     The payload captures the run's LOGICAL identity only.  Wall-clock
@@ -114,7 +115,7 @@ def run_payload(
     tags = sorted(getattr(run, "tags", []) or [])
     ontology_tags = sorted(getattr(run, "ontology_tags", []) or [])
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "run_hash": str(getattr(run, "run_hash", "")),
         "experiment_id": str(getattr(run, "experiment_id", "")),
         "experiment_hash": experiment_hash,
@@ -135,10 +136,10 @@ def run_payload(
 def build_run_envelope(
     run: Any,
     experiment_hash: str = "",
-    backend_identity: Optional[Mapping[str, Any]] = None,
+    backend_identity: Mapping[str, Any] | None = None,
     version: str = RUN_EVIDENCE_VERSION,
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
+    parent_hashes: Sequence[str] | None = None,
 ) -> EvidenceEnvelope:
     """Build a scheme-2 ``EvidenceEnvelope`` for an ``ExperimentRun``.
 
@@ -200,7 +201,7 @@ def attach_experiment_parent(
 
 def emit_run(
     envelope: EvidenceEnvelope,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
 ) -> EvidenceEnvelope:
     """Persist a Run envelope to an ``EvidenceRepository`` (append-only).
 
@@ -226,8 +227,8 @@ def emit_run(
 def emit_run_for_experiment(
     run: Any,
     experiment_hash: str,
-    repository: Optional[EvidenceRepository] = None,
-    backend_identity: Optional[Mapping[str, Any]] = None,
+    repository: EvidenceRepository | None = None,
+    backend_identity: Mapping[str, Any] | None = None,
     version: str = RUN_EVIDENCE_VERSION,
     created_at: str = "",
 ) -> EvidenceEnvelope:

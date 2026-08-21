@@ -43,16 +43,12 @@ class TestArchitectureGuards:
     def test_mil_grd_003_no_runtime_random_in_hash(self, guard_report):
         """MIL-GRD-003: Hash functions must be deterministic."""
         violations = guard_report["runtime_random_in_hash"]
-        assert violations == [], "Non-deterministic runtime source in hash functions: " + str(
-            violations
-        )
+        assert violations == [], "Non-deterministic runtime source in hash functions: " + str(violations)
 
     def test_mil_grd_004_persistent_id_determinism(self, guard_report):
         """MIL-GRD-004: Persistent IDs must be content-derived."""
         violations = guard_report["persistent_id_determinism"]
-        assert violations == [], "Non-content-derived persistent ID generation found: " + str(
-            violations
-        )
+        assert violations == [], "Non-content-derived persistent ID generation found: " + str(violations)
 
     def test_mil_grd_005_full_guard_set_clean(self, guard_report):
         """MIL-GRD-005: The entire guard set is clean."""
@@ -106,6 +102,4 @@ class TestGuardHelpers:
     def test_econometric_single_owner_guard(self):
         """Econometric algorithms are owned exclusively by the econometrics tier."""
         violations = guards.check_econometric_single_owner()
-        assert violations == [], (
-            "Econometric algorithm implemented outside econometrics tier: " + str(violations)
-        )
+        assert violations == [], "Econometric algorithm implemented outside econometrics tier: " + str(violations)

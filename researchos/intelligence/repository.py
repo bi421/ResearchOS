@@ -19,7 +19,6 @@ Responsibilities:
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from researchos.intelligence.contracts import (
     EVIDENCE_GRAPH_VERSION,
@@ -35,7 +34,7 @@ class EvidenceGraphStore:
 
     VERSION = EVIDENCE_GRAPH_VERSION
 
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: str | None = None) -> None:
         self._path = path or DEFAULT_PATH
 
     @property
@@ -83,7 +82,7 @@ class EvidenceGraphStore:
 
     # -- save / load -----------------------------------------------------
 
-    def save(self, graph: EvidenceGraph, path: Optional[str] = None) -> str:
+    def save(self, graph: EvidenceGraph, path: str | None = None) -> str:
         """Write ``graph`` as JSON to ``path`` (or the default path).
 
         Returns:
@@ -95,7 +94,7 @@ class EvidenceGraphStore:
             handle.write(text)
         return target
 
-    def load(self, path: Optional[str] = None) -> EvidenceGraph:
+    def load(self, path: str | None = None) -> EvidenceGraph:
         """Read a graph from ``path`` (or the default path).
 
         Raises:
@@ -103,7 +102,7 @@ class EvidenceGraphStore:
             EvidenceError: If the file does not contain a valid graph.
         """
         target = path or self._path
-        with open(target, "r", encoding="utf-8") as handle:
+        with open(target, encoding="utf-8") as handle:
             text = handle.read()
         return self.deserialize(text)
 

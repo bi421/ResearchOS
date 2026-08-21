@@ -1,4 +1,4 @@
-from .broker_connectors import MT5Connector, DataComparator
+from .broker_connectors import DataComparator, MT5Connector
 from .candle import Candle
 from .contracts import (
     CandleField,

@@ -10,8 +10,6 @@ Every hypothesis must be falsifiable.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
@@ -59,17 +57,17 @@ class Hypothesis(BaseObject):
         type: str,
         statement: str,
         narrative_id: str = "",
-        evidence_ids: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
         evidence_strength: float = 0.0,
         coherence: float = 0.0,
         plausibility: float = 0.0,
         falsifiability: float = 0.0,
         confidence: float = 0.0,
-        valid_if: Optional[List[str]] = None,
-        invalid_if: Optional[List[str]] = None,
-        monitoring_conditions: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        valid_if: list[str] | None = None,
+        invalid_if: list[str] | None = None,
+        monitoring_conditions: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Hypothesis|{research_id}|{type}|{statement}"
@@ -81,15 +79,15 @@ class Hypothesis(BaseObject):
         self.type = type
         self.statement = statement
         self.narrative_id = narrative_id
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.evidence_strength = evidence_strength
         self.coherence = coherence
         self.plausibility = plausibility
         self.falsifiability = falsifiability
         self.confidence = confidence
-        self.valid_if: List[str] = valid_if or []
-        self.invalid_if: List[str] = invalid_if or []
-        self.monitoring_conditions: List[str] = monitoring_conditions or []
+        self.valid_if: list[str] = valid_if or []
+        self.invalid_if: list[str] = invalid_if or []
+        self.monitoring_conditions: list[str] = monitoring_conditions or []
         self.status = "Active"
 
         # Compute rank score
@@ -114,7 +112,7 @@ class Hypothesis(BaseObject):
             + self.falsifiability * RANK_FALSIFIABILITY
         )
 
-    def check_invalidation(self, current_evidence: List[str]) -> bool:
+    def check_invalidation(self, current_evidence: list[str]) -> bool:
         """
         Check if this hypothesis has been invalidated.
 
@@ -178,7 +176,7 @@ class Hypothesis(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Hypothesis":
+    def from_dict(cls, data: dict) -> Hypothesis:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.type = data["type"]
@@ -208,9 +206,9 @@ class HypothesisSet(BaseObject):
     def __init__(
         self,
         research_id: str,
-        hypotheses: Optional[List[Hypothesis]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        hypotheses: list[Hypothesis] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"HypothesisSet|{research_id}"
@@ -218,11 +216,11 @@ class HypothesisSet(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.research_id = research_id
-        self.hypotheses: List[Hypothesis] = hypotheses or []
-        self._hypothesis_ids: List[str] = []
+        self.hypotheses: list[Hypothesis] = hypotheses or []
+        self._hypothesis_ids: list[str] = []
 
     @property
-    def primary_id(self) -> Optional[str]:
+    def primary_id(self) -> str | None:
         """Get the ID of the primary hypothesis."""
         for h in self.hypotheses:
             if h.type == "Primary":
@@ -230,12 +228,12 @@ class HypothesisSet(BaseObject):
         return None
 
     @property
-    def alternatives(self) -> List[str]:
+    def alternatives(self) -> list[str]:
         """Get IDs of alternative hypotheses."""
         return [h.id for h in self.hypotheses if h.type == "Alternative"]
 
     @property
-    def null_id(self) -> Optional[str]:
+    def null_id(self) -> str | None:
         """Get the ID of the null hypothesis."""
         for h in self.hypotheses:
             if h.type == "Null":
@@ -243,7 +241,7 @@ class HypothesisSet(BaseObject):
         return None
 
     @property
-    def tail_ids(self) -> List[str]:
+    def tail_ids(self) -> list[str]:
         """Get IDs of tail hypotheses."""
         return [h.id for h in self.hypotheses if h.type == "Tail"]
 
@@ -251,7 +249,7 @@ class HypothesisSet(BaseObject):
         """Add a hypothesis to the set."""
         self.hypotheses.append(hypothesis)
 
-    def get_ranked(self) -> List[Hypothesis]:
+    def get_ranked(self) -> list[Hypothesis]:
         """Get hypotheses sorted by rank score (descending), with deterministic tie-breaking by ID."""
         return sorted(
             self.hypotheses,
@@ -259,13 +257,13 @@ class HypothesisSet(BaseObject):
         )
 
     @property
-    def hypothesis_ids(self) -> List[str]:
+    def hypothesis_ids(self) -> list[str]:
         if self.hypotheses:
             return [h.id for h in self.hypotheses]
         return self._hypothesis_ids
 
     @hypothesis_ids.setter
-    def hypothesis_ids(self, value: List[str]) -> None:
+    def hypothesis_ids(self, value: list[str]) -> None:
         self._hypothesis_ids = value
 
     def to_dict(self) -> dict:
@@ -279,7 +277,7 @@ class HypothesisSet(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "HypothesisSet":
+    def from_dict(cls, data: dict) -> HypothesisSet:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.hypotheses = []

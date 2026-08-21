@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import Lifecycle
@@ -36,9 +36,9 @@ class BaseObject:
 
     def __init__(
         self,
-        id: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        ontology_tags: Optional[List[str]] = None,
+        id: str | None = None,
+        created_at: datetime | None = None,
+        ontology_tags: list[str] | None = None,
     ):
         """
         Initialize a ResearchOS object.
@@ -50,9 +50,9 @@ class BaseObject:
         """
         self.id = id
         self.created_at = created_at or utc_now()
-        self.ontology_tags: List[str] = ontology_tags or []
+        self.ontology_tags: list[str] = ontology_tags or []
         self.lifecycle = Lifecycle()
-        self._hash: Optional[str] = None
+        self._hash: str | None = None
 
         if self.id is None:
             tags_str = "|".join(sorted(self.ontology_tags)) if self.ontology_tags else "BaseObject"
@@ -71,7 +71,7 @@ class BaseObject:
         content = self._to_hashable_dict()
         return deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         """
         Convert object to a hashable dictionary.
 
@@ -81,7 +81,7 @@ class BaseObject:
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert object to a dictionary representation.
 
@@ -101,7 +101,7 @@ class BaseObject:
         return json.dumps(self.to_dict(), indent=2, sort_keys=True, default=str)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "BaseObject":
+    def from_dict(cls, data: dict) -> BaseObject:
         """
         Restore an object from saved state.
 
@@ -111,9 +111,7 @@ class BaseObject:
         """
         obj = cls.__new__(cls)
         obj.id = data.get("id")
-        obj.created_at = (
-            parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
-        )
+        obj.created_at = parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
         obj.ontology_tags = data.get("ontology_tags", [])
         obj.lifecycle = Lifecycle.from_dict(data.get("lifecycle", {"transitions": []}))
         obj._hash = None

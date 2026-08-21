@@ -2,8 +2,8 @@
 Macro economic factors provider (DXY, US10Y, VIX, XAUUSD).
 """
 
-from typing import List, Optional
 import pandas as pd
+
 from researchos.data_engine.contracts import Timeframe
 from researchos.data_engine.repository import DatasetRepository
 
@@ -16,10 +16,10 @@ class MacroFactorProvider:
 
     def get_factors(
         self,
-        symbols: List[str],
+        symbols: list[str],
         start_date: str,
         end_date: str,
-        timeframe: Optional[Timeframe] = None,
+        timeframe: Timeframe | None = None,
     ) -> pd.DataFrame:
         """
         Fetch historical closing prices for given symbols.
@@ -53,9 +53,7 @@ class MacroFactorProvider:
                 # to_dataframe ??????? ??? _records-??? ???? DataFrame ????
                 records = getattr(dataset, "_records", [])
                 if records:
-                    df = pd.DataFrame(
-                        [{"timestamp": r.timestamp, "close": r.close} for r in records]
-                    )
+                    df = pd.DataFrame([{"timestamp": r.timestamp, "close": r.close} for r in records])
                     df = df.set_index("timestamp")
                     df = df.loc[start_date:end_date] if start_date in df.index else df
                     data[symbol] = df["close"]

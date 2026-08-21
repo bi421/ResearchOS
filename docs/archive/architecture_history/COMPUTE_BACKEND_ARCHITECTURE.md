@@ -102,7 +102,7 @@ returns an immutable `BackendCapabilities` object:
 BackendCapabilities(
     backend_name="PythonQuantBackend",
     version="1.0.0",
-    supported_operations=QUANT_OPERATIONS,   # 7 interface operations
+    supported_operations=QUANT_OPERATIONS,  # 7 interface operations
     deterministic=True,
     stateless=True,
     no_timestamps=True,

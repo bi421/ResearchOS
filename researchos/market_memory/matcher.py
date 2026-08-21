@@ -15,14 +15,13 @@ Every comparison is:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from researchos.market_memory.models import HistoricalScenario, MarketSnapshot
 from researchos.market_memory.similarity import compare_snapshots
 
 # Default feature weights for scenario matching
 # These sum to 1.0 and are configurable per use case
-DEFAULT_FEATURE_WEIGHTS: Dict[str, float] = {
+DEFAULT_FEATURE_WEIGHTS: dict[str, float] = {
     "price_range": 0.25,
     "body_ratio": 0.15,
     "trend_direction": 0.30,
@@ -49,9 +48,9 @@ class MatchResult:
     scenario_id: str
     scenario_name: str
     overall_score: float
-    feature_scores: Dict[str, float]
+    feature_scores: dict[str, float]
     calculation_method: str = "WeightedFeatureComparison"
-    weight_profile: Dict[str, float] = field(default_factory=lambda: dict(DEFAULT_FEATURE_WEIGHTS))
+    weight_profile: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_FEATURE_WEIGHTS))
 
     def to_dict(self) -> dict:
         return {
@@ -79,29 +78,25 @@ class ScenarioMatcher:
 
     def __init__(
         self,
-        feature_weights: Optional[Dict[str, float]] = None,
+        feature_weights: dict[str, float] | None = None,
     ):
-        self.feature_weights = (
-            dict(feature_weights) if feature_weights else dict(DEFAULT_FEATURE_WEIGHTS)
-        )
+        self.feature_weights = dict(feature_weights) if feature_weights else dict(DEFAULT_FEATURE_WEIGHTS)
         self._validate_weights()
 
     def _validate_weights(self) -> None:
         """Validate that weights sum to approximately 1.0."""
         total = sum(self.feature_weights.values())
         if abs(total - 1.0) > 0.01:
-            raise ValueError(
-                f"Feature weights must sum to 1.0, got {total:.3f}. Weights: {self.feature_weights}"
-            )
+            raise ValueError(f"Feature weights must sum to 1.0, got {total:.3f}. Weights: {self.feature_weights}")
 
     def match_scenario(
         self,
         snapshot: MarketSnapshot,
-        scenarios: List[HistoricalScenario],
-        snapshots_index: Optional[Dict[str, MarketSnapshot]] = None,
+        scenarios: list[HistoricalScenario],
+        snapshots_index: dict[str, MarketSnapshot] | None = None,
         top_n: int = 5,
         min_score: float = 0.0,
-    ) -> List[MatchResult]:
+    ) -> list[MatchResult]:
         """
         Match a MarketSnapshot against a list of HistoricalScenario objects.
 
@@ -116,7 +111,7 @@ class ScenarioMatcher:
         Returns:
             List of MatchResult sorted by overall_score descending.
         """
-        results: List[MatchResult] = []
+        results: list[MatchResult] = []
 
         for scenario in scenarios:
             score = self._compute_scenario_score(snapshot, scenario, snapshots_index)
@@ -141,7 +136,7 @@ class ScenarioMatcher:
         self,
         snapshot: MarketSnapshot,
         scenario: HistoricalScenario,
-        snapshots_index: Optional[Dict[str, MarketSnapshot]] = None,
+        snapshots_index: dict[str, MarketSnapshot] | None = None,
     ) -> float:
         """
         Compute the overall similarity score between a snapshot and scenario.
@@ -152,7 +147,7 @@ class ScenarioMatcher:
         if not scenario.snapshot_ids:
             return 0.0
 
-        snapshot_scores: List[float] = []
+        snapshot_scores: list[float] = []
 
         for sid in scenario.snapshot_ids:
             if snapshots_index and sid in snapshots_index:
@@ -173,14 +168,14 @@ class ScenarioMatcher:
         self,
         snapshot: MarketSnapshot,
         scenario: HistoricalScenario,
-        snapshots_index: Optional[Dict[str, MarketSnapshot]] = None,
-    ) -> Dict[str, float]:
+        snapshots_index: dict[str, MarketSnapshot] | None = None,
+    ) -> dict[str, float]:
         """
         Compute per-feature similarity scores for diagnostic purposes.
 
         Returns a dict of feature_name -> score (0.0-1.0).
         """
-        feature_scores: Dict[str, float] = {}
+        feature_scores: dict[str, float] = {}
 
         if not scenario.snapshot_ids or not snapshots_index:
             return {"no_data": 0.0}
@@ -218,7 +213,7 @@ class ScenarioMatcher:
 
         return feature_scores
 
-    def get_weight_report(self) -> Dict[str, object]:
+    def get_weight_report(self) -> dict[str, object]:
         """
         Get a report of the current feature weights and their rationale.
 

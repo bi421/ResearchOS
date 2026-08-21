@@ -216,12 +216,8 @@ class TestMarketSession:
         assert ms.body == pytest.approx(0.0060, rel=1e-9)
 
     def test_deterministic_id(self):
-        ms1 = MarketSession(
-            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
-        )
-        ms2 = MarketSession(
-            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
-        )
+        ms1 = MarketSession("London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
+        ms2 = MarketSession("London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
         assert ms1.id == ms2.id
 
     def test_serialization_round_trip(self):
@@ -498,25 +494,13 @@ class TestMarketMemoryEngineQueries:
         self.repo = MemoryRepository()
         self.engine = MarketMemoryEngine(self.repo)
         # Seed with test data
-        self.engine.record_structure_break(
-            "BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.1050
-        )
-        self.engine.record_structure_break(
-            "CHOCH", "EURUSD", "H1", ts(2024, 6, 1, 12, 0), price_level=1.1080
-        )
-        self.engine.record_liquidity_event(
-            "Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30), price_level=1.1020
-        )
-        self.engine.record_session(
-            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
-        )
-        self.engine.record_session(
-            "NewYork", "EURUSD", "2024-06-01", ts(2024, 6, 1, 13, 0), ts(2024, 6, 1, 22, 0)
-        )
+        self.engine.record_structure_break("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.1050)
+        self.engine.record_structure_break("CHOCH", "EURUSD", "H1", ts(2024, 6, 1, 12, 0), price_level=1.1080)
+        self.engine.record_liquidity_event("Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30), price_level=1.1020)
+        self.engine.record_session("London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
+        self.engine.record_session("NewYork", "EURUSD", "2024-06-01", ts(2024, 6, 1, 13, 0), ts(2024, 6, 1, 22, 0))
         self.engine.record_volatility_state("EURUSD", "H1", ts(2024, 6, 1, 12, 0), atr_value=0.0015)
-        self.engine.record_structure_break(
-            "BOS", "GBPUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.2700
-        )
+        self.engine.record_structure_break("BOS", "GBPUSD", "H1", ts(2024, 6, 1, 8, 0), price_level=1.2700)
 
     def test_get_events_by_asset(self):
         eurusd_events = self.engine.get_events_by_asset("EURUSD")
@@ -641,9 +625,7 @@ class TestObjectRegistryIntegration:
         repo = ResearchRepository(db_path)
         try:
             for i in range(3):
-                ms = MarketStructure(
-                    "BOS", "EURUSD", "H1", ts(2024, 6, i + 1, 8, 0), price_level=1.10 + i * 0.01
-                )
+                ms = MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, i + 1, 8, 0), price_level=1.10 + i * 0.01)
                 repo.save(ms)
             loaded = repo.load_objects_by_type("MarketStructure")
             assert len(loaded) == 3
@@ -667,9 +649,7 @@ class TestEdgeCases:
         assert le.swept_levels == []
 
     def test_session_zero_values(self):
-        ms = MarketSession(
-            "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
-        )
+        ms = MarketSession("London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0))
         assert ms.open == 0.0
         assert ms.range == 0.0
 
@@ -682,9 +662,7 @@ class TestEdgeCases:
         assert mo.outcome_type == "Pending"
 
     def test_metadata_preserved_round_trip(self):
-        me = MarketEvent(
-            "Custom", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), metadata={"key1": "value1", "key2": 42}
-        )
+        me = MarketEvent("Custom", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), metadata={"key1": "value1", "key2": 42})
         d = me.to_dict()
         me2 = MarketEvent.from_dict(d)
         assert me2.metadata["key1"] == "value1"
@@ -694,9 +672,7 @@ class TestEdgeCases:
         objects = [
             MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0)),
             LiquidityEvent("Sweep", "EURUSD", "M15", ts(2024, 6, 1, 9, 30)),
-            MarketSession(
-                "London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)
-            ),
+            MarketSession("London", "EURUSD", "2024-06-01", ts(2024, 6, 1, 7, 0), ts(2024, 6, 1, 16, 0)),
             VolatilityState("EURUSD", "H1", ts(2024, 6, 1, 12, 0)),
             NewsReference("Title", "Source", ts(2024, 6, 1, 14, 0)),
             MarketOutcome("e1", "BOS", "EURUSD", ts(2024, 6, 1, 16, 0)),
@@ -708,9 +684,7 @@ class TestEdgeCases:
 
     def test_all_objects_support_find_by_tag(self):
         repo = MemoryRepository()
-        ms = MarketStructure(
-            "BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), ontology_tags=["trend", "momentum"]
-        )
+        ms = MarketStructure("BOS", "EURUSD", "H1", ts(2024, 6, 1, 8, 0), ontology_tags=["trend", "momentum"])
         repo.save(ms)
         found = repo.find_by_tag("trend")
         assert len(found) == 1

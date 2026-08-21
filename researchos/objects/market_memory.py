@@ -8,7 +8,7 @@ long-term market memory that supports explainable research conclusions.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -46,10 +46,10 @@ class MarketEvent(BaseObject):
         price_level: float = 0.0,
         description: str = "",
         category: str = "",
-        reference_ids: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        reference_ids: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketEvent|{event_type}|{asset}|{timeframe}|{timestamp.isoformat()}|{price_level}"
@@ -65,8 +65,8 @@ class MarketEvent(BaseObject):
         self.price_level = price_level
         self.description = description
         self.category = category
-        self.reference_ids: List[str] = reference_ids or []
-        self.metadata: Dict[str, Any] = metadata or {}
+        self.reference_ids: list[str] = reference_ids or []
+        self.metadata: dict[str, Any] = metadata or {}
 
         self.lifecycle.transition(
             LifecycleStage.DETECTED,
@@ -107,7 +107,7 @@ class MarketEvent(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketEvent":
+    def from_dict(cls, data: dict) -> MarketEvent:
         obj = super().from_dict(data)
         obj.event_type = data["event_type"]
         obj.asset = data["asset"]
@@ -155,8 +155,8 @@ class MarketStructure(BaseObject):
         previous_structure_id: str = "",
         confirmation_price: float = 0.0,
         notes: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketStructure|{structure_type}|{asset}|{timeframe}|{timestamp.isoformat()}|{price_level}"
@@ -223,7 +223,7 @@ class MarketStructure(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketStructure":
+    def from_dict(cls, data: dict) -> MarketStructure:
         obj = super().from_dict(data)
         obj.structure_type = data["structure_type"]
         obj.asset = data["asset"]
@@ -267,12 +267,12 @@ class LiquidityEvent(BaseObject):
         timestamp: datetime,
         direction: str = "bearish",
         price_level: float = 0.0,
-        swept_levels: Optional[List[float]] = None,
+        swept_levels: list[float] | None = None,
         outcome: str = "Pending",
         reference_id: str = "",
         notes: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"LiquidityEvent|{event_type}|{asset}|{timeframe}|{timestamp.isoformat()}|{price_level}"
@@ -286,7 +286,7 @@ class LiquidityEvent(BaseObject):
         self.timestamp = timestamp
         self.direction = direction
         self.price_level = price_level
-        self.swept_levels: List[float] = swept_levels or []
+        self.swept_levels: list[float] = swept_levels or []
         self.outcome = outcome
         self.reference_id = reference_id
         self.notes = notes
@@ -338,7 +338,7 @@ class LiquidityEvent(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "LiquidityEvent":
+    def from_dict(cls, data: dict) -> LiquidityEvent:
         obj = super().from_dict(data)
         obj.event_type = data["event_type"]
         obj.asset = data["asset"]
@@ -392,8 +392,8 @@ class MarketSession(BaseObject):
         volume_ratio: float = 1.0,
         range_atr_ratio: float = 0.0,
         notes: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketSession|{session_name}|{asset}|{date}"
@@ -468,7 +468,7 @@ class MarketSession(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketSession":
+    def from_dict(cls, data: dict) -> MarketSession:
         obj = super().from_dict(data)
         obj.session_name = data["session_name"]
         obj.asset = data["asset"]
@@ -519,8 +519,8 @@ class VolatilityState(BaseObject):
         contracting: bool = False,
         bb_width: float = 0.0,
         notes: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"VolatilityState|{asset}|{timeframe}|{timestamp.isoformat()}"
@@ -578,7 +578,7 @@ class VolatilityState(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "VolatilityState":
+    def from_dict(cls, data: dict) -> VolatilityState:
         obj = super().from_dict(data)
         obj.asset = data["asset"]
         obj.timeframe = data.get("timeframe", "")
@@ -620,12 +620,12 @@ class NewsReference(BaseObject):
         published_at: datetime,
         impact_score: float = 0.5,
         sentiment: str = "neutral",
-        affected_assets: Optional[List[str]] = None,
+        affected_assets: list[str] | None = None,
         category: str = "Other",
         summary: str = "",
         url: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"NewsReference|{title}|{source}|{published_at.isoformat()}"
@@ -638,7 +638,7 @@ class NewsReference(BaseObject):
         self.published_at = published_at
         self.impact_score = impact_score
         self.sentiment = sentiment
-        self.affected_assets: List[str] = affected_assets or []
+        self.affected_assets: list[str] = affected_assets or []
         self.category = category
         self.summary = summary
         self.url = url
@@ -680,7 +680,7 @@ class NewsReference(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "NewsReference":
+    def from_dict(cls, data: dict) -> NewsReference:
         obj = super().from_dict(data)
         obj.title = data["title"]
         obj.source = data.get("source", "")
@@ -731,8 +731,8 @@ class MarketOutcome(BaseObject):
         max_adverse: float = 0.0,
         duration_minutes: int = 0,
         notes: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketOutcome|{event_id}|{outcome_type}|{timestamp.isoformat()}"
@@ -796,7 +796,7 @@ class MarketOutcome(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketOutcome":
+    def from_dict(cls, data: dict) -> MarketOutcome:
         obj = super().from_dict(data)
         obj.event_id = data["event_id"]
         obj.event_type = data.get("event_type", "")

@@ -9,9 +9,10 @@ executes trading.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Tuple
+from typing import Any
 
 from .metadata import ModelMetadata
 
@@ -65,7 +66,7 @@ class ModelContract:
     name: str
     version: str
     algorithm: str
-    feature_names: Tuple[str, ...]
+    feature_names: tuple[str, ...]
     label_name: str
     dataset_hash: str
     validation_hash: str
@@ -108,7 +109,7 @@ class ModelContract:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "model_id": self.model_id,
@@ -125,7 +126,7 @@ class ModelContract:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ModelContract":
+    def from_dict(cls, data: Mapping[str, Any]) -> ModelContract:
         """Reconstruct a ``ModelContract`` from a ``to_dict()`` mapping."""
         return cls(
             model_id=str(data["model_id"]),
@@ -148,8 +149,7 @@ def _validate_model_id(model_id: str) -> None:
         raise ModelContractError("model_id must be a non-empty string")
     if _ID_PATTERN.fullmatch(model_id) is None:
         raise ModelContractError(
-            "model_id may only contain letters, digits, '_', '.', '-' "
-            "and must not start with a separator"
+            "model_id may only contain letters, digits, '_', '.', '-' and must not start with a separator"
         )
 
 

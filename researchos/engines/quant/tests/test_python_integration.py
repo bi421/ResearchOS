@@ -124,9 +124,7 @@ def test_volatility_identical(python_backend, cpp_backend, sample_returns):
     # Rolling
     py_rolling = python_backend.calculate_volatility(sample_returns, "rolling")
     cpp_rolling = cpp_backend.calculate_volatility(sample_returns, "rolling")
-    assert (
-        abs(py_rolling - cpp_rolling) < 1e-12
-    ), f"Rolling vol mismatch: {py_rolling} vs {cpp_rolling}"
+    assert abs(py_rolling - cpp_rolling) < 1e-12, f"Rolling vol mismatch: {py_rolling} vs {cpp_rolling}"
 
 
 def test_drawdown_identical(python_backend, cpp_backend, sample_equity_curve):
@@ -135,9 +133,7 @@ def test_drawdown_identical(python_backend, cpp_backend, sample_equity_curve):
     cpp_dd = cpp_backend.calculate_drawdown(sample_equity_curve)
 
     for key in py_dd:
-        assert (
-            abs(py_dd[key] - cpp_dd[key]) < 1e-10
-        ), f"Drawdown mismatch for {key}: {py_dd[key]} vs {cpp_dd[key]}"
+        assert abs(py_dd[key] - cpp_dd[key]) < 1e-10, f"Drawdown mismatch for {key}: {py_dd[key]} vs {cpp_dd[key]}"
 
 
 def test_statistics_identical(python_backend, cpp_backend, sample_returns):
@@ -183,9 +179,7 @@ def test_performance_analytics_identical(python_backend, cpp_backend, sample_ret
         if math.isinf(py_val) and math.isinf(cpp_val):
             continue
 
-        assert (
-            abs(py_val - cpp_val) < 1e-10
-        ), f"Performance mismatch for {key}: {py_val} vs {cpp_val}"
+        assert abs(py_val - cpp_val) < 1e-10, f"Performance mismatch for {key}: {py_val} vs {cpp_val}"
 
 
 # ── Deterministic Results Tests ─────────────────────────────────────────────

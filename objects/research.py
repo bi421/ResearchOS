@@ -11,7 +11,6 @@ from question formulation through to report generation.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -52,8 +51,8 @@ class Research(BaseObject):
         time_horizon: str = "Daily",
         asset: str = "",
         methodology_version: str = "1.0.0",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Research|{question}|{time_horizon}|{asset}"
@@ -69,17 +68,17 @@ class Research(BaseObject):
         self.status = "In Progress"
 
         # Links to sub-objects
-        self.observation_ids: List[str] = []
-        self.evidence_registry_id: Optional[str] = None
-        self.hypothesis_set_id: Optional[str] = None
-        self.scenario_set_id: Optional[str] = None
-        self.confidence_report_id: Optional[str] = None
-        self.contradiction_report_id: Optional[str] = None
-        self.report_id: Optional[str] = None
+        self.observation_ids: list[str] = []
+        self.evidence_registry_id: str | None = None
+        self.hypothesis_set_id: str | None = None
+        self.scenario_set_id: str | None = None
+        self.confidence_report_id: str | None = None
+        self.contradiction_report_id: str | None = None
+        self.report_id: str | None = None
 
         # Lifecycle timestamps
-        self.completed_at: Optional[datetime] = None
-        self.validated_at: Optional[datetime] = None
+        self.completed_at: datetime | None = None
+        self.validated_at: datetime | None = None
 
         self.lifecycle.transition(
             LifecycleStage.IN_PROGRESS,
@@ -145,7 +144,7 @@ class Research(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Research":
+    def from_dict(cls, data: dict) -> Research:
         obj = super().from_dict(data)
         obj.question = data["question"]
         obj.timestamp = parse_timestamp(data["timestamp"]) if data.get("timestamp") else None
@@ -160,12 +159,8 @@ class Research(BaseObject):
         obj.confidence_report_id = data.get("confidence_report_id")
         obj.contradiction_report_id = data.get("contradiction_report_id")
         obj.report_id = data.get("report_id")
-        obj.completed_at = (
-            parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
-        )
-        obj.validated_at = (
-            parse_timestamp(data["validated_at"]) if data.get("validated_at") else None
-        )
+        obj.completed_at = parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
+        obj.validated_at = parse_timestamp(data["validated_at"]) if data.get("validated_at") else None
         return obj
 
 
@@ -187,11 +182,11 @@ class ResearchQuestion(BaseObject):
         self,
         research_id: str,
         question: str,
-        sub_questions: Optional[List[str]] = None,
+        sub_questions: list[str] | None = None,
         priority: float = 0.0,
         answerable: bool = True,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ResearchQuestion|{research_id}|{question}"
@@ -201,7 +196,7 @@ class ResearchQuestion(BaseObject):
 
         self.research_id = research_id
         self.question = question
-        self.sub_questions: List[str] = sub_questions or []
+        self.sub_questions: list[str] = sub_questions or []
         self.priority = priority
         self.answerable = answerable
 
@@ -234,7 +229,7 @@ class ResearchQuestion(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ResearchQuestion":
+    def from_dict(cls, data: dict) -> ResearchQuestion:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.question = data["question"]
@@ -291,14 +286,14 @@ class ResearchReport(BaseObject):
         scenarios: str = "",
         confidence: str = "",
         contradictions: str = "",
-        risk_factors: Optional[List[str]] = None,
-        invalidation_conditions: Optional[List[str]] = None,
-        known_unknowns: Optional[List[str]] = None,
-        open_questions: Optional[List[str]] = None,
+        risk_factors: list[str] | None = None,
+        invalidation_conditions: list[str] | None = None,
+        known_unknowns: list[str] | None = None,
+        open_questions: list[str] | None = None,
         methodology_version: str = "1.0.0",
         format: str = "Markdown",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ResearchReport|{research_id}|{title}"
@@ -317,10 +312,10 @@ class ResearchReport(BaseObject):
         self.scenarios = scenarios
         self.confidence = confidence
         self.contradictions = contradictions
-        self.risk_factors: List[str] = risk_factors or []
-        self.invalidation_conditions: List[str] = invalidation_conditions or []
-        self.known_unknowns: List[str] = known_unknowns or []
-        self.open_questions: List[str] = open_questions or []
+        self.risk_factors: list[str] = risk_factors or []
+        self.invalidation_conditions: list[str] = invalidation_conditions or []
+        self.known_unknowns: list[str] = known_unknowns or []
+        self.open_questions: list[str] = open_questions or []
         self.methodology_version = methodology_version
         self.format = format
         self.status = "Draft"
@@ -388,7 +383,7 @@ class ResearchReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ResearchReport":
+    def from_dict(cls, data: dict) -> ResearchReport:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.title = data.get("title", "")

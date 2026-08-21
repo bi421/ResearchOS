@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, List
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 
@@ -33,13 +31,13 @@ class Scenario(BaseObject):
         type: str,
         probability: float = 0.0,
         narrative: str = "",
-        label: Optional[str] = None,
-        thesis: Optional[str] = None,
-        calibrated_probability: Optional[float] = None,
-        expected_return: Optional[float] = None,
+        label: str | None = None,
+        thesis: str | None = None,
+        calibrated_probability: float | None = None,
+        expected_return: float | None = None,
         status: str = "ACTIVE",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
         **kwargs,
     ):
         probability = float(probability)
@@ -83,10 +81,7 @@ class Scenario(BaseObject):
         if not 0.0 <= self.probability <= 1.0:
             raise ValueError("Scenario probability must be between 0.0 and 1.0")
 
-        if (
-            self.calibrated_probability is not None
-            and not 0.0 <= float(self.calibrated_probability) <= 1.0
-        ):
+        if self.calibrated_probability is not None and not 0.0 <= float(self.calibrated_probability) <= 1.0:
             raise ValueError("calibrated_probability must be between 0.0 and 1.0")
 
         return True
@@ -111,7 +106,7 @@ class Scenario(BaseObject):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Scenario":
+    def from_dict(cls, data: dict) -> Scenario:
         obj = super().from_dict(data)
 
         obj.hypothesis_id = data["hypothesis_id"]
@@ -138,10 +133,10 @@ class ScenarioSet(BaseObject):
     def __init__(
         self,
         research_id: str,
-        scenarios: Optional[List[Scenario]] = None,
-        scenario_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        scenarios: list[Scenario] | None = None,
+        scenario_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             id = generate_id(f"ScenarioSet|{research_id}")
@@ -154,9 +149,7 @@ class ScenarioSet(BaseObject):
         self.research_id = research_id
         self.scenarios = list(scenarios or [])
 
-        self.scenario_ids = list(
-            scenario_ids if scenario_ids is not None else [s.id for s in self.scenarios]
-        )
+        self.scenario_ids = list(scenario_ids if scenario_ids is not None else [s.id for s in self.scenarios])
 
     def add_scenario(
         self,
@@ -227,7 +220,7 @@ class ScenarioSet(BaseObject):
     def get_scenario(
         self,
         scenario_type: str,
-    ) -> Optional[Scenario]:
+    ) -> Scenario | None:
         for scenario in self.scenarios:
             if scenario.type == scenario_type:
                 return scenario
@@ -271,7 +264,7 @@ class ScenarioSet(BaseObject):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ScenarioSet":
+    def from_dict(cls, data: dict) -> ScenarioSet:
         obj = super().from_dict(data)
 
         obj.research_id = data["research_id"]

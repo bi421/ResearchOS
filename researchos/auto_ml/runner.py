@@ -1,7 +1,8 @@
-import optuna
-import pandas as pd
 import glob
 import sys
+
+import optuna
+import pandas as pd
 
 sys.path.insert(0, ".")
 from researchos.auto_ml.objective import Objective
@@ -24,11 +25,7 @@ def run_auto_ml(n_trials=50):
     )
     df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
     df = df.set_index("datetime")
-    df_h = (
-        df.resample("4h")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last"})
-        .dropna()
-    )
+    df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
     print(f"Data: {len(df_h)} bars (4h)")
 
     # 2021-2024 train, 2025 val, 2026 test

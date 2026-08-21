@@ -1,10 +1,11 @@
 import sys
 
 sys.path.append("cpp_quant/python")
-from researchos.engines.quant.cpp_engine import CppQuant
-import pandas as pd
 import glob
+
 import cpp_quant_core as core
+import pandas as pd
+from researchos.engines.quant.cpp_engine import CppQuant
 
 # 1. Өгөгдөл унших
 df = pd.concat(
@@ -24,11 +25,7 @@ df = pd.concat(
 ).sort_index()
 
 # 2. 1D агрегац
-df_d = (
-    df.resample("1D")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
-)
+df_d = df.resample("1D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 print(f"1D Candle: {len(df_d)}")
 
 # 3. Анхны бэктест (CppQuant)

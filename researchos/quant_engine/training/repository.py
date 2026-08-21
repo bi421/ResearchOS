@@ -8,8 +8,6 @@ results.  All operations are deterministic and free of global state.
 
 from __future__ import annotations
 
-from typing import Dict, Tuple
-
 from .contracts import ModelContract
 from .training_result import TrainingResult
 
@@ -44,7 +42,7 @@ class TrainingRepository:
     """
 
     def __init__(self) -> None:
-        self._results: Dict[str, TrainingResult] = {}
+        self._results: dict[str, TrainingResult] = {}
 
     def save(self, result: TrainingResult) -> None:
         """Store a training result.
@@ -75,7 +73,7 @@ class TrainingRepository:
         """Return the trained model contract stored under ``model_id``."""
         return self.get(model_id).model
 
-    def list_results(self) -> Tuple[TrainingResult, ...]:
+    def list_results(self) -> tuple[TrainingResult, ...]:
         """Return all stored results in deterministic (sorted) order."""
         return tuple(self._results[mid] for mid in sorted(self._results))
 
@@ -109,7 +107,7 @@ class TrainingRepository:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "TrainingRepository":
+    def from_dict(cls, data: dict) -> TrainingRepository:
         """Reconstruct a repository from a ``to_dict()`` mapping."""
         repository = cls()
         for item in data.get("results", []):

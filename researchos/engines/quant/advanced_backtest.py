@@ -2,7 +2,6 @@
 Advanced Backtest Engine with Risk Management (Stop Loss, Take Profit, Max Hold).
 """
 
-from typing import List
 from dataclasses import dataclass
 
 
@@ -20,7 +19,7 @@ class AdvancedBacktestResult:
     max_consecutive_losses: int
     total_commission: float
     total_slippage: float
-    signals: List
+    signals: list
 
 
 class AdvancedBacktestEngine:
@@ -40,7 +39,7 @@ class AdvancedBacktestEngine:
         self.take_profit = take_profit
         self.max_hold_days = max_hold_days
 
-    def run(self, prices: List[float], strategy) -> AdvancedBacktestResult:
+    def run(self, prices: list[float], strategy) -> AdvancedBacktestResult:
         signals = strategy.generate_signals(prices)
         if not signals:
             return AdvancedBacktestResult(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [])
@@ -134,9 +133,7 @@ class AdvancedBacktestEngine:
         total_return = (final_value - self.initial_capital) / self.initial_capital
 
         years = len(prices) / 252
-        annualised_return = (
-            (1 + total_return) ** (1 / years) - 1 if years > 0 and total_return > -1 else 0.0
-        )
+        annualised_return = (1 + total_return) ** (1 / years) - 1 if years > 0 and total_return > -1 else 0.0
 
         daily_returns = [(prices[i] - prices[i - 1]) / prices[i - 1] for i in range(1, len(prices))]
         if daily_returns:
@@ -147,9 +144,7 @@ class AdvancedBacktestEngine:
             sharpe_ratio = 0.0
 
         win_rate = len(wins) / (len(wins) + len(losses)) if (len(wins) + len(losses)) > 0 else 0.0
-        profit_factor = (
-            sum(wins) / sum(losses) if sum(losses) > 0 else (float("inf") if wins else 0.0)
-        )
+        profit_factor = sum(wins) / sum(losses) if sum(losses) > 0 else (float("inf") if wins else 0.0)
         avg_win = sum(wins) / len(wins) if wins else 0.0
         avg_loss = sum(losses) / len(losses) if losses else 0.0
 

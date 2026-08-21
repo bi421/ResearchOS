@@ -11,7 +11,6 @@ MIL-ECM-014: Econometrics owns AIC/BIC.
 from __future__ import annotations
 
 from math import log
-from typing import List, Optional
 
 from researchos.macro.econometrics.models import InformationCriteria
 from researchos.macro.statistics.provenance import StatisticalProvenance
@@ -21,7 +20,7 @@ BIC_VERSION = "ecm/bic/v1"
 
 
 def _log_likelihood_gaussian(
-    residuals: List[float],
+    residuals: list[float],
 ) -> float:
     """Maximized log-likelihood for a Gaussian model from residuals."""
     n = len(residuals)
@@ -33,12 +32,12 @@ def _log_likelihood_gaussian(
 
 
 def aic(
-    residuals: List[float],
+    residuals: list[float],
     n_parameters: int,
-    log_likelihood: Optional[float] = None,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    log_likelihood: float | None = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> InformationCriteria:
     """
     Akaike Information Criterion.
@@ -78,12 +77,12 @@ def aic(
 
 
 def bic(
-    residuals: List[float],
+    residuals: list[float],
     n_parameters: int,
-    log_likelihood: Optional[float] = None,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    log_likelihood: float | None = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> InformationCriteria:
     """
     Bayesian Information Criterion.
@@ -123,12 +122,12 @@ def bic(
 
 
 def information_criteria(
-    residuals: List[float],
+    residuals: list[float],
     n_parameters: int,
-    log_likelihood: Optional[float] = None,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    log_likelihood: float | None = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> InformationCriteria:
     """
     Compute both AIC and BIC together.

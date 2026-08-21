@@ -182,9 +182,7 @@ class ProvenanceChain:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProvenanceChain:
         """Deserialize from dictionary."""
-        evidence_refs = [
-            EvidenceReference.from_dict(ref) for ref in data.get("evidence_references", [])
-        ]
+        evidence_refs = [EvidenceReference.from_dict(ref) for ref in data.get("evidence_references", [])]
 
         return cls(
             source_record=SourceRecord.from_dict(data["source_record"]),
@@ -193,9 +191,7 @@ class ProvenanceChain:
             object_type=data["object_type"],
             evidence_references=evidence_refs,
             metadata=data.get("metadata", {}),
-            created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.now(timezone.utc).isoformat())
-            ),
+            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
             version=data.get("version", "prov/v1"),
         )
 

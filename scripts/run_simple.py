@@ -1,14 +1,16 @@
 from datetime import datetime
+
+import pandas as pd
+
+from researchos.data_engine.repository import SqliteDatasetRepository
+from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
     ProbabilityDirection,
     WeightConfiguration,
 )
-from researchos.decision_engine.context import DecisionContext
 from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.data_engine.repository import SqliteDatasetRepository
-import pandas as pd
 
 
 def get_metrics(symbol):
@@ -20,9 +22,7 @@ def get_metrics(symbol):
     returns = df["close"].pct_change().dropna().tolist()
     equity = (1 + pd.Series(returns)).cumprod() * 10000.0
     backend = PythonQuantBackend()
-    return backend.calculate_metrics(
-        returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0
-    )
+    return backend.calculate_metrics(returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0)
 
 
 xau = get_metrics("XAUUSD")
@@ -88,9 +88,7 @@ weight_config = WeightConfiguration(
 # Энд compute_evidence_score-г ажиллуулах гэхдээ score.py-д item.strength, item.direction хэрэгтэй
 # Тиймээс энэ нь ажиллахгүй. Хэрэв ажиллуулахыг хүсвэл score.py-г өөрчлөх хэрэгтэй.
 # Одоогоор бид зөвхөн метрикийг харуулъя.
-print(
-    "\n📈 Metrics only (Evidence Score cannot be computed without strength/direction in EvidenceItem):"
-)
+print("\n📈 Metrics only (Evidence Score cannot be computed without strength/direction in EvidenceItem):")
 for item in evidence_items:
     meta = item.metadata
     print(

@@ -8,7 +8,7 @@ Validators check objects against deterministic validation rules.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.engines.validation.rules import (
@@ -22,37 +22,37 @@ from researchos.engines.validation.rules import (
 class ObjectValidator:
     """Base validator for all ResearchOS objects."""
 
-    def validate(self, obj: BaseObject) -> Tuple[bool, List[str]]:
+    def validate(self, obj: BaseObject) -> tuple[bool, list[str]]:
         data = obj.to_dict()
         return self._validate_dict(data)
 
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
         raise NotImplementedError("Subclasses must implement _validate_dict")
 
 
 class ObservationValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
         return validate_observation(data)
 
 
 class EvidenceValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
         return validate_evidence(data)
 
 
 class HypothesisValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
         return validate_hypothesis(data)
 
 
 class ScenarioValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
         return validate_scenario(data)
 
 
 class ConfidenceValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         value = data.get("value", 0.0)
         if not (0.0 <= value <= 1.0):
             errors.append("Value must be between 0.0 and 1.0")
@@ -67,8 +67,8 @@ class ConfidenceValidator(ObjectValidator):
 
 
 class ContradictionValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         ctype = data.get("type", "")
         if ctype not in ("Internal", "Cross-Market", "Macro", "Timeframe", "Research"):
             errors.append("Type must be Internal, Cross-Market, Macro, Timeframe, or Research")
@@ -82,8 +82,8 @@ class ContradictionValidator(ObjectValidator):
 
 
 class ValidationValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         status = data.get("overall_status", "")
         if status not in ("In Progress", "Accurate", "Partially Accurate", "Inaccurate"):
             errors.append("Status must be In Progress, Accurate, Partially Accurate, or Inaccurate")
@@ -94,8 +94,8 @@ class ValidationValidator(ObjectValidator):
 
 
 class FailureAnalysisValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         failures = data.get("failures", [])
         if not failures:
             errors.append("At least one failure required for analysis")
@@ -103,8 +103,8 @@ class FailureAnalysisValidator(ObjectValidator):
 
 
 class BiasValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         frequency = data.get("frequency", 0.0)
         if not (0.0 <= frequency <= 1.0):
             errors.append("Frequency must be between 0.0 and 1.0")
@@ -115,8 +115,8 @@ class BiasValidator(ObjectValidator):
 
 
 class LearningRecordValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         score = data.get("score", 0.0)
         if not (0.0 <= score <= 1.0):
             errors.append("Score must be between 0.0 and 1.0")
@@ -127,8 +127,8 @@ class LearningRecordValidator(ObjectValidator):
 
 
 class CognitiveAssessmentValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         for field in (
             "knowledge_score",
             "reasoning_score",
@@ -144,8 +144,8 @@ class CognitiveAssessmentValidator(ObjectValidator):
 
 
 class ResearchCycleValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         stages = data.get("stages", [])
         if not stages:
             errors.append("At least one stage required")
@@ -153,8 +153,8 @@ class ResearchCycleValidator(ObjectValidator):
 
 
 class ReasoningChainValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         steps = data.get("steps", [])
         if not steps:
             errors.append("At least one step required")
@@ -165,8 +165,8 @@ class ReasoningChainValidator(ObjectValidator):
 
 
 class AuditEntryValidator(ObjectValidator):
-    def _validate_dict(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        errors: List[str] = []
+    def _validate_dict(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
+        errors: list[str] = []
         if not data.get("actor"):
             errors.append("Actor is required")
         if not data.get("action"):
@@ -176,7 +176,7 @@ class AuditEntryValidator(ObjectValidator):
         return (len(errors) == 0, errors)
 
 
-VALIDATOR_REGISTRY: Dict[str, Type[ObjectValidator]] = {
+VALIDATOR_REGISTRY: dict[str, type[ObjectValidator]] = {
     "Observation": ObservationValidator,
     "Evidence": EvidenceValidator,
     "Hypothesis": HypothesisValidator,

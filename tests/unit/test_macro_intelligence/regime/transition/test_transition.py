@@ -556,9 +556,7 @@ class TestTransitionProbabilityEngine:
         from macro_intelligence.regime.transition import TransitionProbabilityEngine
 
         engine = TransitionProbabilityEngine()
-        prob = engine.get_transition_probability(
-            MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH
-        )
+        prob = engine.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH)
         assert 0.0 <= prob <= 1.0
 
     def test_get_all_transition_probabilities(self):
@@ -656,9 +654,7 @@ class TestTransitionProbabilityEngine:
 
         assert engine1.get_transition_probability(
             MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH
-        ) == engine2.get_transition_probability(
-            MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH
-        )
+        ) == engine2.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH)
 
 
 # =============================================================================

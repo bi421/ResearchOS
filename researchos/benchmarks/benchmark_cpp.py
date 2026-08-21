@@ -18,7 +18,8 @@ Python fallback and speedup is 1.00x.
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Dict, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.cpp_backend import (
@@ -30,18 +31,18 @@ from researchos.quant_engine.models import CalculationVersion, SimulationRequest
 _V1 = CalculationVersion.CALCULATION_V1
 
 #: Dataset sizes used by the benchmark (number of price observations).
-DATASET_SIZES: Tuple[int, ...] = (1_000, 10_000, 100_000)
+DATASET_SIZES: tuple[int, ...] = (1_000, 10_000, 100_000)
 
 #: Wall-clock budget per operation per size (seconds).
 _BUDGET_SECONDS = 2.0
 
 
-def make_prices(n: int, base: float = 100.0) -> List[float]:
+def make_prices(n: int, base: float = 100.0) -> list[float]:
     """Deterministic price series (no randomness)."""
     return [base + 30.0 * ((i % 17) / 17.0) + 0.5 * (i % 7) for i in range(n)]
 
 
-def _equity(prices: List[float]) -> List[float]:
+def _equity(prices: list[float]) -> list[float]:
     """Build a deterministic equity curve from a price series."""
     equity = [100000.0]
     for r in make_returns(prices):
@@ -49,7 +50,7 @@ def _equity(prices: List[float]) -> List[float]:
     return equity
 
 
-def make_returns(prices: List[float]) -> List[float]:
+def make_returns(prices: list[float]) -> list[float]:
     """Percentage returns from a price series (length n - 1)."""
     return [(prices[i] / prices[i - 1]) - 1.0 for i in range(1, len(prices))]
 
@@ -83,7 +84,7 @@ def timed(fn: Callable[[], Any], budget: float = _BUDGET_SECONDS) -> float:
 
 def build_cases(
     py: PythonQuantBackend, cpp: CppQuantAdapter
-) -> List[Tuple[str, Callable[[Any], Any], Callable[[Any], Any]]]:
+) -> list[tuple[str, Callable[[Any], Any], Callable[[Any], Any]]]:
     """Return (name, python_call, cpp_call) pairs for every operation.
 
     Each callable is invoked with a per-size prepared fixture.
@@ -123,13 +124,13 @@ def build_cases(
     ]
 
 
-def run_benchmark() -> Dict[str, Any]:
+def run_benchmark() -> dict[str, Any]:
     """Run the full benchmark and return a serializable results dict."""
     py = PythonQuantBackend()
     cpp = CppQuantAdapter()
     engine_available = has_cpp_engine()
 
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         "python_backend": "PythonQuantBackend",
         "python_version": py.get_version(),
         "cpp_backend": "CppQuantAdapter" if engine_available else "unavailable (fallback)",
@@ -139,7 +140,7 @@ def run_benchmark() -> Dict[str, Any]:
     }
 
     for name, py_fn, cpp_fn in build_cases(py, cpp):
-        row: Dict[str, Any] = {"operation": name, "measurements": []}
+        row: dict[str, Any] = {"operation": name, "measurements": []}
         for n in DATASET_SIZES:
             prices = make_prices(n)
             py_elapsed = timed(lambda p=prices: py_fn(p))
@@ -157,7 +158,7 @@ def run_benchmark() -> Dict[str, Any]:
     return results
 
 
-def print_results(results: Dict[str, Any]) -> None:
+def print_results(results: dict[str, Any]) -> None:
     """Pretty-print the benchmark results dict."""
     print("=" * 92)
     print("ResearchOS — Python vs C++ Compute Backend Benchmark (Phase 4.3)")
@@ -169,10 +170,7 @@ def print_results(results: Dict[str, Any]) -> None:
         print(f"[{row['operation']}]")
         print(f"  {'size':>10} {'python (s)':>12} {'cpp (s)':>12} {'speedup':>10}")
         for m in row["measurements"]:
-            print(
-                f"  {m['size']:>10} {m['python_s']:>12.6f} {m['cpp_s']:>12.6f} "
-                f"{m['speedup']:>9.2f}x"
-            )
+            print(f"  {m['size']:>10} {m['python_s']:>12.6f} {m['cpp_s']:>12.6f} {m['speedup']:>9.2f}x")
         print()
 
 

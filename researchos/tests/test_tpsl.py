@@ -1,26 +1,21 @@
 import sys
 
 sys.path.insert(0, ".")
-import pandas as pd
 import glob
+
+import pandas as pd
+
 from researchos.engines.quant.backtest_tpsl import vectorized_backtest_with_tpsl
 
 print("Loading data...")
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
 close = df_h["close"]
 
 # SMA20/100 signals

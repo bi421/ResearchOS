@@ -1,4 +1,5 @@
 import pytest
+
 from researchos import Evidence, Hypothesis, Observation, Scenario, ScenarioSet
 
 

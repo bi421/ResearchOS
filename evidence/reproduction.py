@@ -47,8 +47,9 @@ Constraints:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any
 
 from researchos.evidence.envelope import EvidenceEnvelope
 from researchos.evidence.lineage import FullChain, LineageQueryEngine
@@ -65,7 +66,7 @@ from researchos.quant_engine.machine_learning.dataset_contracts import (
 # =========================================================================
 
 
-def research_dataset_to_runner_dataset(dataset: ResearchDataset) -> List[dict]:
+def research_dataset_to_runner_dataset(dataset: ResearchDataset) -> list[dict]:
     """Deterministically convert a ``ResearchDataset`` into the OHLCV contract
     the certified ``BaseExperimentRunner`` boundary normalizes.
 
@@ -91,7 +92,7 @@ def research_dataset_to_runner_dataset(dataset: ResearchDataset) -> List[dict]:
             }
             for i in range(252)
         ]
-    bars: List[dict] = []
+    bars: list[dict] = []
     for row in feature_rows:
         row_values = list(row)
         close = float(row_values[0]) if row_values else 100.0
@@ -161,11 +162,11 @@ class ReproductionReport:
     success: bool
     original_hash: str
     reproduced_hash: str = ""
-    artifact_chain: Dict[str, str] = field(default_factory=dict)
-    verification_errors: List[str] = field(default_factory=list)
-    divergence_details: Dict[str, Any] = field(default_factory=dict)
+    artifact_chain: dict[str, str] = field(default_factory=dict)
+    verification_errors: list[str] = field(default_factory=list)
+    divergence_details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "success": self.success,
             "original_hash": self.original_hash,
@@ -193,9 +194,9 @@ class ReproductionEngine:
 
     def __init__(
         self,
-        repository: Optional[EvidenceRepository] = None,
-        lineage_engine: Optional[LineageQueryEngine] = None,
-        runner: Optional[BaseExperimentRunner] = None,
+        repository: EvidenceRepository | None = None,
+        lineage_engine: LineageQueryEngine | None = None,
+        runner: BaseExperimentRunner | None = None,
     ) -> None:
         self._repo = repository or EvidenceRepository()
         self._lineage = lineage_engine or LineageQueryEngine(repository=self._repo)
@@ -223,13 +224,12 @@ class ReproductionEngine:
         chain = self._lineage.resolve_full_chain(result_hash)
         if chain is None:
             raise MissingArtifact(
-                f"Result artifact {result_hash} is not a Result or is not "
-                f"present in the evidence store"
+                f"Result artifact {result_hash} is not a Result or is not present in the evidence store"
             )
         self._assert_chain(chain, result_hash)
 
         # Build artifact_chain for the report.
-        artifact_chain: Dict[str, str] = {}
+        artifact_chain: dict[str, str] = {}
         for typ, env in [
             ("Dataset", chain.dataset),
             ("Experiment", chain.experiment),
@@ -252,8 +252,7 @@ class ReproductionEngine:
         ]:
             if env is not None and not env.verify():
                 raise IntegrityFailure(
-                    f"{typ} artifact {env.artifact_hash} failed integrity "
-                    f"verification (lineage_hash mismatch)"
+                    f"{typ} artifact {env.artifact_hash} failed integrity verification (lineage_hash mismatch)"
                 )
 
         # ---------------------------------------------------------------
@@ -262,9 +261,7 @@ class ReproductionEngine:
         dataset = self._reconstruct_dataset(chain.dataset)
         dataset_config = self._reconstruct_dataset_config(chain.run)
         simulation_config = self._reconstruct_simulation_config(chain.run)
-        experiment = self._reconstruct_experiment(
-            chain.experiment, dataset_config, simulation_config
-        )
+        experiment = self._reconstruct_experiment(chain.experiment, dataset_config, simulation_config)
 
         # Convert the reconstructed research dataset into the runner-consumable
         # OHLCV contract the certified boundary normalizes.
@@ -283,9 +280,7 @@ class ReproductionEngine:
         # ---------------------------------------------------------------
         payload = chain.result.payload
         if not isinstance(payload, Mapping):
-            raise ReconstructionFailure(
-                f"Result payload is not a mapping: {type(payload).__name__}"
-            )
+            raise ReconstructionFailure(f"Result payload is not a mapping: {type(payload).__name__}")
         original_result_hash = str(payload.get("result_hash", ""))
 
         reproduced_hash = reproduced_result.result_hash
@@ -295,14 +290,12 @@ class ReproductionEngine:
         # ---------------------------------------------------------------
         if not original_result_hash:
             raise ReconstructionFailure(
-                "Result artifact payload does not carry a 'result_hash' "
-                "reference to compare against"
+                "Result artifact payload does not carry a 'result_hash' reference to compare against"
             )
 
         if original_result_hash != reproduced_hash:
             raise HashMismatch(
-                f"Reproduction hash mismatch: original={original_result_hash} "
-                f"reproduced={reproduced_hash}"
+                f"Reproduction hash mismatch: original={original_result_hash} reproduced={reproduced_hash}"
             )
 
         # Success: identical hashes.
@@ -321,7 +314,7 @@ class ReproductionEngine:
 
         Raises ``MissingArtifact`` when any required artifact is missing.
         """
-        missing: List[str] = []
+        missing: list[str] = []
         if chain.dataset is None:
             missing.append("Dataset")
         if chain.experiment is None:
@@ -341,7 +334,7 @@ class ReproductionEngine:
 
     @staticmethod
     def _reconstruct_dataset(
-        dataset_env: Optional[EvidenceEnvelope],
+        dataset_env: EvidenceEnvelope | None,
     ) -> ResearchDataset:
         """Reconstruct a ``ResearchDataset`` from a Dataset evidence envelope.
 
@@ -351,9 +344,7 @@ class ReproductionEngine:
             raise ReconstructionFailure("Dataset envelope is None")
         payload = dataset_env.payload
         if not isinstance(payload, Mapping):
-            raise ReconstructionFailure(
-                f"Dataset payload is not a mapping: {type(payload).__name__}"
-            )
+            raise ReconstructionFailure(f"Dataset payload is not a mapping: {type(payload).__name__}")
         try:
             return ResearchDataset.from_payload(payload)
         except (TypeError, ValueError) as e:
@@ -361,7 +352,7 @@ class ReproductionEngine:
 
     @staticmethod
     def _reconstruct_dataset_config(
-        run_env: Optional[EvidenceEnvelope],
+        run_env: EvidenceEnvelope | None,
     ) -> DatasetConfig:
         """Reconstruct a ``DatasetConfig`` from a Run envelope's payload.
 
@@ -376,9 +367,7 @@ class ReproductionEngine:
             raise ReconstructionFailure(f"Run payload is not a mapping: {type(payload).__name__}")
         config_data = payload.get("dataset_config")
         if not isinstance(config_data, Mapping):
-            raise ReconstructionFailure(
-                "Run payload does not contain a valid dataset_config mapping"
-            )
+            raise ReconstructionFailure("Run payload does not contain a valid dataset_config mapping")
         try:
             return DatasetConfig.from_dict(dict(config_data))
         except (TypeError, ValueError, KeyError) as e:
@@ -386,7 +375,7 @@ class ReproductionEngine:
 
     @staticmethod
     def _reconstruct_simulation_config(
-        run_env: Optional[EvidenceEnvelope],
+        run_env: EvidenceEnvelope | None,
     ) -> SimulationConfig:
         """Reconstruct a ``SimulationConfig`` from a Run envelope's payload.
 
@@ -401,9 +390,7 @@ class ReproductionEngine:
             raise ReconstructionFailure(f"Run payload is not a mapping: {type(payload).__name__}")
         config_data = payload.get("simulation_config")
         if not isinstance(config_data, Mapping):
-            raise ReconstructionFailure(
-                "Run payload does not contain a valid simulation_config mapping"
-            )
+            raise ReconstructionFailure("Run payload does not contain a valid simulation_config mapping")
         try:
             return SimulationConfig.from_dict(dict(config_data))
         except (TypeError, ValueError, KeyError) as e:
@@ -411,7 +398,7 @@ class ReproductionEngine:
 
     @staticmethod
     def _reconstruct_experiment(
-        experiment_env: Optional[EvidenceEnvelope],
+        experiment_env: EvidenceEnvelope | None,
         dataset_config: DatasetConfig,
         simulation_config: SimulationConfig,
     ) -> Experiment:
@@ -429,15 +416,11 @@ class ReproductionEngine:
             raise ReconstructionFailure("Experiment envelope is None")
         payload = experiment_env.payload
         if not isinstance(payload, Mapping):
-            raise ReconstructionFailure(
-                f"Experiment payload is not a mapping: {type(payload).__name__}"
-            )
+            raise ReconstructionFailure(f"Experiment payload is not a mapping: {type(payload).__name__}")
 
         hypothesis_id = payload.get("hypothesis_id", "")
         if not hypothesis_id:
-            raise ReconstructionFailure(
-                "Experiment payload is missing required 'hypothesis_id' field"
-            )
+            raise ReconstructionFailure("Experiment payload is missing required 'hypothesis_id' field")
 
         try:
             from researchos.experiments.contracts import MetricDefinition
@@ -449,9 +432,7 @@ class ReproductionEngine:
                 experiment_type=str(payload.get("experiment_type", "Backtest")),
                 dataset_config=dataset_config,
                 simulation_config=simulation_config,
-                metric_definitions=[
-                    MetricDefinition.from_dict(m) for m in payload.get("metric_definitions", [])
-                ],
+                metric_definitions=[MetricDefinition.from_dict(m) for m in payload.get("metric_definitions", [])],
                 parameters=dict(payload.get("parameters", {})),
                 version=str(payload.get("version", "1.0.0")),
                 tags=list(payload.get("tags", [])),

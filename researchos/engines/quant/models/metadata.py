@@ -7,8 +7,9 @@ Pure Python, deterministic, no external dependencies.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Tuple
+from typing import Any
 
 MODEL_METADATA_VERSION = "1.0.0"
 
@@ -29,14 +30,14 @@ class ModelMetadata:
     author: str = ""
     description: str = ""
     created_at: str = ""
-    tags: Tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
     framework: str = ""
     notes: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "tags", tuple(self.tags))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "author": self.author,
@@ -48,7 +49,7 @@ class ModelMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ModelMetadata":
+    def from_dict(cls, data: Mapping[str, Any]) -> ModelMetadata:
         """Reconstruct a ``ModelMetadata`` from a ``to_dict()`` mapping."""
         return cls(
             author=str(data.get("author", "")),

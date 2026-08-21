@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from researchos.macro.time.enums import (
     EventCategory,
@@ -63,10 +63,10 @@ class RecurringEventPattern:
 
     pattern_type: str  # "daily", "weekly", "monthly", etc.
     interval: int = 1
-    day_of_week: Optional[int] = None  # 0=Monday, 6=Sunday
-    day_of_month: Optional[int] = None
-    month: Optional[int] = None
-    quarter: Optional[int] = None
+    day_of_week: int | None = None  # 0=Monday, 6=Sunday
+    day_of_month: int | None = None
+    month: int | None = None
+    quarter: int | None = None
 
     def get_next_occurrence(self, from_date: datetime) -> datetime:
         """
@@ -114,7 +114,7 @@ class EconomicCalendar:
     # Identity
     calendar_id: str
     year: int
-    month: Optional[int] = None
+    month: int | None = None
 
     # Events
     events: list[CalendarEvent] = field(default_factory=list)

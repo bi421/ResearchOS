@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class Timeframe(str, Enum):
@@ -29,7 +29,7 @@ class Timeframe(str, Enum):
     MN1 = "1mo"
 
     @classmethod
-    def from_string(cls, value: str) -> "Timeframe":
+    def from_string(cls, value: str) -> Timeframe:
         """Parse a timeframe from a string, case-insensitive."""
         mapping = {
             "tick": cls.TICK,
@@ -124,7 +124,7 @@ class DatasetType(str, Enum):
     ORDERBOOK = "orderbook"
 
     @classmethod
-    def from_string(cls, value: str) -> "DatasetType":
+    def from_string(cls, value: str) -> DatasetType:
         """Parse a dataset type from a string, case-insensitive."""
         mapping = {
             "candle": cls.CANDLE,
@@ -145,9 +145,7 @@ class DatasetType(str, Enum):
         }
         normalized = value.lower().strip()
         if normalized not in mapping:
-            raise ValueError(
-                f"Unknown dataset type '{value}'. Valid options: {list(mapping.keys())}"
-            )
+            raise ValueError(f"Unknown dataset type '{value}'. Valid options: {list(mapping.keys())}")
         return mapping[normalized]
 
     def matches(self, data_type: str) -> bool:
@@ -183,7 +181,7 @@ class CandleField:
     volume: str = "volume"
     symbol: str = "symbol"
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         return {
             "timestamp": self.timestamp,
             "open": self.open,
@@ -195,7 +193,7 @@ class CandleField:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, str]) -> "CandleField":
+    def from_dict(cls, data: dict[str, str]) -> CandleField:
         return cls(
             timestamp=data.get("timestamp", "timestamp"),
             open=data.get("open", "open"),
@@ -224,7 +222,7 @@ class LoaderConfig:
         normalize_timezone: Whether to normalize to UTC.
     """
 
-    field_mapping: Optional[CandleField] = None
+    field_mapping: CandleField | None = None
     date_format: str = "%Y-%m-%d %H:%M:%S"
     timezone: str = "UTC"
     delimiter: str = ","
@@ -233,9 +231,9 @@ class LoaderConfig:
     max_records: int = 0
     skip_errors: bool = False
     normalize_timezone: bool = True
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "field_mapping": self.field_mapping.to_dict() if self.field_mapping else None,
             "date_format": self.date_format,
@@ -250,7 +248,7 @@ class LoaderConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "LoaderConfig":
+    def from_dict(cls, data: dict[str, Any]) -> LoaderConfig:
         fm = data.get("field_mapping")
         return cls(
             field_mapping=CandleField.from_dict(fm) if fm else None,
@@ -277,8 +275,8 @@ class ValidationReport:
     missing_candles: int = 0
     duplicates_found: int = 0
     outlier_records: int = 0
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def quality_score(self) -> float:
@@ -290,7 +288,7 @@ class ValidationReport:
         dup_penalty = min(self.duplicates_found / max(self.total_records, 1) * 10, 0.2)
         return max(0.0, min(1.0, valid_ratio - gap_penalty - dup_penalty))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_records": self.total_records,
             "valid_records": self.valid_records,
@@ -305,7 +303,7 @@ class ValidationReport:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ValidationReport":
+    def from_dict(cls, data: dict[str, Any]) -> ValidationReport:
         return cls(
             total_records=int(data.get("total_records", 0)),
             valid_records=int(data.get("valid_records", 0)),

@@ -1,10 +1,11 @@
 import sys
 
 sys.path.insert(0, ".")
-import yfinance as yf
 import pandas as pd
-from researchos.quant_engine.strategies import RSIStrategy, MACDStrategy, BollingerStrategy
+import yfinance as yf
+
 from researchos.quant_engine.backtest import BacktestEngine
+from researchos.quant_engine.strategies import BollingerStrategy, MACDStrategy, RSIStrategy
 
 print("🔄 Bitcoin (BTC-USD) бодит 1 жилийн өгөгдөл татаж байна...")
 df = yf.download("BTC-USD", period="1y", progress=False)

@@ -34,13 +34,14 @@ makes no trading, signalling, or prediction decisions.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 #: Default dataset-size thresholds (number of observations) separating the
 #: SMALL / MEDIUM / LARGE classes.  Configurable per profile.
-DEFAULT_SIZE_THRESHOLDS: Tuple[int, int] = (1_000, 10_000)
+DEFAULT_SIZE_THRESHOLDS: tuple[int, int] = (1_000, 10_000)
 
 #: Initial scheduler policy version (bumped when the decision rule changes).
 POLICY_VERSION = "1.0.0"
@@ -68,7 +69,7 @@ class OperationComplexity(str, Enum):
 
 
 #: Stable per-operation complexity classification.
-OPERATION_COMPLEXITY: Dict[str, OperationComplexity] = {
+OPERATION_COMPLEXITY: dict[str, OperationComplexity] = {
     "calculate_returns": OperationComplexity.LIGHT,
     "calculate_volatility": OperationComplexity.STANDARD,
     "calculate_drawdown": OperationComplexity.STANDARD,
@@ -79,9 +80,7 @@ OPERATION_COMPLEXITY: Dict[str, OperationComplexity] = {
 }
 
 
-def classify_size(
-    n: Optional[int], thresholds: Sequence[int] = DEFAULT_SIZE_THRESHOLDS
-) -> DatasetSizeClass:
+def classify_size(n: int | None, thresholds: Sequence[int] = DEFAULT_SIZE_THRESHOLDS) -> DatasetSizeClass:
     """Bucket a dataset length into a deterministic size class.
 
     ``None`` (unknown length) maps to SMALL.  ``thresholds`` is an ascending
@@ -102,7 +101,7 @@ def operation_complexity(operation: str) -> OperationComplexity:
     return OPERATION_COMPLEXITY.get(operation, OperationComplexity.STANDARD)
 
 
-def _estimate_dataset_size(inputs: Mapping[str, Any]) -> Optional[int]:
+def _estimate_dataset_size(inputs: Mapping[str, Any]) -> int | None:
     """Estimate the dataset length from a raw ``execute`` inputs mapping.
 
     Only ``inputs`` values are inspected (the request payload).  The first
@@ -130,7 +129,7 @@ def _estimate_dataset_size(inputs: Mapping[str, Any]) -> Optional[int]:
     return None
 
 
-def estimate_dataset_size(inputs: Mapping[str, Any]) -> Optional[int]:
+def estimate_dataset_size(inputs: Mapping[str, Any]) -> int | None:
     """Public estimate of a dataset's length for scheduling diagnostics."""
     return _estimate_dataset_size(inputs)
 
@@ -149,7 +148,7 @@ class PerformanceStat:
     count: int = 1
     last_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "mean_ms": round(float(self.mean_ms), 6),
             "count": int(self.count),
@@ -157,7 +156,7 @@ class PerformanceStat:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "PerformanceStat":
+    def from_dict(cls, data: Mapping[str, Any]) -> PerformanceStat:
         return cls(
             mean_ms=float(data["mean_ms"]),
             count=int(data.get("count", 1)),
@@ -165,7 +164,7 @@ class PerformanceStat:
         )
 
     @classmethod
-    def from_measurement(cls, elapsed_ms: float) -> "PerformanceStat":
+    def from_measurement(cls, elapsed_ms: float) -> PerformanceStat:
         return cls(mean_ms=float(elapsed_ms), count=1, last_ms=float(elapsed_ms))
 
 
@@ -185,14 +184,14 @@ class SchedulerDecision:
             candidates that were NOT selected.
     """
 
-    selected_backend: Optional[str]
+    selected_backend: str | None
     rationale: str
     policy_version: str = POLICY_VERSION
     profile_version: str = ""
-    candidates_considered: Tuple[str, ...] = ()
-    rejected_reasons: Tuple[Tuple[str, str], ...] = ()
+    candidates_considered: tuple[str, ...] = ()
+    rejected_reasons: tuple[tuple[str, str], ...] = ()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "selected_backend": self.selected_backend,
             "rationale": self.rationale,
@@ -203,7 +202,7 @@ class SchedulerDecision:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "SchedulerDecision":
+    def from_dict(cls, data: Mapping[str, Any]) -> SchedulerDecision:
         rejected = [
             tuple(pair)
             for pair in data.get("rejected_reasons", [])  # type: ignore[arg-type]
@@ -229,16 +228,16 @@ class CertifiedPerformanceProfile:
     router instance's decisions stay reproducible per version.
     """
 
-    _KEY = Tuple[str, str, str]
+    _KEY = tuple[str, str, str]
 
     def __init__(
         self,
-        measurements: Optional[Mapping[Tuple[str, str, Any], PerformanceStat]] = None,
+        measurements: Mapping[tuple[str, str, Any], PerformanceStat] | None = None,
         thresholds: Sequence[int] = DEFAULT_SIZE_THRESHOLDS,
         version: str = "0",
         source: str = "",
     ) -> None:
-        self._stats: Dict[self._KEY, PerformanceStat] = {
+        self._stats: dict[self._KEY, PerformanceStat] = {
             (
                 str(backend),
                 str(op),
@@ -246,7 +245,7 @@ class CertifiedPerformanceProfile:
             ): stat
             for (backend, op, size), stat in (measurements or {}).items()
         }
-        self._thresholds: Tuple[int, int] = (
+        self._thresholds: tuple[int, int] = (
             int(thresholds[0]),
             int(thresholds[1]),
         )
@@ -254,11 +253,11 @@ class CertifiedPerformanceProfile:
         self.source: str = source
 
     @property
-    def thresholds(self) -> Tuple[int, int]:
+    def thresholds(self) -> tuple[int, int]:
         """The dataset-size thresholds used for classification."""
         return self._thresholds
 
-    def estimate_ms(self, backend: str, operation: str, size: DatasetSizeClass) -> Optional[float]:
+    def estimate_ms(self, backend: str, operation: str, size: DatasetSizeClass) -> float | None:
         """Return the mean runtime estimate (ms) or None when unmeasured."""
         stat = self._stats.get((str(backend), str(operation), size.value))
         return stat.mean_ms if stat is not None else None
@@ -285,7 +284,7 @@ class CertifiedPerformanceProfile:
         operation: str,
         size: DatasetSizeClass,
         stat: PerformanceStat,
-    ) -> "CertifiedPerformanceProfile":
+    ) -> CertifiedPerformanceProfile:
         """Return a new profile with ``(backend, operation, size)`` updated."""
         new = CertifiedPerformanceProfile(
             measurements=self._stats,
@@ -298,9 +297,9 @@ class CertifiedPerformanceProfile:
 
     def recalibrate(
         self,
-        history: "ExecutionHistory",
-        version: Optional[str] = None,
-    ) -> "CertifiedPerformanceProfile":
+        history: ExecutionHistory,
+        version: str | None = None,
+    ) -> CertifiedPerformanceProfile:
         """Return a NEW profile recalibrated from observed telemetry.
 
         The new profile version is ``<old>.<n>`` (or an explicit ``version``).
@@ -311,7 +310,7 @@ class CertifiedPerformanceProfile:
             history: The execution history to learn from.
             version: Optional explicit new version string.
         """
-        samples_by_key: Dict[Tuple[str, str, str], List[float]] = {}
+        samples_by_key: dict[tuple[str, str, str], list[float]] = {}
         for record in history.records:
             if record.size_class is None or record.backend is None:
                 continue
@@ -342,7 +341,7 @@ class CertifiedPerformanceProfile:
             source=self.source or "recalibrated-from-history",
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
             "source": self.source,
@@ -354,8 +353,8 @@ class CertifiedPerformanceProfile:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "CertifiedPerformanceProfile":
-        measurements: Dict[Tuple[str, str, DatasetSizeClass], PerformanceStat] = {}
+    def from_dict(cls, data: Mapping[str, Any]) -> CertifiedPerformanceProfile:
+        measurements: dict[tuple[str, str, DatasetSizeClass], PerformanceStat] = {}
         for key, stat in data.get("measurements", {}).items():
             parts = str(key).split("|")
             if len(parts) != 3:
@@ -380,7 +379,7 @@ class CertifiedPerformanceProfile:
         backend_name: str,
         reference_backend_name: str,
         version: str = "1.0.0",
-    ) -> "CertifiedPerformanceProfile":
+    ) -> CertifiedPerformanceProfile:
         """Build a profile from ``benchmark_cpp.run_benchmark()`` row dicts.
 
         Each row is ``{"operation": str, "measurements": [{"size", "python_s",
@@ -388,16 +387,16 @@ class CertifiedPerformanceProfile:
         reference backend are recorded so the scheduler can compare
         estimates deterministically.
         """
-        measurements: Dict[Tuple[str, str, DatasetSizeClass], PerformanceStat] = {}
+        measurements: dict[tuple[str, str, DatasetSizeClass], PerformanceStat] = {}
         for row in benchmark_rows:
             operation = str(row["operation"])
             for m in row.get("measurements", []):
                 size_class = classify_size(int(m["size"]))
-                measurements[(backend_name, operation, size_class)] = (
-                    PerformanceStat.from_measurement(float(m["cpp_s"]) * 1000.0)
+                measurements[(backend_name, operation, size_class)] = PerformanceStat.from_measurement(
+                    float(m["cpp_s"]) * 1000.0
                 )
-                measurements[(reference_backend_name, operation, size_class)] = (
-                    PerformanceStat.from_measurement(float(m["python_s"]) * 1000.0)
+                measurements[(reference_backend_name, operation, size_class)] = PerformanceStat.from_measurement(
+                    float(m["python_s"]) * 1000.0
                 )
         return cls(
             measurements=measurements,
@@ -425,14 +424,14 @@ class ExecutionRecord:
     """
 
     operation: str
-    backend: Optional[str]
-    size_class: Optional[str]
+    backend: str | None
+    size_class: str | None
     duration_ms: float
     validation_status: str
     error_code: str
     fallback_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "operation": self.operation,
             "backend": self.backend,
@@ -444,7 +443,7 @@ class ExecutionRecord:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ExecutionRecord":
+    def from_dict(cls, data: Mapping[str, Any]) -> ExecutionRecord:
         return cls(
             operation=str(data["operation"]),
             backend=data.get("backend"),
@@ -464,7 +463,7 @@ class ExecutionHistory:
     into a deterministic, JSON-compatible report for observability tooling.
     """
 
-    records: List[ExecutionRecord] = field(default_factory=list)
+    records: list[ExecutionRecord] = field(default_factory=list)
 
     def record(self, entry: ExecutionRecord) -> None:
         self.records.append(entry)
@@ -472,10 +471,10 @@ class ExecutionHistory:
     def __len__(self) -> int:
         return len(self.records)
 
-    def summary(self) -> Dict[str, Any]:
+    def summary(self) -> dict[str, Any]:
         """Deterministic aggregate over all records."""
-        by_backend: Dict[str, int] = {}
-        by_op: Dict[str, int] = {}
+        by_backend: dict[str, int] = {}
+        by_op: dict[str, int] = {}
         total_ms = 0.0
         fallback_count = 0
         for r in self.records:
@@ -491,11 +490,11 @@ class ExecutionHistory:
             "executions_per_operation": dict(sorted(by_op.items())),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"records": [r.to_dict() for r in self.records]}
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ExecutionHistory":
+    def from_dict(cls, data: Mapping[str, Any]) -> ExecutionHistory:
         return cls(records=[ExecutionRecord.from_dict(r) for r in data.get("records", [])])
 
 
@@ -510,17 +509,17 @@ class BackendScheduler:
 
     def __init__(
         self,
-        profile: Optional[CertifiedPerformanceProfile] = None,
+        profile: CertifiedPerformanceProfile | None = None,
         policy_version: str = POLICY_VERSION,
     ) -> None:
         self._profile = profile
         self.policy_version = policy_version
 
     @property
-    def profile(self) -> Optional[CertifiedPerformanceProfile]:
+    def profile(self) -> CertifiedPerformanceProfile | None:
         return self._profile
 
-    def set_profile(self, profile: Optional[CertifiedPerformanceProfile]) -> None:
+    def set_profile(self, profile: CertifiedPerformanceProfile | None) -> None:
         """Install (or clear) the certified performance profile.
 
         The profile is configuration: identical inputs + identical profile →
@@ -538,7 +537,7 @@ class BackendScheduler:
         self,
         operation: str,
         inputs: Mapping[str, Any],
-        eligible: Sequence[Tuple[str, Any]],
+        eligible: Sequence[tuple[str, Any]],
     ) -> SchedulerDecision:
         """Select the backend for ``operation`` given the eligible candidates.
 
@@ -572,17 +571,14 @@ class BackendScheduler:
             return SchedulerDecision(
                 selected_backend=first,
                 rationale=(
-                    f"no certified performance profile; first eligible candidate "
-                    f"selected ({size.value} dataset)"
+                    f"no certified performance profile; first eligible candidate selected ({size.value} dataset)"
                 ),
                 policy_version=self.policy_version,
                 profile_version="",
                 candidates_considered=tuple(name for name, _ in eligible),
             )
 
-        estimates = [
-            (name, self._profile.estimate_ms(name, operation, size)) for name, _ in eligible
-        ]
+        estimates = [(name, self._profile.estimate_ms(name, operation, size)) for name, _ in eligible]
         measured = [(name, est) for name, est in estimates if est is not None]
 
         if not measured:
@@ -602,16 +598,10 @@ class BackendScheduler:
 
         measured.sort(key=lambda item: (item[1], item[0]))
         best = measured[0][0]
-        rejected = [
-            (name, f"estimated slower ({est:.3f}ms vs {measured[0][1]:.3f}ms)")
-            for name, est in measured[1:]
-        ]
+        rejected = [(name, f"estimated slower ({est:.3f}ms vs {measured[0][1]:.3f}ms)") for name, est in measured[1:]]
         return SchedulerDecision(
             selected_backend=best,
-            rationale=(
-                f"certified performance profile chose {best} for {operation} "
-                f"at {size.value} dataset size"
-            ),
+            rationale=(f"certified performance profile chose {best} for {operation} at {size.value} dataset size"),
             policy_version=self.policy_version,
             profile_version=self.profile_version,
             candidates_considered=tuple(name for name, _ in eligible),

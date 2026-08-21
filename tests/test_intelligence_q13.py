@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import unittest
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 from researchos.intelligence import (
     DeterministicRetriever,
@@ -90,7 +90,7 @@ def make_result(
     )
 
 
-def build_indexed_graph() -> tuple[Dict[str, Dict[str, Any]], DeterministicRetriever]:
+def build_indexed_graph() -> tuple[dict[str, dict[str, Any]], DeterministicRetriever]:
     """Build an EvidenceGraph and return its node index + retriever."""
     graph = EvidenceGraph()
     graph.add_node(
@@ -147,9 +147,7 @@ class TestRetrievalSource(unittest.TestCase):
         self.assertIs(RetrievalSource.from_string("knowledge_base"), RetrievalSource.KNOWLEDGE_BASE)
 
     def test_from_string_experiment_result(self):
-        self.assertIs(
-            RetrievalSource.from_string("experiment_result"), RetrievalSource.EXPERIMENT_RESULT
-        )
+        self.assertIs(RetrievalSource.from_string("experiment_result"), RetrievalSource.EXPERIMENT_RESULT)
 
     def test_from_string_unknown_raises(self):
         with self.assertRaises(ValueError):
@@ -211,9 +209,7 @@ class TestRetrievalQueryConstruction(unittest.TestCase):
         self.assertIsNone(q.source_filter)
 
     def test_source_filter_set(self):
-        q = RetrievalQuery(
-            query_id="q", text="test", source_filter=[RetrievalSource.EVIDENCE_GRAPH]
-        )
+        q = RetrievalQuery(query_id="q", text="test", source_filter=[RetrievalSource.EVIDENCE_GRAPH])
         self.assertEqual(q.source_filter, (RetrievalSource.EVIDENCE_GRAPH,))
 
 
@@ -428,15 +424,11 @@ class TestRetrievalContext(unittest.TestCase):
 
     def test_empty_session_id_raises(self):
         with self.assertRaises(ValueError):
-            RetrievalContext(
-                session_id="", queries=(), all_hits=(), session_start=datetime.now(timezone.utc)
-            )
+            RetrievalContext(session_id="", queries=(), all_hits=(), session_start=datetime.now(timezone.utc))
 
     def test_hits_sorted_by_score(self):
         hits = (make_hit("h2", score=0.5), make_hit("h1", score=0.9))
-        ctx = RetrievalContext(
-            session_id="s", queries=(), all_hits=hits, session_start=datetime.now(timezone.utc)
-        )
+        ctx = RetrievalContext(session_id="s", queries=(), all_hits=hits, session_start=datetime.now(timezone.utc))
         self.assertEqual(ctx.all_hits[0].hit_id, "h1")
 
     def test_to_dict_roundtrip(self):
@@ -613,9 +605,7 @@ class TestRetrieverIndexManagement(unittest.TestCase):
 
     def test_update_knowledge_index(self):
         retriever = DeterministicRetriever()
-        retriever.update_index(
-            knowledge={"k1": {"type": "Knowledge", "text": "test", "source": "knowledge_base"}}
-        )
+        retriever.update_index(knowledge={"k1": {"type": "Knowledge", "text": "test", "source": "knowledge_base"}})
         self.assertEqual(retriever.knowledge_count, 1)
 
 

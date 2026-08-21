@@ -128,9 +128,7 @@ class TestCertifiedPerformanceProfile:
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Slow", "Fast") is False
 
     def test_faster_than_unknown_is_false(self):
-        profile = CertifiedPerformanceProfile().add(
-            "Fast", "op", DatasetSizeClass.SMALL, PerformanceStat(5.0)
-        )
+        profile = CertifiedPerformanceProfile().add("Fast", "op", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is False
 
     def test_roundtrip(self):
@@ -161,12 +159,8 @@ class TestCertifiedPerformanceProfile:
         )
         # 1 operation × 2 sizes × 2 backends
         assert profile.measured() == 4
-        cpp_small = profile.estimate_ms(
-            "CppQuantAdapter", "calculate_returns", DatasetSizeClass.SMALL
-        )
-        py_large = profile.estimate_ms(
-            "PythonQuantBackend", "calculate_returns", DatasetSizeClass.LARGE
-        )
+        cpp_small = profile.estimate_ms("CppQuantAdapter", "calculate_returns", DatasetSizeClass.SMALL)
+        py_large = profile.estimate_ms("PythonQuantBackend", "calculate_returns", DatasetSizeClass.LARGE)
         assert cpp_small == pytest.approx(0.5)
         assert py_large == pytest.approx(10.0)
 

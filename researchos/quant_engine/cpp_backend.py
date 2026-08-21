@@ -36,7 +36,7 @@ not used here.
 from __future__ import annotations
 
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.timestamp import utc_now
 from researchos.quant_engine.capabilities import (
@@ -84,7 +84,7 @@ def has_cpp_engine() -> bool:
         return False
 
 
-def get_cpp_engine_version() -> Optional[str]:
+def get_cpp_engine_version() -> str | None:
     """Return the C++ engine version string, or None if unavailable."""
     try:
         backend_class = _get_native_backend_class()
@@ -173,7 +173,7 @@ class CppQuantAdapter(QuantComputationInterface):
             raise ValueError(str(exc)) from None
 
     @staticmethod
-    def _normalize_statistics(statistics: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_statistics(statistics: dict[str, Any]) -> dict[str, Any]:
         out = dict(statistics)
 
         if "count" in out:
@@ -182,8 +182,8 @@ class CppQuantAdapter(QuantComputationInterface):
         return out
 
     @staticmethod
-    def _normalize_metrics(metrics: Dict[str, Any]) -> Dict[str, float]:
-        out: Dict[str, float] = {key: float(value) for key, value in metrics.items()}
+    def _normalize_metrics(metrics: dict[str, Any]) -> dict[str, float]:
+        out: dict[str, float] = {key: float(value) for key, value in metrics.items()}
 
         if "max_drawdown" in out:
             out["max_drawdown"] = round(out["max_drawdown"], 8)
@@ -194,8 +194,8 @@ class CppQuantAdapter(QuantComputationInterface):
         return out
 
     @staticmethod
-    def _normalize_drawdown(drawdown: Dict[str, Any]) -> Dict[str, Any]:
-        out: Dict[str, Any] = {}
+    def _normalize_drawdown(drawdown: dict[str, Any]) -> dict[str, Any]:
+        out: dict[str, Any] = {}
 
         if "max_drawdown" in drawdown:
             out["max_drawdown"] = float(drawdown["max_drawdown"])
@@ -212,20 +212,17 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def calculate_returns(
         self,
-        prices: List[float],
+        prices: list[float],
         return_type: str = "percentage",
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         _require_v1(calculation_version)
 
         if len(prices) < 2:
             raise ValueError(f"Need at least 2 prices to calculate returns, got {len(prices)}")
 
         if return_type not in ("absolute", "percentage", "log"):
-            raise ValueError(
-                f"Unrecognized return_type '{return_type}'. "
-                "Expected 'absolute', 'percentage', or 'log'."
-            )
+            raise ValueError(f"Unrecognized return_type '{return_type}'. Expected 'absolute', 'percentage', or 'log'.")
 
         return list(
             self._call(
@@ -239,7 +236,7 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def calculate_volatility(
         self,
-        returns: List[float],
+        returns: list[float],
         method: str = "standard_deviation",
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
@@ -249,10 +246,7 @@ class CppQuantAdapter(QuantComputationInterface):
             raise ValueError("Cannot compute volatility on empty dataset")
 
         if method not in ("standard_deviation", "rolling", "change"):
-            raise ValueError(
-                f"Unrecognized method '{method}'. "
-                "Expected 'standard_deviation', 'rolling', or 'change'."
-            )
+            raise ValueError(f"Unrecognized method '{method}'. Expected 'standard_deviation', 'rolling', or 'change'.")
 
         return float(
             self._call(
@@ -266,9 +260,9 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def calculate_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         _require_v1(calculation_version)
 
         if len(equity_curve) < 2:
@@ -287,9 +281,9 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def calculate_statistics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         _require_v1(calculation_version)
 
         if not returns:
@@ -308,11 +302,11 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def calculate_metrics(
         self,
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         _require_v1(calculation_version)
 
         if not returns:
@@ -339,9 +333,9 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def calculate_performance_analytics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return compute_performance_analytics(
             returns,
             calculation_version,
@@ -355,7 +349,7 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def regression_slope(
         self,
-        y: List[float],
+        y: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
         _require_v1(calculation_version)
@@ -372,7 +366,7 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def regression_intercept(
         self,
-        y: List[float],
+        y: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
         _require_v1(calculation_version)
@@ -389,8 +383,8 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def regression_correlation(
         self,
-        x: List[float],
-        y: List[float],
+        x: list[float],
+        y: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
         _require_v1(calculation_version)
@@ -411,8 +405,8 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def regression_r_squared(
         self,
-        x: List[float],
-        y: List[float],
+        x: list[float],
+        y: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
         _require_v1(calculation_version)
@@ -433,8 +427,8 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def regression_standard_error(
         self,
-        x: List[float],
-        y: List[float],
+        x: list[float],
+        y: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
         _require_v1(calculation_version)
@@ -457,10 +451,10 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def rolling_mean(
         self,
-        data: List[float],
+        data: list[float],
         window: int,
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         _require_v1(calculation_version)
 
         if window <= 0:
@@ -479,11 +473,11 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def rolling_volatility_series(
         self,
-        data: List[float],
+        data: list[float],
         window: int,
         ddof: int = 1,
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         _require_v1(calculation_version)
 
         if window <= 0:
@@ -506,11 +500,11 @@ class CppQuantAdapter(QuantComputationInterface):
 
     def rolling_variance_series(
         self,
-        data: List[float],
+        data: list[float],
         window: int,
         ddof: int = 1,
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         _require_v1(calculation_version)
 
         if window <= 0:
@@ -536,7 +530,7 @@ class CppQuantAdapter(QuantComputationInterface):
     def run_simulation(
         self,
         request: SimulationRequest,
-        prices: List[float],
+        prices: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> SimulationResult:
         _require_v1(calculation_version)
@@ -620,9 +614,9 @@ class CppQuantAdapter(QuantComputationInterface):
 
     @staticmethod
     def _build_equity_curve(
-        returns: List[float],
+        returns: list[float],
         initial_capital: float,
-    ) -> List[float]:
+    ) -> list[float]:
         """Build an equity curve from percentage returns."""
         equity = [initial_capital]
 

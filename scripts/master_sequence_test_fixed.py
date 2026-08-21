@@ -4,14 +4,16 @@ import warnings
 warnings.filterwarnings("ignore")
 sys.path.insert(0, "cpp_quant")
 
-import pandas as pd
-import numpy as np
-import yfinance as yf
 import glob
 import time
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
 from joblib import Parallel, delayed
-from xgboost import XGBClassifier
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
+
 from cpp_quant import run_ml_backtest_cpp
 
 print("=" * 60)
@@ -46,17 +48,9 @@ def load_xauusd(timeframe="4h"):
     df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
     df = df.set_index("datetime")
     if timeframe == "4h":
-        return (
-            df.resample("4h")
-            .agg({"open": "first", "high": "max", "low": "min", "close": "last"})
-            .dropna()
-        )
+        return df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
     else:
-        return (
-            df.resample("D")
-            .agg({"open": "first", "high": "max", "low": "min", "close": "last"})
-            .dropna()
-        )
+        return df.resample("D").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
 
 
 def load_btc(timeframe="4h"):
@@ -161,9 +155,7 @@ def run_pipeline(df_h, macro_df, name):
         eval_metric="logloss",
     )
     model.fit(X_train_s, y_train, eval_set=[(X_val_s, y_val)], verbose=False)
-    print(
-        f"Train acc: {model.score(X_train_s, y_train):.2%}, Val acc: {model.score(X_val_s, y_val):.2%}"
-    )
+    print(f"Train acc: {model.score(X_train_s, y_train):.2%}, Val acc: {model.score(X_val_s, y_val):.2%}")
 
     thresholds = [0.50, 0.55, 0.58, 0.60, 0.62]
 

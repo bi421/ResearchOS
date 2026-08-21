@@ -1,6 +1,6 @@
 # 1. test_experiment_backend_integration.py засах
 path1 = "researchos/tests/test_experiment_backend_integration.py"
-with open(path1, "r", encoding="utf-8") as f:
+with open(path1, encoding="utf-8") as f:
     content1 = f.read()
 
 old1 = """    def test_insufficient_dataset_raises(self):
@@ -27,7 +27,7 @@ if count1 == 1:
 
 # 2. test_quant_engine.py засах
 path2 = "researchos/tests/test_quant_engine.py"
-with open(path2, "r", encoding="utf-8") as f:
+with open(path2, encoding="utf-8") as f:
     content2 = f.read()
 
 old2 = """    def test_replay_insufficient_data_raises(self, engine, simulation_request):

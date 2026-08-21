@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 ResearchOS БҮРЭН ЭРҮҮЛ МЭНДИЙН ШАЛГАЛТ
 ====================================
 Энэ скрипт нь ResearchOS-ийн бүх чухал функциональ байдлыг шалгадаг.
 """
 
-import sys
 import os
-import time
 import subprocess
+import sys
+import time
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -61,8 +60,9 @@ except Exception:
 # 3. ӨГӨГДӨЛ АЧААЛАХ
 # ============================================================
 try:
-    import pandas as pd
     import glob
+
+    import pandas as pd
 
     files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
     if files:
@@ -114,8 +114,9 @@ except Exception as e:
 # 5. ML FEATURE GENERATION
 # ============================================================
 try:
-    import pandas as pd
     import glob
+
+    import pandas as pd
 
     files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
     if files:
@@ -148,9 +149,11 @@ except Exception as e:
 # 6. БЭКТЕСТ (TP/SL-ТЭЙ)
 # ============================================================
 try:
-    from researchos.quant_engine.backtest_tpsl import vectorized_backtest_with_tpsl
-    import pandas as pd
     import glob
+
+    import pandas as pd
+
+    from researchos.quant_engine.backtest_tpsl import vectorized_backtest_with_tpsl
 
     files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
     if files:

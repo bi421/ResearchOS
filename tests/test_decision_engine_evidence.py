@@ -118,9 +118,7 @@ class TestCanonicalIdentity:
         source_defs: list[str] = []
         for py_file in sorted(decision_engine_dir.glob("*.py")):
             source = py_file.read_text(encoding="utf-8")
-            for match in re.finditer(
-                r"^class\s+(DecisionEvidenceItem|EvidenceSource)\b", source, re.MULTILINE
-            ):
+            for match in re.finditer(r"^class\s+(DecisionEvidenceItem|EvidenceSource)\b", source, re.MULTILINE):
                 target = item_defs if match.group(1) == "DecisionEvidenceItem" else source_defs
                 target.append(f"{py_file.name}:{match.group(1)}")
         assert item_defs == ["contracts.py:DecisionEvidenceItem"]
@@ -411,15 +409,9 @@ class TestEvidenceCollectionSerialization:
 class TestProbabilityCalculator:
     def test_directional_probabilities_with_canonical_items(self):
         items = [
-            make_item(
-                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
-            ),
-            make_item(
-                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
-            ),
-            make_item(
-                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
-            ),
+            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
+            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
+            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
         ]
         assessment = ProbabilityCalculator().compute(
             decision_context_id="ctx_1",
@@ -432,9 +424,7 @@ class TestProbabilityCalculator:
         assert assessment.bearish_probability == pytest.approx(0.375)
         assert assessment.neutral_probability == pytest.approx(0.125)
         assert (
-            assessment.bullish_probability
-            + assessment.bearish_probability
-            + assessment.neutral_probability
+            assessment.bullish_probability + assessment.bearish_probability + assessment.neutral_probability
             == pytest.approx(1.0)
         )
         assert assessment.confidence == pytest.approx(1.6 / 3.0)
@@ -446,15 +436,9 @@ class TestProbabilityCalculator:
 
     def test_assessment_passes_probability_validator(self):
         items = [
-            make_item(
-                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
-            ),
-            make_item(
-                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
-            ),
-            make_item(
-                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
-            ),
+            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
+            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
+            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
         ]
         assessment = ProbabilityCalculator().compute(
             decision_context_id="ctx_1",
@@ -465,12 +449,8 @@ class TestProbabilityCalculator:
 
     def test_zero_weight_falls_back_to_uniform(self):
         items = [
-            make_item(
-                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5
-            ),
-            make_item(
-                source_id="n2", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5
-            ),
+            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5),
+            make_item(source_id="n2", direction=ProbabilityOutcome.NEUTRAL, confidence=0.0, weight=0.5),
         ]
         assessment = ProbabilityCalculator().compute(
             decision_context_id="ctx_1",
@@ -600,6 +580,4 @@ class TestNoLegacyAttributeAccess:
         module_path = Path(contracts.__file__).parent / module_name
         source = module_path.read_text(encoding="utf-8")
         for pattern in self.LEGACY_PATTERNS:
-            assert re.search(pattern, source) is None, (
-                f"{module_name} contains legacy pattern {pattern!r}"
-            )
+            assert re.search(pattern, source) is None, f"{module_name} contains legacy pattern {pattern!r}"

@@ -12,7 +12,7 @@ of the ResearchOS reasoning pipeline.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_observation_id
@@ -50,11 +50,11 @@ class Observation(BaseObject):
         frequency: str = "",
         geography: str = "",
         asset_class: str = "",
-        quality_flags: Optional[List[str]] = None,
-        retrieval_time: Optional[datetime] = None,
+        quality_flags: list[str] | None = None,
+        retrieval_time: datetime | None = None,
         retrieval_method: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         # Generate deterministic ID from source + timestamp + value
         if id is None:
@@ -69,12 +69,12 @@ class Observation(BaseObject):
         self.frequency = frequency
         self.geography = geography
         self.asset_class = asset_class
-        self.quality_flags: List[str] = quality_flags or []
+        self.quality_flags: list[str] = quality_flags or []
         self.retrieval_time = retrieval_time or utc_now()
         self.retrieval_method = retrieval_method
         self.validated: bool = False
 
-    def validate(self, reference_time: Optional[datetime] = None) -> bool:
+    def validate(self, reference_time: datetime | None = None) -> bool:
         """
         Validate this observation against three criteria:
         1. Completeness — No missing values
@@ -144,7 +144,7 @@ class Observation(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Observation":
+    def from_dict(cls, data: dict) -> Observation:
         obj = super().from_dict(data)
         obj.source = data["source"]
         obj.timestamp = parse_timestamp(data["timestamp"])
@@ -154,9 +154,7 @@ class Observation(BaseObject):
         obj.geography = data.get("geography", "")
         obj.asset_class = data.get("asset_class", "")
         obj.quality_flags = list(data.get("quality_flags", []))
-        obj.retrieval_time = (
-            parse_timestamp(data["retrieval_time"]) if data.get("retrieval_time") else None
-        )
+        obj.retrieval_time = parse_timestamp(data["retrieval_time"]) if data.get("retrieval_time") else None
         obj.retrieval_method = data.get("retrieval_method", "")
         obj.validated = data.get("validated", False)
         return obj
@@ -189,10 +187,10 @@ class MarketState(BaseObject):
         volatility: float = 0.0,
         liquidity: str = "",
         sentiment: float = 0.0,
-        observations: Optional[List[str]] = None,
+        observations: list[str] | None = None,
         confidence: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.timestamp = timestamp
@@ -202,7 +200,7 @@ class MarketState(BaseObject):
         self.volatility = volatility
         self.liquidity = liquidity
         self.sentiment = sentiment
-        self.observations: List[str] = observations or []
+        self.observations: list[str] = observations or []
         self.confidence = confidence
 
     def to_dict(self) -> dict:
@@ -223,7 +221,7 @@ class MarketState(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketState":
+    def from_dict(cls, data: dict) -> MarketState:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data["timestamp"])
         obj.asset = data["asset"]
@@ -277,11 +275,11 @@ class MacroState(BaseObject):
         inflation: float = 0.0,
         growth: float = 0.0,
         policy_stance: str = "",
-        risk_factors: Optional[List[str]] = None,
-        observations: Optional[List[str]] = None,
+        risk_factors: list[str] | None = None,
+        observations: list[str] | None = None,
         confidence: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.timestamp = timestamp
@@ -290,8 +288,8 @@ class MacroState(BaseObject):
         self.inflation = inflation
         self.growth = growth
         self.policy_stance = policy_stance
-        self.risk_factors: List[str] = risk_factors or []
-        self.observations: List[str] = observations or []
+        self.risk_factors: list[str] = risk_factors or []
+        self.observations: list[str] = observations or []
         self.confidence = confidence
 
     def to_dict(self) -> dict:
@@ -312,7 +310,7 @@ class MacroState(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroState":
+    def from_dict(cls, data: dict) -> MacroState:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data["timestamp"])
         obj.geography = data["geography"]

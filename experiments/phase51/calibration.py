@@ -13,7 +13,8 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, List, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from researchos.quant_engine.probability.statistics import probability_calibration
 
@@ -55,9 +56,9 @@ def evaluate_calibration(
     probs: Sequence[Mapping[int, float]],
     actuals: Sequence[float],
     num_bins: int = 10,
-    model_brier: Optional[float] = None,
-    baseline_brier: Optional[float] = None,
-    baseline: Optional[BaselineResult] = None,
+    model_brier: float | None = None,
+    baseline_brier: float | None = None,
+    baseline: BaselineResult | None = None,
 ) -> CalibrationResult:
     """Assess calibration of predicted probabilities.
 
@@ -85,17 +86,13 @@ def evaluate_calibration(
 
     avg_conf = _average_confidence(probs)
     # Mean accuracy of the argmax prediction.
-    predictions: List[int] = []
+    predictions: list[int] = []
     for p in probs:
         if p:
             predictions.append(max(p, key=lambda k: p[k]))
         else:
             predictions.append(0)
-    avg_acc = (
-        sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a)) / len(actuals)
-        if actuals
-        else 0.0
-    )
+    avg_acc = sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a)) / len(actuals) if actuals else 0.0
 
     table: Mapping[str, Any] = {
         "model_brier": model_brier,

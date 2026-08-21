@@ -12,7 +12,7 @@ storage, databases, or distributed systems.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, List, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from researchos.core.base_object import BaseObject
 
@@ -41,7 +41,7 @@ class RepositoryInterface(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get(self, id: str) -> Optional[T]:
+    def get(self, id: str) -> T | None:
         """
         Retrieve an object by ID.
 
@@ -54,7 +54,7 @@ class RepositoryInterface(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_all(self) -> List[T]:
+    def get_all(self) -> list[T]:
         """
         Retrieve all objects from the repository.
 
@@ -77,7 +77,7 @@ class RepositoryInterface(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def find_by_tag(self, tag: str) -> List[T]:
+    def find_by_tag(self, tag: str) -> list[T]:
         """
         Find all objects with a specific ontology tag.
 

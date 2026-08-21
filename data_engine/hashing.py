@@ -16,7 +16,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from researchos.core.identity import deterministic_hash
 from researchos.data_engine.candle import Candle
@@ -39,7 +39,7 @@ def compute_dataset_hash(dataset: HistoricalDataset) -> str:
         SHA-256 hash string.
     """
     # Build record-level content
-    record_content: List[str] = []
+    record_content: list[str] = []
     for record in dataset._records:
         if hasattr(record, "hash"):
             record_content.append(record.hash)
@@ -110,9 +110,9 @@ def verify_dataset_integrity(dataset: HistoricalDataset) -> bool:
 
 
 def compute_range_hash(
-    records: List[Any],
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
+    records: list[Any],
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
 ) -> str:
     """
     Compute a hash for a subset (range) of records.

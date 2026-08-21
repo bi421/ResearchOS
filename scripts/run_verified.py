@@ -1,6 +1,13 @@
-import yfinance as yf
-import pandas as pd
+import sys
+import time
 from datetime import datetime, timedelta
+
+import pandas as pd
+import yfinance as yf
+
+from researchos.data_engine.asset_identity import (
+    assert_xauusd_identity,
+)
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
@@ -8,11 +15,6 @@ from researchos.decision_engine.contracts import (
     WeightConfiguration,
 )
 from researchos.decision_engine.score import compute_evidence_score
-from researchos.data_engine.asset_identity import (
-    assert_xauusd_identity,
-)
-import sys
-import time
 
 # ============================================================
 # 1. ӨГӨГДӨЛ ТАТАХ
@@ -118,9 +120,7 @@ for name in combined_df.columns:
             "strength": strength,
             "price_change": price_change,
             "current_price": combined_df[name].iloc[-1],
-            "prev_price": combined_df[name].iloc[-2]
-            if len(combined_df[name]) > 1
-            else combined_df[name].iloc[-1],
+            "prev_price": combined_df[name].iloc[-2] if len(combined_df[name]) > 1 else combined_df[name].iloc[-1],
         }
         emoji = "🟢" if trend == "BULLISH" else "🔴" if trend == "BEARISH" else "🟡"
         print(f"{emoji} {name}: {trend} (strength: {strength:.2f}, change: {price_change:.2%})")

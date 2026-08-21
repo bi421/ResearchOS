@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from researchos.macro.revision.enums import AuditAction, IntegrityLevel
 
@@ -34,7 +34,7 @@ class AuditEntry:
     action: AuditAction
     object_type: str
     object_id: str
-    revision_id: Optional[str]
+    revision_id: str | None
 
     # Details
     actor: str
@@ -42,9 +42,9 @@ class AuditEntry:
     details: dict = field(default_factory=dict)
 
     # Optional fields
-    error_message: Optional[str] = None
-    session_id: Optional[str] = None
-    batch_id: Optional[str] = None
+    error_message: str | None = None
+    session_id: str | None = None
+    batch_id: str | None = None
 
     # Generated
     version: str = "audit/v1"
@@ -127,7 +127,7 @@ class IntegrityCheck:
     timestamp: datetime
     object_type: str
     object_id: str
-    revision_id: Optional[str]
+    revision_id: str | None
     level: IntegrityLevel
     passed: bool
     checks_performed: list[str]
@@ -190,9 +190,7 @@ class AuditLog:
     """
 
     log_id: str
-    created_at: datetime = field(
-        default_factory=lambda: datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc))
     entries: list[AuditEntry] = field(default_factory=list)
     integrity_checks: list[IntegrityCheck] = field(default_factory=list)
 
@@ -225,17 +223,13 @@ class AuditLog:
         object_id: str,
     ) -> list[AuditEntry]:
         """Get all audit entries for a specific object."""
-        return [
-            entry
-            for entry in self.entries
-            if entry.object_type == object_type and entry.object_id == object_id
-        ]
+        return [entry for entry in self.entries if entry.object_type == object_type and entry.object_id == object_id]
 
     def get_latest_entry(
         self,
         object_type: str,
         object_id: str,
-    ) -> Optional[AuditEntry]:
+    ) -> AuditEntry | None:
         """Get the latest audit entry for an object."""
         entries = self.get_entries_for_object(object_type, object_id)
         return entries[-1] if entries else None
@@ -256,7 +250,7 @@ class AuditLog:
         self,
         object_type: str,
         object_id: str,
-    ) -> Optional[IntegrityCheck]:
+    ) -> IntegrityCheck | None:
         """Get the latest integrity check for an object."""
         checks = self.get_integrity_checks_for_object(object_type, object_id)
         return checks[-1] if checks else None

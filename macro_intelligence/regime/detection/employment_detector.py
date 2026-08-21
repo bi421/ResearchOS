@@ -91,9 +91,7 @@ def detect_employment(features: FeatureVector) -> DetectionEvidence:
 
     # Combine signals
     signal = _combine_employment_signals(nfp_score, unemployment_score, jolts_score, ratio_score)
-    confidence = _compute_employment_confidence(
-        nfp_score, unemployment_score, jolts_score, ratio_score
-    )
+    confidence = _compute_employment_confidence(nfp_score, unemployment_score, jolts_score, ratio_score)
 
     return _build_evidence(signal, confidence, factors)
 

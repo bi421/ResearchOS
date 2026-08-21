@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
-import time
 import sys
+import time
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # C++ бэкенд адаптер
 try:
@@ -58,9 +59,7 @@ class MillionCandleAnalyzer:
                     },
                 )
                 # Огноо/цагийг зөв форматлалтайгаар хувиргах
-                df["datetime"] = pd.to_datetime(
-                    df["datetime"], format="%Y%m%d %H%M%S", errors="coerce"
-                )
+                df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S", errors="coerce")
                 df = df.dropna(subset=["datetime"])
                 if not df.empty:
                     dfs.append(df)

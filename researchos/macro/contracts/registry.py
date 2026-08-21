@@ -191,9 +191,7 @@ SUPPORTED_SERIES: dict[str, dict[str, Any]] = {
 
 
 # Validation ranges for range validator
-SERIES_RANGES: dict[str, tuple[float, float]] = {
-    series: info["range"] for series, info in SUPPORTED_SERIES.items()
-}
+SERIES_RANGES: dict[str, tuple[float, float]] = {series: info["range"] for series, info in SUPPORTED_SERIES.items()}
 
 
 def get_series_metadata(series_id: str) -> dict | None:

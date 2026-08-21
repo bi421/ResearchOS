@@ -1,5 +1,5 @@
 file_path = "scripts/h1_feature_sweep.py"
-with open(file_path, "r", encoding="utf-8") as f:
+with open(file_path, encoding="utf-8") as f:
     content = f.read()
 
 old_logic = """        model_acc = d.get("model", {}).get("accuracy")

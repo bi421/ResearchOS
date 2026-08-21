@@ -364,9 +364,7 @@ class TestFeatureBuilder(unittest.TestCase):
         self.assertEqual(fs1.data, fs2.data)
 
     def test_with_labels(self):
-        labels = [
-            1.0 if self.close[i] > self.close[i - 1] else 0.0 for i in range(1, len(self.close))
-        ] + [0.0]
+        labels = [1.0 if self.close[i] > self.close[i - 1] else 0.0 for i in range(1, len(self.close))] + [0.0]
         fb = FeatureBuilder(self.close, self.high, self.low, self.vol, labels=labels)
         fs = fb.build(drop_na=True)
         self.assertIsNotNone(fs.labels)

@@ -7,7 +7,6 @@ Status: FROZEN
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 UTC = timezone.utc
 
@@ -21,7 +20,7 @@ class TimeNormalizer:
     """
 
     @staticmethod
-    def to_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    def to_utc(dt: datetime | None) -> datetime | None:
         """
         Convert datetime to UTC.
 
@@ -46,7 +45,7 @@ class TimeNormalizer:
         return dt.astimezone(UTC)
 
     @staticmethod
-    def normalize_timestamp(dt: Optional[datetime]) -> Optional[datetime]:
+    def normalize_timestamp(dt: datetime | None) -> datetime | None:
         """
         Normalize timestamp to UTC with second precision.
 
@@ -64,7 +63,7 @@ class TimeNormalizer:
         return utc_dt.replace(microsecond=0)
 
     @staticmethod
-    def normalize_to_minute(dt: Optional[datetime]) -> Optional[datetime]:
+    def normalize_to_minute(dt: datetime | None) -> datetime | None:
         """
         Normalize timestamp to UTC with minute precision.
 
@@ -82,7 +81,7 @@ class TimeNormalizer:
         return utc_dt.replace(second=0, microsecond=0)
 
     @staticmethod
-    def normalize_to_hour(dt: Optional[datetime]) -> Optional[datetime]:
+    def normalize_to_hour(dt: datetime | None) -> datetime | None:
         """
         Normalize timestamp to UTC with hour precision.
 
@@ -100,7 +99,7 @@ class TimeNormalizer:
         return utc_dt.replace(minute=0, second=0, microsecond=0)
 
     @staticmethod
-    def normalize_to_day(dt: Optional[datetime]) -> Optional[datetime]:
+    def normalize_to_day(dt: datetime | None) -> datetime | None:
         """
         Normalize timestamp to UTC with day precision.
 

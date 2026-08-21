@@ -2,10 +2,12 @@
 TRUE PRODUCTION v2: Векторчилсон өгөгдөл + 1 удаагийн C++ ачаалал + Sweep
 """
 
+import glob
 import sys
 import time
+
 import pandas as pd
-import glob
+
 from cpp_quant import CppQuant
 
 print("=" * 70)

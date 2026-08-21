@@ -1,9 +1,11 @@
 import sys
 
 sys.path.append("cpp_quant/python")
-from cpp_quant import CppQuant
-import pandas as pd
 import json
+
+import pandas as pd
+
+from cpp_quant import CppQuant
 
 df = pd.read_parquet("data/raw/histdata/xauusd/xauusd_m1_cached.parquet")
 
@@ -26,9 +28,7 @@ detail_equity = []
 
 for label, rule in timeframes:
     df_r = (
-        df.resample(rule)
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
+        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     )
 
     engine = CppQuant()
@@ -74,6 +74,4 @@ output = {
 with open("dashboard_data.json", "w", encoding="utf-8") as f:
     json.dump(output, f, ensure_ascii=False, indent=2)
 
-print(
-    f"Saved dashboard_data.json — {len(summary)} timeframes, {len(detail_trades)} trades for {detail_timeframe}"
-)
+print(f"Saved dashboard_data.json — {len(summary)} timeframes, {len(detail_trades)} trades for {detail_timeframe}")

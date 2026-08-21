@@ -9,8 +9,9 @@ All integrations are optional and non-breaking.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -22,13 +23,13 @@ class IntegrationContext:
     callable interfaces, avoiding direct imports and hard coupling.
     """
 
-    research_cycle_adapter: Optional[Callable] = None
-    reasoning_chain_adapter: Optional[Callable] = None
-    validation_adapter: Optional[Callable] = None
-    experiment_framework_adapter: Optional[Callable] = None
-    macro_intelligence_adapter: Optional[Callable] = None
-    evidence_registry_adapter: Optional[Callable] = None
-    audit_entry_adapter: Optional[Callable] = None
+    research_cycle_adapter: Callable | None = None
+    reasoning_chain_adapter: Callable | None = None
+    validation_adapter: Callable | None = None
+    experiment_framework_adapter: Callable | None = None
+    macro_intelligence_adapter: Callable | None = None
+    evidence_registry_adapter: Callable | None = None
+    audit_entry_adapter: Callable | None = None
 
 
 class MarketMemoryIntegrator:
@@ -42,10 +43,10 @@ class MarketMemoryIntegrator:
         context: IntegrationContext with optional adapters.
     """
 
-    def __init__(self, context: Optional[IntegrationContext] = None):
+    def __init__(self, context: IntegrationContext | None = None):
         self.context = context or IntegrationContext()
 
-    def connect_to_research_cycle(self, cycle_id: str, memory_report_id: str) -> Dict[str, Any]:
+    def connect_to_research_cycle(self, cycle_id: str, memory_report_id: str) -> dict[str, Any]:
         """
         Connect a market memory report to a research cycle.
 
@@ -60,9 +61,7 @@ class MarketMemoryIntegrator:
             return self.context.research_cycle_adapter(cycle_id, memory_report_id)
         return {"status": "standalone", "note": "No research cycle adapter configured"}
 
-    def connect_to_reasoning_chain(
-        self, chain_id: str, match_results: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def connect_to_reasoning_chain(self, chain_id: str, match_results: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Connect match results to a reasoning chain.
 
@@ -77,7 +76,7 @@ class MarketMemoryIntegrator:
             return self.context.reasoning_chain_adapter(chain_id, match_results)
         return {"status": "standalone", "note": "No reasoning chain adapter configured"}
 
-    def connect_to_validation(self, validation_id: str, memory_report_id: str) -> Dict[str, Any]:
+    def connect_to_validation(self, validation_id: str, memory_report_id: str) -> dict[str, Any]:
         """
         Connect a market memory report to validation.
 
@@ -92,7 +91,7 @@ class MarketMemoryIntegrator:
             return self.context.validation_adapter(validation_id, memory_report_id)
         return {"status": "standalone", "note": "No validation adapter configured"}
 
-    def connect_to_experiment(self, experiment_id: str, memory_report_id: str) -> Dict[str, Any]:
+    def connect_to_experiment(self, experiment_id: str, memory_report_id: str) -> dict[str, Any]:
         """
         Connect a market memory report to an experiment.
 
@@ -107,7 +106,7 @@ class MarketMemoryIntegrator:
             return self.context.experiment_framework_adapter(experiment_id, memory_report_id)
         return {"status": "standalone", "note": "No experiment framework adapter configured"}
 
-    def connect_to_macro_intelligence(self, macro_id: str, memory_report_id: str) -> Dict[str, Any]:
+    def connect_to_macro_intelligence(self, macro_id: str, memory_report_id: str) -> dict[str, Any]:
         """
         Connect a market memory report to macro intelligence.
 
@@ -122,7 +121,7 @@ class MarketMemoryIntegrator:
             return self.context.macro_intelligence_adapter(macro_id, memory_report_id)
         return {"status": "standalone", "note": "No macro intelligence adapter configured"}
 
-    def register_evidence(self, evidence_ids: List[str], memory_report_id: str) -> Dict[str, Any]:
+    def register_evidence(self, evidence_ids: list[str], memory_report_id: str) -> dict[str, Any]:
         """
         Register evidence references for a market memory report.
 
@@ -137,7 +136,7 @@ class MarketMemoryIntegrator:
             return self.context.evidence_registry_adapter(evidence_ids, memory_report_id)
         return {"status": "standalone", "note": "No evidence registry adapter configured"}
 
-    def create_audit_entry(self, action: str, object_id: str, details: str = "") -> Dict[str, Any]:
+    def create_audit_entry(self, action: str, object_id: str, details: str = "") -> dict[str, Any]:
         """
         Create an audit entry through the adapter.
 

@@ -1,10 +1,11 @@
 import sys
 
 sys.path.insert(0, ".")
-import yfinance as yf
 import pandas as pd
-from researchos.engines.quant.ensemble_strategy import EnsembleStrategy
+import yfinance as yf
+
 from researchos.engines.quant.advanced_backtest import AdvancedBacktestEngine
+from researchos.engines.quant.ensemble_strategy import EnsembleStrategy
 
 print("🔄 S&P 500 (^GSPC) бодит 1 жилийн өгөгдөл татаж байна...")
 df = yf.download("^GSPC", period="1y", progress=False)
@@ -23,9 +24,7 @@ else:
 
 # Яг ижил стратеги, ижил Risk Management
 strategy = EnsembleStrategy(min_confidence=0.60)
-engine = AdvancedBacktestEngine(
-    initial_capital=100000.0, stop_loss=0.15, take_profit=0.30, max_hold_days=30
-)
+engine = AdvancedBacktestEngine(initial_capital=100000.0, stop_loss=0.15, take_profit=0.30, max_hold_days=30)
 
 result = engine.run(prices, strategy)
 
@@ -48,7 +47,4 @@ print("=" * 70)
 if result.total_return > 0:
     print("✅ Стратеги S&P 500 дээр ашигтай ажиллаж байна! (Зах зээлийн нийцэл батлагдлаа)")
 else:
-    print(
-        "⚠️ Энэ стратеги S&P 500 дээр ч алдагдалтай байна. Параметр оновчлол (Optimization) хийх "
-        "шаардлагатай."
-    )
+    print("⚠️ Энэ стратеги S&P 500 дээр ч алдагдалтай байна. Параметр оновчлол (Optimization) хийх шаардлагатай.")

@@ -10,8 +10,6 @@ MIL-ECM-010: Econometrics owns VIF.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from macro_intelligence.econometrics.matrix import invert
 from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.provenance import StatisticalProvenance
@@ -20,10 +18,10 @@ VIF_VERSION = "ecm/vif/v1"
 
 
 def variance_inflation_factor(
-    x: List[List[float]],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    x: list[list[float]],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Compute the Variance Inflation Factor for each predictor.
@@ -98,10 +96,10 @@ def variance_inflation_factor(
 
 
 def vif(
-    x: List[List[float]],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    x: list[list[float]],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """Alias for :func:`variance_inflation_factor`."""
     return variance_inflation_factor(x, dataset_id, dataset_version, dataset_hash)

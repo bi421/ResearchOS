@@ -196,10 +196,7 @@ class TestCsvLoaderMt5:
 
     def test_mt5_detect_format(self):
         loader = CsvLoader()
-        assert (
-            loader.detect_format(["Date", "Time", "Open", "High", "Low", "Close", "Volume"])
-            == "mt5"
-        )
+        assert loader.detect_format(["Date", "Time", "Open", "High", "Low", "Close", "Volume"]) == "mt5"
 
 
 class TestCsvLoaderTradingView:
@@ -229,9 +226,7 @@ class TestCsvLoaderTradingView:
     def test_tradingview_keep_duplicates(self):
         dup_csv = TRADINGVIEW_CSV + "\n1704096000,2000.0,2010.0,1995.0,2005.0,1000.0"
         loader = CsvLoader()
-        candles = loader.load_tradingview_candles_from_text(
-            dup_csv, "XAU/USD", remove_duplicates=False
-        )
+        candles = loader.load_tradingview_candles_from_text(dup_csv, "XAU/USD", remove_duplicates=False)
         assert len(candles) == 4
 
     def test_tradingview_symbol_column(self):
@@ -274,10 +269,7 @@ class TestCsvLoaderAuto:
 
     def test_detect_format_generic(self):
         loader = CsvLoader()
-        assert (
-            loader.detect_format(["timestamp", "open", "high", "low", "close", "volume"])
-            == "generic"
-        )
+        assert loader.detect_format(["timestamp", "open", "high", "low", "close", "volume"]) == "generic"
 
     def test_detect_columns_aliases(self):
         loader = CsvLoader()
@@ -548,9 +540,7 @@ class TestEndToEndDeterminism:
     def test_duplicate_detection_after_tradingview_load(self):
         dup_csv = TRADINGVIEW_CSV + "\n1704096000,2000.0,2010.0,1995.0,2005.0,1000.0"
         loader = CsvLoader()
-        candles = loader.load_tradingview_candles_from_text(
-            dup_csv, "XAU/USD", remove_duplicates=False
-        )
+        candles = loader.load_tradingview_candles_from_text(dup_csv, "XAU/USD", remove_duplicates=False)
         detector = DuplicateDetector()
         assert len(detector.detect(candles)) == 1
 

@@ -1,0 +1,31 @@
+# Ruff Configuration - ResearchOS
+line-length = 120
+
+[lint]
+select = [
+    "E", "W",      # pycodestyle
+    "F",           # pyflakes
+    "I",           # isort
+    "UP",          # pyupgrade
+]
+
+# Naming convention-ыг үл тоомсорлох (дараа нь засна)
+ignore = [
+    "N801", "N802", "N803", "N806",  # Naming conventions
+    "N813", "N814", "N818",           # More naming
+    "E701",                           # Multiple statements (minor)
+]
+
+[lint.per-file-ignores]
+# Archive, backup файлуудыг бүрэн үл тоомсорлох
+".lint_fix_backup/**/*.py" = ["ALL"]
+"archive/**/*.py" = ["ALL"]
+"docs/**/*.md" = ["ALL"]
+
+# Test файлуудад сул дүрэм
+"tests/**/*.py" = ["S101", "PLR2004"]
+"scripts/**/*.py" = ["E402", "T201"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

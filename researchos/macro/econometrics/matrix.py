@@ -20,9 +20,7 @@ MIL-ECM-003: Matrix operations are deterministic and pure.
 
 from __future__ import annotations
 
-from typing import List
-
-Matrix = List[List[float]]
+Matrix = list[list[float]]
 
 
 def transpose(matrix: Matrix) -> Matrix:
@@ -136,7 +134,7 @@ def _gauss_solve(a: Matrix, b: Matrix) -> Matrix:
     return x
 
 
-def solve(a: Matrix, b: List[float]) -> List[float]:
+def solve(a: Matrix, b: list[float]) -> list[float]:
     """
     Solve A x = b for x (single right-hand side).
 

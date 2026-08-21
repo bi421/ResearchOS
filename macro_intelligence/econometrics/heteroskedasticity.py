@@ -10,8 +10,6 @@ MIL-ECM-011: Econometrics owns Breusch-Pagan.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from macro_intelligence.econometrics.matrix import matmul, solve, transpose
 from macro_intelligence.econometrics.models import TestResult
 from macro_intelligence.statistics.distributions import t_distribution_p_value
@@ -21,11 +19,11 @@ BREUSCH_PAGAN_VERSION = "ecm/breusch_pagan/v1"
 
 
 def breusch_pagan(
-    y: List[float],
-    x: List[List[float]],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    y: list[float],
+    x: list[list[float]],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Breusch-Pagan test for heteroskedasticity.

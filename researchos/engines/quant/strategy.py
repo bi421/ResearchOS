@@ -25,7 +25,7 @@ Rules:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any
 
 from researchos.engines.quant.models import OrderSide, Signal
 
@@ -55,9 +55,9 @@ class StrategyEvaluationInterface(ABC):
     def evaluate(
         self,
         bar: Any,
-        history: List[Any],
+        history: list[Any],
         bar_index: int,
-    ) -> Optional[Signal]:
+    ) -> Signal | None:
         """
         Evaluate the current bar and produce an optional Signal.
 
@@ -98,9 +98,9 @@ class BuyAndHoldStrategy(StrategyEvaluationInterface):
     def evaluate(
         self,
         bar: Any,
-        history: List[Any],
+        history: list[Any],
         bar_index: int,
-    ) -> Optional[Signal]:
+    ) -> Signal | None:
         if bar_index == 0:
             return Signal(
                 bar_index=0,

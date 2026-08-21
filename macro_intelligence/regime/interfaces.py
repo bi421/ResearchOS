@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from macro_intelligence.regime.contracts import (
     MacroRegime,
@@ -31,9 +31,9 @@ class RegimeDetectorInterface(ABC):
     @abstractmethod
     def detect(
         self,
-        evidence: List[RegimeEvidence],
+        evidence: list[RegimeEvidence],
         timestamp: datetime,
-    ) -> Optional[MacroRegime]:
+    ) -> MacroRegime | None:
         """
         Detect regime from evidence.
 
@@ -54,8 +54,8 @@ class RegimeDetectorInterface(ABC):
     @abstractmethod
     def validate_evidence(
         self,
-        evidence: List[RegimeEvidence],
-    ) -> tuple[bool, List[str]]:
+        evidence: list[RegimeEvidence],
+    ) -> tuple[bool, list[str]]:
         """
         Validate evidence for detection.
 
@@ -97,7 +97,7 @@ class RegimeClassifierInterface(ABC):
     def get_state_mapping(
         self,
         state_name: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get state mapping for classification.
 
@@ -167,7 +167,7 @@ class RegimeSnapshotInterface(ABC):
         self,
         assessment: RegimeAssessment,
         timestamp: datetime,
-        provenance: Optional[Any] = None,
+        provenance: Any | None = None,
     ) -> RegimeSnapshot:
         """
         Create regime snapshot.
@@ -192,7 +192,7 @@ class RegimeSnapshotInterface(ABC):
         self,
         snapshot1: RegimeSnapshot,
         snapshot2: RegimeSnapshot,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare two snapshots.
 

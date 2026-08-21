@@ -18,7 +18,6 @@ Based on Article X: Reasoning Engine -- Evidence Validation Layer.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
 
 from researchos.engines.reasoning.contracts import ReasoningEvidence
 
@@ -36,7 +35,7 @@ class EvidenceRecord:
 
     evidence: ReasoningEvidence
     validated: bool = False
-    validation_errors: Tuple[str, ...] = ()
+    validation_errors: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Canonicalise errors and derive ``validated`` from them."""

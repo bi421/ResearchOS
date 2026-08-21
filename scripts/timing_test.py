@@ -1,10 +1,12 @@
 import sys
 
 sys.path.append("cpp_quant/python")
-from cpp_quant import CppQuant
-import pandas as pd
 import glob
 import time
+
+import pandas as pd
+
+from cpp_quant import CppQuant
 
 print("=" * 60)
 print("??????? ?????????")
@@ -34,9 +36,7 @@ timeframes = [("1min", "1min"), ("5min", "5min"), ("1h", "1h"), ("1D", "1D")]
 for label, rule in timeframes:
     ta = time.time()
     df_resampled = (
-        df.resample(rule)
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
+        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     )
     tb = time.time()
 

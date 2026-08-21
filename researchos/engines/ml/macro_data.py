@@ -1,5 +1,5 @@
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 
 
 def fetch_macro_data(start_date, end_date):

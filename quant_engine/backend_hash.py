@@ -25,7 +25,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from typing import Any, Dict, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 HASH_ALGORITHM = "sha256"
 HASH_VERSION = "1.0.0"
@@ -119,7 +120,7 @@ def compute_backend_result_hash(
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
-def canonical_dict(value: Any) -> Dict[str, Any]:
+def canonical_dict(value: Any) -> dict[str, Any]:
     """Return a canonical JSON-compatible dict of any value."""
     return {"canonical": canonicalize(value)}
 

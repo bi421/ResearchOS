@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, List
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 
@@ -15,20 +13,20 @@ class Confidence(BaseObject):
         self,
         target_id: str,
         target_type: str = "",
-        score: Optional[float] = None,
+        score: float | None = None,
         rationale: str = "",
         evidence_strength: float = 0.0,
         coherence: float = 0.0,
         historical_precedent: float = 0.0,
         model_uncertainty: float = 0.0,
         recency: float = 0.0,
-        penalties: Optional[List[str]] = None,
-        boosters: Optional[List[str]] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
-        calibration_bin: Optional[str] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        penalties: list[str] | None = None,
+        boosters: list[str] | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+        calibration_bin: str | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
         **kwargs,
     ):
         factors = [
@@ -66,17 +64,11 @@ class Confidence(BaseObject):
 
         self.value = float(score) if score is not None else self._compute_value()
 
-        self.lower_bound = (
-            float(lower_bound) if lower_bound is not None else max(0.0, self.value - 0.1)
-        )
+        self.lower_bound = float(lower_bound) if lower_bound is not None else max(0.0, self.value - 0.1)
 
-        self.upper_bound = (
-            float(upper_bound) if upper_bound is not None else min(1.0, self.value + 0.1)
-        )
+        self.upper_bound = float(upper_bound) if upper_bound is not None else min(1.0, self.value + 0.1)
 
-        self.calibration_bin = (
-            calibration_bin if calibration_bin is not None else self._compute_calibration_bin()
-        )
+        self.calibration_bin = calibration_bin if calibration_bin is not None else self._compute_calibration_bin()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -148,7 +140,7 @@ class Confidence(BaseObject):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Confidence":
+    def from_dict(cls, data: dict) -> Confidence:
         obj = super().from_dict(data)
 
         obj.target_id = data["target_id"]
@@ -191,10 +183,10 @@ class ConfidenceReport(BaseObject):
     def __init__(
         self,
         research_id: str,
-        confidences: Optional[List[Confidence]] = None,
-        confidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        confidences: list[Confidence] | None = None,
+        confidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             id = generate_id(f"ConfidenceReport|{research_id}")
@@ -207,9 +199,7 @@ class ConfidenceReport(BaseObject):
         self.research_id = research_id
         self.confidences = list(confidences or [])
 
-        self.confidence_ids = list(
-            confidence_ids if confidence_ids is not None else [c.id for c in self.confidences]
-        )
+        self.confidence_ids = list(confidence_ids if confidence_ids is not None else [c.id for c in self.confidences])
 
     def add_confidence(
         self,
@@ -263,7 +253,7 @@ class ConfidenceReport(BaseObject):
     def from_dict(
         cls,
         data: dict,
-    ) -> "ConfidenceReport":
+    ) -> ConfidenceReport:
         obj = super().from_dict(data)
 
         obj.research_id = data["research_id"]

@@ -35,7 +35,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from researchos.evidence.envelope import (
     HASH_SCHEME_VERSION,
@@ -66,7 +67,7 @@ def _to_primitives(value: Any) -> Any:
     return value
 
 
-def _config_to_dict(config: Any) -> Dict[str, Any]:
+def _config_to_dict(config: Any) -> dict[str, Any]:
     """Serialize a config object (DatasetConfig / SimulationConfig) to a dict.
 
     Returns an empty mapping when the config is absent or has no ``to_dict``.
@@ -79,7 +80,7 @@ def _config_to_dict(config: Any) -> Dict[str, Any]:
     return to_dict()
 
 
-def experiment_payload(experiment: Any) -> Dict[str, Any]:
+def experiment_payload(experiment: Any) -> dict[str, Any]:
     """Build a deterministic, primitives-only payload from an ``Experiment``.
 
     Mirrors ``Experiment._to_hashable_dict`` so the evidence identity is the
@@ -122,7 +123,7 @@ def build_experiment_envelope(
     experiment: Any,
     version: str = EXPERIMENT_EVIDENCE_VERSION,
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
+    parent_hashes: Sequence[str] | None = None,
 ) -> EvidenceEnvelope:
     """Build a scheme-2 ``EvidenceEnvelope`` for an ``Experiment``.
 
@@ -176,7 +177,7 @@ def attach_dataset_parent(
 
 def emit_experiment(
     envelope: EvidenceEnvelope,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
 ) -> EvidenceEnvelope:
     """Persist an Experiment envelope to an ``EvidenceRepository`` (append-only).
 
@@ -193,9 +194,7 @@ def emit_experiment(
             verification.
     """
     if envelope.artifact_type != EXPERIMENT_ARTIFACT_TYPE:
-        raise ValueError(
-            f"emit_experiment() expects artifact_type='Experiment', got '{envelope.artifact_type}'"
-        )
+        raise ValueError(f"emit_experiment() expects artifact_type='Experiment', got '{envelope.artifact_type}'")
     if not envelope.verify():
         raise ValueError(f"Experiment evidence lineage mismatch for {envelope.artifact_hash}")
     repo = repository or EvidenceRepository()
@@ -205,7 +204,7 @@ def emit_experiment(
 def emit_experiment_with_dataset(
     experiment: Any,
     dataset_hash: str,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
     version: str = EXPERIMENT_EVIDENCE_VERSION,
     created_at: str = "",
 ) -> EvidenceEnvelope:

@@ -219,9 +219,7 @@ class EvidenceObject:
             source_quality_score=data["source_quality_score"],
             series_reference=data["series_reference"],
             observation_time=datetime.fromisoformat(data["observation_time"]),
-            release_time=datetime.fromisoformat(data["release_time"])
-            if data.get("release_time")
-            else None,
+            release_time=datetime.fromisoformat(data["release_time"]) if data.get("release_time") else None,
             available_time=datetime.fromisoformat(data["available_time"]),
             value=data.get("value"),
             forecast=data.get("forecast"),
@@ -231,9 +229,7 @@ class EvidenceObject:
             quality_score=data["quality_score"],
             provenance=provenance,
             metadata=data.get("metadata", {}),
-            created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.now(timezone.utc).isoformat())
-            ),
+            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
             version=data.get("version", "ev/v1"),
         )
 

@@ -975,9 +975,7 @@ class TestFullClassification:
         classifier = RegimeClassifier()
         assessment = _make_test_assessment()
 
-        classification = classifier.classify_macro_regime(
-            assessment, classification_id="CL-TEST-001"
-        )
+        classification = classifier.classify_macro_regime(assessment, classification_id="CL-TEST-001")
 
         json_str = classification.to_json()
         restored = type(classification).from_json(json_str)
@@ -994,9 +992,7 @@ class TestFullClassification:
         classifier = RegimeClassifier()
         assessment = _make_test_assessment()
 
-        classification = classifier.classify_macro_regime(
-            assessment, classification_id="CL-MY-CUSTOM-ID"
-        )
+        classification = classifier.classify_macro_regime(assessment, classification_id="CL-MY-CUSTOM-ID")
 
         assert classification.classification_id == "CL-MY-CUSTOM-ID"
 

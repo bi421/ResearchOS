@@ -1,12 +1,14 @@
-import numpy as np
-import pandas as pd
-import optuna
 import glob
 import sys
+
+import numpy as np
+import optuna
+import pandas as pd
 
 sys.path.insert(0, ".")
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+
 from researchos.quant_engine.vectorized_backtest import vectorized_backtest
 
 
@@ -47,9 +49,7 @@ def make_features(df, selected, target_horizon=1):
     if "vol" in selected:
         keep_cols.append("volatility")
     if "lags" in selected:
-        keep_cols.extend(
-            ["ret_lag_1", "ret_lag_2", "ret_lag_3", "ret_lag_5", "ret_lag_10", "ret_lag_20"]
-        )
+        keep_cols.extend(["ret_lag_1", "ret_lag_2", "ret_lag_3", "ret_lag_5", "ret_lag_10", "ret_lag_20"])
 
     # Target
     df["target"] = (close.shift(-target_horizon) > close).astype(int)
@@ -149,11 +149,7 @@ def run_auto_ml(n_trials=30, n_jobs=4):
     )
     df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
     df = df.set_index("datetime")
-    df_h = (
-        df.resample("4h")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last"})
-        .dropna()
-    )
+    df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
     print(f"Data: {len(df_h)} bars (4h)")
 
     split1 = int(len(df_h) * 0.7)

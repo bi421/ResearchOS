@@ -109,9 +109,9 @@ def test_returns_identical(python_backend, cpp_backend, sample_prices):
 
         assert len(py_result) == len(cpp_result)
         for i in range(len(py_result)):
-            assert abs(py_result[i] - cpp_result[i]) < 1e-12, (
-                f"Mismatch at {i} for return_type={return_type}: {py_result[i]} vs {cpp_result[i]}"
-            )
+            assert (
+                abs(py_result[i] - cpp_result[i]) < 1e-12
+            ), f"Mismatch at {i} for return_type={return_type}: {py_result[i]} vs {cpp_result[i]}"
 
 
 def test_volatility_identical(python_backend, cpp_backend, sample_returns):
@@ -124,9 +124,7 @@ def test_volatility_identical(python_backend, cpp_backend, sample_returns):
     # Rolling
     py_rolling = python_backend.calculate_volatility(sample_returns, "rolling")
     cpp_rolling = cpp_backend.calculate_volatility(sample_returns, "rolling")
-    assert abs(py_rolling - cpp_rolling) < 1e-12, (
-        f"Rolling vol mismatch: {py_rolling} vs {cpp_rolling}"
-    )
+    assert abs(py_rolling - cpp_rolling) < 1e-12, f"Rolling vol mismatch: {py_rolling} vs {cpp_rolling}"
 
 
 def test_drawdown_identical(python_backend, cpp_backend, sample_equity_curve):
@@ -135,9 +133,7 @@ def test_drawdown_identical(python_backend, cpp_backend, sample_equity_curve):
     cpp_dd = cpp_backend.calculate_drawdown(sample_equity_curve)
 
     for key in py_dd:
-        assert abs(py_dd[key] - cpp_dd[key]) < 1e-10, (
-            f"Drawdown mismatch for {key}: {py_dd[key]} vs {cpp_dd[key]}"
-        )
+        assert abs(py_dd[key] - cpp_dd[key]) < 1e-10, f"Drawdown mismatch for {key}: {py_dd[key]} vs {cpp_dd[key]}"
 
 
 def test_statistics_identical(python_backend, cpp_backend, sample_returns):
@@ -148,9 +144,9 @@ def test_statistics_identical(python_backend, cpp_backend, sample_returns):
     for key in py_stats:
         if key in ("count",):
             continue  # int vs float
-        assert abs(py_stats[key] - cpp_stats[key]) < 1e-10, (
-            f"Statistics mismatch for {key}: {py_stats[key]} vs {cpp_stats[key]}"
-        )
+        assert (
+            abs(py_stats[key] - cpp_stats[key]) < 1e-10
+        ), f"Statistics mismatch for {key}: {py_stats[key]} vs {cpp_stats[key]}"
 
 
 def test_metrics_identical(python_backend, cpp_backend, sample_returns, sample_equity_curve):
@@ -183,9 +179,7 @@ def test_performance_analytics_identical(python_backend, cpp_backend, sample_ret
         if math.isinf(py_val) and math.isinf(cpp_val):
             continue
 
-        assert abs(py_val - cpp_val) < 1e-10, (
-            f"Performance mismatch for {key}: {py_val} vs {cpp_val}"
-        )
+        assert abs(py_val - cpp_val) < 1e-10, f"Performance mismatch for {key}: {py_val} vs {cpp_val}"
 
 
 # ── Deterministic Results Tests ─────────────────────────────────────────────
@@ -255,15 +249,15 @@ def test_simulation_identical_results(python_backend, cpp_backend, sample_prices
 
     # Compare returns
     for i in range(len(py_result.returns)):
-        assert abs(py_result.returns[i] - cpp_result.returns[i]) < 1e-12, (
-            f"Return mismatch at {i}: {py_result.returns[i]} vs {cpp_result.returns[i]}"
-        )
+        assert (
+            abs(py_result.returns[i] - cpp_result.returns[i]) < 1e-12
+        ), f"Return mismatch at {i}: {py_result.returns[i]} vs {cpp_result.returns[i]}"
 
     # Compare equity curves
     for i in range(len(py_result.equity_curve)):
-        assert abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10, (
-            f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
-        )
+        assert (
+            abs(py_result.equity_curve[i] - cpp_result.equity_curve[i]) < 1e-10
+        ), f"Equity mismatch at {i}: {py_result.equity_curve[i]} vs {cpp_result.equity_curve[i]}"
 
     # Compare metrics
     for key in py_result.metrics:

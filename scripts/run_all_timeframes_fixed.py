@@ -1,8 +1,9 @@
 import sys
 
 sys.path.append("cpp_quant/python")
-from cpp_quant import CppQuant
 import pandas as pd
+
+from cpp_quant import CppQuant
 
 print("=" * 60)
 print("БҮХ ЦАГИЙН ХҮРЭЭНД БЭКТЕСТ ШИНЖИЛГЭЭ (Commission: 0.01%)")
@@ -37,9 +38,7 @@ for label, rule in timeframes:
     print(f"\n{label} агрегацлаж байна...")
 
     df_resampled = (
-        df.resample(rule)
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
+        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     )
 
     print(f"   {len(df_resampled):,} candle")
@@ -76,9 +75,7 @@ print("\n" + "=" * 80)
 print("БҮХ ЦАГИЙН ХҮРЭЭНИЙ ХАРЬЦУУЛАЛТ")
 print("=" * 80)
 
-print(
-    f"\n{'Цаг.хүрээ':<10} {'Candle':<10} {'Арилжаа':<10} {'Winrate':<10} {'Өгөөж':<12} {'Sharpe':<10} {'P/F':<8}"
-)
+print(f"\n{'Цаг.хүрээ':<10} {'Candle':<10} {'Арилжаа':<10} {'Winrate':<10} {'Өгөөж':<12} {'Sharpe':<10} {'P/F':<8}")
 print("-" * 80)
 
 for r in results:

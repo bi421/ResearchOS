@@ -17,8 +17,6 @@ MIL-ECM-012: Econometrics owns diagnostics; diagnostics are separated from fit.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from macro_intelligence.econometrics.models import (
     InformationCriteria,
     ModelDiagnostics,
@@ -34,10 +32,10 @@ JARQUE_BERA_VERSION = "ecm/jb/v1"
 
 
 def durbin_watson(
-    residuals: List[float],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    residuals: list[float],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Durbin-Watson statistic for autocorrelation of residuals.
@@ -86,10 +84,10 @@ def durbin_watson(
 
 
 def jarque_bera(
-    residuals: List[float],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    residuals: list[float],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Jarque-Bera test for normality of residuals.
@@ -136,10 +134,10 @@ def jarque_bera(
 
 
 def residual_diagnostics(
-    residuals: List[float],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    residuals: list[float],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
     method_version: str = "ecm/diag/v1",
 ) -> ResidualDiagnostics:
     """
@@ -205,16 +203,16 @@ def residual_diagnostics(
 
 
 def model_diagnostics(
-    y: List[float],
-    fitted: List[float],
+    y: list[float],
+    fitted: list[float],
     n_parameters: int,
-    residuals: Optional[List[float]] = None,
-    aic: Optional[float] = None,
-    bic: Optional[float] = None,
-    log_likelihood: Optional[float] = None,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    residuals: list[float] | None = None,
+    aic: float | None = None,
+    bic: float | None = None,
+    log_likelihood: float | None = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
     method_version: str = "ecm/diag/v1",
 ) -> ModelDiagnostics:
     """

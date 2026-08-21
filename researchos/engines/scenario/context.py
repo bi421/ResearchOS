@@ -33,24 +33,14 @@ Design Principles:
 
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any
 
 import pandas as pd
-from typing import Dict, Optional
-from datetime import datetime
-
-
-from typing import Any, List
-
 
 from researchos.core.base_object import BaseObject
-
-
 from researchos.core.identity import generate_id
-
-
 from researchos.core.lifecycle import LifecycleStage
-
-
 from researchos.core.timestamp import parse_timestamp, utc_now
 
 
@@ -93,25 +83,25 @@ class DecisionContext(BaseObject):
         market_snapshot_id: str = "",
         market_regime_id: str = "",
         macro_state_id: str = "",
-        historical_scenario_ids: Optional[List[str]] = None,
-        experiment_result_ids: Optional[List[str]] = None,
-        validation_ids: Optional[List[str]] = None,
-        research_ids: Optional[List[str]] = None,
-        market_memory_report_ids: Optional[List[str]] = None,
-        simulation_result_ids: Optional[List[str]] = None,
+        historical_scenario_ids: list[str] | None = None,
+        experiment_result_ids: list[str] | None = None,
+        validation_ids: list[str] | None = None,
+        research_ids: list[str] | None = None,
+        market_memory_report_ids: list[str] | None = None,
+        simulation_result_ids: list[str] | None = None,
         reasoning_chain_id: str = "",
         audit_entry_id: str = "",
         symbol: str = "",
         timeframe: str = "",
-        decision_timestamp: Optional[datetime] = None,
+        decision_timestamp: datetime | None = None,
         dataset_version: str = "DATASET_V1",
         calculation_version: str = "DECISION_V1",
         context_version: str = "CONTEXT_V1",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
-        self.macro_data: Optional[pd.DataFrame] = None
-        self.macro_correlations: Optional[Dict[str, float]] = None
+        self.macro_data: pd.DataFrame | None = None
+        self.macro_correlations: dict[str, float] | None = None
         if id is None:
             ts = decision_timestamp.isoformat() if decision_timestamp else utc_now().isoformat()
             seed = f"DecisionContext|{asset}|{ts}|{timeframe}"
@@ -124,12 +114,12 @@ class DecisionContext(BaseObject):
         self.market_snapshot_id = market_snapshot_id
         self.market_regime_id = market_regime_id
         self.macro_state_id = macro_state_id
-        self.historical_scenario_ids: List[str] = historical_scenario_ids or []
-        self.experiment_result_ids: List[str] = experiment_result_ids or []
-        self.validation_ids: List[str] = validation_ids or []
-        self.research_ids: List[str] = research_ids or []
-        self.market_memory_report_ids: List[str] = market_memory_report_ids or []
-        self.simulation_result_ids: List[str] = simulation_result_ids or []
+        self.historical_scenario_ids: list[str] = historical_scenario_ids or []
+        self.experiment_result_ids: list[str] = experiment_result_ids or []
+        self.validation_ids: list[str] = validation_ids or []
+        self.research_ids: list[str] = research_ids or []
+        self.market_memory_report_ids: list[str] = market_memory_report_ids or []
+        self.simulation_result_ids: list[str] = simulation_result_ids or []
 
         # Optional references
         self.reasoning_chain_id = reasoning_chain_id
@@ -186,7 +176,7 @@ class DecisionContext(BaseObject):
     # Deterministic identity & serialization
     # ------------------------------------------------------------------
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "asset": self.asset,
             "market_snapshot_id": self.market_snapshot_id,
@@ -209,7 +199,7 @@ class DecisionContext(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -236,7 +226,7 @@ class DecisionContext(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DecisionContext":
+    def from_dict(cls, data: dict[str, Any]) -> DecisionContext:
         obj = super().from_dict(data)
         obj.asset = data["asset"]
         obj.market_snapshot_id = data.get("market_snapshot_id", "")
@@ -253,9 +243,7 @@ class DecisionContext(BaseObject):
         obj.symbol = data.get("symbol", "")
         obj.timeframe = data.get("timeframe", "")
         obj.decision_timestamp = (
-            parse_timestamp(data["decision_timestamp"])
-            if data.get("decision_timestamp")
-            else utc_now()
+            parse_timestamp(data["decision_timestamp"]) if data.get("decision_timestamp") else utc_now()
         )
         obj.dataset_version = data.get("dataset_version", "DATASET_V1")
         obj.calculation_version = data.get("calculation_version", "DECISION_V1")
@@ -310,7 +298,7 @@ class DecisionContextValidator:
         "audit_entry_id",
     ]
 
-    def validate(self, context: DecisionContext) -> List[str]:
+    def validate(self, context: DecisionContext) -> list[str]:
         """
         Validate a DecisionContext.
 
@@ -320,7 +308,7 @@ class DecisionContextValidator:
         Returns:
             List of error messages. Empty list means validation passed.
         """
-        errors: List[str] = []
+        errors: list[str] = []
 
         # Rule 1: Required fields
         errors.extend(self._check_required(context))
@@ -336,21 +324,21 @@ class DecisionContextValidator:
 
         return errors
 
-    def _check_required(self, context: DecisionContext) -> List[str]:
+    def _check_required(self, context: DecisionContext) -> list[str]:
         """Check that required fields are non-empty."""
         errors = []
         if not context.asset:
             errors.append("Required field 'asset' is empty")
         return errors
 
-    def _check_timestamp(self, context: DecisionContext) -> List[str]:
+    def _check_timestamp(self, context: DecisionContext) -> list[str]:
         """Check that decision_timestamp is valid."""
         errors = []
         if context.decision_timestamp is None:
             errors.append("decision_timestamp is not set")
         return errors
 
-    def _check_duplicates(self, context: DecisionContext) -> List[str]:
+    def _check_duplicates(self, context: DecisionContext) -> list[str]:
         """Check that no reference list contains duplicates."""
         errors = []
         for list_name in self.REFERENCE_LISTS:
@@ -366,7 +354,7 @@ class DecisionContextValidator:
                 errors.append(f"Duplicate references found in '{list_name}': {dup_str}")
         return errors
 
-    def _check_empty_ids(self, context: DecisionContext) -> List[str]:
+    def _check_empty_ids(self, context: DecisionContext) -> list[str]:
         """Check that no reference list contains empty strings."""
         errors = []
         for list_name in self.REFERENCE_LISTS:

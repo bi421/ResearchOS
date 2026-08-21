@@ -7,7 +7,7 @@ Pure Python, no external dependencies. All functions are deterministic.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Sequence
+from collections.abc import Sequence
 
 from researchos.quant_engine.econometrics.contracts import (
     AcfResult,
@@ -147,13 +147,11 @@ def adf_test(values: Sequence[float], max_lag: int = 1) -> StationarityTestResul
     """Augmented Dickey-Fuller test (deterministic implementation)."""
     n = len(values)
     if n < 10:
-        return StationarityTestResult(
-            statistic=0.0, conclusion=StationarityResult.INSUFFICIENT_DATA, test_name="ADF"
-        )
+        return StationarityTestResult(statistic=0.0, conclusion=StationarityResult.INSUFFICIENT_DATA, test_name="ADF")
     p = max(0, min(max_lag, (n - 3) // 5))
 
-    X: List[List[float]] = []
-    Y: List[float] = []
+    X: list[list[float]] = []
+    Y: list[float] = []
 
     for t in range(1 + p, n):
         delta_y_t = values[t] - values[t - 1]
@@ -166,9 +164,7 @@ def adf_test(values: Sequence[float], max_lag: int = 1) -> StationarityTestResul
 
     n_obs = len(Y)
     if n_obs < 3:
-        return StationarityTestResult(
-            statistic=0.0, conclusion=StationarityResult.INSUFFICIENT_DATA, test_name="ADF"
-        )
+        return StationarityTestResult(statistic=0.0, conclusion=StationarityResult.INSUFFICIENT_DATA, test_name="ADF")
 
     Xt = _transpose(X)
     XtX = _mat_mul(Xt, X)
@@ -186,9 +182,7 @@ def adf_test(values: Sequence[float], max_lag: int = 1) -> StationarityTestResul
 
     critical = {"1%": -3.43, "5%": -2.86, "10%": -2.57}
     is_stationary = stat < critical["5%"]
-    conclusion = (
-        StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
-    )
+    conclusion = StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
 
     return StationarityTestResult(
         statistic=stat,
@@ -203,9 +197,7 @@ def kpss_test(values: Sequence[float]) -> StationarityTestResult:
     """KPSS test (deterministic approximation)."""
     n = len(values)
     if n < 10:
-        return StationarityTestResult(
-            statistic=0.0, conclusion=StationarityResult.INSUFFICIENT_DATA, test_name="KPSS"
-        )
+        return StationarityTestResult(statistic=0.0, conclusion=StationarityResult.INSUFFICIENT_DATA, test_name="KPSS")
     m = _mean(values)
     e = [values[i] - m for i in range(n)]
     s = [sum(e[: i + 1]) for i in range(n)]
@@ -216,9 +208,7 @@ def kpss_test(values: Sequence[float]) -> StationarityTestResult:
     critical = {"1%": 0.739, "5%": 0.463, "10%": 0.347}
     # KPSS: H0 = stationary; reject if stat > critical.
     is_stationary = stat < critical["5%"]
-    conclusion = (
-        StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
-    )
+    conclusion = StationarityResult.STATIONARY if is_stationary else StationarityResult.NON_STATIONARY
 
     return StationarityTestResult(
         statistic=stat,
@@ -323,9 +313,7 @@ def fit_arma(values: Sequence[float], p_order: int = 1, q_order: int = 1) -> Fit
     """Fit an ARMA(p,q) model via iterative two-stage approximation."""
     n = len(values)
     if n < p_order + q_order + 2:
-        return FittedModel(
-            family=ModelFamily.ARMA, metadata={"p_order": p_order, "q_order": q_order}
-        )
+        return FittedModel(family=ModelFamily.ARMA, metadata={"p_order": p_order, "q_order": q_order})
 
     # Step 1: Fit AR(p) to get residuals.
     ar_model = fit_ar(values, p_order)
@@ -415,9 +403,7 @@ def fit_arima(
     """Fit an ARIMA(p,d,q) model by differencing d times then fitting ARMA(p,q)."""
     n = len(values)
     if n < p + q + d + 2:
-        return FittedModel(
-            family=ModelFamily.ARIMA, metadata={"p_order": p, "d_order": d, "q_order": q}
-        )
+        return FittedModel(family=ModelFamily.ARIMA, metadata={"p_order": p, "d_order": d, "q_order": q})
 
     curr = list(values)
     for _ in range(d):
@@ -505,7 +491,7 @@ def fit_sarima(
 
 
 def fit_var(
-    multivariate_series: List[List[float]],
+    multivariate_series: list[list[float]],
     p: int = 1,
 ) -> FittedModel:
     """Fit a Vector Autoregression VAR(p) model across k variables via system OLS."""
@@ -522,7 +508,7 @@ def fit_var(
         return FittedModel(family=ModelFamily.VAR, metadata={"k_vars": k_vars, "p_order": p})
 
     n_effective = n_obs - p
-    X: List[List[float]] = []
+    X: list[list[float]] = []
     for t in range(p, n_obs):
         row = [1.0]
         for lag in range(1, p + 1):
@@ -533,8 +519,8 @@ def fit_var(
     Xt = _transpose(X)
     XtX = _mat_mul(Xt, X)
 
-    coeffs: Dict[str, float] = {}
-    all_residuals: List[float] = []
+    coeffs: dict[str, float] = {}
+    all_residuals: list[float] = []
 
     for v in range(k_vars):
         y_v = [multivariate_series[v][t] for t in range(p, n_obs)]
@@ -548,15 +534,11 @@ def fit_var(
                 coeffs[f"var_{v}_eq_var_{target_v}_lag_{lag}"] = b_v[idx]
                 idx += 1
 
-        res_v = [
-            y_v[i] - sum(X[i][j] * b_v[j] for j in range(len(b_v))) for i in range(n_effective)
-        ]
+        res_v = [y_v[i] - sum(X[i][j] * b_v[j] for j in range(len(b_v))) for i in range(n_effective)]
         all_residuals.extend(res_v)
 
     res_var = _var(all_residuals) if all_residuals else 1.0
-    log_lik = (
-        -0.5 * n_obs * k_vars * (math.log(2 * math.pi * res_var) + 1.0) if res_var > 0 else 0.0
-    )
+    log_lik = -0.5 * n_obs * k_vars * (math.log(2 * math.pi * res_var) + 1.0) if res_var > 0 else 0.0
     num_params = k_vars * (1 + k_vars * p)
     aic = 2 * num_params - 2 * log_lik
     bic = num_params * math.log(n_obs) - 2 * log_lik
@@ -601,9 +583,7 @@ def engle_granger_cointegration(
     adf_res = adf_test(residuals, max_lag=max_lag)
     var_y = _var(y)
     var_res = _var(residuals)
-    is_coint = (
-        adf_res.is_stationary or adf_res.statistic < -2.57 or (var_y > 0 and var_res / var_y < 0.05)
-    )
+    is_coint = adf_res.is_stationary or adf_res.statistic < -2.57 or (var_y > 0 and var_res / var_y < 0.05)
 
     return CointegrationTestResult(
         alpha=alpha,
@@ -616,7 +596,7 @@ def engle_granger_cointegration(
 
 
 def johansen_test(
-    multivariate_series: List[List[float]],
+    multivariate_series: list[list[float]],
     lag: int = 1,
 ) -> JohansenTestResult:
     """Johansen vector cointegration test for rank r."""
@@ -633,13 +613,11 @@ def johansen_test(
         return JohansenTestResult()
 
     T = n_obs - lag
-    dY: List[List[float]] = []
-    Y_lag: List[List[float]] = []
+    dY: list[list[float]] = []
+    Y_lag: list[list[float]] = []
 
     for t in range(lag, n_obs):
-        dY.append(
-            [multivariate_series[v][t] - multivariate_series[v][t - 1] for v in range(k_vars)]
-        )
+        dY.append([multivariate_series[v][t] - multivariate_series[v][t - 1] for v in range(k_vars)])
         Y_lag.append([multivariate_series[v][t - 1] for v in range(k_vars)])
 
     S00 = [[0.0] * k_vars for _ in range(k_vars)]
@@ -800,13 +778,13 @@ def fit_tgarch(
 # ──────────────────────────────────────────────
 
 
-def _transpose(m: List[List[float]]) -> List[List[float]]:
+def _transpose(m: list[list[float]]) -> list[list[float]]:
     if not m:
         return []
     return [[m[i][j] for i in range(len(m))] for j in range(len(m[0]))]
 
 
-def _mat_mul(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
+def _mat_mul(a: list[list[float]], b: list[list[float]]) -> list[list[float]]:
     n, k = len(a), len(a[0]) if a else 0
     m = len(b[0]) if b else 0
     out = [[0.0] * m for _ in range(n)]
@@ -816,11 +794,11 @@ def _mat_mul(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
     return out
 
 
-def _mat_vec_mul(a: List[List[float]], v: List[float]) -> List[float]:
+def _mat_vec_mul(a: list[list[float]], v: list[float]) -> list[float]:
     return [sum(row[i] * v[i] for i in range(len(v))) for row in a]
 
 
-def _solve_linear(a: List[List[float]], b: List[float]) -> List[float]:
+def _solve_linear(a: list[list[float]], b: list[float]) -> list[float]:
     """Solve Ax=b by Gaussian elimination with partial pivoting."""
     n = len(b)
     aug = [row[:] + [b[i]] for i, row in enumerate(a)]
@@ -841,7 +819,7 @@ def _solve_linear(a: List[List[float]], b: List[float]) -> List[float]:
     return x
 
 
-def _mat_inv(a: List[List[float]]) -> List[List[float]]:
+def _mat_inv(a: list[list[float]]) -> list[list[float]]:
     """Matrix inversion via Gauss-Jordan elimination."""
     n = len(a)
     aug = [a[i][:] + [1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
@@ -861,7 +839,7 @@ def _mat_inv(a: List[List[float]]) -> List[List[float]]:
     return [row[n:] for row in aug]
 
 
-def _eigenvalues_sym(a: List[List[float]], max_iter: int = 100) -> List[float]:
+def _eigenvalues_sym(a: list[list[float]], max_iter: int = 100) -> list[float]:
     """Jacobi eigenvalue algorithm for symmetric matrices."""
     n = len(a)
     if n == 0:

@@ -7,7 +7,7 @@ that the computation layer can assume well-formed inputs.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from researchos.engines.quant.technical.contracts import Bars
 
@@ -60,9 +60,9 @@ def validate_positive_float(name: str, value: Any, default: float) -> float:
 
 
 def validate_params(
-    params: Dict[str, Any],
-    allowed: Dict[str, Any],
-) -> Dict[str, Any]:
+    params: dict[str, Any],
+    allowed: dict[str, Any],
+) -> dict[str, Any]:
     """
     Validate indicator params against a schema of default values.
 
@@ -77,7 +77,7 @@ def validate_params(
     if unknown:
         raise ValueError(f"Unknown indicator parameters: {sorted(unknown)}")
 
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
     for key, default in allowed.items():
         result[key] = params.get(key, default)
     return result

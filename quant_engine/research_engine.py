@@ -25,7 +25,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from researchos.quant_engine.backend_hash import canonicalize
 from researchos.quant_engine.capabilities import BackendCapabilities, default_capabilities
@@ -81,17 +82,17 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
 
     def calculate_returns(
         self,
-        prices: List[float],
+        prices: list[float],
         return_type: str = "percentage",
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
         return PythonQuantBackend().calculate_returns(prices, return_type, calculation_version)
 
     def calculate_volatility(
         self,
-        returns: List[float],
+        returns: list[float],
         method: str = "standard_deviation",
         calculation_version: CalculationVersion = CALCULATION_V1,
     ) -> float:
@@ -101,18 +102,18 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
 
     def calculate_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
         return PythonQuantBackend().calculate_drawdown(equity_curve, calculation_version)
 
     def calculate_statistics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
         return PythonQuantBackend().calculate_statistics(returns, calculation_version)
@@ -129,22 +130,20 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
 
     def calculate_metrics(
         self,
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
-        return PythonQuantBackend().calculate_metrics(
-            returns, equity_curve, risk_free_rate, calculation_version
-        )
+        return PythonQuantBackend().calculate_metrics(returns, equity_curve, risk_free_rate, calculation_version)
 
     def calculate_performance_analytics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         from researchos.quant_engine.backend import PythonQuantBackend
 
         return PythonQuantBackend().calculate_performance_analytics(returns, calculation_version)
@@ -156,13 +155,9 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
 
         engine = TechnicalAnalysisEngine()
         batch = engine.compute_batch(bars, list(specs))
-        return self._wrap(
-            "research_technical", "technical", batch.to_dict(), params, "PythonResearchBackend"
-        )
+        return self._wrap("research_technical", "technical", batch.to_dict(), params, "PythonResearchBackend")
 
-    def research_probabilistic_fit(
-        self, samples: Sequence[float], distribution: str, **params: Any
-    ) -> ResearchResult:
+    def research_probabilistic_fit(self, samples: Sequence[float], distribution: str, **params: Any) -> ResearchResult:
         from researchos.quant_engine.probability.statistics import (
             fit_log_normal,
             fit_normal,
@@ -195,9 +190,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
             "PythonResearchBackend",
         )
 
-    def research_probabilistic_hypothesis(
-        self, samples: Sequence[float], test: str, **params: Any
-    ) -> ResearchResult:
+    def research_probabilistic_hypothesis(self, samples: Sequence[float], test: str, **params: Any) -> ResearchResult:
         from researchos.quant_engine.probability.statistics import (
             one_sample_t_test,
             z_test,
@@ -230,7 +223,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
     def research_portfolio_metrics(
         self,
         portfolio: Any,
-        benchmark_returns: Optional[Sequence[float]] = None,
+        benchmark_returns: Sequence[float] | None = None,
         **params: Any,
     ) -> ResearchResult:
         from researchos.quant_engine.portfolio.analytics import compute_portfolio_metrics
@@ -245,9 +238,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
             "PythonResearchBackend",
         )
 
-    def research_historical(
-        self, returns: Sequence[float], metric: str, **params: Any
-    ) -> ResearchResult:
+    def research_historical(self, returns: Sequence[float], metric: str, **params: Any) -> ResearchResult:
         from researchos.quant_engine.historical.analytics import (
             drawdown_statistics,
             extract_features,
@@ -317,9 +308,7 @@ class PythonResearchBackend(ResearchComputationInterface, QuantComputationInterf
             "PythonResearchBackend",
         )
 
-    def research_econometric_analysis(
-        self, values: Sequence[float], model: str, **params: Any
-    ) -> ResearchResult:
+    def research_econometric_analysis(self, values: Sequence[float], model: str, **params: Any) -> ResearchResult:
         from researchos.quant_engine.econometrics.core import (
             adf_test,
             compute_acf,
@@ -436,7 +425,7 @@ class ResearchEngine:
     pass-through: it performs no computation of its own, only marshalling.
     """
 
-    def __init__(self, backend: Optional[ResearchComputationInterface] = None) -> None:
+    def __init__(self, backend: ResearchComputationInterface | None = None) -> None:
         self._backend = backend or PythonResearchBackend()
 
     @property
@@ -455,20 +444,16 @@ class ResearchEngine:
     def technical(self, bars: Any, specs: Sequence[Any], **params: Any) -> ResearchResult:
         return self._backend.research_technical(bars, specs, **params)
 
-    def probabilistic_fit(
-        self, samples: Sequence[float], distribution: str, **params: Any
-    ) -> ResearchResult:
+    def probabilistic_fit(self, samples: Sequence[float], distribution: str, **params: Any) -> ResearchResult:
         return self._backend.research_probabilistic_fit(samples, distribution, **params)
 
-    def probabilistic_hypothesis(
-        self, samples: Sequence[float], test: str, **params: Any
-    ) -> ResearchResult:
+    def probabilistic_hypothesis(self, samples: Sequence[float], test: str, **params: Any) -> ResearchResult:
         return self._backend.research_probabilistic_hypothesis(samples, test, **params)
 
     def portfolio_metrics(
         self,
         portfolio: Any,
-        benchmark_returns: Optional[Sequence[float]] = None,
+        benchmark_returns: Sequence[float] | None = None,
         **params: Any,
     ) -> ResearchResult:
         return self._backend.research_portfolio_metrics(portfolio, benchmark_returns, **params)
@@ -479,17 +464,13 @@ class ResearchEngine:
     def fundamental(self, analytics: str, inputs: Any, **params: Any) -> ResearchResult:
         return self._backend.research_fundamental(analytics, inputs, **params)
 
-    def econometric_analysis(
-        self, values: Sequence[float], model: str, **params: Any
-    ) -> ResearchResult:
+    def econometric_analysis(self, values: Sequence[float], model: str, **params: Any) -> ResearchResult:
         return self._backend.research_econometric_analysis(values, model, **params)
 
     def validation(
         self, dataset: Any, train_size: int, validation_size: int, step_size: int, **params: Any
     ) -> ResearchResult:
-        return self._backend.research_validation(
-            dataset, train_size, validation_size, step_size, **params
-        )
+        return self._backend.research_validation(dataset, train_size, validation_size, step_size, **params)
 
 
 def research_capabilities(backend: Any) -> BackendCapabilities:

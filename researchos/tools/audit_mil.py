@@ -162,31 +162,21 @@ def immutability_audit():
                                 if kw.arg == "frozen" and isinstance(kw.value, ast.Constant):
                                     frozen = kw.value.value
                             if not frozen:
-                                findings.append(
-                                    ("NON_FROZEN_DATACLASS", get_module_name(path), node.name)
-                                )
+                                findings.append(("NON_FROZEN_DATACLASS", get_module_name(path), node.name))
                 # Mutable defaults in dataclass fields
                 if isinstance(node, ast.ClassDef):
                     for stmt in node.body:
                         if isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
                             # check for default_factory or mutable literal
                             v = stmt.value
-                            if (
-                                isinstance(v, ast.List)
-                                or isinstance(v, ast.Dict)
-                                or isinstance(v, ast.Set)
-                            ):
+                            if isinstance(v, ast.List) or isinstance(v, ast.Dict) or isinstance(v, ast.Set):
                                 findings.append(
                                     (
                                         "MUTABLE_DEFAULT",
                                         get_module_name(path),
                                         node.name
                                         + "."
-                                        + (
-                                            stmt.target.id
-                                            if isinstance(stmt.target, ast.Name)
-                                            else "?"
-                                        ),
+                                        + (stmt.target.id if isinstance(stmt.target, ast.Name) else "?"),
                                     )
                                 )
     return findings
@@ -254,9 +244,7 @@ def provenance_audit():
 def version_audit():
     """Collect version constants."""
     versions = []
-    pat = re.compile(
-        r"(VERSION|ALGORITHM_VERSION|RULES_VERSION|_VERSION)\s*=\s*[\"']([^\"']+)[\"']"
-    )
+    pat = re.compile(r"(VERSION|ALGORITHM_VERSION|RULES_VERSION|_VERSION)\s*=\s*[\"']([^\"']+)[\"']")
     for r, _, fs in os.walk(MIL):
         for f in fs:
             if not f.endswith(".py"):

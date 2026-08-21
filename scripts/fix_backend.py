@@ -1,4 +1,4 @@
-with open("researchos/quant_engine/backend.py", "r", encoding="utf-8") as f:
+with open("researchos/quant_engine/backend.py", encoding="utf-8") as f:
     content = f.read()
 
 new_method = """    def calculate_metrics(

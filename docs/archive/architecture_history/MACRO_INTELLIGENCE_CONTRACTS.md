@@ -358,7 +358,7 @@ EventClassification = {
     "FOMC_DOT_PLOT",                # Dot plot release
     "FOMC_QUANTITATIVE_EASING",     # QE announcement
     "FOMC_QUANTITATIVE_TIGHTENING", # QT announcement
-    
+
     # Data releases
     "DATA_CPI",                       # CPI release
     "DATA_PPI",                       # PPI release
@@ -368,12 +368,12 @@ EventClassification = {
     "DATA_RETAIL",                    # Retail sales
     "DATA PMI",                       # PMI releases
     "DATA_JOBLESS",                   # Jobless claims
-    
+
     # Fed communications
     "SPEECH_HAWKSISH",                # Hawkish speech
     "SPEECH_DOVISH",                  # Dovish speech
     "SPEECH_NEUTRAL",                 # Neutral speech
-    
+
     # Geopolitical
     "SANCTION Announcement",          # Sanctions announcement
     "TRADE TARIFF",                   # Trade tariff change
@@ -550,7 +550,7 @@ MarketReaction(
         end_price=4.27,
         start_volatility=0.85,
         end_volatility=0.92,
-        start_liquidity=1.0
+        start_liquidity=1.0,
     ),
     window_after=WindowSpec(
         start_offset=timedelta(hours=0),
@@ -559,7 +559,7 @@ MarketReaction(
         end_price=4.42,
         start_volatility=0.92,
         end_volatility=1.15,
-        start_liquidity=1.0
+        start_liquidity=1.0,
     ),
     reaction_metrics=ReactionMetrics(
         return_bps=150.0,
@@ -568,9 +568,9 @@ MarketReaction(
         bid_ask_widen_bps=1.5,
         max_drawdown_bps=85.0,
         max_spike_bps=120.0,
-        reaction_significance=0.001
+        reaction_significance=0.001,
     ),
-    calculation_version="mr/v1.2.0"
+    calculation_version="mr/v1.2.0",
 )
 ```
 
@@ -622,13 +622,13 @@ PatternTypeEnum = {
     "LIQUIDITY_DRY_UP",           # Liquidity contraction
     "TREND_ACCELERATION",         # Trend acceleration
     "TREND_REVERSAL",             # Trend reversal
-    
+
     # Macro patterns
     "INFLATION_PERSISTENCE",      # Inflation proving sticky
     "RATE_PATH_SHIFT",            # Expected rate path change
     "YIELD_CURVE_INVERSION",      # Yield curve inversion
     "YIELD_CURVE_STEEPENING",     # Yield curve steepening
-    
+
     # Event patterns
     "EVENT_SURPRISE_PATTERN",     # Recurring surprise pattern
     "MARKET_OVERREACTION",        # Market overreacting to events
@@ -675,10 +675,7 @@ Published Knowledge
 ```python
 KnowledgeObject(
     knowledge_id="KN_20260815_001",
-    evidence_refs=[
-        "EV_20260801_001", "EV_20260802_001", "EV_20260803_001",
-        "EV_20260804_001", "EV_20260805_001"
-    ],
+    evidence_refs=["EV_20260801_001", "EV_20260802_001", "EV_20260803_001", "EV_20260804_001", "EV_20260805_001"],
     pattern_type="INFLATION_PERSISTENCE",
     confidence=0.82,
     statistical_support=StatisticalSupport(
@@ -688,10 +685,10 @@ KnowledgeObject(
         effect_size=0.35,
         test_method="linear_regression",
         assumptions_valid=True,
-        limitations=["Small sample size", "Recent data subject to revision"]
+        limitations=["Small sample size", "Recent data subject to revision"],
     ),
     created_version="ko/v1.0.0",
-    explanation="Core inflation has shown persistent upward pressure over the past 12 months, with a statistically significant trend (p=0.003). The effect size of 0.35 indicates a moderate but consistent deviation from expected decline. This pattern suggests the Federal Reserve may need to maintain restrictive policy longer than market expects."
+    explanation="Core inflation has shown persistent upward pressure over the past 12 months, with a statistically significant trend (p=0.003). The effect size of 0.35 indicates a moderate but consistent deviation from expected decline. This pattern suggests the Federal Reserve may need to maintain restrictive policy longer than market expects.",
 )
 ```
 
@@ -717,7 +714,7 @@ class MacroQueryInterface(ABC):
     Read-only interface for V1 Core to query Macro Intelligence Layer.
     All methods are synchronous for simplicity; async variants may be added.
     """
-    
+
     # Series Queries
     @abstractmethod
     def get_series(
@@ -729,18 +726,18 @@ class MacroQueryInterface(ABC):
     ) -> list[NormalizedSeries]:
         """
         Retrieve a time series within a date range.
-        
+
         Args:
             series_id: Series identifier (e.g., "US10Y", "CPI_YOY")
             start: Start date (inclusive)
             end: End date (inclusive)
             include_revisions: If True, include all revisions
-        
+
         Returns:
             List of NormalizedSeries ordered by observation_period ascending
         """
         ...
-    
+
     @abstractmethod
     def get_latest(
         self,
@@ -748,12 +745,12 @@ class MacroQueryInterface(ABC):
     ) -> NormalizedSeries | None:
         """
         Retrieve the latest observation for a series.
-        
+
         Returns:
             Latest NormalizedSeries or None if not found
         """
         ...
-    
+
     @abstractmethod
     def get_surprise(
         self,
@@ -762,12 +759,12 @@ class MacroQueryInterface(ABC):
     ) -> float | None:
         """
         Get the consensus surprise for a data release.
-        
+
         Returns:
             surprise = actual - forecast (null if no forecast available)
         """
         ...
-    
+
     @abstractmethod
     def get_yield_curve(
         self,
@@ -775,12 +772,12 @@ class MacroQueryInterface(ABC):
     ) -> dict[str, float]:
         """
         Get the full Treasury yield curve for a date.
-        
+
         Returns:
             {tenor: yield_in_percent} for 2Y, 5Y, 10Y, 30Y
         """
         ...
-    
+
     @abstractmethod
     def get_spread(
         self,
@@ -790,12 +787,12 @@ class MacroQueryInterface(ABC):
     ) -> float:
         """
         Get the spread between two tenors in basis points.
-        
+
         Returns:
             Spread in basis points (tenor_a - tenor_b)
         """
         ...
-    
+
     @abstractmethod
     def get_market_context(
         self,
@@ -805,12 +802,12 @@ class MacroQueryInterface(ABC):
     ) -> MarketContext:
         """
         Get market context for a series around a date.
-        
+
         Returns:
             MarketContext with statistics and nearby events
         """
         ...
-    
+
     # Event Queries
     @abstractmethod
     def get_event(
@@ -819,12 +816,12 @@ class MacroQueryInterface(ABC):
     ) -> MacroEvent | None:
         """
         Retrieve an event by ID.
-        
+
         Returns:
             MacroEvent or None if not found
         """
         ...
-    
+
     @abstractmethod
     def search_events(
         self,
@@ -837,12 +834,12 @@ class MacroQueryInterface(ABC):
     ) -> list[MacroEvent]:
         """
         Search events with filters.
-        
+
         Returns:
             List of MacroEvents matching criteria
         """
         ...
-    
+
     # Evidence Queries
     @abstractmethod
     def get_evidence(
@@ -851,12 +848,12 @@ class MacroQueryInterface(ABC):
     ) -> EvidenceObject | None:
         """
         Retrieve evidence by ID.
-        
+
         Returns:
             EvidenceObject or None if not found
         """
         ...
-    
+
     @abstractmethod
     def get_evidence_for_series(
         self,
@@ -865,12 +862,12 @@ class MacroQueryInterface(ABC):
     ) -> list[EvidenceObject]:
         """
         Get all evidence for a series on a date.
-        
+
         Returns:
             List of EvidenceObjects (may include revisions)
         """
         ...
-    
+
     # Reaction Queries
     @abstractmethod
     def get_reaction(
@@ -880,12 +877,12 @@ class MacroQueryInterface(ABC):
     ) -> MarketReaction | None:
         """
         Get market reaction for an event and instrument.
-        
+
         Returns:
             MarketReaction or None if not found
         """
         ...
-    
+
     @abstractmethod
     def get_reactions_for_event(
         self,
@@ -893,23 +890,23 @@ class MacroQueryInterface(ABC):
     ) -> list[MarketReaction]:
         """
         Get all market reactions for an event.
-        
+
         Returns:
             List of MarketReaction objects
         """
         ...
-    
+
     # Health & Status
     @abstractmethod
     def get_health(self) -> dict:
         """
         Get MIL health status.
-        
+
         Returns:
             Dict with ingestion status, last update times, etc.
         """
         ...
-    
+
     @abstractmethod
     def get_series_metadata(
         self,
@@ -917,7 +914,7 @@ class MacroQueryInterface(ABC):
     ) -> SeriesMetadata | None:
         """
         Get metadata for a series.
-        
+
         Returns:
             SeriesMetadata or None if not found
         """
@@ -938,6 +935,7 @@ class MarketContext:
     volatility_90d: float
     nearby_events: list[MacroEvent]
     recent_reactions: list[MarketReaction]
+
 
 @dataclass(frozen=True)
 class SeriesMetadata:
@@ -971,16 +969,16 @@ The V1 Bridge provides a read-only, versioned interface between ResearchOS V1 Co
 class V1BridgeInterface(ABC):
     """
     Read-only bridge from V1 Core to Macro Intelligence Layer.
-    
+
     Rules:
     - V1 Core can ONLY READ through this interface
     - MIL cannot write to V1 Core
     - All changes are additive (new methods, not breaking changes)
     - Version is strictly enforced
     """
-    
+
     BRIDGE_VERSION = "v1"
-    
+
     @abstractmethod
     def query(
         self,
@@ -989,31 +987,31 @@ class V1BridgeInterface(ABC):
     ) -> Any:
         """
         Generic query endpoint for V1 Core.
-        
+
         Args:
             query_type: Type of query (e.g., "series", "event", "reaction")
             params: Query parameters
-        
+
         Returns:
             Query result (type varies by query_type)
         """
         ...
-    
+
     @abstractmethod
     def validate_contract(self) -> ContractValidationResult:
         """
         Validate that the current implementation matches the contract.
-        
+
         Returns:
             ContractValidationResult with pass/fail status
         """
         ...
-    
+
     @abstractmethod
     def get_contract_version(self) -> str:
         """
         Get the current contract version.
-        
+
         Returns:
             Version string (e.g., "v1.0.0")
         """
@@ -1051,13 +1049,13 @@ The Event Subscription Interface provides an in-process event bus for publishing
 class MacroEventBus(ABC):
     """
     In-process event bus for macro events.
-    
+
     Usage:
         bus = MacroEventBusImpl()
         bus.subscribe("FOMC_MEETING", handler_function)
         bus.publish(event)
     """
-    
+
     @abstractmethod
     def subscribe(
         self,
@@ -1066,16 +1064,16 @@ class MacroEventBus(ABC):
     ) -> str:
         """
         Subscribe to events of a specific type.
-        
+
         Args:
             event_type: Type of event to subscribe to
             handler: Callback function to invoke
-        
+
         Returns:
             Subscription ID for later unsubscription
         """
         ...
-    
+
     @abstractmethod
     def unsubscribe(
         self,
@@ -1083,12 +1081,12 @@ class MacroEventBus(ABC):
     ) -> bool:
         """
         Unsubscribe from events.
-        
+
         Returns:
             True if subscription was found and removed
         """
         ...
-    
+
     @abstractmethod
     def publish(
         self,
@@ -1096,12 +1094,12 @@ class MacroEventBus(ABC):
     ) -> None:
         """
         Publish an event to all subscribers.
-        
+
         Args:
             event: The MacroEvent to publish
         """
         ...
-    
+
     @abstractmethod
     def publish_batch(
         self,
@@ -1109,12 +1107,12 @@ class MacroEventBus(ABC):
     ) -> None:
         """
         Publish multiple events atomically.
-        
+
         Args:
             events: List of MacroEvents to publish
         """
         ...
-    
+
     @abstractmethod
     def get_subscribers(
         self,
@@ -1122,7 +1120,7 @@ class MacroEventBus(ABC):
     ) -> list[str]:
         """
         Get all subscription IDs for an event type.
-        
+
         Returns:
             List of subscription IDs
         """
@@ -1342,6 +1340,7 @@ esi/v1.0.0 — Event Subscription Interface (frozen)
 # - No whitespace compression variations
 # - Consistent datetime formatting (ISO 8601, UTC)
 # - Consistent float formatting (no trailing zeros)
+
 
 def canonical_serialize(obj: FrozenDataclass) -> bytes:
     """Deterministic serialization for auditability."""

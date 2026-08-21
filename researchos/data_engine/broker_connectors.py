@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 # --- MT5 (PRIMARY) ---
 try:
@@ -59,9 +60,7 @@ class MT5Connector:
     def is_available(self) -> bool:
         return self.initialized
 
-    def fetch_ohlcv(
-        self, symbol: str, timeframe: str, start: datetime, end: datetime
-    ) -> pd.DataFrame:
+    def fetch_ohlcv(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame:
         """
         Fetch OHLCV data from MT5.
 
@@ -117,9 +116,7 @@ class DataComparator:
     """
 
     @staticmethod
-    def compare(
-        df1: pd.DataFrame, df2: pd.DataFrame, source1: str = "MT5", source2: str = "Other"
-    ) -> dict:
+    def compare(df1: pd.DataFrame, df2: pd.DataFrame, source1: str = "MT5", source2: str = "Other") -> dict:
         """
         Compare two OHLCV DataFrames.
         Returns correlation, MAPE, missing bars, etc.

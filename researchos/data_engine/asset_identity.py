@@ -45,18 +45,16 @@ Public API:
 
 from __future__ import annotations
 
-from typing import FrozenSet
-
 # ---------------------------------------------------------------------------
 # Symbol families
 # ---------------------------------------------------------------------------
 
 #: Canonical symbol spellings for the XAUUSD (gold/USD) spot asset.
-XAUUSD_SYMBOLS: FrozenSet[str] = frozenset({"XAUUSD", "XAU/USD", "GOLD"})
+XAUUSD_SYMBOLS: frozenset[str] = frozenset({"XAUUSD", "XAU/USD", "GOLD"})
 
 #: COMEX gold *futures* tickers.  These carry futures roll/carry dynamics and
 #: are NEVER acceptable as a representation of XAUUSD spot.
-COMEX_GOLD_FUTURES: FrozenSet[str] = frozenset(
+COMEX_GOLD_FUTURES: frozenset[str] = frozenset(
     {
         "GC=F",  # COMEX Gold Futures (Yahoo front-month)
         "GC1!",  # front-month continuous

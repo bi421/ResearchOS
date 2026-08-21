@@ -25,8 +25,6 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.research_cpp_backend import ResearchCppBackend
@@ -45,7 +43,7 @@ def register_research_backend(router: BackendRouter, backend: QuantComputationIn
 
 
 def create_research_router(
-    reference_backend: Optional[QuantComputationInterface] = None,
+    reference_backend: QuantComputationInterface | None = None,
     register_cpp: bool = True,
 ) -> BackendRouter:
     """Create a ``BackendRouter`` with the research analytical surface registered.
@@ -67,7 +65,7 @@ def create_research_router(
 
 
 def create_research_engine(
-    backend: Optional[QuantComputationInterface] = None,
+    backend: QuantComputationInterface | None = None,
     use_cpp: bool = False,
 ) -> ResearchEngine:
     """Create a ``ResearchEngine`` over a research backend.

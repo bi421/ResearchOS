@@ -15,8 +15,9 @@ Guarantees:
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
-from typing import Any, Callable, Iterator, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from researchos.data_engine.dataset import HistoricalDataset
 
@@ -56,10 +57,10 @@ class HistoricalIterator:
     def __init__(
         self,
         dataset: HistoricalDataset,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         reverse: bool = False,
-        as_of: Optional[datetime] = None,
+        as_of: datetime | None = None,
     ):
         """
         Args:
@@ -78,7 +79,7 @@ class HistoricalIterator:
         self._index = 0
         self._indices = self._build_index()
 
-    def _build_index(self) -> List[int]:
+    def _build_index(self) -> list[int]:
         """Build a list of indices matching the time filters."""
         indices = []
         for i, record in enumerate(self.dataset._records):
@@ -112,7 +113,7 @@ class HistoricalIterator:
     def reset(self) -> None:
         self._index = 0
 
-    def take(self, count: int) -> List[Any]:
+    def take(self, count: int) -> list[Any]:
         records = []
         for _ in range(count):
             try:
@@ -126,7 +127,7 @@ class HistoricalIterator:
         self._index = min(self._index + count, len(self._indices))
         return self._index - before
 
-    def windows(self, window_size: int, step: int = 1) -> Iterator[List[Any]]:
+    def windows(self, window_size: int, step: int = 1) -> Iterator[list[Any]]:
         i = 0
         while i + window_size <= len(self._indices):
             window = [self.dataset._records[self._indices[j]] for j in range(i, i + window_size)]
@@ -136,8 +137,8 @@ class HistoricalIterator:
     def time_windows(
         self,
         window_duration: timedelta,
-        step: Optional[timedelta] = None,
-    ) -> Iterator[List[Any]]:
+        step: timedelta | None = None,
+    ) -> Iterator[list[Any]]:
         if not self._indices:
             return
         step = step or window_duration
@@ -162,7 +163,7 @@ class HistoricalIterator:
             if predicate(record):
                 yield record
 
-    def to_list(self) -> List[Any]:
+    def to_list(self) -> list[Any]:
         return list(self)
 
     @property

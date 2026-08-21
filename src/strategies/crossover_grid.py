@@ -1,6 +1,8 @@
-import pandas as pd
-import numpy as np
 import glob
+
+import numpy as np
+import pandas as pd
+
 from researchos.quant_engine.vectorized_backtest import vectorized_backtest
 
 print("=" * 60)
@@ -9,29 +11,18 @@ print("=" * 60)
 
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 close = df_h["close"]
 
 
 # Compute ADX (14) for filter
 def compute_adx(high, low, close):
-    tr = np.maximum(
-        high - low, np.maximum((high - close.shift()).abs(), (low - close.shift()).abs())
-    )
+    tr = np.maximum(high - low, np.maximum((high - close.shift()).abs(), (low - close.shift()).abs()))
     atr = tr.rolling(14).mean()
     up_move = high - high.shift()
     down_move = low.shift() - low

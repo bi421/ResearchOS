@@ -1,5 +1,5 @@
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 
 
 def fetch_multi_asset(symbols, start="2021-01-01", end="2026-08-20"):

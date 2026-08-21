@@ -1,12 +1,13 @@
-import sys
 import json
+import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path("cpp_quant_engine/python").resolve()))
 
-from cpp_quant_engine import CppQuantEngineBackend, BacktestRequest, Candle
 import pandas as pd
+
+from cpp_quant_engine import BacktestRequest, Candle, CppQuantEngineBackend
 
 print("=" * 70)
 print("🚀 TRUE PRODUCTION: Векторчилсон өгөгдөл + 100% C++ Тооцоолол")
@@ -61,9 +62,7 @@ candles = [
         volume=float(v),
         timeframe="M1",
     )
-    for ts, o, h, lo, c, v in zip(
-        df["iso_ts"], df["open"], df["high"], df["low"], df["close"], df["volume"]
-    )
+    for ts, o, h, lo, c, v in zip(df["iso_ts"], df["open"], df["high"], df["low"], df["close"], df["volume"])
 ]
 
 convert_time = time.time() - start_time

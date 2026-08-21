@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import Lifecycle
@@ -22,14 +22,14 @@ class BaseObject:
 
     def __init__(
         self,
-        id: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        ontology_tags: Optional[List[str]] = None,
+        id: str | None = None,
+        created_at: datetime | None = None,
+        ontology_tags: list[str] | None = None,
     ):
         self.created_at = created_at or utc_now()
         self.ontology_tags = list(ontology_tags or [])
         self.lifecycle = Lifecycle()
-        self._hash: Optional[str] = None
+        self._hash: str | None = None
 
         if id is None:
             seed = "|".join(sorted(self.ontology_tags)) or self.__class__.__name__
@@ -37,7 +37,7 @@ class BaseObject:
         else:
             self.id = id
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "ontology_tags": sorted(self.ontology_tags),
         }
@@ -51,7 +51,7 @@ class BaseObject:
             self._hash = self.compute_hash()
         return self._hash
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "object_type": self.__class__.__name__,
             "id": self.id,
@@ -70,7 +70,7 @@ class BaseObject:
         )
 
     @classmethod
-    def from_dict(cls, data: dict) -> "BaseObject":
+    def from_dict(cls, data: dict) -> BaseObject:
         obj = cls.__new__(cls)
 
         obj.id = data.get("id")

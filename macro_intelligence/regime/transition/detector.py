@@ -97,9 +97,7 @@ class RegimeTransitionDetector:
         signal_agreement = self._compute_signal_agreement(signals)
         persistence = self._estimate_persistence(current_assessment)
 
-        transition_type = classify_transition_type(
-            signal_strengths, signal_agreement, confidence, persistence
-        )
+        transition_type = classify_transition_type(signal_strengths, signal_agreement, confidence, persistence)
 
         # Generate transition ID.
         # Content-derived deterministic ID: identical scientific inputs produce
@@ -115,9 +113,7 @@ class RegimeTransitionDetector:
         )
 
         # Build explanation
-        explanation = self._build_transition_explanation(
-            previous_regime, current_regime, transition_type, signals
-        )
+        explanation = self._build_transition_explanation(previous_regime, current_regime, transition_type, signals)
 
         return RegimeTransition(
             transition_id=transition_id,
@@ -187,9 +183,7 @@ class RegimeTransitionDetector:
             transition=transition,
             early_warnings=early_warnings,
             persistence=persistence,
-            probability_matrix=TransitionProbabilityMatrix.from_dict(prob_matrix)
-            if prob_matrix
-            else None,
+            probability_matrix=TransitionProbabilityMatrix.from_dict(prob_matrix) if prob_matrix else None,
             evidence_refs=self._collect_all_evidence_refs(current_assessment, early_warnings),
         )
 
@@ -211,9 +205,7 @@ class RegimeTransitionDetector:
             TransitionSignal(
                 detector_name="inflation_detector",
                 signal_id="TRANS-INF-001",
-                signal_type=self._signal_type_from_confidence(
-                    assessment.inflation_signal.confidence
-                ),
+                signal_type=self._signal_type_from_confidence(assessment.inflation_signal.confidence),
                 strength=assessment.inflation_signal.confidence,
                 direction=self._detect_direction(assessment.inflation_signal.signal),
                 contributing_factors=assessment.inflation_signal.contributing_factors,
@@ -241,9 +233,7 @@ class RegimeTransitionDetector:
             TransitionSignal(
                 detector_name="monetary_detector",
                 signal_id="TRANS-MON-001",
-                signal_type=self._signal_type_from_confidence(
-                    assessment.monetary_signal.confidence
-                ),
+                signal_type=self._signal_type_from_confidence(assessment.monetary_signal.confidence),
                 strength=assessment.monetary_signal.confidence,
                 direction=self._detect_direction(assessment.monetary_signal.signal),
                 contributing_factors=assessment.monetary_signal.contributing_factors,
@@ -257,9 +247,7 @@ class RegimeTransitionDetector:
             TransitionSignal(
                 detector_name="liquidity_detector",
                 signal_id="TRANS-LIQ-001",
-                signal_type=self._signal_type_from_confidence(
-                    assessment.liquidity_signal.confidence
-                ),
+                signal_type=self._signal_type_from_confidence(assessment.liquidity_signal.confidence),
                 strength=assessment.liquidity_signal.confidence,
                 direction=self._detect_direction(assessment.liquidity_signal.signal),
                 contributing_factors=assessment.liquidity_signal.contributing_factors,
@@ -273,9 +261,7 @@ class RegimeTransitionDetector:
             TransitionSignal(
                 detector_name="employment_detector",
                 signal_id="TRANS-EMP-001",
-                signal_type=self._signal_type_from_confidence(
-                    assessment.employment_signal.confidence
-                ),
+                signal_type=self._signal_type_from_confidence(assessment.employment_signal.confidence),
                 strength=assessment.employment_signal.confidence,
                 direction=self._detect_direction(assessment.employment_signal.signal),
                 contributing_factors=assessment.employment_signal.contributing_factors,
@@ -434,9 +420,7 @@ class RegimeTransitionDetector:
         # Get historical average persistence for this regime
         historical_avg = self._get_historical_avg_persistence(current_regime)
 
-        continuation_prob = calculate_continuation_probability(
-            persistence_periods, historical_avg, signal_strengths
-        )
+        continuation_prob = calculate_continuation_probability(persistence_periods, historical_avg, signal_strengths)
 
         return RegimePersistence(
             regime=current_regime,
@@ -517,9 +501,7 @@ class RegimeTransitionDetector:
 
         # Add top contributing signals
         top_signals = sorted(signals, key=lambda s: s.strength, reverse=True)[:3]
-        signal_descs = [
-            f"{s.detector_name}: {s.signal_type} ({s.strength:.2f})" for s in top_signals
-        ]
+        signal_descs = [f"{s.detector_name}: {s.signal_type} ({s.strength:.2f})" for s in top_signals]
         if signal_descs:
             parts.append("Signals: " + "; ".join(signal_descs))
 

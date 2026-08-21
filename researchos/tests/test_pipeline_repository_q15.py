@@ -538,7 +538,7 @@ class TestDependencyAudit(unittest.TestCase):
         pkg = os.path.join(base, "pipeline_repository")
         for name in ("__init__.py", "contracts.py", "repository.py"):
             path = os.path.join(pkg, name)
-            with open(path, "r", encoding="utf-8") as handle:
+            with open(path, encoding="utf-8") as handle:
                 yield name, handle.read()
 
     def _import_lines(self, source):

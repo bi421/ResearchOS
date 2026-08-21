@@ -11,7 +11,7 @@ shapes shared by the label generators.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -29,10 +29,10 @@ class LabelResult:
     """
 
     name: str
-    values: List[Optional[float]]
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    horizon: Optional[int] = None
-    timestamps: Optional[List[Any]] = None
+    values: list[float | None]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    horizon: int | None = None
+    timestamps: list[Any] | None = None
 
 
 __all__ = ["LabelResult"]

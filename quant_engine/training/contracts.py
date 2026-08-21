@@ -15,9 +15,10 @@ import enum
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Tuple
+from typing import Any
 
 TRAINING_VERSION = "1.0.0"
 MODEL_CONTRACT_VERSION = "1.0.0"
@@ -51,7 +52,7 @@ class ModelType(enum.Enum):
     FEATURE_WEIGHT = "feature_weight"
 
     @classmethod
-    def from_value(cls, value: str) -> "ModelType":
+    def from_value(cls, value: str) -> ModelType:
         """Resolve a ``ModelType`` from its string value."""
         for member in cls:
             if member.value == value:
@@ -86,8 +87,7 @@ def _validate_model_id(model_id: str) -> None:
         raise InvalidModelError("model_id must be a non-empty string")
     if _ID_PATTERN.fullmatch(model_id) is None:
         raise InvalidModelError(
-            "model_id may only contain letters, digits, '_', '.', '-' "
-            "and must not start with a separator"
+            "model_id may only contain letters, digits, '_', '.', '-' and must not start with a separator"
         )
 
 
@@ -120,7 +120,7 @@ class ModelContract:
     name: str
     version: str
     model_type: ModelType
-    feature_names: Tuple[str, ...]
+    feature_names: tuple[str, ...]
     label_name: str
     parameters: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -184,7 +184,7 @@ class ModelContract:
         }
         return hashlib.sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "model_id": self.model_id,
@@ -200,7 +200,7 @@ class ModelContract:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "ModelContract":
+    def from_dict(cls, data: Mapping[str, Any]) -> ModelContract:
         """Reconstruct a contract from a ``to_dict()`` mapping."""
         return cls(
             model_id=str(data["model_id"]),

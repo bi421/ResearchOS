@@ -6,13 +6,13 @@ ResearchOS Lint Fixer + Self-Destruct
 - Git-тэй ажиллахад тохиромжтой
 """
 
-import re
-import sys
 import json
-import subprocess
+import re
 import shutil
-from pathlib import Path
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # ===== CONFIG =====
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -40,7 +40,7 @@ def backup_file(filepath: Path):
 
 
 def read_file(filepath: Path) -> str:
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+    with open(filepath, encoding="utf-8", errors="ignore") as f:
         return f.read()
 
 
@@ -69,9 +69,7 @@ def fix_e402(content: str) -> str:
 
     # Docstring хадгалах
     docstring = []
-    if code_lines and (
-        code_lines[0].strip().startswith('"""') or code_lines[0].strip().startswith("'''")
-    ):
+    if code_lines and (code_lines[0].strip().startswith('"""') or code_lines[0].strip().startswith("'''")):
         quote = '"""' if '"""' in code_lines[0] else "'''"
         docstring.append(code_lines.pop(0))
         while code_lines and quote not in code_lines[0]:
@@ -207,9 +205,7 @@ def fix_file(filepath: Path, errors: list) -> bool:
 def get_ruff_errors() -> list:
     """Ruff-аас алдааг JSON форматаар авах"""
     try:
-        result = subprocess.run(
-            RUFF_CMD.split(), cwd=PROJECT_ROOT, capture_output=True, text=True, check=False
-        )
+        result = subprocess.run(RUFF_CMD.split(), cwd=PROJECT_ROOT, capture_output=True, text=True, check=False)
         if result.stdout.strip():
             return json.loads(result.stdout)
         return []

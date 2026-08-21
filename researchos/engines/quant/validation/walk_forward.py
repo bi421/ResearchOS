@@ -12,7 +12,7 @@ The validation layer only depends on the dataset contract; it never imports
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 from ..machine_learning.dataset_contracts import ResearchDataset
 from .contracts import (
@@ -25,15 +25,15 @@ from .metrics import compute_metrics
 from .splitter import Fold, WalkForwardSplitter
 
 
-def _pairwise(seq: Sequence) -> List[Tuple[object, object]]:
+def _pairwise(seq: Sequence) -> list[tuple[object, object]]:
     values = list(seq)
-    out: List[Tuple[object, object]] = []
+    out: list[tuple[object, object]] = []
     for i in range(1, len(values)):
         out.append((values[i - 1], values[i]))
     return out
 
 
-def _aggregate(fold_results: Tuple[FoldResult, ...]) -> dict:
+def _aggregate(fold_results: tuple[FoldResult, ...]) -> dict:
     """Mean of each metric across folds (deterministic)."""
     if not fold_results:
         return {}
@@ -50,10 +50,10 @@ class WalkForwardValidator:
 
     def __init__(
         self,
-        train_size: Optional[int] = None,
-        validation_size: Optional[int] = None,
-        step_size: Optional[int] = None,
-        test_size: Optional[int] = None,
+        train_size: int | None = None,
+        validation_size: int | None = None,
+        step_size: int | None = None,
+        test_size: int | None = None,
     ) -> None:
         if train_size is None:
             raise ValidationError("train_size is required")
@@ -85,7 +85,7 @@ class WalkForwardValidator:
         if dataset.sample_count < self.train_size + self.validation_size:
             raise ValidationError("dataset too small for the requested window sizes")
 
-    def _check_fold_leakage(self, folds: List[Fold], length: int) -> None:
+    def _check_fold_leakage(self, folds: list[Fold], length: int) -> None:
         if not folds:
             raise ValidationError("empty folds detected")
         prev_val_start = -1
@@ -118,9 +118,7 @@ class WalkForwardValidator:
 
     # -- core validation ----------------------------------------------------
 
-    def _fold_predictions(
-        self, dataset: ResearchDataset, fold: Fold
-    ) -> Tuple[List[float], List[float]]:
+    def _fold_predictions(self, dataset: ResearchDataset, fold: Fold) -> tuple[list[float], list[float]]:
         """Deterministic baseline predictor: predict the last training label
         for every validation sample.  This is a pure, leak-free baseline used
         to demonstrate the engine; callers can plug in their own predictors.
@@ -139,7 +137,7 @@ class WalkForwardValidator:
         folds = self.splitter.split(dataset.sample_count)
         self._check_fold_leakage(folds, dataset.sample_count)
 
-        fold_results: List[FoldResult] = []
+        fold_results: list[FoldResult] = []
         for fold in folds:
             y_true, y_pred = self._fold_predictions(dataset, fold)
             fold_results.append(
@@ -172,7 +170,7 @@ class WalkForwardValidator:
             },
         )
 
-    def validate_folds(self, dataset: ResearchDataset) -> Tuple[FoldResult, ...]:
+    def validate_folds(self, dataset: ResearchDataset) -> tuple[FoldResult, ...]:
         """Return the per-fold results without aggregation."""
         result = self.validate(dataset)
         return result.fold_results

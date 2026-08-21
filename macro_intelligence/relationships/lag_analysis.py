@@ -171,9 +171,7 @@ def detect_reaction_delay(
             mean_r = mean(response_series)
             std_r = std(response_series, sample=False)
             if std_r > 0:
-                resp_deviation = sum(abs(v - mean_r) / std_r for v in response_values) / len(
-                    response_values
-                )
+                resp_deviation = sum(abs(v - mean_r) / std_r for v in response_values) / len(response_values)
                 # Higher deviation = stronger reaction
                 if resp_deviation > abs(best_corr):
                     best_corr = resp_deviation * 0.5  # Scale to correlation-like range

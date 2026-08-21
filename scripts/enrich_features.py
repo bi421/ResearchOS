@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 print("=" * 60)
 print("⚙️ FEATURE ENGINEER: Өгөгдлийг баяжуулах процесс эхэллээ...")
@@ -58,9 +59,7 @@ df["volatility_20"] = df["return_1"].rolling(window=20).std()
 # E. Time Regime Features
 df["hour"] = df["datetime"].dt.hour
 df["day_of_week"] = df["datetime"].dt.dayofweek  # 0=Даваа, 4=Баасан
-df["is_london_ny_overlap"] = ((df["hour"] >= 13) & (df["hour"] <= 17)).astype(
-    int
-)  # UTC цагаар ойролцоогоор
+df["is_london_ny_overlap"] = ((df["hour"] >= 13) & (df["hour"] <= 17)).astype(int)  # UTC цагаар ойролцоогоор
 
 # F. NaN утгуудыг цэвэрлэх (Эхний 20 мөр)
 df = df.dropna().reset_index(drop=True)

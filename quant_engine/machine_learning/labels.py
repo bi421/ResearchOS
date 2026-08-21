@@ -16,16 +16,15 @@ Design rules:
 from __future__ import annotations
 
 import math
-from typing import List, Optional
 
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
 
-def _sanitize(values) -> List[Optional[float]]:
+def _sanitize(values) -> list[float | None]:
     """Convert inputs to floats; map missing / non-finite values to ``None``."""
-    out: List[Optional[float]] = []
+    out: list[float | None] = []
     for v in values:
         if v is None:
             out.append(None)
@@ -69,7 +68,7 @@ def _check_positive(value, name: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def future_return(close, horizon) -> List[Optional[float]]:
+def future_return(close, horizon) -> list[float | None]:
     """Forward-return label.
 
     ``label[i] = (close[i + horizon] - close[i]) / close[i]``
@@ -80,7 +79,7 @@ def future_return(close, horizon) -> List[Optional[float]]:
     _check_horizon(horizon)
     close = _sanitize(close)
     n = len(close)
-    out: List[Optional[float]] = [None] * n
+    out: list[float | None] = [None] * n
     for i in range(n - horizon):
         base = close[i]
         if base is None or base == 0:
@@ -97,13 +96,13 @@ def future_return(close, horizon) -> List[Optional[float]]:
 # ---------------------------------------------------------------------------
 
 
-def binary_label(close, horizon) -> List[Optional[int]]:
+def binary_label(close, horizon) -> list[int | None]:
     """Binary direction label.
 
     ``1`` if future return > 0, else ``0``.
     """
     returns = future_return(close, horizon)
-    out: List[Optional[int]] = []
+    out: list[int | None] = []
     for v in returns:
         if v is None:
             out.append(None)
@@ -119,7 +118,7 @@ def binary_label(close, horizon) -> List[Optional[int]]:
 # ---------------------------------------------------------------------------
 
 
-def multiclass_label(close, horizon, threshold) -> List[Optional[int]]:
+def multiclass_label(close, horizon, threshold) -> list[int | None]:
     """Multi-class direction label.
 
     ``1``  up      (future return > threshold)
@@ -128,7 +127,7 @@ def multiclass_label(close, horizon, threshold) -> List[Optional[int]]:
     """
     _check_threshold(threshold)
     returns = future_return(close, horizon)
-    out: List[Optional[int]] = []
+    out: list[int | None] = []
     for v in returns:
         if v is None:
             out.append(None)
@@ -146,7 +145,7 @@ def multiclass_label(close, horizon, threshold) -> List[Optional[int]]:
 # ---------------------------------------------------------------------------
 
 
-def regression_target(close, horizon) -> List[Optional[float]]:
+def regression_target(close, horizon) -> list[float | None]:
     """Regression target — alias of :func:`future_return`."""
     return future_return(close, horizon)
 
@@ -161,7 +160,7 @@ def triple_barrier(
     take_profit,
     stop_loss,
     max_horizon,
-) -> List[Optional[int]]:
+) -> list[int | None]:
     """Simplified deterministic triple-barrier label.
 
     Scans forward from each bar for up to ``max_horizon`` bars:
@@ -178,7 +177,7 @@ def triple_barrier(
     _check_horizon(max_horizon)
     close = _sanitize(close)
     n = len(close)
-    out: List[Optional[int]] = [None] * n
+    out: list[int | None] = [None] * n
     for i in range(n):
         end = i + max_horizon
         if end >= n:
@@ -211,7 +210,7 @@ def vol_adjusted_return(
     close,
     rolling_volatility,
     horizon,
-) -> List[Optional[float]]:
+) -> list[float | None]:
     """Volatility-adjusted forward return.
 
     ``future_return / rolling_volatility``.
@@ -222,7 +221,7 @@ def vol_adjusted_return(
     returns = future_return(close, horizon)
     vol = _sanitize(rolling_volatility)
     n = len(returns)
-    out: List[Optional[float]] = [None] * n
+    out: list[float | None] = [None] * n
     for i in range(n):
         ret = returns[i]
         if ret is None:

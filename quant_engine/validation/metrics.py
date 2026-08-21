@@ -8,10 +8,10 @@ denominator is undefined).
 
 from __future__ import annotations
 
-from typing import List, Sequence
+from collections.abc import Sequence
 
 
-def _as_floats(values: Sequence) -> List[float]:
+def _as_floats(values: Sequence) -> list[float]:
     return [float(v) for v in values]
 
 

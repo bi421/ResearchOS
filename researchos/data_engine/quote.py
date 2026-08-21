@@ -14,7 +14,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -47,8 +47,8 @@ class Quote(BaseObject):
         ask_size: float = 0.0,
         exchange: str = "",
         condition: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             ts_str = timestamp.isoformat() if hasattr(timestamp, "isoformat") else str(timestamp)
@@ -88,7 +88,7 @@ class Quote(BaseObject):
             return 0.0
         return (self.spread / self.mid) * 10000.0
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timestamp": self.timestamp.isoformat(),
@@ -101,7 +101,7 @@ class Quote(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -121,7 +121,7 @@ class Quote(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Quote":
+    def from_dict(cls, data: dict[str, Any]) -> Quote:
         obj = super().from_dict(data)
         obj.symbol = data["symbol"]
         obj.timestamp = parse_timestamp(data["timestamp"])

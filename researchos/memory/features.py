@@ -8,7 +8,6 @@ for pattern recognition and similarity comparison.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict
 
 from researchos.memory.models import MarketSnapshot
 
@@ -41,7 +40,7 @@ class FeatureSet:
     # Volume features
     volume_ratio: float  # volume relative to typical (default 1.0)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "asset": self.asset,
             "timestamp": self.timestamp,

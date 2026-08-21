@@ -1,9 +1,10 @@
 import sys
 
 sys.path.insert(0, ".")
+from datetime import datetime, timedelta
+
 from researchos.data_engine.broker_connectors import MT5Connector
 from researchos.quant_engine.vectorized_backtest import vectorized_backtest
-from datetime import datetime, timedelta
 
 print("=" * 60)
 print("📈 SMA20/100 STRATEGY BACKTEST (MT5 DATA)")

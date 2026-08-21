@@ -10,8 +10,6 @@ Conflict Resolution Protocol.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
@@ -51,9 +49,9 @@ class Contradiction(BaseObject):
         research_id: str,
         type: str,
         description: str,
-        sides: Optional[List[dict]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        sides: list[dict] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Contradiction|{research_id}|{type}|{description}"
@@ -64,7 +62,7 @@ class Contradiction(BaseObject):
         self.research_id = research_id
         self.type = type
         self.description = description
-        self.sides: List[dict] = sides or []
+        self.sides: list[dict] = sides or []
         self.severity = self._compute_severity()
         self.resolution = "Unresolved"
         self.resolution_method = ""
@@ -176,7 +174,7 @@ class Contradiction(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Contradiction":
+    def from_dict(cls, data: dict) -> Contradiction:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.type = data["type"]
@@ -200,9 +198,9 @@ class ContradictionReport(BaseObject):
     def __init__(
         self,
         research_id: str,
-        contradictions: Optional[List[Contradiction]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        contradictions: list[Contradiction] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ContradictionReport|{research_id}"
@@ -210,8 +208,8 @@ class ContradictionReport(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.research_id = research_id
-        self.contradictions: List[Contradiction] = contradictions or []
-        self._contradiction_ids: List[str] = []
+        self.contradictions: list[Contradiction] = contradictions or []
+        self._contradiction_ids: list[str] = []
 
     @property
     def total_count(self) -> int:
@@ -241,13 +239,13 @@ class ContradictionReport(BaseObject):
             c.resolve()
 
     @property
-    def contradiction_ids(self) -> List[str]:
+    def contradiction_ids(self) -> list[str]:
         if self.contradictions:
             return [c.id for c in self.contradictions]
         return self._contradiction_ids
 
     @contradiction_ids.setter
-    def contradiction_ids(self, value: List[str]) -> None:
+    def contradiction_ids(self, value: list[str]) -> None:
         self._contradiction_ids = value
 
     def to_dict(self) -> dict:
@@ -261,7 +259,7 @@ class ContradictionReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ContradictionReport":
+    def from_dict(cls, data: dict) -> ContradictionReport:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.contradictions = []

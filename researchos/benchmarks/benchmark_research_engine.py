@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 from researchos.quant_engine.research_cpp_backend import ResearchCppBackend
 from researchos.quant_engine.research_engine import PythonResearchBackend
@@ -51,9 +52,7 @@ def _timeit(fn: Callable[[], Any], repeats: int = 1) -> float:
     return (time.perf_counter() - start) * 1000.0
 
 
-def _benchmark_op(
-    name: str, python_fn: Callable[[], Any], cpp_fn: Callable[[], Any]
-) -> Dict[str, Any]:
+def _benchmark_op(name: str, python_fn: Callable[[], Any], cpp_fn: Callable[[], Any]) -> dict[str, Any]:
     py_ms = _timeit(python_fn)
     cpp_ms = _timeit(cpp_fn)
     return {"operation": name, "python_ms": py_ms, "cpp_ms": cpp_ms}
@@ -72,7 +71,7 @@ def main() -> None:
     returns = _returns(500)
     specs = [IndicatorSpec(name="SMA", params={"period": 20})]
 
-    rows: List[Dict[str, float]] = []
+    rows: list[dict[str, float]] = []
 
     rows.append(
         _benchmark_op(

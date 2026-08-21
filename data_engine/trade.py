@@ -14,7 +14,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -46,11 +46,11 @@ class Trade(BaseObject):
         volume: float,
         side: str = "unknown",
         exchange: str = "",
-        conditions: Optional[List[str]] = None,
+        conditions: list[str] | None = None,
         trade_id: str = "",
         is_block_trade: bool = False,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             ts_str = timestamp.isoformat() if hasattr(timestamp, "isoformat") else str(timestamp)
@@ -65,7 +65,7 @@ class Trade(BaseObject):
         self.volume = volume
         self.side = side
         self.exchange = exchange
-        self.conditions: List[str] = conditions or []
+        self.conditions: list[str] = conditions or []
         self.trade_id = trade_id
         self.is_block_trade = is_block_trade
 
@@ -89,7 +89,7 @@ class Trade(BaseObject):
         """Whether this is a sell trade."""
         return self.side == "sell"
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timestamp": self.timestamp.isoformat(),
@@ -103,7 +103,7 @@ class Trade(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -122,7 +122,7 @@ class Trade(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Trade":
+    def from_dict(cls, data: dict[str, Any]) -> Trade:
         obj = super().from_dict(data)
         obj.symbol = data["symbol"]
         obj.timestamp = parse_timestamp(data["timestamp"])

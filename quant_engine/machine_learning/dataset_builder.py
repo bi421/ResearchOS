@@ -15,7 +15,7 @@ Architecture rules:
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 from .dataset_contracts import BUILDER_VERSION, DATASET_VERSION, ResearchDataset
 from .features import FeatureBuilder
@@ -51,21 +51,19 @@ class DatasetBuilder:
 
     def _assemble(
         self,
-        label_values: Sequence[Optional[float]],
+        label_values: Sequence[float | None],
         label_name: str,
-        horizon: Optional[int] = None,
-        extra_metadata: Optional[dict] = None,
+        horizon: int | None = None,
+        extra_metadata: dict | None = None,
     ) -> ResearchDataset:
         """Align feature rows and labels, trimming undefined entries."""
         feature_names, rows = self._feature_matrix()
         n = len(rows)
         if len(label_values) != n:
-            raise ValueError(
-                f"label length {len(label_values)} does not match feature row count {n}"
-            )
+            raise ValueError(f"label length {len(label_values)} does not match feature row count {n}")
 
-        aligned_features: List[Tuple[float, ...]] = []
-        aligned_labels: List[float] = []
+        aligned_features: list[tuple[float, ...]] = []
+        aligned_labels: list[float] = []
         for i in range(n):
             label = label_values[i]
             if label is None:
@@ -139,9 +137,9 @@ class DatasetBuilder:
 
     def build_custom(
         self,
-        labels: Sequence[Optional[float]],
+        labels: Sequence[float | None],
         label_name: str = "custom",
-        horizon: Optional[int] = None,
+        horizon: int | None = None,
     ) -> ResearchDataset:
         """Build a dataset from an explicit label sequence.
 

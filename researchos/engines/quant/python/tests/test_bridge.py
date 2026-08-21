@@ -10,6 +10,7 @@ import math
 from datetime import datetime, timedelta
 
 import pytest
+import researchos.engines.quant.cpp_engine as cq
 from researchos.engines.quant.cpp_engine.backend import (
     BacktestEngine,
     Risk,
@@ -45,8 +46,6 @@ from researchos.engines.quant.cpp_engine.models import (
     canonical_json_escape,
     canonical_object,
 )
-
-import researchos.engines.quant.cpp_engine as cq
 
 # ── fixtures ────────────────────────────────────────────────────────────────
 
@@ -167,9 +166,7 @@ class TestCanonicalSerialization:
         assert canonical_double_map({"y": 2.0, "x": 1.0}) == '{"x":1.0000000000,"y":2.0000000000}'
 
     def test_candle_canonical(self):
-        c = Candle(
-            timestamp="2026-01-01T00:00:00", open=1.0, high=2.0, low=0.5, close=1.5, volume=10.0
-        )
+        c = Candle(timestamp="2026-01-01T00:00:00", open=1.0, high=2.0, low=0.5, close=1.5, volume=10.0)
         assert c.to_canonical() == (
             '{"close":1.5000000000,"high":2.0000000000,"low":0.5000000000,'
             '"open":1.0000000000,"timeframe":"M1","timestamp":"2026-01-01T00:00:00",'
@@ -197,9 +194,7 @@ class TestBaseObjectRoundTrip:
         assert back == req
 
     def test_result_round_trip(self, backend):
-        raw = backend._cpp.statistics_compute(
-            StatisticsRequest(data=[1.0, 2.0, 3.0]).to_base_object()
-        )
+        raw = backend._cpp.statistics_compute(StatisticsRequest(data=[1.0, 2.0, 3.0]).to_base_object())
         r = StatisticsResult.from_base_object(raw)
         assert r.to_base_object() == raw
 
@@ -222,10 +217,7 @@ class TestHashConsistency:
 
     def test_statistics_result_hash_recomputed(self, backend):
         res = backend.statistics_compute(StatisticsRequest(data=[2.0, 4.0, 6.0]))
-        assert (
-            res.result_hash
-            == StatisticsResult.from_base_object(res.to_base_object()).compute_result_hash()
-        )
+        assert res.result_hash == StatisticsResult.from_base_object(res.to_base_object()).compute_result_hash()
 
     def test_simulation_input_hash_matches(self, backend):
         req = simulation_request(25)
@@ -267,12 +259,8 @@ class TestHashConsistency:
         assert a != b
 
     def test_hash_differs_when_calc_version_changes(self):
-        a = StatisticsRequest(
-            data=[1.0, 2.0], calculation_version="CALCULATION_V1"
-        ).compute_input_hash()
-        b = StatisticsRequest(
-            data=[1.0, 2.0], calculation_version="CALCULATION_V2"
-        ).compute_input_hash()
+        a = StatisticsRequest(data=[1.0, 2.0], calculation_version="CALCULATION_V1").compute_input_hash()
+        b = StatisticsRequest(data=[1.0, 2.0], calculation_version="CALCULATION_V2").compute_input_hash()
         assert a != b
 
     def test_large_dataset_hash_stable(self, backend):
@@ -323,10 +311,7 @@ class TestStatistics:
 
     def test_deterministic(self, backend):
         req = StatisticsRequest(data=[1.5, -2.0, 0.25, 3.75])
-        assert (
-            backend.statistics_compute(req).result_hash
-            == backend.statistics_compute(req).result_hash
-        )
+        assert backend.statistics_compute(req).result_hash == backend.statistics_compute(req).result_hash
 
 
 # ── risk ────────────────────────────────────────────────────────────────────
@@ -335,9 +320,7 @@ class TestStatistics:
 class TestRisk:
     def test_drawdown_magnitude(self, backend):
         res = backend.risk_compute(
-            RiskRequest(
-                returns=[0.01, -0.02, 0.03], equity_curve=[100.0, 105.0, 102.0, 99.0, 101.0]
-            )
+            RiskRequest(returns=[0.01, -0.02, 0.03], equity_curve=[100.0, 105.0, 102.0, 99.0, 101.0])
         )
         assert res.max_drawdown_pct == pytest.approx(5.7142857143, rel=1e-6)
         assert res.peak_index == 1
@@ -345,9 +328,7 @@ class TestRisk:
 
     def test_var_cvar_present(self, backend):
         res = backend.risk_compute(
-            RiskRequest(
-                returns=[0.02, -0.05, 0.01, -0.03, 0.0, -0.04], equity_curve=[100.0, 101.0, 102.0]
-            )
+            RiskRequest(returns=[0.02, -0.05, 0.01, -0.03, 0.0, -0.04], equity_curve=[100.0, 101.0, 102.0])
         )
         assert res.var_95 > 0.0
         assert res.var_99 > 0.0
@@ -373,9 +354,7 @@ class TestSimulation:
         assert res.equity_curve[0] == pytest.approx(100_000.0)
 
     def test_equity_from_capital(self, backend):
-        req = SimulationRequest(
-            dataset_reference="T", initial_capital=1000.0, prices=[100.0, 110.0, 99.0]
-        )
+        req = SimulationRequest(dataset_reference="T", initial_capital=1000.0, prices=[100.0, 110.0, 99.0])
         res = backend.simulation_run(req)
         assert res.equity_curve == pytest.approx([1000.0, 1100.0, 990.0])
         assert res.metrics["total_return_pct"] == pytest.approx(-1.0)
@@ -398,9 +377,7 @@ class TestSimulation:
 
     def test_non_positive_capital_raises(self, backend):
         with pytest.raises(InvalidParameterError):
-            backend.simulation_run(
-                SimulationRequest(dataset_reference="X", initial_capital=0.0, prices=[100.0, 101.0])
-            )
+            backend.simulation_run(SimulationRequest(dataset_reference="X", initial_capital=0.0, prices=[100.0, 101.0]))
 
     def test_empty_dataset_reference_raises(self, backend):
         with pytest.raises(InvalidParameterError):
@@ -434,9 +411,7 @@ class TestMarketData:
 
     def test_bad_timeframe_raises(self, backend):
         with pytest.raises(InvalidParameterError):
-            backend.market_data_load(
-                MarketDataRequest(symbol="EURUSD", timeframe="M7", candles=make_candles(3))
-            )
+            backend.market_data_load(MarketDataRequest(symbol="EURUSD", timeframe="M7", candles=make_candles(3)))
 
     def test_bad_ohlc_raises(self, backend):
         candles = make_candles(3)
@@ -492,24 +467,18 @@ class TestBacktest:
     def test_backtest_deterministic(self, backend):
         req = backtest_request(150)
         a = backend.backtest_run(req, signal=buy_uptick_signal)
-        b = backend.backtest_run(
-            BacktestRequest.from_base_object(req.to_base_object()), signal=buy_uptick_signal
-        )
+        b = backend.backtest_run(BacktestRequest.from_base_object(req.to_base_object()), signal=buy_uptick_signal)
         assert a.equity_curve == b.equity_curve
         assert a.result_hash == b.result_hash
 
     def test_engine_facade(self):
         engine = BacktestEngine()
-        res = engine.run(
-            MarketData(symbol="BTCUSD", candles=make_candles(50)), signal_reference="facade"
-        )
+        res = engine.run(MarketData(symbol="BTCUSD", candles=make_candles(50)), signal_reference="facade")
         assert res.total_bars == 50
 
     def test_engine_facade_with_signal(self):
         engine = BacktestEngine()
-        res = engine.run(
-            MarketData(symbol="BTCUSD", candles=make_candles(120)), signal=buy_uptick_signal
-        )
+        res = engine.run(MarketData(symbol="BTCUSD", candles=make_candles(120)), signal=buy_uptick_signal)
         assert res.num_trades > 0
 
     def test_empty_candles_raises(self, backend):
@@ -546,9 +515,7 @@ class TestPerformance:
 
     def test_drawdown_present(self, backend):
         res = backend.performance_analyze(
-            PerformanceRequest(
-                equity_curve=[100.0, 110.0, 99.0, 108.9, 119.79], initial_capital=100.0
-            )
+            PerformanceRequest(equity_curve=[100.0, 110.0, 99.0, 108.9, 119.79], initial_capital=100.0)
         )
         assert res.max_drawdown_pct > 0.0
 
@@ -567,9 +534,7 @@ class TestPerformance:
                 v -= 50.0
             eq.append(v)
         res = backend.performance_analyze(
-            PerformanceRequest(
-                equity_curve=eq, bars=make_candles(500, tf="D1"), initial_capital=100.0
-            )
+            PerformanceRequest(equity_curve=eq, bars=make_candles(500, tf="D1"), initial_capital=100.0)
         )
         assert res.num_yearly_periods > 0
         assert res.num_monthly_periods > 0
@@ -628,9 +593,7 @@ class TestExceptions:
 
     def test_exception_code_attribute(self, backend):
         with pytest.raises(cq.UnsupportedVersionError) as excinfo:
-            backend.statistics_compute(
-                StatisticsRequest(data=[1.0, 2.0], calculation_version="CALCULATION_V9")
-            )
+            backend.statistics_compute(StatisticsRequest(data=[1.0, 2.0], calculation_version="CALCULATION_V9"))
         assert excinfo.value.code == 300
 
     def test_native_error_translated(self, backend):
@@ -670,9 +633,7 @@ class TestLargeDatasets:
 
     def test_large_performance(self, backend):
         res = backend.performance_analyze(
-            PerformanceRequest(
-                equity_curve=make_prices(100_000, base=1000.0), initial_capital=1000.0
-            )
+            PerformanceRequest(equity_curve=make_prices(100_000, base=1000.0), initial_capital=1000.0)
         )
         assert res.result_hash
         assert res.max_drawdown_recovery_bars >= 0

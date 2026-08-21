@@ -126,9 +126,7 @@ class MacroEvent:
             full_text=data.get("full_text"),
             source_urls=data.get("source_urls", []),
             metadata=data.get("metadata", {}),
-            created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.now(timezone.utc).isoformat())
-            ),
+            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
             version=data.get("version", "me/v1"),
         )
 

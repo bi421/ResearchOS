@@ -1,9 +1,7 @@
 import numpy as np
 
 
-def vectorized_backtest(
-    prices, signals, initial_capital=100000.0, commission=0.001, slippage=0.0005
-):
+def vectorized_backtest(prices, signals, initial_capital=100000.0, commission=0.001, slippage=0.0005):
     """
     Fully vectorized backtest (no Python loops).
     signals: list of (action, price) tuples

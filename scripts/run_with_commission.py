@@ -1,9 +1,10 @@
-import sys
-import time
-import pandas as pd
-import numpy as np
 import glob
 import json
+import sys
+import time
+
+import numpy as np
+import pandas as pd
 
 print("=" * 70)
 print("💰 БОДИТ КОМИСС/SPREAD-ТЭЙ БЭКТЕСТ (Python векторчилсон)")
@@ -119,9 +120,7 @@ for h in timeframes:
     for name, short, long in strategies:
         for c in commissions:
             result = backtest_sma_vectorized(df_h, short, long, c, spread)
-            result.update(
-                {"timeframe": f"{h}min", "strategy": name, "commission": c, "spread": spread}
-            )
+            result.update({"timeframe": f"{h}min", "strategy": name, "commission": c, "spread": spread})
             all_results.append(result)
 
             print(
@@ -153,12 +152,8 @@ base = [r for r in all_results if r["timeframe"] == "60min" and r["strategy"] ==
 if base:
     no_commission = [r for r in base if r["commission"] == 0.0005][0]
     high_commission = [r for r in base if r["commission"] == 0.0015][0]
-    print(
-        f"  Комисс 0.05%: Winrate {no_commission['winrate']:.2f}%, Return {no_commission['total_return']:.2f}%"
-    )
-    print(
-        f"  Комисс 0.15%: Winrate {high_commission['winrate']:.2f}%, Return {high_commission['total_return']:.2f}%"
-    )
+    print(f"  Комисс 0.05%: Winrate {no_commission['winrate']:.2f}%, Return {no_commission['total_return']:.2f}%")
+    print(f"  Комисс 0.15%: Winrate {high_commission['winrate']:.2f}%, Return {high_commission['total_return']:.2f}%")
     print(f"  Зөрүү: Winrate {no_commission['winrate'] - high_commission['winrate']:.2f}%")
 
 # 6. Хадгалах

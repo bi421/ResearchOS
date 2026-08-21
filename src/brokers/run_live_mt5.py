@@ -62,9 +62,7 @@ acc_info = broker.get_account_info()
 balance = acc_info.get("balance", 10000)
 print("💰 Account Balance: ")
 
-lot_size = broker.calculate_lot_size(
-    risk_percent=RISK_PERCENT, stop_loss_points=SL_POINTS, account_balance=balance
-)
+lot_size = broker.calculate_lot_size(risk_percent=RISK_PERCENT, stop_loss_points=SL_POINTS, account_balance=balance)
 print(f"📐 Lot size: {lot_size:.2f} (0.01 = 1$ per point)")
 
 # 5. Check existing positions
@@ -73,9 +71,7 @@ if not positions.empty:
     print(f"📋 Existing positions: {len(positions)}")
     # Close existing positions first if opposite signal
     for _, pos in positions.iterrows():
-        if (signal == "BUY" and pos["type"] == "SELL") or (
-            signal == "SELL" and pos["type"] == "BUY"
-        ):
+        if (signal == "BUY" and pos["type"] == "SELL") or (signal == "SELL" and pos["type"] == "BUY"):
             print(f"   Closing opposite position: Ticket {pos['ticket']}")
             broker.close_position(pos["ticket"])
             time.sleep(1)

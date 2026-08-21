@@ -1,15 +1,17 @@
 from datetime import datetime
+
+import pandas as pd
+
+from researchos.data_engine.repository import SqliteDatasetRepository
+from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
     ProbabilityDirection,
     WeightConfiguration,
 )
-from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.score import compute_evidence_score
 from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.data_engine.repository import SqliteDatasetRepository
-import pandas as pd
 
 
 def get_metrics(symbol):
@@ -21,9 +23,7 @@ def get_metrics(symbol):
     returns = df["close"].pct_change().dropna().tolist()
     equity = (1 + pd.Series(returns)).cumprod() * 10000.0
     backend = PythonQuantBackend()
-    return backend.calculate_metrics(
-        returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0
-    )
+    return backend.calculate_metrics(returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0)
 
 
 xau = get_metrics("XAUUSD")
@@ -72,9 +72,7 @@ for symbol, metrics, source in [
 
 print("📊 Evidence Items Created:")
 for item in evidence_items:
-    print(
-        f"  {item.metadata.get('title', item.source.value)} → {item.direction.value} (strength: {item.strength:.2f})"
-    )
+    print(f"  {item.metadata.get('title', item.source.value)} → {item.direction.value} (strength: {item.strength:.2f})")
 
 context = DecisionContext(decision_timestamp=datetime.now(), context_id="multi_asset_comparison")
 

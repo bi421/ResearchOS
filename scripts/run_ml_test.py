@@ -2,10 +2,11 @@
 ML backtest runner with configurable parameters.
 """
 
-import pandas as pd
+import argparse
 import glob
 import sys
-import argparse
+
+import pandas as pd
 
 sys.path.insert(0, ".")
 from researchos.ml_engine.pipeline import run_ml_backtest
@@ -34,11 +35,7 @@ def main():
     )
     df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
     df = df.set_index("datetime")
-    df_h = (
-        df.resample("1h")
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last"})
-        .dropna()
-    )
+    df_h = df.resample("1h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
     print(f"Data loaded: {len(df_h)} bars")
 
     print(f"Running ML backtest ({args.model}, threshold={args.threshold})...")

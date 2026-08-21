@@ -24,7 +24,6 @@ import argparse
 import json
 import os
 import sys
-from typing import List, Optional
 
 from researchos.data_engine.loader import CsvLoader
 from researchos.experiments.phase51 import Phase51Config, run_phase51
@@ -47,7 +46,7 @@ def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
     return close, high, low, volume, candles
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Phase 5.1 XAUUSD experiment")
     parser.add_argument("--csv", default="", help="Path to real XAUUSD CSV (MT5/TradingView)")
     parser.add_argument("--format", default="mt5", choices=["mt5", "tradingview", "auto"])
@@ -74,9 +73,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
 
     try:
-        close, high, low, volume, candles = _load_candles(
-            args.csv, args.format, args.symbol, args.timeframe
-        )
+        close, high, low, volume, candles = _load_candles(args.csv, args.format, args.symbol, args.timeframe)
     except Exception as e:  # noqa: BLE001
         print(f"BLOCKED — data load failed: {e}")
         return 2

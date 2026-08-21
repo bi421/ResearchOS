@@ -6,11 +6,7 @@ import sys
 
 ROOT = os.getcwd()
 BAD_EXTENSIONS = (".db", ".csv", ".json", ".txt", ".log")
-artifacts = [
-    f
-    for f in os.listdir(ROOT)
-    if f.endswith(BAD_EXTENSIONS) and os.path.isfile(os.path.join(ROOT, f))
-]
+artifacts = [f for f in os.listdir(ROOT) if f.endswith(BAD_EXTENSIONS) and os.path.isfile(os.path.join(ROOT, f))]
 
 if artifacts:
     for a in artifacts:

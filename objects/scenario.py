@@ -10,8 +10,6 @@ market states with associated probabilities.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
@@ -59,22 +57,22 @@ class Scenario(BaseObject):
         label: str = "Scenario A",
         thesis: str = "",
         probability: float = 0.0,
-        calibrated_probability: Optional[float] = None,
-        confidence_interval: Optional[dict] = None,
+        calibrated_probability: float | None = None,
+        confidence_interval: dict | None = None,
         expected_return: float = 0.0,
-        return_range: Optional[dict] = None,
+        return_range: dict | None = None,
         volatility: float = 0.0,
         regime: str = "",
-        assumptions: Optional[List[str]] = None,
-        dependencies: Optional[List[str]] = None,
-        valid_if: Optional[List[str]] = None,
-        invalid_if: Optional[List[str]] = None,
-        supporting_evidence: Optional[List[str]] = None,
-        contradicting_evidence: Optional[List[str]] = None,
-        milestones: Optional[List[str]] = None,
+        assumptions: list[str] | None = None,
+        dependencies: list[str] | None = None,
+        valid_if: list[str] | None = None,
+        invalid_if: list[str] | None = None,
+        supporting_evidence: list[str] | None = None,
+        contradicting_evidence: list[str] | None = None,
+        milestones: list[str] | None = None,
         construction_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Scenario|{hypothesis_id}|{type}|{label}"
@@ -93,13 +91,13 @@ class Scenario(BaseObject):
         self.return_range = return_range or {"p5": 0.0, "p95": 0.0}
         self.volatility = volatility
         self.regime = regime
-        self.assumptions: List[str] = assumptions or []
-        self.dependencies: List[str] = dependencies or []
-        self.valid_if: List[str] = valid_if or []
-        self.invalid_if: List[str] = invalid_if or []
-        self.supporting_evidence: List[str] = supporting_evidence or []
-        self.contradicting_evidence: List[str] = contradicting_evidence or []
-        self.milestones: List[str] = milestones or []
+        self.assumptions: list[str] = assumptions or []
+        self.dependencies: list[str] = dependencies or []
+        self.valid_if: list[str] = valid_if or []
+        self.invalid_if: list[str] = invalid_if or []
+        self.supporting_evidence: list[str] = supporting_evidence or []
+        self.contradicting_evidence: list[str] = contradicting_evidence or []
+        self.milestones: list[str] = milestones or []
         self.construction_trace = construction_trace
         self.status = "Active"
 
@@ -108,7 +106,7 @@ class Scenario(BaseObject):
             reason="Scenario constructed from hypothesis",
         )
 
-    def check_invalidation(self, current_evidence: List[str]) -> bool:
+    def check_invalidation(self, current_evidence: list[str]) -> bool:
         """Check if this scenario has been invalidated."""
         for condition in self.invalid_if:
             if condition in current_evidence:
@@ -182,7 +180,7 @@ class Scenario(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Scenario":
+    def from_dict(cls, data: dict) -> Scenario:
         obj = super().from_dict(data)
         obj.hypothesis_id = data["hypothesis_id"]
         obj.type = data.get("type", "Base")
@@ -217,9 +215,9 @@ class ScenarioSet(BaseObject):
     def __init__(
         self,
         research_id: str,
-        scenarios: Optional[List[Scenario]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        scenarios: list[Scenario] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ScenarioSet|{research_id}"
@@ -227,32 +225,32 @@ class ScenarioSet(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.research_id = research_id
-        self.scenarios: List[Scenario] = scenarios or []
-        self._scenario_ids: List[str] = []
+        self.scenarios: list[Scenario] = scenarios or []
+        self._scenario_ids: list[str] = []
 
     @property
-    def base_id(self) -> Optional[str]:
+    def base_id(self) -> str | None:
         for s in self.scenarios:
             if s.type == "Base":
                 return s.id
         return None
 
     @property
-    def bull_id(self) -> Optional[str]:
+    def bull_id(self) -> str | None:
         for s in self.scenarios:
             if s.type == "Bull":
                 return s.id
         return None
 
     @property
-    def bear_id(self) -> Optional[str]:
+    def bear_id(self) -> str | None:
         for s in self.scenarios:
             if s.type == "Bear":
                 return s.id
         return None
 
     @property
-    def tail_ids(self) -> List[str]:
+    def tail_ids(self) -> list[str]:
         return [s.id for s in self.scenarios if s.type == "Tail"]
 
     @property
@@ -280,13 +278,13 @@ class ScenarioSet(BaseObject):
                 s.calibrated_probability = s.probability
 
     @property
-    def scenario_ids(self) -> List[str]:
+    def scenario_ids(self) -> list[str]:
         if self.scenarios:
             return [s.id for s in self.scenarios]
         return self._scenario_ids
 
     @scenario_ids.setter
-    def scenario_ids(self, value: List[str]) -> None:
+    def scenario_ids(self, value: list[str]) -> None:
         self._scenario_ids = value
 
     def to_dict(self) -> dict:
@@ -300,7 +298,7 @@ class ScenarioSet(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ScenarioSet":
+    def from_dict(cls, data: dict) -> ScenarioSet:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.scenarios = []

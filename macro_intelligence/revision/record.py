@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from macro_intelligence.revision.enums import (
     RevisionState,
@@ -50,7 +50,7 @@ class RevisionRecord:
     # Timestamps
     created_at: datetime
     effective_from: datetime
-    effective_to: Optional[datetime] = None
+    effective_to: datetime | None = None
 
     # Data changes
     previous_value: Any = None
@@ -58,11 +58,11 @@ class RevisionRecord:
     change_description: str = ""
 
     # Lineage
-    parent_revision_id: Optional[str] = None
+    parent_revision_id: str | None = None
     child_revision_ids: list[str] = field(default_factory=list)
 
     # Provenance
-    provenance: Optional[ProvenanceChain] = None  # noqa: F821 -- string annotation only (from __future__ import annotations); resolved lazily via importlib in from_dict() to respect MIL tier boundary (see NOTE above)  # noqa: F821 -- lazily resolved via importlib in from_dict(); see NOTE above (MIL-GRD-001 tier boundary)
+    provenance: ProvenanceChain | None = None  # noqa: F821 -- string annotation only (from __future__ import annotations); resolved lazily via importlib in from_dict() to respect MIL tier boundary (see NOTE above)  # noqa: F821 -- lazily resolved via importlib in from_dict(); see NOTE above (MIL-GRD-001 tier boundary)
 
     # Metadata
     metadata: dict = field(default_factory=dict)
@@ -111,9 +111,7 @@ class RevisionRecord:
             revision_type=RevisionType(data["revision_type"]),
             created_at=datetime.fromisoformat(data["created_at"]),
             effective_from=datetime.fromisoformat(data["effective_from"]),
-            effective_to=datetime.fromisoformat(data["effective_to"])
-            if data.get("effective_to")
-            else None,
+            effective_to=datetime.fromisoformat(data["effective_to"]) if data.get("effective_to") else None,
             previous_value=data.get("previous_value"),
             new_value=data.get("new_value"),
             change_description=data.get("change_description", ""),
@@ -269,7 +267,7 @@ class RevisionChain:
             else:
                 break
 
-    def get_revision(self, revision_number: int) -> Optional[RevisionRecord]:
+    def get_revision(self, revision_number: int) -> RevisionRecord | None:
         """Get revision by number."""
         for rev in self.revisions:
             if rev.revision_number == revision_number:

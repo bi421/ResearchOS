@@ -10,12 +10,11 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from math import sqrt
-from typing import List, Optional
 
 from macro_intelligence.statistics.descriptive import mean
 
 
-def pearson_correlation(x: List[float], y: List[float]) -> Optional[float]:
+def pearson_correlation(x: list[float], y: list[float]) -> float | None:
     """
     Calculate Pearson correlation coefficient.
 
@@ -50,7 +49,7 @@ def pearson_correlation(x: List[float], y: List[float]) -> Optional[float]:
     return cov_xy / (std_x * std_y)
 
 
-def spearman_correlation(x: List[float], y: List[float]) -> Optional[float]:
+def spearman_correlation(x: list[float], y: list[float]) -> float | None:
     """
     Calculate Spearman rank correlation coefficient.
 
@@ -69,7 +68,7 @@ def spearman_correlation(x: List[float], y: List[float]) -> Optional[float]:
     return pearson_correlation(x_ranked, y_ranked)
 
 
-def _rank_values(values: List[float]) -> List[float]:
+def _rank_values(values: list[float]) -> list[float]:
     """
     Convert values to ranks.
 
@@ -104,11 +103,11 @@ def _rank_values(values: List[float]) -> List[float]:
 
 
 def rolling_correlation(
-    x: List[float],
-    y: List[float],
+    x: list[float],
+    y: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling Pearson correlation.
 
@@ -143,7 +142,7 @@ def rolling_correlation(
     return result
 
 
-def correlation_matrix(data: List[List[float]]) -> List[List[Optional[float]]]:
+def correlation_matrix(data: list[list[float]]) -> list[list[float | None]]:
     """
     Calculate correlation matrix.
 

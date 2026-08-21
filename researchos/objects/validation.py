@@ -10,7 +10,7 @@ market outcomes to measure quality, identify errors, and calibrate confidence.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -49,13 +49,13 @@ class Validation(BaseObject):
         time_horizon: str = "",
         overall_status: str = "In Progress",
         quality_score: float = 0.0,
-        scenario_results: Optional[List[Dict[str, Any]]] = None,
-        target_results: Optional[List[Dict[str, Any]]] = None,
-        failure_analysis_id: Optional[str] = None,
-        statistics_update_id: Optional[str] = None,
+        scenario_results: list[dict[str, Any]] | None = None,
+        target_results: list[dict[str, Any]] | None = None,
+        failure_analysis_id: str | None = None,
+        statistics_update_id: str | None = None,
         validation_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Validation|{research_id}|{research_report_id}|{time_horizon}"
@@ -69,8 +69,8 @@ class Validation(BaseObject):
         self.time_horizon = time_horizon
         self.overall_status = overall_status
         self.quality_score = quality_score
-        self.scenario_results: List[Dict[str, Any]] = scenario_results or []
-        self.target_results: List[Dict[str, Any]] = target_results or []
+        self.scenario_results: list[dict[str, Any]] = scenario_results or []
+        self.target_results: list[dict[str, Any]] = target_results or []
         self.failure_analysis_id = failure_analysis_id
         self.statistics_update_id = statistics_update_id
         self.validation_trace = validation_trace
@@ -89,11 +89,11 @@ class Validation(BaseObject):
             reason=f"Validation completed: {overall_status} ({quality_score:.2f})",
         )
 
-    def add_scenario_result(self, result: Dict[str, Any]) -> None:
+    def add_scenario_result(self, result: dict[str, Any]) -> None:
         """Add a scenario validation result."""
         self.scenario_results.append(result)
 
-    def add_target_result(self, result: Dict[str, Any]) -> None:
+    def add_target_result(self, result: dict[str, Any]) -> None:
         """Add a target prediction validation result."""
         self.target_results.append(result)
 
@@ -132,13 +132,11 @@ class Validation(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Validation":
+    def from_dict(cls, data: dict) -> Validation:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.research_report_id = data["research_report_id"]
-        obj.validation_date = (
-            parse_timestamp(data["validation_date"]) if data.get("validation_date") else None
-        )
+        obj.validation_date = parse_timestamp(data["validation_date"]) if data.get("validation_date") else None
         obj.time_horizon = data.get("time_horizon", "")
         obj.overall_status = data.get("overall_status", "In Progress")
         obj.quality_score = data.get("quality_score", 0.0)
@@ -174,13 +172,13 @@ class FailureAnalysis(BaseObject):
         self,
         validation_id: str,
         research_id: str,
-        failures: Optional[List[Dict[str, Any]]] = None,
-        root_causes: Optional[List[str]] = None,
-        severity_scores: Optional[List[Dict[str, Any]]] = None,
-        improvement_areas: Optional[List[str]] = None,
+        failures: list[dict[str, Any]] | None = None,
+        root_causes: list[str] | None = None,
+        severity_scores: list[dict[str, Any]] | None = None,
+        improvement_areas: list[str] | None = None,
         failure_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"FailureAnalysis|{validation_id}|{research_id}"
@@ -190,10 +188,10 @@ class FailureAnalysis(BaseObject):
 
         self.validation_id = validation_id
         self.research_id = research_id
-        self.failures: List[Dict[str, Any]] = failures or []
-        self.root_causes: List[str] = root_causes or []
-        self.severity_scores: List[Dict[str, Any]] = severity_scores or []
-        self.improvement_areas: List[str] = improvement_areas or []
+        self.failures: list[dict[str, Any]] = failures or []
+        self.root_causes: list[str] = root_causes or []
+        self.severity_scores: list[dict[str, Any]] = severity_scores or []
+        self.improvement_areas: list[str] = improvement_areas or []
         self.failure_trace = failure_trace
 
         self.lifecycle.transition(
@@ -263,7 +261,7 @@ class FailureAnalysis(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "FailureAnalysis":
+    def from_dict(cls, data: dict) -> FailureAnalysis:
         obj = super().from_dict(data)
         obj.validation_id = data["validation_id"]
         obj.research_id = data["research_id"]

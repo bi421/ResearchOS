@@ -1,5 +1,6 @@
-import pandas as pd
 import glob
+
+import pandas as pd
 
 all_dfs = []
 for f in glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv"):

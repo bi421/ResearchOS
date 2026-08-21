@@ -9,17 +9,17 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.macro.statistics.descriptive import mean
 from researchos.macro.statistics.regression import linear_regression
 
 
 def moving_average(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate simple moving average.
 
@@ -49,10 +49,10 @@ def moving_average(
 
 
 def exponential_moving_average(
-    values: List[float],
+    values: list[float],
     span: int,
     adjust: bool = True,
-) -> List[float]:
+) -> list[float]:
     """
     Calculate exponential moving average.
 
@@ -82,7 +82,7 @@ def exponential_moving_average(
 
 
 def trend_strength(
-    values: List[float],
+    values: list[float],
     window: int = 20,
 ) -> float:
     """
@@ -118,9 +118,9 @@ def trend_strength(
     if len(returns) < 2:
         return 0.0
 
-    cov = sum(
-        (returns[i] - mean_ret) * (returns[i - 1] - mean_ret) for i in range(1, len(returns))
-    ) / (len(returns) - 1)
+    cov = sum((returns[i] - mean_ret) * (returns[i - 1] - mean_ret) for i in range(1, len(returns))) / (
+        len(returns) - 1
+    )
 
     autocorr = cov / var_ret
 
@@ -129,9 +129,9 @@ def trend_strength(
 
 
 def momentum(
-    values: List[float],
+    values: list[float],
     period: int = 1,
-) -> List[Optional[float]]:
+) -> list[float | None]:
     """
     Calculate momentum (rate of change).
 
@@ -153,9 +153,9 @@ def momentum(
 
 
 def rate_of_change(
-    values: List[float],
+    values: list[float],
     period: int = 1,
-) -> List[Optional[float]]:
+) -> list[float | None]:
     """
     Calculate rate of change (percentage).
 
@@ -177,9 +177,9 @@ def rate_of_change(
 
 
 def trend_analysis(
-    values: List[float],
+    values: list[float],
     window: int = 20,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Complete trend analysis.
 

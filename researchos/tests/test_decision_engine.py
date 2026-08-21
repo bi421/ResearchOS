@@ -292,12 +292,8 @@ class TestHashStability:
         assert ctx1.compute_hash() != ctx2.compute_hash()
 
     def test_different_references_different_hash(self, sample_timestamp: datetime):
-        ctx1 = DecisionContext(
-            asset="XAUUSD", decision_timestamp=sample_timestamp, market_snapshot_id="snap_a"
-        )
-        ctx2 = DecisionContext(
-            asset="XAUUSD", decision_timestamp=sample_timestamp, market_snapshot_id="snap_b"
-        )
+        ctx1 = DecisionContext(asset="XAUUSD", decision_timestamp=sample_timestamp, market_snapshot_id="snap_a")
+        ctx2 = DecisionContext(asset="XAUUSD", decision_timestamp=sample_timestamp, market_snapshot_id="snap_b")
         assert ctx1.compute_hash() != ctx2.compute_hash()
 
     def test_hash_stable_across_serialization(self, sample_context: DecisionContext):
@@ -368,28 +364,20 @@ class TestReferenceManagement:
 class TestValidator:
     """Tests for DecisionContextValidator."""
 
-    def test_valid_context_passes(
-        self, sample_context: DecisionContext, validator: DecisionContextValidator
-    ):
+    def test_valid_context_passes(self, sample_context: DecisionContext, validator: DecisionContextValidator):
         errors = validator.validate(sample_context)
         assert errors == []
 
-    def test_valid_empty_context_passes(
-        self, empty_context: DecisionContext, validator: DecisionContextValidator
-    ):
+    def test_valid_empty_context_passes(self, empty_context: DecisionContext, validator: DecisionContextValidator):
         errors = validator.validate(empty_context)
         assert errors == []
 
-    def test_missing_asset_fails(
-        self, validator: DecisionContextValidator, sample_timestamp: datetime
-    ):
+    def test_missing_asset_fails(self, validator: DecisionContextValidator, sample_timestamp: datetime):
         ctx = DecisionContext(asset="", decision_timestamp=sample_timestamp)
         errors = validator.validate(ctx)
         assert any("asset" in e for e in errors)
 
-    def test_duplicate_references_fail(
-        self, validator: DecisionContextValidator, sample_timestamp: datetime
-    ):
+    def test_duplicate_references_fail(self, validator: DecisionContextValidator, sample_timestamp: datetime):
         ctx = DecisionContext(
             asset="XAUUSD",
             decision_timestamp=sample_timestamp,
@@ -399,9 +387,7 @@ class TestValidator:
         assert any("Duplicate" in e for e in errors)
         assert any("historical_scenario_ids" in e for e in errors)
 
-    def test_empty_ids_in_list_fail(
-        self, validator: DecisionContextValidator, sample_timestamp: datetime
-    ):
+    def test_empty_ids_in_list_fail(self, validator: DecisionContextValidator, sample_timestamp: datetime):
         ctx = DecisionContext(
             asset="XAUUSD",
             decision_timestamp=sample_timestamp,
@@ -417,9 +403,7 @@ class TestValidator:
         errors = validator.validate(ctx)
         assert any("timestamp" in e.lower() for e in errors)
 
-    def test_is_valid_true(
-        self, sample_context: DecisionContext, validator: DecisionContextValidator
-    ):
+    def test_is_valid_true(self, sample_context: DecisionContext, validator: DecisionContextValidator):
         assert validator.is_valid(sample_context) is True
 
     def test_is_valid_false(self, validator: DecisionContextValidator, sample_timestamp: datetime):
@@ -436,9 +420,7 @@ class TestValidator:
         errors = validator.validate(ctx)
         assert len(errors) >= 3
 
-    def test_duplicate_detection_multiple_lists(
-        self, validator: DecisionContextValidator, sample_timestamp: datetime
-    ):
+    def test_duplicate_detection_multiple_lists(self, validator: DecisionContextValidator, sample_timestamp: datetime):
         ctx = DecisionContext(
             asset="XAUUSD",
             decision_timestamp=sample_timestamp,
@@ -449,13 +431,9 @@ class TestValidator:
         dup_errors = [e for e in errors if "Duplicate" in e]
         assert len(dup_errors) == 2
 
-    def test_empty_single_reference_not_flagged(
-        self, validator: DecisionContextValidator, sample_timestamp: datetime
-    ):
+    def test_empty_single_reference_not_flagged(self, validator: DecisionContextValidator, sample_timestamp: datetime):
         """Empty single reference fields are valid optional defaults, not errors."""
-        ctx = DecisionContext(
-            asset="XAUUSD", decision_timestamp=sample_timestamp, market_snapshot_id=""
-        )
+        ctx = DecisionContext(asset="XAUUSD", decision_timestamp=sample_timestamp, market_snapshot_id="")
         errors = validator.validate(ctx)
         assert errors == []
 
@@ -486,9 +464,7 @@ class TestLargeContext:
 
     def test_large_context_serialization(self, sample_timestamp: datetime):
         many_ids = [f"id_{i:04d}" for i in range(500)]
-        ctx = DecisionContext(
-            asset="XAUUSD", decision_timestamp=sample_timestamp, historical_scenario_ids=many_ids
-        )
+        ctx = DecisionContext(asset="XAUUSD", decision_timestamp=sample_timestamp, historical_scenario_ids=many_ids)
         d = ctx.to_dict()
         restored = DecisionContext.from_dict(d)
         assert restored.historical_scenario_ids == many_ids
@@ -496,9 +472,7 @@ class TestLargeContext:
 
     def test_large_context_hash_stable(self, sample_timestamp: datetime):
         many_ids = [f"id_{i:04d}" for i in range(500)]
-        ctx1 = DecisionContext(
-            asset="XAUUSD", decision_timestamp=sample_timestamp, historical_scenario_ids=many_ids
-        )
+        ctx1 = DecisionContext(asset="XAUUSD", decision_timestamp=sample_timestamp, historical_scenario_ids=many_ids)
         ctx2 = DecisionContext(
             asset="XAUUSD",
             decision_timestamp=sample_timestamp,

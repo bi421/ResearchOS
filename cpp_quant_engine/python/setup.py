@@ -1,7 +1,8 @@
 # setup.py
-from setuptools import setup, Extension, find_packages
 import os
 import sys
+
+from setuptools import Extension, find_packages, setup
 
 build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "build", "Release"))
 

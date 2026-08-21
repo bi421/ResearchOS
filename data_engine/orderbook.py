@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -38,7 +38,7 @@ class OrderBookLevel:
     size: float
     order_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "price": self.price,
             "size": self.size,
@@ -46,7 +46,7 @@ class OrderBookLevel:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OrderBookLevel":
+    def from_dict(cls, data: dict[str, Any]) -> OrderBookLevel:
         return cls(
             price=float(data["price"]),
             size=float(data.get("size", 0.0)),
@@ -75,13 +75,13 @@ class OrderBook(BaseObject):
         self,
         symbol: str,
         timestamp: datetime,
-        bids: Optional[List[OrderBookLevel]] = None,
-        asks: Optional[List[OrderBookLevel]] = None,
+        bids: list[OrderBookLevel] | None = None,
+        asks: list[OrderBookLevel] | None = None,
         exchange: str = "",
         is_snapshot: bool = True,
         sequence: int = 0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             ts_str = timestamp.isoformat() if hasattr(timestamp, "isoformat") else str(timestamp)
@@ -92,8 +92,8 @@ class OrderBook(BaseObject):
 
         self.symbol = symbol
         self.timestamp = timestamp
-        self.bids: List[OrderBookLevel] = bids or []
-        self.asks: List[OrderBookLevel] = asks or []
+        self.bids: list[OrderBookLevel] = bids or []
+        self.asks: list[OrderBookLevel] = asks or []
         self.exchange = exchange
         self.is_snapshot = is_snapshot
         self.sequence = sequence
@@ -104,21 +104,21 @@ class OrderBook(BaseObject):
         )
 
     @property
-    def best_bid(self) -> Optional[float]:
+    def best_bid(self) -> float | None:
         """Best bid price."""
         if self.bids:
             return max(b.price for b in self.bids)
         return None
 
     @property
-    def best_ask(self) -> Optional[float]:
+    def best_ask(self) -> float | None:
         """Best ask price."""
         if self.asks:
             return min(a.price for a in self.asks)
         return None
 
     @property
-    def mid_price(self) -> Optional[float]:
+    def mid_price(self) -> float | None:
         """Mid price from best bid/ask."""
         bb = self.best_bid
         ba = self.best_ask
@@ -127,7 +127,7 @@ class OrderBook(BaseObject):
         return None
 
     @property
-    def spread(self) -> Optional[float]:
+    def spread(self) -> float | None:
         """Bid-ask spread."""
         bb = self.best_bid
         ba = self.best_ask
@@ -145,7 +145,7 @@ class OrderBook(BaseObject):
         """Total size available on ask side."""
         return sum(a.size for a in self.asks)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timestamp": self.timestamp.isoformat(),
@@ -163,7 +163,7 @@ class OrderBook(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -185,7 +185,7 @@ class OrderBook(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OrderBook":
+    def from_dict(cls, data: dict[str, Any]) -> OrderBook:
         obj = super().from_dict(data)
         obj.symbol = data["symbol"]
         obj.timestamp = parse_timestamp(data["timestamp"])

@@ -17,7 +17,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -52,11 +52,11 @@ class ExperimentValidation(BaseObject):
         self,
         experiment_id: str,
         hypothesis_id: str,
-        run_id: Optional[str] = None,
+        run_id: str | None = None,
         validation_type: str = "Target",
-        criteria: Optional[Dict[str, Dict[str, Any]]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        criteria: dict[str, dict[str, Any]] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ExperimentValidation|{experiment_id}|{validation_type}"
@@ -68,11 +68,11 @@ class ExperimentValidation(BaseObject):
         self.hypothesis_id = hypothesis_id
         self.run_id = run_id
         self.validation_type = validation_type
-        self.criteria: Dict[str, Dict[str, Any]] = criteria or {}
-        self.results: Dict[str, Dict[str, Any]] = {}
+        self.criteria: dict[str, dict[str, Any]] = criteria or {}
+        self.results: dict[str, dict[str, Any]] = {}
         self.overall_status = ValidationStatus.PENDING
         self.confidence: float = 0.0
-        self.findings: List[str] = []
+        self.findings: list[str] = []
         self.validation_trace: str = ""
 
         self.lifecycle.transition(
@@ -82,9 +82,9 @@ class ExperimentValidation(BaseObject):
 
     def validate_against_benchmark(
         self,
-        result_metrics: Dict[str, float],
-        benchmark_metrics: Dict[str, float],
-        metric_definitions: Optional[List[MetricDefinition]] = None,
+        result_metrics: dict[str, float],
+        benchmark_metrics: dict[str, float],
+        metric_definitions: list[MetricDefinition] | None = None,
     ) -> None:
         """
         Validate results against a benchmark.
@@ -145,14 +145,13 @@ class ExperimentValidation(BaseObject):
         self.confidence = passed_count / max(total_count, 1)
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
-            reason=f"Benchmark validation: {self.overall_status.value} "
-            f"({passed_count}/{total_count} metrics passed)",
+            reason=f"Benchmark validation: {self.overall_status.value} ({passed_count}/{total_count} metrics passed)",
         )
 
     def validate_against_targets(
         self,
-        result_metrics: Dict[str, float],
-        metric_definitions: Optional[List[MetricDefinition]] = None,
+        result_metrics: dict[str, float],
+        metric_definitions: list[MetricDefinition] | None = None,
     ) -> None:
         """
         Validate results against target values defined in metric definitions.
@@ -205,8 +204,7 @@ class ExperimentValidation(BaseObject):
 
         self.confidence = passed_count / max(total_count, 1)
         self.validation_trace = (
-            f"Target validation: {self.overall_status.value} "
-            f"({passed_count}/{total_count} targets met)"
+            f"Target validation: {self.overall_status.value} ({passed_count}/{total_count} targets met)"
         )
 
         self.lifecycle.transition(
@@ -285,7 +283,7 @@ class ExperimentValidation(BaseObject):
             reason=f"Statistical validation: {'significant' if is_significant else 'not significant'}",
         )
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "experiment_id": self.experiment_id,
             "hypothesis_id": self.hypothesis_id,
@@ -300,7 +298,7 @@ class ExperimentValidation(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -319,7 +317,7 @@ class ExperimentValidation(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExperimentValidation":
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentValidation:
         obj = super().from_dict(data)
         obj.experiment_id = data["experiment_id"]
         obj.hypothesis_id = data["hypothesis_id"]

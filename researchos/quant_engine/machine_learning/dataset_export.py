@@ -13,12 +13,12 @@ from __future__ import annotations
 import csv
 import io
 import json
-from typing import Any, Dict, List
+from typing import Any
 
 from .dataset_contracts import ResearchDataset
 
 
-def to_dict(dataset: ResearchDataset) -> Dict[str, Any]:
+def to_dict(dataset: ResearchDataset) -> dict[str, Any]:
     """Return a plain dictionary representation of ``dataset``."""
     return {
         "feature_names": list(dataset.feature_names),
@@ -46,7 +46,7 @@ def to_csv(dataset: ResearchDataset) -> str:
     """
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    header: List[Any] = list(dataset.feature_names) + [dataset.label_name]
+    header: list[Any] = list(dataset.feature_names) + [dataset.label_name]
     writer.writerow(header)
     for i, row in enumerate(dataset.features):
         writer.writerow(list(row) + [dataset.labels[i]])

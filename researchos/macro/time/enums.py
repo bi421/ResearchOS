@@ -6,7 +6,6 @@ Status: FROZEN
 
 from datetime import timedelta, timezone
 from enum import Enum
-from typing import Optional
 
 UTC = timezone.utc
 
@@ -214,7 +213,7 @@ class Frequency(str, Enum):
     ANNUAL = "annual"
     IRREGULAR = "irregular"
 
-    def get_expected_interval(self) -> Optional[timedelta]:
+    def get_expected_interval(self) -> timedelta | None:
         """Get expected interval between releases."""
         intervals = {
             Frequency.INTRADAILY: timedelta(hours=1),

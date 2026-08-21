@@ -8,7 +8,7 @@ no broker logic.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -23,8 +23,8 @@ class Portfolio:
         initial_capital: Optional notional for sizing analytics.
     """
 
-    weights: List[float]
-    asset_returns: List[List[float]] = field(default_factory=list)
+    weights: list[float]
+    asset_returns: list[list[float]] = field(default_factory=list)
     risk_free_rate: float = 0.0
     initial_capital: float = 100_000.0
 
@@ -59,7 +59,7 @@ class PortfolioMetrics:
     conditional_var_95: float = 0.0
     omega_ratio: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "annualised_return": self.annualised_return,
             "annualised_volatility": self.annualised_volatility,
@@ -87,7 +87,7 @@ class RiskContribution:
     contribution: float = 0.0
     percent_contribution: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "asset_index": self.asset_index,
             "weight": self.weight,
@@ -101,12 +101,12 @@ class RiskContribution:
 class AllocationResult:
     """Capital allocation / position sizing analytics."""
 
-    capital_per_asset: List[float] = field(default_factory=list)
-    risk_budget_per_asset: List[float] = field(default_factory=list)
+    capital_per_asset: list[float] = field(default_factory=list)
+    risk_budget_per_asset: list[float] = field(default_factory=list)
     kelly_fraction: float = 0.0
     total_capital: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "capital_per_asset": self.capital_per_asset,
             "risk_budget_per_asset": self.risk_budget_per_asset,
@@ -119,12 +119,12 @@ class AllocationResult:
 class EfficientFrontierPoint:
     """A single portfolio point on the Efficient Frontier."""
 
-    weights: List[float]
+    weights: list[float]
     expected_return: float = 0.0
     volatility: float = 0.0
     sharpe_ratio: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "weights": self.weights,
             "expected_return": self.expected_return,
@@ -137,21 +137,17 @@ class EfficientFrontierPoint:
 class EfficientFrontierResult:
     """The result of an Efficient Frontier calculation."""
 
-    frontier_points: List[EfficientFrontierPoint] = field(default_factory=list)
-    min_variance_portfolio: Optional[EfficientFrontierPoint] = None
-    max_sharpe_portfolio: Optional[EfficientFrontierPoint] = None
-    covariance_matrix: List[List[float]] = field(default_factory=list)
-    expected_returns: List[float] = field(default_factory=list)
+    frontier_points: list[EfficientFrontierPoint] = field(default_factory=list)
+    min_variance_portfolio: EfficientFrontierPoint | None = None
+    max_sharpe_portfolio: EfficientFrontierPoint | None = None
+    covariance_matrix: list[list[float]] = field(default_factory=list)
+    expected_returns: list[float] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "frontier_points": [p.to_dict() for p in self.frontier_points],
-            "min_variance_portfolio": (
-                self.min_variance_portfolio.to_dict() if self.min_variance_portfolio else None
-            ),
-            "max_sharpe_portfolio": (
-                self.max_sharpe_portfolio.to_dict() if self.max_sharpe_portfolio else None
-            ),
+            "min_variance_portfolio": (self.min_variance_portfolio.to_dict() if self.min_variance_portfolio else None),
+            "max_sharpe_portfolio": (self.max_sharpe_portfolio.to_dict() if self.max_sharpe_portfolio else None),
             "covariance_matrix": self.covariance_matrix,
             "expected_returns": self.expected_returns,
         }

@@ -11,7 +11,6 @@ MIL-ECM-013: Econometrics owns confidence/prediction intervals.
 from __future__ import annotations
 
 from math import sqrt
-from typing import List, Optional
 
 from macro_intelligence.econometrics.models import IntervalResult
 from macro_intelligence.statistics.provenance import StatisticalProvenance
@@ -48,7 +47,7 @@ def _t_critical(level: float, df: int) -> float:
     return base * (1.0 + (30 - df) / 30.0 * 0.5)
 
 
-def _standard_error_of_residuals(residuals: List[float], n_parameters: int) -> float:
+def _standard_error_of_residuals(residuals: list[float], n_parameters: int) -> float:
     """Standard error of the estimate (residual standard error)."""
     n = len(residuals)
     rss = sum(r * r for r in residuals)
@@ -64,9 +63,9 @@ def confidence_interval(
     sample_size: int,
     n_parameters: int = 1,
     level: float = 0.95,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> IntervalResult:
     """
     Confidence interval for a parameter estimate.
@@ -109,12 +108,12 @@ def confidence_interval(
 
 def prediction_interval(
     prediction: float,
-    residuals: List[float],
+    residuals: list[float],
     n_parameters: int = 1,
     level: float = 0.95,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> IntervalResult:
     """
     Prediction interval for a new observation.

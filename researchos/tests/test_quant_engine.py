@@ -17,7 +17,6 @@ Covers:
 from __future__ import annotations
 
 import math
-from typing import List
 
 import pytest
 
@@ -65,13 +64,13 @@ from researchos.quant_engine import (
 
 
 @pytest.fixture
-def sample_prices() -> List[float]:
+def sample_prices() -> list[float]:
     """11 daily prices (10 returns) — deterministic dataset."""
     return [100.0, 102.0, 101.0, 103.0, 107.0, 106.0, 108.0, 110.0, 109.0, 111.0, 115.0]
 
 
 @pytest.fixture
-def sample_returns(sample_prices) -> List[float]:
+def sample_returns(sample_prices) -> list[float]:
     return calculate_returns_from_prices(sample_prices, "percentage")
 
 
@@ -490,9 +489,7 @@ class TestInterfaceCompatibility:
 
 
 class TestExperimentIntegration:
-    def test_simulation_result_feeds_experiment_result(
-        self, engine, simulation_request, sample_prices
-    ):
+    def test_simulation_result_feeds_experiment_result(self, engine, simulation_request, sample_prices):
         """SimulationResult can populate ExperimentResult fields."""
         sim_result = engine.replay(simulation_request, sample_prices)
 
@@ -512,9 +509,7 @@ class TestExperimentIntegration:
         assert exp_result.performance["win_rate"] == sim_result.performance["win_rate"]
         assert exp_result.equity_curve == sim_result.equity_curve
 
-    def test_simulation_result_serializable_via_experiment(
-        self, engine, simulation_request, sample_prices
-    ):
+    def test_simulation_result_serializable_via_experiment(self, engine, simulation_request, sample_prices):
         """SimulationResult data survives ExperimentResult serialization."""
         sim_result = engine.replay(simulation_request, sample_prices)
         from researchos.experiments.result import ExperimentResult
@@ -563,9 +558,7 @@ class TestMarketMemoryIntegration:
         assert "rate_hike_scenario" in request.tags
         assert request.compute_input_hash() != ""
 
-    def test_simulation_result_stores_dataset_reference(
-        self, engine, simulation_request, sample_prices
-    ):
+    def test_simulation_result_stores_dataset_reference(self, engine, simulation_request, sample_prices):
         """SimulationResult preserves the dataset reference for audit."""
         result = engine.replay(simulation_request, sample_prices)
         assert result.dataset_reference == "XAU/USD:2020-2024"

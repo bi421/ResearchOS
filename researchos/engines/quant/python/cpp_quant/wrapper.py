@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 import glob
+
+import numpy as np
+import pandas as pd
 
 try:
     # E????? ????? ?????????? ????, ????? ?? build ??????????
@@ -143,8 +144,5 @@ class CppQuant:
             "avg_win": res.avg_win,
             "avg_loss": res.avg_loss,
             "profit_factor": res.profit_factor,
-            "trades": [
-                (t.entry_time, t.exit_time, t.entry_price, t.exit_price, t.pnl, t.is_win)
-                for t in res.trades
-            ],
+            "trades": [(t.entry_time, t.exit_time, t.entry_price, t.exit_price, t.pnl, t.is_win) for t in res.trades],
         }

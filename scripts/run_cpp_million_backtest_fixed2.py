@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
-import time
 import sys
+import time
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # C++ бэкенд импорт
 try:
@@ -43,9 +44,7 @@ class MillionCandleCPPAnalyzer:
                         break
                 else:
                     print("❌ data/raw/histdata/xauusd/ хавтас олдсонгүй")
-                    print(
-                        "💡 Та load_xauusd.py ажиллуулж өгөгдөл үүсгэх эсвэл замыг засах хэрэгтэй."
-                    )
+                    print("💡 Та load_xauusd.py ажиллуулж өгөгдөл үүсгэх эсвэл замыг засах хэрэгтэй.")
                     return False
 
         files = list(self.data_path.glob("DAT_ASCII_XAUUSD_M1_*.csv"))
@@ -69,9 +68,7 @@ class MillionCandleCPPAnalyzer:
                     names=["datetime", "open", "high", "low", "close", "volume"],
                     dtype={"datetime": str},
                 )
-                df["datetime"] = pd.to_datetime(
-                    df["datetime"], format="%Y%m%d %H:%M:%S", errors="coerce"
-                )
+                df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H:%M:%S", errors="coerce")
                 df = df.dropna(subset=["datetime"])
                 if not df.empty:
                     dfs.append(df)

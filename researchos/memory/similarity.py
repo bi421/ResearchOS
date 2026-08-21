@@ -7,8 +7,6 @@ and scenarios to find historical analogues.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
-
 from researchos.memory.features import compute_features
 from researchos.memory.models import HistoricalScenario, MarketSnapshot
 
@@ -88,10 +86,10 @@ def compare_snapshots(
 
 def find_similar_snapshots(
     target: MarketSnapshot,
-    candidates: List[MarketSnapshot],
+    candidates: list[MarketSnapshot],
     top_n: int = 5,
     min_score: float = 0.0,
-) -> List[Tuple[MarketSnapshot, float]]:
+) -> list[tuple[MarketSnapshot, float]]:
     """
     Find the most similar snapshots to a target.
 
@@ -104,7 +102,7 @@ def find_similar_snapshots(
     Returns:
         List of (snapshot, score) tuples sorted by score descending.
     """
-    scored: List[Tuple[MarketSnapshot, float]] = []
+    scored: list[tuple[MarketSnapshot, float]] = []
     for candidate in candidates:
         score = compare_snapshots(target, candidate)
         if score >= min_score:
@@ -117,7 +115,7 @@ def find_similar_snapshots(
 def compare_scenarios(
     a: HistoricalScenario,
     b: HistoricalScenario,
-    snapshots: Dict[str, MarketSnapshot],
+    snapshots: dict[str, MarketSnapshot],
 ) -> float:
     """
     Compute similarity between two historical scenarios.
@@ -136,7 +134,7 @@ def compare_scenarios(
     regime_sim = 1.0 if a.regime_id == b.regime_id else 0.0
 
     # Snapshot similarity (average of all matching pairs)
-    snapshot_scores: List[float] = []
+    snapshot_scores: list[float] = []
     common_ids = set(a.snapshot_ids) & set(b.snapshot_ids)
     for sid in common_ids:
         sa = snapshots.get(a.snapshot_ids[0]) if a.snapshot_ids else None

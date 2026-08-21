@@ -14,7 +14,6 @@ All calculations are deterministic and based solely on the provided data.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 from researchos.market_memory.matcher import MatchResult
 from researchos.market_memory.models import HistoricalScenario
@@ -51,7 +50,7 @@ class OutcomeAnalysisResult:
     avg_max_adverse: float = 0.0
     confidence_score: float = 0.0
     calculation_method: str = "HistoricalOutcomeAnalysis"
-    matched_scenarios: List[str] = field(default_factory=list)
+    matched_scenarios: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -86,8 +85,8 @@ class OutcomeAnalysis:
 
     def analyze(
         self,
-        match_results: List[MatchResult],
-        scenarios: Dict[str, HistoricalScenario],
+        match_results: list[MatchResult],
+        scenarios: dict[str, HistoricalScenario],
     ) -> OutcomeAnalysisResult:
         """
         Analyze outcomes from matched scenarios.
@@ -170,9 +169,7 @@ class OutcomeAnalysis:
 
         # Outcome clarity factor
         # Higher when one outcome dominates
-        max_outcome = max(
-            result.positive_outcomes, result.negative_outcomes, result.neutral_outcomes
-        )
+        max_outcome = max(result.positive_outcomes, result.negative_outcomes, result.neutral_outcomes)
         clarity_factor = max_outcome / result.total_examples if result.total_examples > 0 else 0.0
 
         # Effect size factor

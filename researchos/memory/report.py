@@ -13,7 +13,7 @@ Based on the ResearchOS reporting framework with full auditability.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -48,16 +48,16 @@ class MarketMemoryReport(BaseObject):
         self,
         report_type: str,
         target_snapshot_id: str = "",
-        matched_scenarios: Optional[List[Dict[str, Any]]] = None,
-        outcome_analysis: Optional[Dict[str, Any]] = None,
-        feature_weights: Optional[Dict[str, float]] = None,
+        matched_scenarios: list[dict[str, Any]] | None = None,
+        outcome_analysis: dict[str, Any] | None = None,
+        feature_weights: dict[str, float] | None = None,
         calculation_method: str = "WeightedFeatureComparison",
-        evidence_ids: Optional[List[str]] = None,
-        historical_sources: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        historical_sources: list[str] | None = None,
         confidence_basis: str = "",
-        limitations: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        limitations: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketMemoryReport|{report_type}|{target_snapshot_id}|{utc_now().isoformat()}"
@@ -67,15 +67,15 @@ class MarketMemoryReport(BaseObject):
 
         self.report_type = report_type
         self.target_snapshot_id = target_snapshot_id
-        self.matched_scenarios: List[Dict[str, Any]] = matched_scenarios or []
-        self.outcome_analysis: Optional[Dict[str, Any]] = outcome_analysis
-        self.feature_weights: Dict[str, float] = dict(feature_weights) if feature_weights else {}
+        self.matched_scenarios: list[dict[str, Any]] = matched_scenarios or []
+        self.outcome_analysis: dict[str, Any] | None = outcome_analysis
+        self.feature_weights: dict[str, float] = dict(feature_weights) if feature_weights else {}
         self.calculation_method = calculation_method
-        self.evidence_ids: List[str] = evidence_ids or []
-        self.historical_sources: List[str] = historical_sources or []
+        self.evidence_ids: list[str] = evidence_ids or []
+        self.historical_sources: list[str] = historical_sources or []
         self.confidence_basis = confidence_basis
-        self.limitations: List[str] = limitations or []
-        self.audit_entries: List[Dict[str, Any]] = []
+        self.limitations: list[str] = limitations or []
+        self.audit_entries: list[dict[str, Any]] = []
         self.generated_at = utc_now()
         self.status = "Draft"
 
@@ -108,7 +108,7 @@ class MarketMemoryReport(BaseObject):
             reason="MarketMemoryReport finalized",
         )
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "report_type": self.report_type,
             "target_snapshot_id": self.target_snapshot_id,
@@ -130,7 +130,7 @@ class MarketMemoryReport(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -152,7 +152,7 @@ class MarketMemoryReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MarketMemoryReport":
+    def from_dict(cls, data: dict) -> MarketMemoryReport:
         obj = super().from_dict(data)
         obj.report_type = data["report_type"]
         obj.target_snapshot_id = data.get("target_snapshot_id", "")
@@ -165,8 +165,6 @@ class MarketMemoryReport(BaseObject):
         obj.confidence_basis = data.get("confidence_basis", "")
         obj.limitations = list(data.get("limitations", []))
         obj.audit_entries = list(data.get("audit_entries", []))
-        obj.generated_at = (
-            parse_timestamp(data["generated_at"]) if data.get("generated_at") else utc_now()
-        )
+        obj.generated_at = parse_timestamp(data["generated_at"]) if data.get("generated_at") else utc_now()
         obj.status = data.get("status", "Draft")
         return obj

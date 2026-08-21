@@ -1,5 +1,6 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from researchos.data_engine.repository import SqliteDatasetRepository
 
 
@@ -110,9 +111,7 @@ def monte_carlo_validation(actual_returns):
     p_value = (np.array(random_means) > actual_mean).sum() / 10000
     print(f"   Бодит дундаж өгөөж: {actual_mean:.4f}")
     print(f"   Санамсаргүйн P-Value: {p_value:.4f}")
-    print(
-        f"   {'✅ Стратеги ач холбогдолтой' if p_value < 0.05 else '⚠️ Стратеги санамсаргүй байж болзошгүй'}"
-    )
+    print(f"   {'✅ Стратеги ач холбогдолтой' if p_value < 0.05 else '⚠️ Стратеги санамсаргүй байж болзошгүй'}")
 
     return p_value
 
@@ -134,9 +133,7 @@ def compare_to_buy_hold():
         print(f"   Buy & Hold Return: {buy_hold_return * 100:.2f}%")
         print(f"   Strategy Return: {res['return'] * 100:.2f}%")
         print(f"   Зөрүү: {diff * 100:.2f}%")
-        print(
-            f"   {'✅ Стратеги Buy & Hold-оос илүү' if diff > 0 else '⚠️ Стратеги Buy & Hold-оос муу'}"
-        )
+        print(f"   {'✅ Стратеги Buy & Hold-оос илүү' if diff > 0 else '⚠️ Стратеги Buy & Hold-оос муу'}")
         return {"buy_hold": buy_hold_return, "strategy": res["return"], "diff": diff}
     return None
 

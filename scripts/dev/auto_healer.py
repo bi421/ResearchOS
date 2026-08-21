@@ -10,7 +10,7 @@ class DiagnosticEngine:
         self.issues = []
 
     def _load_results(self):
-        with open(self.results_file, "r", encoding="utf-8") as f:
+        with open(self.results_file, encoding="utf-8") as f:
             return json.load(f)
 
     def diagnose(self):
@@ -22,9 +22,7 @@ class DiagnosticEngine:
 
     def _check_model_vs_baseline(self):
         model_worse = sum(1 for r in self.results if r["model_acc"] < r["baseline_acc"])
-        model_equal = sum(
-            1 for r in self.results if abs(r["model_acc"] - r["baseline_acc"]) < 0.001
-        )
+        model_equal = sum(1 for r in self.results if abs(r["model_acc"] - r["baseline_acc"]) < 0.001)
         total = len(self.results)
 
         if model_worse > total * 0.3:

@@ -1,7 +1,13 @@
-import yfinance as yf
-import pandas as pd
+import sys
+import time
 from datetime import datetime, timedelta
-from researchos.quant_engine.backend import PythonQuantBackend
+
+import pandas as pd
+import yfinance as yf
+
+from researchos.data_engine.asset_identity import (
+    assert_xauusd_identity,
+)
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
@@ -9,11 +15,7 @@ from researchos.decision_engine.contracts import (
     WeightConfiguration,
 )
 from researchos.decision_engine.score import compute_evidence_score
-from researchos.data_engine.asset_identity import (
-    assert_xauusd_identity,
-)
-import sys
-import time
+from researchos.quant_engine.backend import PythonQuantBackend
 
 # ============================================================
 # 1. ӨГӨГДӨЛ ТАТАХ
@@ -138,9 +140,7 @@ def compute_metrics(series):
     equity = (1 + pd.Series(returns)).cumprod() * 10000.0
     backend = PythonQuantBackend()
     try:
-        return backend.calculate_metrics(
-            returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0
-        )
+        return backend.calculate_metrics(returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0)
     except Exception:
         return None
 
@@ -174,9 +174,7 @@ for name, trend_info in trend_results.items():
         strength=strength,
         weight=0.35,
         confidence=0.75,
-        description=(
-            f"{name}: {trend_info['trend']}, Price: , Change: {trend_info['price_change']:.2%}"
-        ),
+        description=(f"{name}: {trend_info['trend']}, Price: , Change: {trend_info['price_change']:.2%}"),
         supporting_ids=[],
     )
     evidence_items.append(item)
@@ -220,7 +218,9 @@ for name, info in trend_results.items():
         sma20 = combined_df[name].rolling(20).mean().iloc[-1]
         sma50 = combined_df[name].rolling(50).mean().iloc[-1]
         emoji = "🟢" if info["trend"] == "BULLISH" else "🔴" if info["trend"] == "BEARISH" else "🟡"
-        report += f"| {name} |  | {emoji} {info['trend']} | {info['strength']:.2f} | {info['price_change']:.2%} |  |  |\n"
+        report += (
+            f"| {name} |  | {emoji} {info['trend']} | {info['strength']:.2f} | {info['price_change']:.2%} |  |  |\n"
+        )
 
 report += f"""
 
@@ -242,12 +242,8 @@ report += f"""
 ## 🔍 Key Insights
 """
 # Хүчтэй хандлагатай хөрөнгүүд
-strong_bullish = [
-    k for k, v in trend_results.items() if v["trend"] == "BULLISH" and v["strength"] > 0.6
-]
-strong_bearish = [
-    k for k, v in trend_results.items() if v["trend"] == "BEARISH" and v["strength"] > 0.6
-]
+strong_bullish = [k for k, v in trend_results.items() if v["trend"] == "BULLISH" and v["strength"] > 0.6]
+strong_bearish = [k for k, v in trend_results.items() if v["trend"] == "BEARISH" and v["strength"] > 0.6]
 
 if strong_bullish:
     report += f"- **Strong Bullish:** {', '.join(strong_bullish)}\n"

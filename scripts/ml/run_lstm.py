@@ -3,17 +3,18 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-import pandas as pd
-import numpy as np
 import glob
 import time
+
 import joblib
+import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-from tensorflow.keras.callbacks import EarlyStopping
 from researchos.engines.quant.cpp_engine import run_ml_backtest_cpp
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.models import Sequential
 
 sys.path.insert(0, "cpp_quant")
 
@@ -27,19 +28,12 @@ print("=" * 60)
 print("Loading XAUUSD data...")
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
 print(f"Data: {len(df_h)} bars (4h)")
 
 
@@ -153,9 +147,7 @@ print(f"Training time: {time.time() - start:.2f}s")
 train_acc = model.evaluate(X_train_seq, y_train_seq, verbose=0)[1]
 val_acc = model.evaluate(X_val_seq, y_val_seq, verbose=0)[1]
 test_acc = model.evaluate(X_test_seq, y_test_seq, verbose=0)[1]
-print(
-    f"Train accuracy: {train_acc:.2%}, Val accuracy: {val_acc:.2%}, Test accuracy: {test_acc:.2%}"
-)
+print(f"Train accuracy: {train_acc:.2%}, Val accuracy: {val_acc:.2%}, Test accuracy: {test_acc:.2%}")
 
 # =============================================
 # 8. SIGNALS & BACKTEST (C++)

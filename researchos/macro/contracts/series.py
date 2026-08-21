@@ -80,9 +80,7 @@ class NormalizedSeries:
             source=data["source"],
             timestamp=datetime.fromisoformat(data["timestamp"]),
             observation_period=date.fromisoformat(data["observation_period"]),
-            release_time=(
-                datetime.fromisoformat(data["release_time"]) if data.get("release_time") else None
-            ),
+            release_time=(datetime.fromisoformat(data["release_time"]) if data.get("release_time") else None),
             available_time=datetime.fromisoformat(data["available_time"]),
             value=data.get("value"),
             unit=data["unit"],
@@ -92,9 +90,7 @@ class NormalizedSeries:
             revision_number=data.get("revision_number", 0),
             quality_score=data.get("quality_score", 1.0),
             metadata=data.get("metadata", {}),
-            created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.now(timezone.utc).isoformat())
-            ),
+            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
             version=data.get("version", "ms/v1"),
         )
 

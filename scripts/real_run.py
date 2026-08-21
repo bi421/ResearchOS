@@ -1,4 +1,5 @@
 import sys
+
 import pandas as pd
 
 sys.path.insert(0, ".")
@@ -45,9 +46,7 @@ def get_tradingview_data(symbol="GC=F", period="1y"):
             prices = close_col.iloc[:, 0].dropna().astype(float).tolist()
         else:
             prices = close_col.dropna().astype(float).tolist()
-        print(
-            f"✅ TradingView: {symbol} тэмдэгтийн {len(prices)} өдрийн өгөгдөл амжилттай татагдлаа."
-        )
+        print(f"✅ TradingView: {symbol} тэмдэгтийн {len(prices)} өдрийн өгөгдөл амжилттай татагдлаа.")
         return prices
     except Exception as e:
         print(f"❌ YFinance алдаа: {e}")
@@ -106,9 +105,7 @@ def main():
             hypothesis_id=f"real_market_{choice}",
             name=f"Real Market Test: {symbol_name}",
             dataset_config=DatasetConfig(source=symbol_name),
-            simulation_config=SimulationConfig(
-                initial_capital=100000.0, commission=0.001, slippage=0.0005, seed=42
-            ),
+            simulation_config=SimulationConfig(initial_capital=100000.0, commission=0.001, slippage=0.0005, seed=42),
         )
         exp.mark_ready()
 

@@ -1,8 +1,9 @@
-import yfinance as yf
-import pandas as pd
-import numpy as np
-from datetime import datetime
 import warnings
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
 
 warnings.filterwarnings("ignore")
 
@@ -82,29 +83,16 @@ class RealBacktestWinrate:
         if trades:
             df_trades = pd.DataFrame(trades)
             winrate = (df_trades["pnl"] > 0).sum() / len(df_trades) * 100
-            avg_win = (
-                df_trades[df_trades["pnl"] > 0]["pnl"].mean()
-                if (df_trades["pnl"] > 0).sum() > 0
-                else 0
-            )
-            avg_loss = (
-                df_trades[df_trades["pnl"] < 0]["pnl"].mean()
-                if (df_trades["pnl"] < 0).sum() > 0
-                else 0
-            )
+            avg_win = df_trades[df_trades["pnl"] > 0]["pnl"].mean() if (df_trades["pnl"] > 0).sum() > 0 else 0
+            avg_loss = df_trades[df_trades["pnl"] < 0]["pnl"].mean() if (df_trades["pnl"] < 0).sum() > 0 else 0
             profit_factor = (
-                abs(
-                    (df_trades[df_trades["pnl"] > 0]["pnl"].sum())
-                    / (df_trades[df_trades["pnl"] < 0]["pnl"].sum())
-                )
+                abs((df_trades[df_trades["pnl"] > 0]["pnl"].sum()) / (df_trades[df_trades["pnl"] < 0]["pnl"].sum()))
                 if (df_trades["pnl"] < 0).sum() > 0
                 else np.inf
             )
             total_return = (1 + df_trades["pnl"]).prod() - 1
             sharpe = (
-                df_trades["pnl"].mean() / df_trades["pnl"].std() * np.sqrt(252)
-                if df_trades["pnl"].std() != 0
-                else 0
+                df_trades["pnl"].mean() / df_trades["pnl"].std() * np.sqrt(252) if df_trades["pnl"].std() != 0 else 0
             )
 
             self.results[strategy_name] = {
@@ -199,9 +187,7 @@ class RealBacktestWinrate:
             if i < 200:
                 return False
             # MACD bearish crossover OR price below SMA 200
-            return (data["MACD_Hist"].iloc[i] < 0) or (
-                data["Close"].iloc[i] < data["SMA_200"].iloc[i]
-            )
+            return (data["MACD_Hist"].iloc[i] < 0) or (data["Close"].iloc[i] < data["SMA_200"].iloc[i])
 
         return self.run_backtest("MACD + SMA Filter", entry_condition, exit_condition)
 

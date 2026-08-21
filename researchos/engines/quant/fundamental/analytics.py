@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Dict, List, Sequence
+from collections.abc import Sequence
 
 from researchos.engines.quant.fundamental.contracts import (
     CommodityBasket,
@@ -53,7 +53,7 @@ def classify_surprise(point: MacroDataPoint) -> str:
     return "neutral"
 
 
-def macro_series_statistics(points: Sequence[MacroDataPoint]) -> Dict[str, float]:
+def macro_series_statistics(points: Sequence[MacroDataPoint]) -> dict[str, float]:
     """Summary statistics of a macro indicator series."""
     values = [p.value for p in points]
     if not values:
@@ -97,7 +97,7 @@ def classify_policy_action(previous_rate: float, new_rate: float) -> str:
 def yield_curve_metrics(
     maturities: Sequence[str],
     yields: Sequence[float],
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Slope, level, and curvature proxies for a yield curve."""
     if len(maturities) != len(yields) or len(yields) < 3:
         return {"level": 0.0, "slope": 0.0, "curvature": 0.0}
@@ -132,13 +132,13 @@ def yield_curve_metrics(
 # ──────────────────────────────────────────────
 
 
-def commodity_correlations(basket: CommodityBasket) -> Dict[str, float]:
+def commodity_correlations(basket: CommodityBasket) -> dict[str, float]:
     """Correlations between gold and other commodities."""
     basket.validate()
     if len(basket.gold) < 2:
         return {}
 
-    def _corr(x: List[float], y: List[float]) -> float:
+    def _corr(x: list[float], y: list[float]) -> float:
         n = len(x)
         mx = sum(x) / n
         my = sum(y) / n
@@ -159,7 +159,7 @@ def commodity_correlations(basket: CommodityBasket) -> Dict[str, float]:
     }
 
 
-def commodity_ratio(basket: CommodityBasket) -> Dict[str, float]:
+def commodity_ratio(basket: CommodityBasket) -> dict[str, float]:
     """Research ratios: gold/silver, gold/oil, copper/gold."""
     basket.validate()
     gold_last = basket.gold[-1] if basket.gold else 0.0
@@ -231,7 +231,7 @@ def real_yield_series(
     nominal_yields: Sequence[float],
     inflation_rates: Sequence[float],
     exact_fisher: bool = False,
-) -> List[float]:
+) -> list[float]:
     """Compute real yield series from nominal yields and inflation rates."""
     if len(nominal_yields) != len(inflation_rates):
         raise ValueError("nominal_yields and inflation_rates must have equal length")
@@ -248,21 +248,21 @@ def bond_spread(yield_a: float, yield_b: float) -> float:
 def bond_spread_series(
     yields_a: Sequence[float],
     yields_b: Sequence[float],
-) -> List[float]:
+) -> list[float]:
     """Compute yield spread series."""
     if len(yields_a) != len(yields_b):
         raise ValueError("yields_a and yields_b must have equal length")
     return [a - b for a, b in zip(yields_a, yields_b)]
 
 
-def yield_spread_metrics(yields_by_maturity: Dict[str, float]) -> Dict[str, float]:
+def yield_spread_metrics(yields_by_maturity: dict[str, float]) -> dict[str, float]:
     """
     Key benchmark yield curve spreads from a dictionary of maturity → yield.
 
     Keys normalized to uppercase e.g. {"2Y": 4.5, "10Y": 4.2, "30Y": 4.4, "3M": 5.2}.
     """
     normalized = {k.strip().upper(): float(v) for k, v in yields_by_maturity.items()}
-    out: Dict[str, float] = {}
+    out: dict[str, float] = {}
     if "10Y" in normalized and "2Y" in normalized:
         out["10y_2y_spread"] = normalized["10Y"] - normalized["2Y"]
     if "30Y" in normalized and "10Y" in normalized:
@@ -277,26 +277,24 @@ def yield_spread_metrics(yields_by_maturity: Dict[str, float]) -> Dict[str, floa
 # ──────────────────────────────────────────────
 
 
-def filter_high_severity(events: Sequence[EconomicCalendarEvent]) -> List[EconomicCalendarEvent]:
+def filter_high_severity(events: Sequence[EconomicCalendarEvent]) -> list[EconomicCalendarEvent]:
     return [e for e in events if e.severity in (EventSeverity.HIGH, EventSeverity.CRITICAL)]
 
 
-def events_by_country(
-    events: Sequence[EconomicCalendarEvent], country: str
-) -> List[EconomicCalendarEvent]:
+def events_by_country(events: Sequence[EconomicCalendarEvent], country: str) -> list[EconomicCalendarEvent]:
     return [e for e in events if e.country.upper() == country.upper()]
 
 
-def concentration_by_indicator(events: Sequence[EconomicCalendarEvent]) -> Dict[str, int]:
-    out: Dict[str, int] = {}
+def concentration_by_indicator(events: Sequence[EconomicCalendarEvent]) -> dict[str, int]:
+    out: dict[str, int] = {}
     for e in events:
         key = e.indicator.value if e.indicator else "other"
         out[key] = out.get(key, 0) + 1
     return out
 
 
-def calendar_density(events: Sequence[EconomicCalendarEvent]) -> Dict[str, float]:
-    counts: Dict[str, int] = {}
+def calendar_density(events: Sequence[EconomicCalendarEvent]) -> dict[str, float]:
+    counts: dict[str, int] = {}
     for e in events:
         counts[e.time] = counts.get(e.time, 0) + 1
     return {k: float(v) for k, v in counts.items()}
@@ -379,7 +377,7 @@ def normalize_news_event(raw_headline: str, source: str = "") -> NewsEvent:
 
 def fit_macro_factor_model(
     target: Sequence[float],
-    features: Dict[str, Sequence[float]],
+    features: dict[str, Sequence[float]],
 ) -> MacroFactorModel:
     """
     Fit a deterministic OLS-style macro factor model via normal equations.
@@ -422,13 +420,13 @@ def fit_macro_factor_model(
     )
 
 
-def _transpose(m: List[List[float]]) -> List[List[float]]:
+def _transpose(m: list[list[float]]) -> list[list[float]]:
     if not m:
         return []
     return [[m[i][j] for i in range(len(m))] for j in range(len(m[0]))]
 
 
-def _mat_mul(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
+def _mat_mul(a: list[list[float]], b: list[list[float]]) -> list[list[float]]:
     n, k = len(a), len(a[0]) if a else 0
     m = len(b[0]) if b else 0
     out = [[0.0] * m for _ in range(n)]
@@ -438,11 +436,11 @@ def _mat_mul(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
     return out
 
 
-def _mat_vec_mul(a: List[List[float]], v: List[float]) -> List[float]:
+def _mat_vec_mul(a: list[list[float]], v: list[float]) -> list[float]:
     return [sum(row[i] * v[i] for i in range(len(v))) for row in a]
 
 
-def _solve_linear(a: List[List[float]], b: List[float]) -> List[float]:
+def _solve_linear(a: list[list[float]], b: list[float]) -> list[float]:
     """Solve Ax=b by Gaussian elimination with partial pivoting."""
     n = len(b)
     aug = [row[:] + [b[i]] for i, row in enumerate(a)]

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class MarketState(str, Enum):
@@ -26,7 +26,7 @@ class MarketState(str, Enum):
 class ReturnSeries:
     """Immutable daily return series for analysis."""
 
-    returns: List[float] = field(default_factory=list)
+    returns: list[float] = field(default_factory=list)
 
     @property
     def length(self) -> int:
@@ -49,7 +49,7 @@ class RegimeStatistics:
     cumulative_return: float = 0.0
     num_periods: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "state": self.state.value,
             "start_index": self.start_index,
@@ -66,9 +66,9 @@ class SeasonalityProfile:
     """Seasonality statistics grouped by key."""
 
     group_key: str = ""
-    periods: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    periods: dict[str, dict[str, float]] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "group_key": self.group_key,
             "periods": {k: dict(v) for k, v in self.periods.items()},
@@ -83,10 +83,10 @@ class DrawdownStatistics:
     avg_drawdown: float = 0.0
     longest_drawdown_periods: int = 0
     avg_drawdown_periods: float = 0.0
-    recovery_periods: List[int] = field(default_factory=list)
+    recovery_periods: list[int] = field(default_factory=list)
     num_drawdowns: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "max_drawdown": self.max_drawdown,
             "avg_drawdown": self.avg_drawdown,
@@ -101,11 +101,11 @@ class DrawdownStatistics:
 class StateTransitionTable:
     """Market state transition probabilities (probability table)."""
 
-    states: List[str] = field(default_factory=list)
-    transition_matrix: List[List[float]] = field(default_factory=list)
-    state_counts: Dict[str, int] = field(default_factory=dict)
+    states: list[str] = field(default_factory=list)
+    transition_matrix: list[list[float]] = field(default_factory=list)
+    state_counts: dict[str, int] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "states": self.states,
             "transition_matrix": self.transition_matrix,
@@ -117,7 +117,7 @@ class StateTransitionTable:
 class FeatureExtraction:
     """Extracted historical features (flat dict of scalars)."""
 
-    features: Dict[str, float] = field(default_factory=dict)
+    features: dict[str, float] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(sorted(self.features.items()))

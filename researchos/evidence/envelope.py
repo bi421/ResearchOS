@@ -44,11 +44,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 #: Canonical artifact types recognized by the evidence store.
-ARTIFACT_TYPES: Tuple[str, ...] = (
+ARTIFACT_TYPES: tuple[str, ...] = (
     "Dataset",
     "Feature",
     "Experiment",
@@ -57,10 +58,10 @@ ARTIFACT_TYPES: Tuple[str, ...] = (
     "Validation",
     "Model",
 )
-ARTIFACT_TYPES_TUPLE: Tuple[str, ...] = ARTIFACT_TYPES
+ARTIFACT_TYPES_TUPLE: tuple[str, ...] = ARTIFACT_TYPES
 
 #: Accepted lineage relation labels.
-LINEAGE_RELATIONS: Tuple[str, ...] = (
+LINEAGE_RELATIONS: tuple[str, ...] = (
     "feeds",
     "executes",
     "produces",
@@ -192,21 +193,19 @@ class EvidenceEnvelope:
     payload: Any = field(default_factory=dict)
     version: str = ""
     created_at: str = ""
-    parent_hashes: Tuple[str, ...] = field(default_factory=tuple)
+    parent_hashes: tuple[str, ...] = field(default_factory=tuple)
     lineage_hash: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "parent_hashes", tuple(sorted(self.parent_hashes)))
         if self.artifact_type not in ARTIFACT_TYPES:
-            raise ValueError(
-                f"Unknown artifact_type '{self.artifact_type}'. Expected one of {ARTIFACT_TYPES}."
-            )
+            raise ValueError(f"Unknown artifact_type '{self.artifact_type}'. Expected one of {ARTIFACT_TYPES}.")
         if not self.artifact_hash:
             raise ValueError("artifact_hash is required")
         # Validate the payload contract at construction time.
         _validate_payload(self.payload)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible mapping."""
         return {
             "artifact_type": self.artifact_type,
@@ -219,7 +218,7 @@ class EvidenceEnvelope:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceEnvelope":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvidenceEnvelope:
         """Reconstruct an envelope from a ``to_dict()`` mapping."""
         return cls(
             artifact_type=str(data["artifact_type"]),
@@ -280,8 +279,8 @@ def build_envelope(
     payload: Any,
     version: str = "",
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
-    artifact_hash: Optional[str] = None,
+    parent_hashes: Sequence[str] | None = None,
+    artifact_hash: str | None = None,
 ) -> EvidenceEnvelope:
     """Build a fully-hashed ``EvidenceEnvelope``.
 

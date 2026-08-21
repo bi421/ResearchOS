@@ -19,7 +19,7 @@ MIL-ECM-005: Econometrics never duplicates single-variable OLS.
 from __future__ import annotations
 
 from math import exp, log
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.macro.econometrics.matrix import invert, matmul, solve, transpose
 from researchos.macro.econometrics.models import RegressionResult
@@ -39,10 +39,10 @@ LOGISTIC_VERSION = "ecm/reg/logistic/v1"
 def _provenance(
     method: str,
     method_version: str,
-    parameters: Dict[str, Any],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    parameters: dict[str, Any],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> StatisticalProvenance:
     """Construct a StatisticalProvenance envelope for a regression."""
     return StatisticalProvenance(
@@ -56,16 +56,16 @@ def _provenance(
 
 
 def _design_matrix(
-    x: List[List[float]],
+    x: list[list[float]],
     add_intercept: bool = True,
-) -> List[List[float]]:
+) -> list[list[float]]:
     """Build the design matrix (with leading column of 1s if add_intercept)."""
     if add_intercept:
         return [[1.0] + list(row) for row in x]
     return [list(row) for row in x]
 
 
-def _ols_solve(X: List[List[float]], y: List[float]) -> Tuple[List[float], List[float]]:
+def _ols_solve(X: list[list[float]], y: list[float]) -> tuple[list[float], list[float]]:
     """
     Solve the normal equations for multiple linear regression.
 
@@ -84,7 +84,7 @@ def _ols_solve(X: List[List[float]], y: List[float]) -> Tuple[List[float], List[
     return beta_mat, fitted
 
 
-def _r_squared(y: List[float], fitted: List[float]) -> float:
+def _r_squared(y: list[float], fitted: list[float]) -> float:
     """Compute R^2 from observed and fitted values."""
     y_mean = mean(y)
     ss_tot = sum((yi - y_mean) ** 2 for yi in y)
@@ -102,11 +102,11 @@ def _adjusted_r_squared(r2: float, n: int, k: int) -> float:
 
 
 def _inference(
-    X: List[List[float]],
-    y: List[float],
-    beta: List[float],
-    fitted: List[float],
-) -> Tuple[List[float], List[float], List[float]]:
+    X: list[list[float]],
+    y: list[float],
+    beta: list[float],
+    fitted: list[float],
+) -> tuple[list[float], list[float], list[float]]:
     """
     Compute standard errors, t-stats, and p-values for coefficients.
 
@@ -142,11 +142,11 @@ def _inference(
 
 
 def multiple_regression(
-    x: List[List[float]],
-    y: List[float],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    x: list[list[float]],
+    y: list[float],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> RegressionResult:
     """
     Multiple linear regression by matrix OLS.
@@ -178,9 +178,7 @@ def multiple_regression(
         "n_predictors": k,
         "add_intercept": True,
     }
-    prov = _provenance(
-        "multiple_regression", MULTIPLE_VERSION, params, dataset_id, dataset_version, dataset_hash
-    )
+    prov = _provenance("multiple_regression", MULTIPLE_VERSION, params, dataset_id, dataset_version, dataset_hash)
     return RegressionResult(
         coefficients=beta,
         r_squared=r2,
@@ -201,12 +199,12 @@ def multiple_regression(
 
 
 def polynomial_regression(
-    x: List[float],
-    y: List[float],
+    x: list[float],
+    y: list[float],
     degree: int = 2,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> RegressionResult:
     """
     Polynomial regression by matrix OLS on power features.
@@ -273,7 +271,7 @@ def _sigmoid(z: float) -> float:
     return e / (1.0 + e)
 
 
-def _logistic_log_likelihood(beta: List[float], X: List[List[float]], y: List[float]) -> float:
+def _logistic_log_likelihood(beta: list[float], X: list[list[float]], y: list[float]) -> float:
     """Negative log-likelihood for logistic regression (for convergence)."""
     total = 0.0
     for row, yi in zip(X, y):
@@ -285,13 +283,13 @@ def _logistic_log_likelihood(beta: List[float], X: List[List[float]], y: List[fl
 
 
 def logistic_regression(
-    x: List[List[float]],
-    y: List[float],
+    x: list[list[float]],
+    y: list[float],
     max_iterations: int = 100,
     tolerance: float = 1e-8,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> RegressionResult:
     """
     Binary logistic regression via deterministic Newton-Raphson.
@@ -383,9 +381,7 @@ def logistic_regression(
         "converged": converged,
         "iterations": iterations,
     }
-    prov = _provenance(
-        "logistic_regression", LOGISTIC_VERSION, params, dataset_id, dataset_version, dataset_hash
-    )
+    prov = _provenance("logistic_regression", LOGISTIC_VERSION, params, dataset_id, dataset_version, dataset_hash)
     return RegressionResult(
         coefficients=beta,
         r_squared=r2,
@@ -406,11 +402,11 @@ def logistic_regression(
 
 
 def univariate_ols(
-    x: List[float],
-    y: List[float],
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    x: list[float],
+    y: list[float],
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> RegressionResult:
     """
     Single-variable OLS, delegating to the canonical Statistics owner.

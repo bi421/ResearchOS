@@ -9,10 +9,10 @@ All validation rules are deterministic and version-controlled.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 # Validation rule definitions
-VALIDATION_RULES: Dict[str, Dict[str, Any]] = {
+VALIDATION_RULES: dict[str, dict[str, Any]] = {
     "observation": {
         "completeness": "Value must not be None",
         "timeliness": "Timestamp must be in the past",
@@ -81,14 +81,14 @@ VALIDATION_RULES: Dict[str, Dict[str, Any]] = {
 }
 
 
-def validate_observation(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_observation(data: dict[str, Any]) -> tuple[bool, list[str]]:
     """
     Validate an observation against the observation validation rules.
 
     Returns:
         Tuple of (is_valid, list of error messages).
     """
-    errors: List[str] = []
+    errors: list[str] = []
 
     # Completeness check
     if data.get("value") is None:
@@ -114,9 +114,9 @@ def validate_observation(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
     return (len(errors) == 0, errors)
 
 
-def validate_evidence(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_evidence(data: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate an evidence object."""
-    errors: List[str] = []
+    errors: list[str] = []
 
     quality = data.get("quality", 0.0)
     if not (0.0 <= quality <= 1.0):
@@ -141,9 +141,9 @@ def validate_evidence(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
     return (len(errors) == 0, errors)
 
 
-def validate_hypothesis(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_hypothesis(data: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate a hypothesis object."""
-    errors: List[str] = []
+    errors: list[str] = []
 
     htype = data.get("type", "")
     if htype not in ("Primary", "Alternative", "Null", "Tail"):
@@ -164,9 +164,9 @@ def validate_hypothesis(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
     return (len(errors) == 0, errors)
 
 
-def validate_scenario(data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+def validate_scenario(data: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate a scenario object."""
-    errors: List[str] = []
+    errors: list[str] = []
 
     stype = data.get("type", "")
     if stype not in ("Base", "Bull", "Bear", "Tail"):

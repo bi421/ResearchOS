@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Tuple
+from typing import Any
 
 from .contracts import ModelContract, _freeze
 
@@ -38,7 +39,7 @@ class TrainingResult:
     dataset_hash: str
     n_samples: int
     n_features: int
-    predictions: Tuple[float, ...] = ()
+    predictions: tuple[float, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -84,7 +85,7 @@ class TrainingResult:
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "model": self.model.to_dict(),
@@ -97,7 +98,7 @@ class TrainingResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "TrainingResult":
+    def from_dict(cls, data: Mapping[str, Any]) -> TrainingResult:
         """Reconstruct a training result from a ``to_dict()`` mapping."""
         return cls(
             model=ModelContract.from_dict(data["model"]),

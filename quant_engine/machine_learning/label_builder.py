@@ -8,8 +8,6 @@ FeatureBuilder, model training, dataset construction, and the decision engine.
 
 from __future__ import annotations
 
-from typing import Dict
-
 from .label_contracts import LabelResult
 from .labels import (
     binary_label,
@@ -87,7 +85,7 @@ class LabelBuilder:
         take_profit: float = 0.02,
         stop_loss: float = 0.02,
         max_horizon: int = 10,
-    ) -> Dict[str, LabelResult]:
+    ) -> dict[str, LabelResult]:
         """Build every label type and return them keyed by name."""
         return {
             "future_return": self.build_future_return(horizon),

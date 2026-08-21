@@ -174,8 +174,7 @@ class RegimeClassifier:
 
         # Compute overall confidence
         overall_confidence = round(
-            (gi_confidence + liq_confidence + risk_confidence + mon_confidence + emp_confidence)
-            / 5,
+            (gi_confidence + liq_confidence + risk_confidence + mon_confidence + emp_confidence) / 5,
             2,
         )
 
@@ -189,9 +188,7 @@ class RegimeClassifier:
 
         # Build evidence
         evidence = ClassificationEvidence(
-            matching_rule_id="GI-" + gi_regime.upper()[:3]
-            if gi_regime != "disinflation"
-            else "GI-005",
+            matching_rule_id="GI-" + gi_regime.upper()[:3] if gi_regime != "disinflation" else "GI-005",
             matching_rule_version=RULES_VERSION,
             signal_evidence={
                 "inflation": assessment.inflation_signal.signal,

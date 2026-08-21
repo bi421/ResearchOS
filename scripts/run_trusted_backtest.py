@@ -1,8 +1,10 @@
-import sys
-import time
-import pandas as pd
 import glob
 import json
+import sys
+import time
+
+import pandas as pd
+
 from cpp_quant import CppQuant
 
 print("=" * 70)

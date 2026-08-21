@@ -81,9 +81,7 @@ class TestFundamentalAllExports:
         from researchos.quant_engine import fundamental
 
         for name in fundamental.__all__:
-            assert hasattr(fundamental, name), (
-                f"fundamental.__all__ references missing symbol {name!r}"
-            )
+            assert hasattr(fundamental, name), f"fundamental.__all__ references missing symbol {name!r}"
 
     def test_commodity_ratio_not_exported(self):
         from researchos.quant_engine import fundamental

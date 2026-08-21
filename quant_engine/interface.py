@@ -32,7 +32,7 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 from researchos.quant_engine.models import (
     CalculationVersion,
@@ -65,7 +65,7 @@ class QuantComputationInterface(ABC):
         """
         return type(self).__name__
 
-    def capabilities(self) -> "BackendCapabilities":
+    def capabilities(self) -> BackendCapabilities:
         """Return the backend's advertised certification capabilities.
 
         The default declaration advertises the full interface operation set
@@ -79,10 +79,10 @@ class QuantComputationInterface(ABC):
     @abstractmethod
     def calculate_returns(
         self,
-        prices: List[float],
+        prices: list[float],
         return_type: str = "percentage",
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         """
         Calculate returns from a price series.
 
@@ -103,7 +103,7 @@ class QuantComputationInterface(ABC):
     @abstractmethod
     def calculate_volatility(
         self,
-        returns: List[float],
+        returns: list[float],
         method: str = "standard_deviation",
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
     ) -> float:
@@ -126,9 +126,9 @@ class QuantComputationInterface(ABC):
     @abstractmethod
     def calculate_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate drawdown metrics from an equity curve.
 
@@ -151,9 +151,9 @@ class QuantComputationInterface(ABC):
     @abstractmethod
     def calculate_statistics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate statistical summaries of a return series.
 
@@ -209,11 +209,11 @@ class QuantComputationInterface(ABC):
     @abstractmethod
     def calculate_metrics(
         self,
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Calculate a comprehensive set of performance metrics.
 
@@ -234,9 +234,9 @@ class QuantComputationInterface(ABC):
     @abstractmethod
     def calculate_performance_analytics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calculate research performance analytics from a return series.
 

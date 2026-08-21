@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 import random
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 from researchos.quant_engine.probability.contracts import (
     ConfidenceInterval,
@@ -76,9 +76,7 @@ def log_normal_pdf(x: float, mu: float = 0.0, sigma: float = 1.0) -> float:
         return 0.0 if x <= 0 else 0.0
     if x <= 0:
         return 0.0
-    return math.exp(-0.5 * ((math.log(x) - mu) / sigma) ** 2) / (
-        x * sigma * math.sqrt(2.0 * math.pi)
-    )
+    return math.exp(-0.5 * ((math.log(x) - mu) / sigma) ** 2) / (x * sigma * math.sqrt(2.0 * math.pi))
 
 
 def empirical_cdf(samples: Sequence[float], x: float) -> float:
@@ -143,7 +141,7 @@ def fit_student_t(samples: Sequence[float], df: float = 5.0) -> DistributionFit:
 def kernel_density_estimate(
     samples: Sequence[float],
     x: float,
-    bandwidth: Optional[float] = None,
+    bandwidth: float | None = None,
 ) -> float:
     n = len(samples)
     if n == 0:
@@ -352,7 +350,7 @@ def monte_carlo_return_paths(
 
 
 def _monte_carlo_result(
-    samples: List[float],
+    samples: list[float],
     seed: int,
     num_samples: int,
 ) -> MonteCarloResult:
@@ -378,11 +376,11 @@ def probability_calibration(
     predicted: Sequence[float],
     actual: Sequence[int],
     num_bins: int = 10,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Simple reliability/calibration table (research only)."""
     if len(predicted) != len(actual) or len(predicted) == 0:
         raise ValueError("predicted and actual must be equal-length, non-empty")
-    bins: Dict[int, Dict[str, float]] = {}
+    bins: dict[int, dict[str, float]] = {}
     for p, a in zip(predicted, actual):
         idx = min(num_bins - 1, int(p * num_bins))
         bins.setdefault(idx, {"count": 0, "sum_pred": 0.0, "sum_actual": 0.0})

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class DistributionType(str, Enum):
@@ -32,11 +32,11 @@ class DistributionFit:
     """Parameters of a fitted distribution."""
 
     distribution: DistributionType
-    parameters: Dict[str, float] = field(default_factory=dict)
+    parameters: dict[str, float] = field(default_factory=dict)
     log_likelihood: float = 0.0
     sample_size: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "distribution": self.distribution.value,
             "parameters": dict(sorted(self.parameters.items())),
@@ -57,7 +57,7 @@ class ConfidenceInterval:
     def contains(self, value: float) -> bool:
         return self.lower <= value <= self.upper
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "lower": self.lower,
             "upper": self.upper,
@@ -81,7 +81,7 @@ class HypothesisTestResult:
     def is_significant(self) -> bool:
         return self.p_value < self.significance_level
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "statistic": self.statistic,
             "p_value": self.p_value,
@@ -97,14 +97,14 @@ class HypothesisTestResult:
 class MonteCarloResult:
     """Result of a Monte Carlo simulation."""
 
-    samples: List[float] = field(default_factory=list)
+    samples: list[float] = field(default_factory=list)
     mean: float = 0.0
     std: float = 0.0
-    percentiles: Dict[float, float] = field(default_factory=dict)
+    percentiles: dict[float, float] = field(default_factory=dict)
     seed: int = 0
     num_samples: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "mean": self.mean,
             "std": self.std,

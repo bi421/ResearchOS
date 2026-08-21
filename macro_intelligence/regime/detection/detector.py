@@ -144,9 +144,7 @@ class RegimeDetector:
         overall_confidence = round(overall_confidence, 2)
 
         # Determine dominant regime from risk and growth signals
-        dominant_regime = self._determine_dominant_regime(
-            growth.signal, risk.signal, inflation.signal
-        )
+        dominant_regime = self._determine_dominant_regime(growth.signal, risk.signal, inflation.signal)
 
         # Generate regime description
         regime_description = self._generate_regime_description(

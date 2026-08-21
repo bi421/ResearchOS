@@ -1,3 +1,6 @@
+import pandas as pd
+
+from researchos.data_engine.repository import SqliteDatasetRepository
 from researchos.decision_engine.contracts import (
     EvidenceItem,
     EvidenceSource,
@@ -6,8 +9,6 @@ from researchos.decision_engine.contracts import (
 )
 from researchos.decision_engine.score import compute_evidence_score
 from researchos.quant_engine.backend import PythonQuantBackend
-from researchos.data_engine.repository import SqliteDatasetRepository
-import pandas as pd
 
 
 def get_metrics(symbol):
@@ -19,9 +20,7 @@ def get_metrics(symbol):
     returns = df["close"].pct_change().dropna().tolist()
     equity = (1 + pd.Series(returns)).cumprod() * 10000.0
     backend = PythonQuantBackend()
-    return backend.calculate_metrics(
-        returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0
-    )
+    return backend.calculate_metrics(returns=returns, equity_curve=equity.tolist(), risk_free_rate=0.0)
 
 
 xau = get_metrics("XAUUSD")

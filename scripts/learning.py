@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import json
 import math
-from typing import Dict, List, Tuple, Any
+from typing import Any
 
 from researchos.quant_engine.probability.statistics import (
     probability_calibration,
@@ -52,7 +52,7 @@ class BayesianLearner:
         self._calibration_type: str | None = None
         self._is_calibrated = False
 
-        self._history: List[Tuple[float, int]] = []
+        self._history: list[tuple[float, int]] = []
 
     # ------------------------------------------------------------------
     # Core learning
@@ -60,9 +60,9 @@ class BayesianLearner:
 
     def learn(
         self,
-        scores: List[float],
-        outcomes: List[int],
-    ) -> Dict[str, float]:
+        scores: list[float],
+        outcomes: list[int],
+    ) -> dict[str, float]:
         """
         Learn from evidence scores and binary outcomes.
 
@@ -84,9 +84,7 @@ class BayesianLearner:
             raise ValueError("outcomes must contain only 0 or 1")
 
         # Store observations.
-        self._history.extend(
-            (float(score), int(outcome)) for score, outcome in zip(scores, outcomes)
-        )
+        self._history.extend((float(score), int(outcome)) for score, outcome in zip(scores, outcomes))
 
         # Update Bayesian posterior.
         wins = sum(outcomes)
@@ -116,8 +114,8 @@ class BayesianLearner:
 
     def update(
         self,
-        outcomes: List[float],
-    ) -> Dict[str, float]:
+        outcomes: list[float],
+    ) -> dict[str, float]:
         """
         Update Beta posterior from signed outcomes.
 
@@ -183,8 +181,8 @@ class BayesianLearner:
 
     def calibrate(
         self,
-        scores: List[float],
-        outcomes: List[float],
+        scores: list[float],
+        outcomes: list[float],
         method: str = "isotonic",
     ) -> None:
         """
@@ -258,9 +256,9 @@ class BayesianLearner:
 
     def calibration_metrics(
         self,
-        scores: List[float],
-        outcomes: List[int],
-    ) -> Dict[str, Any]:
+        scores: list[float],
+        outcomes: list[int],
+    ) -> dict[str, Any]:
         """
         Evaluate probability calibration.
 
@@ -282,13 +280,12 @@ class BayesianLearner:
 
         predictions = [self.predict(score) for score in scores]
 
-        brier_score = sum(
-            (prediction - outcome) ** 2 for prediction, outcome in zip(predictions, outcomes)
-        ) / len(outcomes)
+        brier_score = sum((prediction - outcome) ** 2 for prediction, outcome in zip(predictions, outcomes)) / len(
+            outcomes
+        )
 
         accuracy = sum(
-            (prediction >= 0.5) == bool(outcome)
-            for prediction, outcome in zip(predictions, outcomes)
+            (prediction >= 0.5) == bool(outcome) for prediction, outcome in zip(predictions, outcomes)
         ) / len(outcomes)
 
         calibration = probability_calibration(
@@ -321,7 +318,7 @@ class BayesianLearner:
     def get_credible_interval(
         self,
         confidence: float = 0.95,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Return Bayesian credible interval for posterior win rate.
         """
@@ -352,7 +349,7 @@ class BayesianLearner:
     # State / history
     # ------------------------------------------------------------------
 
-    def get_history(self) -> List[Tuple[float, int]]:
+    def get_history(self) -> list[tuple[float, int]]:
         return list(self._history)
 
     @property
@@ -374,7 +371,7 @@ class BayesianLearner:
         """
         Save learner state as JSON.
         """
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "version": "1.0",
             "alpha": self.alpha,
             "beta": self.beta,
@@ -383,11 +380,7 @@ class BayesianLearner:
             "history": [[score, outcome] for score, outcome in self._history],
         }
 
-        if (
-            self._is_calibrated
-            and self._calibration_type == "platt"
-            and self._calibration_model is not None
-        ):
+        if self._is_calibrated and self._calibration_type == "platt" and self._calibration_model is not None:
             slope, intercept = self._calibration_model
 
             data["calibration_model"] = {
@@ -416,7 +409,6 @@ class BayesianLearner:
         """
         with open(
             filepath,
-            "r",
             encoding="utf-8",
         ) as file:
             data = json.load(file)

@@ -9,9 +9,10 @@ leakage.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Mapping, Tuple
+from typing import Any
 
 VALIDATION_VERSION = "1.0.0"
 
@@ -43,8 +44,8 @@ class FoldResult:
     """
 
     fold_id: int
-    train_range: Tuple[int, int]
-    validation_range: Tuple[int, int]
+    train_range: tuple[int, int]
+    validation_range: tuple[int, int]
     metrics: Mapping[str, float]
     sample_count: int
 
@@ -94,7 +95,7 @@ class ValidationResult:
     validation_size: int
     test_size: int
     fold_count: int
-    fold_results: Tuple[FoldResult, ...]
+    fold_results: tuple[FoldResult, ...]
     metrics: Mapping[str, float]
     metadata: Mapping[str, Any] = field(default_factory=dict)
 

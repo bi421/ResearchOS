@@ -1,13 +1,15 @@
-import time
-import pandas as pd
-import numpy as np
 import glob
 import sys
+import time
+
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, ".")
+from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-from joblib import Parallel, delayed
+
 from researchos.quant_engine.vectorized_backtest import vectorized_backtest
 
 timings = {}
@@ -16,19 +18,12 @@ timings = {}
 t0 = time.time()
 files = glob.glob("data/raw/histdata/xauusd/DAT_ASCII_XAUUSD_M1_*.csv")
 df = pd.concat(
-    [
-        pd.read_csv(
-            f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]
-        )
-        for f in files
-    ],
+    [pd.read_csv(f, sep=";", header=None, names=["datetime", "open", "high", "low", "close", "volume"]) for f in files],
     ignore_index=True,
 )
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H%M%S")
 df = df.set_index("datetime")
-df_h = (
-    df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
-)
+df_h = df.resample("4h").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
 timings["data_loading"] = time.time() - t0
 
 # 2. Train/val/test split

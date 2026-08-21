@@ -80,9 +80,7 @@ class TransitionSignal:
             "strength": self.strength,
             "direction": self.direction,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -160,9 +158,7 @@ class RegimeTransition:
             "confidence": self.confidence,
             "signals": [s.compute_hash() for s in self.signals],
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -215,9 +211,7 @@ class TransitionHistoryEntry:
             "transition_type": self.transition_type,
             "confidence": self.confidence,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -243,9 +237,7 @@ class TransitionProbabilityMatrix:
             observation_count=data.get("observation_count", 0),
             transition_counts=data.get("transition_counts", {}),
             algorithm_version=data.get("algorithm_version", ALGORITHM_VERSION),
-            last_updated=datetime.fromisoformat(
-                data.get("last_updated", datetime.now(timezone.utc).isoformat())
-            ),
+            last_updated=datetime.fromisoformat(data.get("last_updated", datetime.now(timezone.utc).isoformat())),
             transition_probs=data.get("transition_probs", {}),
         )
 
@@ -258,9 +250,7 @@ class TransitionProbabilityMatrix:
             "transition_probs": self.transition_probs,
             "observation_count": self.observation_count,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -302,9 +292,7 @@ class RegimePersistence:
             "persistence_periods": self.persistence_periods,
             "continuation_probability": self.continuation_probability,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -371,9 +359,7 @@ class EarlyWarningSignal:
             "confidence": self.confidence,
             "horizon_periods": self.horizon_periods,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -413,13 +399,9 @@ class TransitionAnalysisResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TransitionAnalysisResult:
-        transition = (
-            RegimeTransition.from_dict(data["transition"]) if data.get("transition") else None
-        )
+        transition = RegimeTransition.from_dict(data["transition"]) if data.get("transition") else None
         early_warnings = [EarlyWarningSignal.from_dict(w) for w in data.get("early_warnings", [])]
-        persistence = (
-            RegimePersistence.from_dict(data["persistence"]) if data.get("persistence") else None
-        )
+        persistence = RegimePersistence.from_dict(data["persistence"]) if data.get("persistence") else None
         prob_matrix = (
             TransitionProbabilityMatrix.from_dict(data["probability_matrix"])
             if data.get("probability_matrix")
@@ -462,6 +444,4 @@ class TransitionAnalysisResult:
             "transition_detected": self.transition_detected,
             "transition_id": self.transition.transition_id if self.transition else None,
         }
-        return hashlib.sha256(
-            json.dumps(h, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(h, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

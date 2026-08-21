@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MacroIndicator(str, Enum):
@@ -68,7 +68,7 @@ class MacroDataPoint:
     def mom_change(self) -> float:
         return self.value - self.previous
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "indicator": self.indicator.value,
             "value": self.value,
@@ -91,12 +91,12 @@ class EconomicCalendarEvent:
     country: str = "US"
     time: str = ""
     severity: EventSeverity = EventSeverity.MEDIUM
-    indicator: Optional[MacroIndicator] = None
+    indicator: MacroIndicator | None = None
     forecast: float = 0.0
     previous: float = 0.0
     currency: str = "USD"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "event_id": self.event_id,
             "name": self.name,
@@ -114,10 +114,10 @@ class EconomicCalendarEvent:
 class CommodityBasket:
     """Commodity price series for cross-asset research."""
 
-    oil: List[float] = field(default_factory=list)
-    silver: List[float] = field(default_factory=list)
-    copper: List[float] = field(default_factory=list)
-    gold: List[float] = field(default_factory=list)
+    oil: list[float] = field(default_factory=list)
+    silver: list[float] = field(default_factory=list)
+    copper: list[float] = field(default_factory=list)
+    gold: list[float] = field(default_factory=list)
     name: str = "global_commodities"
 
     def validate(self) -> None:
@@ -138,7 +138,7 @@ class NewsEvent:
     normalized_text: str = ""
     severity: EventSeverity = EventSeverity.MEDIUM
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "headline": self.headline,
             "source": self.source,
@@ -154,16 +154,14 @@ class MacroFactorModel:
     """A fitted deterministic macro factor model."""
 
     factor_name: str = ""
-    coefficients: Dict[str, float] = field(default_factory=dict)
+    coefficients: dict[str, float] = field(default_factory=dict)
     intercept: float = 0.0
     r_squared: float = 0.0
 
-    def predict(self, features: Dict[str, float]) -> float:
-        return self.intercept + sum(
-            self.coefficients[k] * features.get(k, 0.0) for k in self.coefficients
-        )
+    def predict(self, features: dict[str, float]) -> float:
+        return self.intercept + sum(self.coefficients[k] * features.get(k, 0.0) for k in self.coefficients)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "factor_name": self.factor_name,
             "coefficients": dict(sorted(self.coefficients.items())),

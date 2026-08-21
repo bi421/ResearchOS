@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 
 class StationarityResult(str, Enum):
@@ -38,13 +38,13 @@ class StationarityTestResult:
     """Result of a unit-root / stationarity test."""
 
     statistic: float
-    critical_values: Dict[str, float] = field(default_factory=dict)
+    critical_values: dict[str, float] = field(default_factory=dict)
     p_value: float = 0.0
     is_stationary: bool = False
     test_name: str = ""
     conclusion: StationarityResult = StationarityResult.INSUFFICIENT_DATA
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "statistic": self.statistic,
             "critical_values": self.critical_values,
@@ -60,16 +60,16 @@ class FittedModel:
     """A fitted time-series model."""
 
     family: ModelFamily
-    coefficients: Dict[str, float] = field(default_factory=dict)
-    residuals: List[float] = field(default_factory=list)
+    coefficients: dict[str, float] = field(default_factory=dict)
+    residuals: list[float] = field(default_factory=list)
     log_likelihood: float = 0.0
     aic: float = 0.0
     bic: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def predict(self, history: List[float], steps: int = 1) -> List[float]:
+    def predict(self, history: list[float], steps: int = 1) -> list[float]:
         """Deterministic recursive forecast."""
-        out: List[float] = []
+        out: list[float] = []
         work = list(history)
         for _ in range(steps):
             pred = 0.0
@@ -87,7 +87,7 @@ class FittedModel:
             work.append(pred)
         return out
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "family": self.family.value,
             "coefficients": dict(sorted(self.coefficients.items())),
@@ -107,11 +107,11 @@ class VolatilityModelResult:
     alpha: float = 0.0
     beta: float = 0.0
     gamma: float = 0.0
-    conditional_volatility: List[float] = field(default_factory=list)
+    conditional_volatility: list[float] = field(default_factory=list)
     log_likelihood: float = 0.0
-    forecast_volatility: List[float] = field(default_factory=list)
+    forecast_volatility: list[float] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "family": self.family.value,
             "omega": self.omega,
@@ -127,13 +127,13 @@ class VolatilityModelResult:
 class AcfResult:
     """Autocorrelation, partial autocorrelation, and Ljung-Box statistics."""
 
-    autocorrelations: List[float] = field(default_factory=list)
-    partial_autocorrelations: List[float] = field(default_factory=list)
+    autocorrelations: list[float] = field(default_factory=list)
+    partial_autocorrelations: list[float] = field(default_factory=list)
     ljung_box_q: float = 0.0
     ljung_box_p: float = 0.0
     max_lag: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "autocorrelations": self.autocorrelations,
             "partial_autocorrelations": self.partial_autocorrelations,
@@ -152,9 +152,9 @@ class CointegrationTestResult:
     adf_statistic: float = 0.0
     p_value: float = 0.0
     is_cointegrated: bool = False
-    residuals: List[float] = field(default_factory=list)
+    residuals: list[float] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "alpha": self.alpha,
             "beta": self.beta,
@@ -169,13 +169,13 @@ class CointegrationTestResult:
 class JohansenTestResult:
     """Result of Johansen vector cointegration test."""
 
-    trace_statistics: List[float] = field(default_factory=list)
-    eigenvalues: List[float] = field(default_factory=list)
-    critical_values_95: List[float] = field(default_factory=list)
+    trace_statistics: list[float] = field(default_factory=list)
+    eigenvalues: list[float] = field(default_factory=list)
+    critical_values_95: list[float] = field(default_factory=list)
     cointegration_rank: int = 0
     is_cointegrated: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "trace_statistics": self.trace_statistics,
             "eigenvalues": self.eigenvalues,

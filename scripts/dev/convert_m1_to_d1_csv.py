@@ -24,7 +24,5 @@ d1 = (
     .drop_nulls()
 )
 print(f"D1 bars from M1: {d1.height} - Required: 2000 - Enough? {d1.height >= 2000}")
-d1.select([pl.col("ts_utc").alias("time"), "open", "high", "low", "close", "volume"]).write_csv(
-    OUT_CSV
-)
+d1.select([pl.col("ts_utc").alias("time"), "open", "high", "low", "close", "volume"]).write_csv(OUT_CSV)
 print(f"Saved to {OUT_CSV}")

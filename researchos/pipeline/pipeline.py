@@ -20,7 +20,7 @@ The pipeline NEVER:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.objects.cognitive import CognitiveAssessment
 from researchos.objects.confidence import Confidence, ConfidenceReport
@@ -69,7 +69,7 @@ class ResearchPipeline:
         time_horizon: str = "Daily",
         asset: str = "",
         methodology_version: str = "1.0.0",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Research:
         """
         Start a new research cycle.
@@ -119,9 +119,9 @@ class ResearchPipeline:
         frequency: str = "",
         geography: str = "",
         asset_class: str = "",
-        quality_flags: Optional[List[str]] = None,
+        quality_flags: list[str] | None = None,
         retrieval_method: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Observation:
         """
         Create an observation and link it to a research cycle.
@@ -174,11 +174,11 @@ class ResearchPipeline:
         quality_factor: float = 1.0,
         uncertainty: float = 0.0,
         tier: str = "Primary",
-        observation_timestamp: Optional[datetime] = None,
-        dependencies: Optional[List[str]] = None,
-        conflicts: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        research_id: Optional[str] = None,
+        observation_timestamp: datetime | None = None,
+        dependencies: list[str] | None = None,
+        conflicts: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        research_id: str | None = None,
     ) -> Evidence:
         """
         Create evidence from an observation, linked to a hypothesis.
@@ -238,16 +238,16 @@ class ResearchPipeline:
 
     def create_interpretation(
         self,
-        evidence_ids: List[str],
+        evidence_ids: list[str],
         rule_applied: str,
         context: str,
         conclusion: str,
         confidence: float = 0.0,
-        supporting_evidence: Optional[List[str]] = None,
-        contradicting_evidence: Optional[List[str]] = None,
-        alternatives: Optional[List[str]] = None,
-        unknowns: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        supporting_evidence: list[str] | None = None,
+        contradicting_evidence: list[str] | None = None,
+        alternatives: list[str] | None = None,
+        unknowns: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> Interpretation:
         """
         Create an interpretation from evidence.
@@ -286,15 +286,15 @@ class ResearchPipeline:
         research_id: str,
         thesis: str,
         primary_driver: str = "",
-        supporting_drivers: Optional[List[str]] = None,
-        interpretations: Optional[List[str]] = None,
+        supporting_drivers: list[str] | None = None,
+        interpretations: list[str] | None = None,
         evidence_strength: float = 0.0,
         coherence_score: float = 0.0,
         plausibility_score: float = 0.0,
-        invalidation_conditions: Optional[List[str]] = None,
-        catalysts: Optional[List[str]] = None,
+        invalidation_conditions: list[str] | None = None,
+        catalysts: list[str] | None = None,
         confidence: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Narrative:
         """
         Create a narrative linking interpretations together.
@@ -340,16 +340,16 @@ class ResearchPipeline:
         type: str,
         statement: str,
         narrative_id: str = "",
-        evidence_ids: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
         evidence_strength: float = 0.0,
         coherence: float = 0.0,
         plausibility: float = 0.0,
         falsifiability: float = 0.0,
         confidence: float = 0.0,
-        valid_if: Optional[List[str]] = None,
-        invalid_if: Optional[List[str]] = None,
-        monitoring_conditions: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        valid_if: list[str] | None = None,
+        invalid_if: list[str] | None = None,
+        monitoring_conditions: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> Hypothesis:
         """
         Create a hypothesis within a research cycle.
@@ -412,21 +412,21 @@ class ResearchPipeline:
         label: str = "Scenario A",
         thesis: str = "",
         probability: float = 0.0,
-        calibrated_probability: Optional[float] = None,
-        confidence_interval: Optional[dict] = None,
+        calibrated_probability: float | None = None,
+        confidence_interval: dict | None = None,
         expected_return: float = 0.0,
-        return_range: Optional[dict] = None,
+        return_range: dict | None = None,
         volatility: float = 0.0,
         regime: str = "",
-        assumptions: Optional[List[str]] = None,
-        dependencies: Optional[List[str]] = None,
-        valid_if: Optional[List[str]] = None,
-        invalid_if: Optional[List[str]] = None,
-        supporting_evidence: Optional[List[str]] = None,
-        contradicting_evidence: Optional[List[str]] = None,
-        milestones: Optional[List[str]] = None,
+        assumptions: list[str] | None = None,
+        dependencies: list[str] | None = None,
+        valid_if: list[str] | None = None,
+        invalid_if: list[str] | None = None,
+        supporting_evidence: list[str] | None = None,
+        contradicting_evidence: list[str] | None = None,
+        milestones: list[str] | None = None,
         construction_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Scenario:
         """
         Create a scenario from a hypothesis.
@@ -495,10 +495,10 @@ class ResearchPipeline:
         historical_precedent: float = 0.0,
         model_uncertainty: float = 0.0,
         recency: float = 0.0,
-        penalties: Optional[List[str]] = None,
-        boosters: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        research_id: Optional[str] = None,
+        penalties: list[str] | None = None,
+        boosters: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        research_id: str | None = None,
     ) -> Confidence:
         """
         Register a confidence estimate for a target object.
@@ -554,8 +554,8 @@ class ResearchPipeline:
         research_id: str,
         type: str,
         description: str,
-        sides: Optional[List[dict]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        sides: list[dict] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> Contradiction:
         """
         Record a contradiction within a research cycle.
@@ -616,13 +616,13 @@ class ResearchPipeline:
         scenarios: str = "",
         confidence: str = "",
         contradictions: str = "",
-        risk_factors: Optional[List[str]] = None,
-        invalidation_conditions: Optional[List[str]] = None,
-        known_unknowns: Optional[List[str]] = None,
-        open_questions: Optional[List[str]] = None,
+        risk_factors: list[str] | None = None,
+        invalidation_conditions: list[str] | None = None,
+        known_unknowns: list[str] | None = None,
+        open_questions: list[str] | None = None,
         methodology_version: str = "1.0.0",
         format: str = "Markdown",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> ResearchReport:
         """
         Generate a research report from completed research.
@@ -680,10 +680,10 @@ class ResearchPipeline:
         time_horizon: str = "",
         overall_status: str = "In Progress",
         quality_score: float = 0.0,
-        scenario_results: Optional[List[Dict[str, Any]]] = None,
-        target_results: Optional[List[Dict[str, Any]]] = None,
+        scenario_results: list[dict[str, Any]] | None = None,
+        target_results: list[dict[str, Any]] | None = None,
         validation_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Validation:
         """
         Validate research outputs against actual outcomes.
@@ -725,12 +725,12 @@ class ResearchPipeline:
         self,
         validation_id: str,
         research_id: str,
-        failures: Optional[List[Dict[str, Any]]] = None,
-        root_causes: Optional[List[str]] = None,
-        severity_scores: Optional[List[Dict[str, Any]]] = None,
-        improvement_areas: Optional[List[str]] = None,
+        failures: list[dict[str, Any]] | None = None,
+        root_causes: list[str] | None = None,
+        severity_scores: list[dict[str, Any]] | None = None,
+        improvement_areas: list[str] | None = None,
         failure_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> FailureAnalysis:
         """
         Analyze failures identified during validation.
@@ -775,9 +775,9 @@ class ResearchPipeline:
         object: str,
         confidence: float = 0.0,
         evidence_count: int = 0,
-        source_references: Optional[List[str]] = None,
+        source_references: list[str] | None = None,
         knowledge_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Knowledge:
         """
         Record a knowledge item extracted from research validation.
@@ -818,10 +818,10 @@ class ResearchPipeline:
         recommendation: str = "",
         severity: float = 0.0,
         frequency: int = 0,
-        affected_articles: Optional[List[str]] = None,
-        supporting_evidence: Optional[List[str]] = None,
+        affected_articles: list[str] | None = None,
+        supporting_evidence: list[str] | None = None,
         lesson_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> Lesson:
         """
         Record a lesson learned from validation.
@@ -862,15 +862,15 @@ class ResearchPipeline:
         research_id: str = "",
         knowledge_score: float = 0.0,
         reasoning_score: float = 0.0,
-        bias_profile: Optional[List[str]] = None,
+        bias_profile: list[str] | None = None,
         discipline_score: float = 0.0,
         reflection_score: float = 0.0,
         learning_progress: float = 0.0,
         overall_score: float = 0.0,
-        feedback: Optional[List[str]] = None,
-        recommendations: Optional[List[str]] = None,
+        feedback: list[str] | None = None,
+        recommendations: list[str] | None = None,
         assessment_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> CognitiveAssessment:
         """
         Create a cognitive assessment for a trader.
@@ -915,14 +915,14 @@ class ResearchPipeline:
     def record_reasoning_chain(
         self,
         research_id: str,
-        steps: Optional[List[Dict[str, Any]]] = None,
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
-        rules_applied: Optional[List[str]] = None,
-        evidence_used: Optional[List[str]] = None,
+        steps: list[dict[str, Any]] | None = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
+        rules_applied: list[str] | None = None,
+        evidence_used: list[str] | None = None,
         confidence: float = 0.0,
         trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> ReasoningChain:
         """
         Record a reasoning chain for auditability.

@@ -2,11 +2,12 @@
 TRUE PRODUCTION v3: Векторчилсон өгөгдөл + C++ backend + Sweep
 """
 
-import sys
-import time
-import pandas as pd
 import glob
 import json
+import sys
+import time
+
+import pandas as pd
 
 # C++ модуль импорт
 try:
@@ -76,9 +77,7 @@ for label, rule in timeframes.items():
 
     # Python-д агрегацлах (хурдан)
     df_resampled = (
-        df.resample(rule)
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
+        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     )
 
     print(f"   ✅ {len(df_resampled):,} candle")

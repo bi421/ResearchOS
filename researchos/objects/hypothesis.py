@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, List, Any
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -23,13 +23,13 @@ class Hypothesis(BaseObject):
         coherence: float = 0.0,
         plausibility: float = 0.0,
         falsifiability: float = 0.0,
-        narrative_id: Optional[str] = None,
-        evidence_ids: Optional[List[str]] = None,
-        invalid_if: Optional[Any] = None,
+        narrative_id: str | None = None,
+        evidence_ids: list[str] | None = None,
+        invalid_if: Any | None = None,
         status: str = "ACTIVE",
-        rank_score: Optional[float] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        rank_score: float | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
         **kwargs,
     ):
         for name, value in [
@@ -42,10 +42,7 @@ class Hypothesis(BaseObject):
                 raise ValueError(f"{name} must be between 0.0 and 1.0, got {value}")
 
         if id is None:
-            seed = (
-                f"Hypothesis|{research_id}|{type}|{statement}|"
-                f"{narrative_id}|{sorted(evidence_ids or [])}"
-            )
+            seed = f"Hypothesis|{research_id}|{type}|{statement}|{narrative_id}|{sorted(evidence_ids or [])}"
             id = generate_id(seed)
 
         super().__init__(
@@ -131,7 +128,7 @@ class Hypothesis(BaseObject):
         self._hash = None
         return self.rank_score
 
-    def invalidate(self, reason: Optional[str] = None) -> None:
+    def invalidate(self, reason: str | None = None) -> None:
         self.status = "Invalidated"
 
         if reason is not None:
@@ -170,7 +167,7 @@ class Hypothesis(BaseObject):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Hypothesis":
+    def from_dict(cls, data: dict) -> Hypothesis:
         obj = super().from_dict(data)
 
         obj.research_id = data["research_id"]
@@ -209,10 +206,10 @@ class HypothesisSet(BaseObject):
     def __init__(
         self,
         research_id: str,
-        hypotheses: Optional[List[Hypothesis]] = None,
-        hypothesis_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        hypotheses: list[Hypothesis] | None = None,
+        hypothesis_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             id = generate_id(f"HypothesisSet|{research_id}")
@@ -225,9 +222,7 @@ class HypothesisSet(BaseObject):
         self.research_id = research_id
         self.hypotheses = list(hypotheses or [])
 
-        self.hypothesis_ids = list(
-            hypothesis_ids if hypothesis_ids is not None else [h.id for h in self.hypotheses]
-        )
+        self.hypothesis_ids = list(hypothesis_ids if hypothesis_ids is not None else [h.id for h in self.hypotheses])
 
     def add_hypothesis(
         self,
@@ -243,14 +238,14 @@ class HypothesisSet(BaseObject):
     def get_hypothesis(
         self,
         hypothesis_id: str,
-    ) -> Optional[Hypothesis]:
+    ) -> Hypothesis | None:
         for hypothesis in self.hypotheses:
             if hypothesis.id == hypothesis_id:
                 return hypothesis
 
         return None
 
-    def get_ranked(self) -> List[Hypothesis]:
+    def get_ranked(self) -> list[Hypothesis]:
         """
         Return hypotheses sorted deterministically.
 
@@ -305,7 +300,7 @@ class HypothesisSet(BaseObject):
     def from_dict(
         cls,
         data: dict,
-    ) -> "HypothesisSet":
+    ) -> HypothesisSet:
         obj = super().from_dict(data)
 
         obj.research_id = data["research_id"]

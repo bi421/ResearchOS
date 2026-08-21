@@ -7,18 +7,14 @@ Numeric codes are stable and shared with C++ (``BridgeErrorCode`` in
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Type
-
 
 class BridgeError(RuntimeError):
     """Base error for all bridge failures."""
 
-    code: Optional[int] = None
-    name: Optional[str] = None
+    code: int | None = None
+    name: str | None = None
 
-    def __init__(
-        self, message: str, code: Optional[int] = None, name: Optional[str] = None
-    ) -> None:
+    def __init__(self, message: str, code: int | None = None, name: str | None = None) -> None:
         if code is not None:
             self.code = code
         if name is not None:
@@ -81,7 +77,7 @@ class InternalError(BridgeError):
     name = "InternalError"
 
 
-_ERROR_CLASSES: Dict[int, Type[BridgeError]] = {
+_ERROR_CLASSES: dict[int, type[BridgeError]] = {
     cls.code: cls
     for cls in (
         InvalidArgumentError,
@@ -99,7 +95,7 @@ _ERROR_CLASSES: Dict[int, Type[BridgeError]] = {
 }
 
 
-def error_from_code(code: int, message: str, name: Optional[str] = None) -> BridgeError:
+def error_from_code(code: int, message: str, name: str | None = None) -> BridgeError:
     """Build the typed bridge error for a stable numeric code."""
     cls = _ERROR_CLASSES.get(code, BridgeError)
     return cls(message, code=code, name=name)

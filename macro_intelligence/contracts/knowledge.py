@@ -130,9 +130,7 @@ class KnowledgeObject:
     def from_dict(cls, data: dict[str, Any]) -> KnowledgeObject:
         """Deserialize from dictionary."""
         patterns = [Pattern.from_dict(p) for p in data.get("patterns", [])]
-        statistics = (
-            StatisticalAnalysis.from_dict(data["statistics"]) if data.get("statistics") else None
-        )
+        statistics = StatisticalAnalysis.from_dict(data["statistics"]) if data.get("statistics") else None
 
         return cls(
             knowledge_id=data["knowledge_id"],
@@ -144,9 +142,7 @@ class KnowledgeObject:
             statistics=statistics,
             confidence=data["confidence"],
             explanation=data["explanation"],
-            created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.now(timezone.utc).isoformat())
-            ),
+            created_at=datetime.fromisoformat(data.get("created_at", datetime.now(timezone.utc).isoformat())),
             generation_pipeline=data.get("generation_pipeline", "deterministic"),
         )
 

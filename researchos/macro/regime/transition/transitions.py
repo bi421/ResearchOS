@@ -62,9 +62,7 @@ def classify_transition_type(
     avg_strength = sum(signal_strengths) / len(signal_strengths)
     max(signal_strengths)
     min(signal_strengths)
-    strength_variance = sum((s - avg_strength) ** 2 for s in signal_strengths) / len(
-        signal_strengths
-    )
+    strength_variance = sum((s - avg_strength) ** 2 for s in signal_strengths) / len(signal_strengths)
 
     # STABLE: no significant signals
     if confidence < _CONFIDENCE_LOW and avg_strength < 0.3:
@@ -75,11 +73,7 @@ def classify_transition_type(
         return TransitionType.VOLATILE
 
     # REVERSAL: high confidence, high strength, short persistence
-    if (
-        confidence >= _CONFIDENCE_HIGH
-        and avg_strength >= 0.7
-        and persistence_periods < _PERSISTENCE_SHORT
-    ):
+    if confidence >= _CONFIDENCE_HIGH and avg_strength >= 0.7 and persistence_periods < _PERSISTENCE_SHORT:
         return TransitionType.REVERSAL
 
     # ACCELERATED_SHIFT: high confidence, moderate-high strength

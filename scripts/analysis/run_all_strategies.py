@@ -1,9 +1,10 @@
 import sys
 
 sys.path.append("cpp_quant/python")
-from researchos.engines.quant.cpp_engine import CppQuant
-import pandas as pd
 import glob
+
+import pandas as pd
+from researchos.engines.quant.cpp_engine import CppQuant
 
 # Өгөгдөл унших
 df = pd.concat(
@@ -23,11 +24,7 @@ df = pd.concat(
 ).sort_index()
 
 # 1D агрегац
-df_d = (
-    df.resample("1D")
-    .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-    .dropna()
-)
+df_d = df.resample("1D").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
 
 engine = CppQuant()
 engine.load_from_dataframe(df_d)

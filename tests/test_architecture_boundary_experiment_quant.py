@@ -37,7 +37,7 @@ import inspect
 import random
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from researchos.experiments.contracts import DatasetConfig, SimulationConfig
 from researchos.experiments.experiment import Experiment
@@ -85,10 +85,10 @@ def _executable_source(path: Path) -> str:
     return cleaned
 
 
-def _forbidden_import(path: Path, forbidden: List[str]) -> List[str]:
+def _forbidden_import(path: Path, forbidden: list[str]) -> list[str]:
     """Return forbidden import/from-import module names found in the file."""
     tree = ast.parse(path.read_text(encoding="utf-8"))
-    hits: List[str] = []
+    hits: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -101,7 +101,7 @@ def _forbidden_import(path: Path, forbidden: List[str]) -> List[str]:
     return sorted(set(hits))
 
 
-def _forbidden_tokens(source: str, tokens: List[str]) -> List[str]:
+def _forbidden_tokens(source: str, tokens: list[str]) -> list[str]:
     """Return forbidden identifier/attribute tokens present in executable source."""
     return [t for t in tokens if t in source]
 
@@ -145,14 +145,12 @@ class TestRunnerNoOhlcvKnowledge:
     def test_runner_has_no_price_extraction_helper(self):
         """_extract_prices and friends must not exist in the runner."""
         runner = BaseExperimentRunner()
-        forbidden = [
-            name for name in dir(runner) if "price" in name.lower() or "extract" in name.lower()
-        ]
+        forbidden = [name for name in dir(runner) if "price" in name.lower() or "extract" in name.lower()]
         assert forbidden == [], f"Price-extraction helpers found on runner: {forbidden}"
 
     def test_runner_forwards_raw_dataset_contract(self):
         """The runner must pass the dataset contract through unchanged."""
-        captured: Dict[str, Any] = {}
+        captured: dict[str, Any] = {}
 
         class RecordingBackend(PythonQuantBackend):
             def run_simulation(
@@ -255,9 +253,7 @@ class TestBackendDeterminism:
 
     def test_backend_deterministic_result_hash(self):
         backend = PythonQuantBackend()
-        request = SimulationRequest(
-            dataset_reference="det", parameters={"initial_capital": 100000.0}, seed=42
-        )
+        request = SimulationRequest(dataset_reference="det", parameters={"initial_capital": 100000.0}, seed=42)
         prices = _prices()
         r1: SimulationResult = backend.run_simulation(request, prices)
         r2: SimulationResult = backend.run_simulation(request, prices)
@@ -400,14 +396,14 @@ class TestExperimentResultProvenance:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> List[float]:
+def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> list[float]:
     """Deterministic synthetic price series."""
     return [base * (1.0 + drift * i) for i in range(n)]
 
 
-def _make_dataset_contract() -> List[Dict[str, Any]]:
+def _make_dataset_contract() -> list[dict[str, Any]]:
     """A list-of-dicts OHLCV-style dataset contract (backend must normalize)."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     ts = datetime(2020, 1, 1, tzinfo=timezone.utc)
     price = 100.0
     for i in range(252):

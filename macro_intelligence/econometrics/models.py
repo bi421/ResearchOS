@@ -20,7 +20,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from macro_intelligence.statistics.provenance import StatisticalProvenance
 
@@ -35,7 +35,7 @@ def deterministic_hash(data: Any) -> str:
     return hashlib.sha256(_canonical(data).encode("utf-8")).hexdigest()
 
 
-def _freeze_dict(d: Optional[Dict[str, Any]]) -> MappingProxyType:
+def _freeze_dict(d: dict[str, Any] | None) -> MappingProxyType:
     """Return an immutable mapping view of a dict (empty if None)."""
     if not d:
         return MappingProxyType({})
@@ -66,14 +66,14 @@ class RegressionResult:
         result_hash: Deterministic SHA-256 over the result content.
     """
 
-    coefficients: List[float]
+    coefficients: list[float]
     r_squared: float
     adjusted_r_squared: float
-    standard_errors: List[float]
-    t_stats: List[float]
-    p_values: List[float]
-    fitted_values: List[float]
-    residuals: List[float]
+    standard_errors: list[float]
+    t_stats: list[float]
+    p_values: list[float]
+    fitted_values: list[float]
+    residuals: list[float]
     n_observations: int
     n_features: int
     method: str
@@ -110,7 +110,7 @@ class RegressionResult:
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary (stable ordering)."""
         return {
             "coefficients": list(self.coefficients),
@@ -132,7 +132,7 @@ class RegressionResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> RegressionResult:
+    def from_dict(cls, data: dict[str, Any]) -> RegressionResult:
         """Deserialize from a dictionary."""
         return cls(
             coefficients=list(data["coefficients"]),
@@ -153,7 +153,7 @@ class RegressionResult:
             result_hash=data.get("result_hash", ""),
         )
 
-    def evidence_metadata(self) -> Dict[str, Any]:
+    def evidence_metadata(self) -> dict[str, Any]:
         """Return structured evidence metadata for future EvidenceGraph integration.
 
         Exposes provenance and diagnostic metadata sufficient for the
@@ -198,10 +198,10 @@ class TestResult:
 
     test_name: str
     statistic: float
-    p_value: Optional[float]
-    critical_values: Dict[str, float]
+    p_value: float | None
+    critical_values: dict[str, float]
     is_significant: bool
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     provenance: StatisticalProvenance = field(default_factory=StatisticalProvenance)
     result_hash: str = ""
 
@@ -221,7 +221,7 @@ class TestResult:
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary (stable ordering)."""
         return {
             "test_name": self.test_name,
@@ -235,7 +235,7 @@ class TestResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> TestResult:
+    def from_dict(cls, data: dict[str, Any]) -> TestResult:
         """Deserialize from a dictionary."""
         return cls(
             test_name=data["test_name"],
@@ -299,7 +299,7 @@ class ResidualDiagnostics:
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary (stable ordering)."""
         return {
             "mean": self.mean,
@@ -317,7 +317,7 @@ class ResidualDiagnostics:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> ResidualDiagnostics:
+    def from_dict(cls, data: dict[str, Any]) -> ResidualDiagnostics:
         """Deserialize from a dictionary."""
         return cls(
             mean=data["mean"],
@@ -370,7 +370,7 @@ class IntervalResult:
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary (stable ordering)."""
         return {
             "level": self.level,
@@ -383,7 +383,7 @@ class IntervalResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> IntervalResult:
+    def from_dict(cls, data: dict[str, Any]) -> IntervalResult:
         """Deserialize from a dictionary."""
         return cls(
             level=data["level"],
@@ -431,7 +431,7 @@ class InformationCriteria:
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary (stable ordering)."""
         return {
             "aic": self.aic,
@@ -444,7 +444,7 @@ class InformationCriteria:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> InformationCriteria:
+    def from_dict(cls, data: dict[str, Any]) -> InformationCriteria:
         """Deserialize from a dictionary."""
         return cls(
             aic=data["aic"],
@@ -470,9 +470,9 @@ class ModelDiagnostics:
         result_hash: Deterministic SHA-256 over the result content.
     """
 
-    regression: Optional[RegressionResult]
+    regression: RegressionResult | None
     residual: ResidualDiagnostics
-    information_criteria: Optional[InformationCriteria]
+    information_criteria: InformationCriteria | None
     provenance: StatisticalProvenance = field(default_factory=StatisticalProvenance)
     result_hash: str = ""
 
@@ -481,27 +481,23 @@ class ModelDiagnostics:
             content = {
                 "regression": self.regression.to_dict() if self.regression else None,
                 "residual": self.residual.to_dict(),
-                "information_criteria": self.information_criteria.to_dict()
-                if self.information_criteria
-                else None,
+                "information_criteria": self.information_criteria.to_dict() if self.information_criteria else None,
                 "provenance": self.provenance.to_dict(),
             }
             object.__setattr__(self, "result_hash", deterministic_hash(content))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary (stable ordering)."""
         return {
             "regression": self.regression.to_dict() if self.regression else None,
             "residual": self.residual.to_dict(),
-            "information_criteria": self.information_criteria.to_dict()
-            if self.information_criteria
-            else None,
+            "information_criteria": self.information_criteria.to_dict() if self.information_criteria else None,
             "provenance": self.provenance.to_dict(),
             "result_hash": self.result_hash,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> ModelDiagnostics:
+    def from_dict(cls, data: dict[str, Any]) -> ModelDiagnostics:
         """Deserialize from a dictionary."""
         regression = None
         if data.get("regression"):

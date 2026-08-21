@@ -48,9 +48,10 @@ makes no trading, signalling, or prediction decisions.
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 from researchos.engines.quant.backend import PythonQuantBackend
 from researchos.engines.quant.backend_hash import (
@@ -138,14 +139,14 @@ class BackendExecutionMetadata:
     result_hash: str
     error_code: str
     execution_timestamp: str = ""
-    capability_profile: Optional[BackendCapabilities] = None
-    scheduler_decision: Optional[SchedulerDecision] = None
+    capability_profile: BackendCapabilities | None = None
+    scheduler_decision: SchedulerDecision | None = None
     policy_version: str = ""
     profile_version: str = ""
     fallback_count: int = 0
-    attempted_backends: Tuple[str, ...] = ()
+    attempted_backends: tuple[str, ...] = ()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible mapping."""
         return {
             "operation": self.operation,
@@ -157,12 +158,8 @@ class BackendExecutionMetadata:
             "result_hash": self.result_hash,
             "error_code": self.error_code,
             "execution_timestamp": self.execution_timestamp,
-            "capability_profile": (
-                self.capability_profile.to_dict() if self.capability_profile is not None else None
-            ),
-            "scheduler_decision": (
-                self.scheduler_decision.to_dict() if self.scheduler_decision is not None else None
-            ),
+            "capability_profile": (self.capability_profile.to_dict() if self.capability_profile is not None else None),
+            "scheduler_decision": (self.scheduler_decision.to_dict() if self.scheduler_decision is not None else None),
             "policy_version": self.policy_version,
             "profile_version": self.profile_version,
             "fallback_count": self.fallback_count,
@@ -170,7 +167,7 @@ class BackendExecutionMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "BackendExecutionMetadata":
+    def from_dict(cls, data: Mapping[str, Any]) -> BackendExecutionMetadata:
         """Reconstruct from a ``to_dict()`` mapping."""
         caps = data.get("capability_profile")
         if caps is not None:
@@ -225,15 +222,15 @@ class BackendRouter:
 
     def __init__(
         self,
-        reference_backend: Optional[QuantComputationInterface] = None,
-        candidates: Optional[List[QuantComputationInterface]] = None,
-        scheduler: Optional[BackendScheduler] = None,
-        history: Optional[ExecutionHistory] = None,
+        reference_backend: QuantComputationInterface | None = None,
+        candidates: list[QuantComputationInterface] | None = None,
+        scheduler: BackendScheduler | None = None,
+        history: ExecutionHistory | None = None,
     ) -> None:
         self._reference = reference_backend or PythonQuantBackend()
         if not isinstance(self._reference, QuantComputationInterface):
             raise TypeError("reference_backend must implement QuantComputationInterface")
-        self._candidates: List[QuantComputationInterface] = list(candidates or [])
+        self._candidates: list[QuantComputationInterface] = list(candidates or [])
         if scheduler is not None and not isinstance(scheduler, BackendScheduler):
             raise TypeError("scheduler must be a BackendScheduler or None")
         self._scheduler = scheduler
@@ -265,9 +262,9 @@ class BackendRouter:
             return
         self._candidates.append(backend)
 
-    def list_candidates(self) -> Tuple[BackendCapabilities, ...]:
+    def list_candidates(self) -> tuple[BackendCapabilities, ...]:
         """Return the capability declarations of all registered candidates."""
-        out: List[BackendCapabilities] = []
+        out: list[BackendCapabilities] = []
         for backend in self._candidates:
             caps = self._safe_capabilities(backend)
             if caps is not None:
@@ -277,7 +274,7 @@ class BackendRouter:
     # ── Phase 4.4 scheduler configuration ────────────────────────────────
 
     @property
-    def scheduler(self) -> Optional[BackendScheduler]:
+    def scheduler(self) -> BackendScheduler | None:
         """The installed scheduler (or None)."""
         return self._scheduler
 
@@ -286,13 +283,13 @@ class BackendRouter:
         """Observational execution history (never hashed)."""
         return self._history
 
-    def set_scheduler(self, scheduler: Optional[BackendScheduler]) -> None:
+    def set_scheduler(self, scheduler: BackendScheduler | None) -> None:
         """Install (or clear) the scheduler used for candidate selection."""
         if scheduler is not None and not isinstance(scheduler, BackendScheduler):
             raise TypeError("scheduler must be a BackendScheduler or None")
         self._scheduler = scheduler
 
-    def set_scheduler_profile(self, profile: Optional[CertifiedPerformanceProfile]) -> None:
+    def set_scheduler_profile(self, profile: CertifiedPerformanceProfile | None) -> None:
         """Install (or clear) the scheduler's certified performance profile."""
         if self._scheduler is None:
             if profile is None:
@@ -301,13 +298,11 @@ class BackendRouter:
         self._scheduler.set_profile(profile)
 
     @property
-    def scheduler_profile(self) -> Optional[CertifiedPerformanceProfile]:
+    def scheduler_profile(self) -> CertifiedPerformanceProfile | None:
         """The scheduler's current certified performance profile (or None)."""
         return self._scheduler.profile if self._scheduler is not None else None
 
-    def recalibrate_profile(
-        self, version: Optional[str] = None
-    ) -> Optional[CertifiedPerformanceProfile]:
+    def recalibrate_profile(self, version: str | None = None) -> CertifiedPerformanceProfile | None:
         """Fold observed execution history into a NEW versioned profile.
 
         This is the explicit, auditable way historical performance enters
@@ -359,9 +354,7 @@ class BackendRouter:
         if not isinstance(inputs, Mapping):
             raise BackendRouterError("inputs must be a mapping of keyword arguments")
         if validation not in _VALIDATION_MODES:
-            raise BackendRouterError(
-                f"validation must be one of {_VALIDATION_MODES}, got {validation!r}"
-            )
+            raise BackendRouterError(f"validation must be one of {_VALIDATION_MODES}, got {validation!r}")
 
         comparator = NumericalComparator()
         input_hash = compute_input_hash(inputs)
@@ -391,7 +384,7 @@ class BackendRouter:
         # Build the ordered candidate attempt list: scheduler choice first,
         # then remaining eligible candidates in registration order.
         attempt_order = self._attempt_order(decision, eligible)
-        attempted: List[str] = []
+        attempted: list[str] = []
         fallback_count = 0
         last_error = ERROR_NO_CANDIDATE
 
@@ -414,13 +407,9 @@ class BackendRouter:
                 try:
                     expected = self._invoke(self._reference, operation, inputs)
                 except Exception as exc:  # pragma: no cover - reference must work
-                    raise BackendExecutionError(
-                        f"reference backend failed for {operation!r}: {exc}"
-                    ) from exc
+                    raise BackendExecutionError(f"reference backend failed for {operation!r}: {exc}") from exc
 
-            validation_result = self._validate(
-                comparator, expected, output, atol=atol, rtol=rtol, mode=validation
-            )
+            validation_result = self._validate(comparator, expected, output, atol=atol, rtol=rtol, mode=validation)
             if validation_result.passed:
                 return self._success(
                     operation=operation,
@@ -467,9 +456,7 @@ class BackendRouter:
         caps = self._safe_capabilities(self._reference)
         return caps.backend_name if caps is not None else type(self._reference).__name__
 
-    def _eligible_candidates(
-        self, operation: str
-    ) -> Tuple[List[Tuple[str, QuantComputationInterface]], bool]:
+    def _eligible_candidates(self, operation: str) -> tuple[list[tuple[str, QuantComputationInterface]], bool]:
         """Return ``(eligible, trust_rejected)``.
 
         ``eligible`` is the list of ``(name, backend)`` for all candidates
@@ -477,7 +464,7 @@ class BackendRouter:
         ``trust_rejected`` is True when at least one registered candidate was
         ineligible specifically because it violated the trust boundary.
         """
-        eligible: List[Tuple[str, QuantComputationInterface]] = []
+        eligible: list[tuple[str, QuantComputationInterface]] = []
         trust_rejected = False
         for backend in self._candidates:
             caps = self._safe_capabilities(backend)
@@ -495,8 +482,8 @@ class BackendRouter:
         self,
         operation: str,
         inputs: Mapping[str, Any],
-        eligible: Sequence[Tuple[str, QuantComputationInterface]],
-    ) -> Optional[SchedulerDecision]:
+        eligible: Sequence[tuple[str, QuantComputationInterface]],
+    ) -> SchedulerDecision | None:
         """Consult the scheduler (if any) for a candidate decision.
 
         When a scheduler is configured, the Python reference backend is also a
@@ -517,9 +504,9 @@ class BackendRouter:
 
     def _attempt_order(
         self,
-        decision: Optional[SchedulerDecision],
-        eligible: Sequence[Tuple[str, QuantComputationInterface]],
-    ) -> List[QuantComputationInterface]:
+        decision: SchedulerDecision | None,
+        eligible: Sequence[tuple[str, QuantComputationInterface]],
+    ) -> list[QuantComputationInterface]:
         """Order the candidates to attempt for this execution.
 
         With a scheduler, the selected backend is attempted first, then the
@@ -533,7 +520,7 @@ class BackendRouter:
             return [b for _, b in eligible]
 
         selected = decision.selected_backend
-        ordered: List[QuantComputationInterface] = []
+        ordered: list[QuantComputationInterface] = []
         for name, backend in eligible:
             if name == selected:
                 ordered.insert(0, backend)
@@ -577,14 +564,14 @@ class BackendRouter:
         operation: str,
         name: str,
         version: str,
-        caps: Optional[BackendCapabilities],
+        caps: BackendCapabilities | None,
         input_hash: str,
         output: Any,
         start: float,
-        decision: Optional[SchedulerDecision],
-        attempted: List[str],
+        decision: SchedulerDecision | None,
+        attempted: list[str],
         fallback_count: int,
-        inputs: Optional[Mapping[str, Any]] = None,
+        inputs: Mapping[str, Any] | None = None,
     ) -> BackendExecutionResult:
         """Record a successful candidate execution."""
         elapsed_ms = (time.perf_counter() - start) * 1000.0
@@ -649,9 +636,7 @@ class BackendRouter:
             attempted=[],
             fallback_count=0,
         )
-        self._record(
-            operation, name, elapsed_ms, ValidationStatus.NOT_REQUIRED.value, ERROR_OK, 0, inputs
-        )
+        self._record(operation, name, elapsed_ms, ValidationStatus.NOT_REQUIRED.value, ERROR_OK, 0, inputs)
         return BackendExecutionResult(metadata=metadata, output=output)
 
     def _fallback(
@@ -665,10 +650,10 @@ class BackendRouter:
         validation: str,
         input_hash: str,
         start: float,
-        tried_candidates: List[str],
+        tried_candidates: list[str],
         fallback_count: int,
         last_error: str,
-        decision: Optional[SchedulerDecision],
+        decision: SchedulerDecision | None,
     ) -> BackendExecutionResult:
         """Execute the operation on the Python reference backend.
 
@@ -679,9 +664,7 @@ class BackendRouter:
         try:
             output = self._invoke(self._reference, operation, inputs)
         except Exception as exc:
-            raise BackendExecutionError(
-                f"no backend available for {operation!r}; reference failed: {exc}"
-            ) from exc
+            raise BackendExecutionError(f"no backend available for {operation!r}; reference failed: {exc}") from exc
 
         caps = self._safe_capabilities(self._reference)
         name = self._reference_name()
@@ -715,9 +698,7 @@ class BackendRouter:
             attempted=tried_candidates,
             fallback_count=fallback_count,
         )
-        self._record(
-            operation, name, elapsed_ms, validation_status, last_error, fallback_count, inputs
-        )
+        self._record(operation, name, elapsed_ms, validation_status, last_error, fallback_count, inputs)
         return BackendExecutionResult(metadata=metadata, output=output)
 
     def _build_metadata(
@@ -731,9 +712,9 @@ class BackendRouter:
         execution_time_ms: float,
         result_hash: str,
         error_code: str,
-        caps: Optional[BackendCapabilities],
-        decision: Optional[SchedulerDecision],
-        attempted: List[str],
+        caps: BackendCapabilities | None,
+        decision: SchedulerDecision | None,
+        attempted: list[str],
         fallback_count: int,
     ) -> BackendExecutionMetadata:
         return BackendExecutionMetadata(
@@ -762,7 +743,7 @@ class BackendRouter:
         validation_status: str,
         error_code: str,
         fallback_count: int,
-        inputs: Optional[Mapping[str, Any]] = None,
+        inputs: Mapping[str, Any] | None = None,
     ) -> None:
         """Append an observational telemetry record to ``history``."""
         thresholds = (
@@ -786,7 +767,7 @@ class BackendRouter:
         self._history.record(record)
 
     @staticmethod
-    def _safe_capabilities(backend: Any) -> Optional[BackendCapabilities]:
+    def _safe_capabilities(backend: Any) -> BackendCapabilities | None:
         getter = getattr(backend, "capabilities", None)
         if not callable(getter):
             return None
@@ -811,9 +792,7 @@ class BackendRouter:
     def _invoke(backend: Any, operation: str, inputs: Mapping[str, Any]) -> Any:
         fn = getattr(backend, operation, None)
         if not callable(fn):
-            raise BackendExecutionError(
-                f"backend {type(backend).__name__!r} has no callable {operation!r}"
-            )
+            raise BackendExecutionError(f"backend {type(backend).__name__!r} has no callable {operation!r}")
         return fn(**dict(inputs))
 
 
@@ -826,10 +805,7 @@ def _validation_detail(validation: NumericalValidationResult) -> str:
     if validation.has_inf:
         parts.append("infinite value present")
     if not parts:
-        parts.append(
-            f"max_abs_error={validation.max_abs_error:.3e} "
-            f"max_rel_error={validation.max_rel_error:.3e}"
-        )
+        parts.append(f"max_abs_error={validation.max_abs_error:.3e} max_rel_error={validation.max_rel_error:.3e}")
     return "; ".join(parts)
 
 

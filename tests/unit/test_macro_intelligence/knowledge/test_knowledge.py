@@ -478,12 +478,8 @@ class TestEvidenceLinking:
         from macro_intelligence.knowledge.evidence_link import EvidenceLinker
 
         obj = _make_knowledge_object()
-        l1 = EvidenceLinker().build_link(
-            obj, evidence_ids=["EV_1"], regime_classification_id="CLS_1"
-        )
-        l2 = EvidenceLinker().build_link(
-            obj, evidence_ids=["EV_1"], regime_classification_id="CLS_1"
-        )
+        l1 = EvidenceLinker().build_link(obj, evidence_ids=["EV_1"], regime_classification_id="CLS_1")
+        l2 = EvidenceLinker().build_link(obj, evidence_ids=["EV_1"], regime_classification_id="CLS_1")
         assert l1.compute_hash() == l2.compute_hash()
 
 
@@ -556,9 +552,7 @@ class TestPatternDetection:
         from macro_intelligence.knowledge.models import KnowledgeType
         from macro_intelligence.knowledge.pattern import PatternDetector
 
-        finding = PatternDetector().detect_anomaly(
-            {"FEAT_CPI_Z": {"z_score": 3.2, "quality_score": 0.9}}
-        )
+        finding = PatternDetector().detect_anomaly({"FEAT_CPI_Z": {"z_score": 3.2, "quality_score": 0.9}})
         assert finding is not None
         assert finding.pattern_type == KnowledgeType.ANOMALY
 
@@ -732,18 +726,14 @@ class TestContextBuilding:
         from macro_intelligence.knowledge.context import MacroContextBuilder
         from macro_intelligence.knowledge.models import KnowledgeType
 
-        obj_a = _make_knowledge_object(
-            knowledge_id="KN_KNOW-001_aaa", knowledge_type=KnowledgeType.ANOMALY
-        )
+        obj_a = _make_knowledge_object(knowledge_id="KN_KNOW-001_aaa", knowledge_type=KnowledgeType.ANOMALY)
         obj_b = _make_knowledge_object(
             knowledge_id="KN_KNOW-001_bbb",
             knowledge_type=KnowledgeType.REGIME_PATTERN,
         )
         c1 = MacroContextBuilder().build([obj_a, obj_b], regime_context="x")
         c2 = MacroContextBuilder().build([obj_b, obj_a], regime_context="x")
-        assert [k.knowledge_id for k in c1.knowledge_objects] == [
-            k.knowledge_id for k in c2.knowledge_objects
-        ]
+        assert [k.knowledge_id for k in c1.knowledge_objects] == [k.knowledge_id for k in c2.knowledge_objects]
 
 
 # =============================================================================

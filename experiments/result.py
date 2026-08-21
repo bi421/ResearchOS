@@ -16,9 +16,10 @@ Guarantees:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -31,7 +32,7 @@ from researchos.experiments.contracts import (
 )
 
 
-def _freeze_mapping(data: Optional[Mapping[str, Any]]) -> Mapping[str, Any]:
+def _freeze_mapping(data: Mapping[str, Any] | None) -> Mapping[str, Any]:
     """Return a read-only mapping view of ``data`` (or empty mapping)."""
     return MappingProxyType(dict(data) if data else {})
 
@@ -65,12 +66,12 @@ class ExperimentRun(BaseObject):
         self,
         experiment_id: str,
         run_number: int = 1,
-        dataset_config: Optional[DatasetConfig] = None,
-        simulation_config: Optional[SimulationConfig] = None,
-        parameters: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        dataset_config: DatasetConfig | None = None,
+        simulation_config: SimulationConfig | None = None,
+        parameters: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ExperimentRun|{experiment_id}|{run_number}"
@@ -86,15 +87,15 @@ class ExperimentRun(BaseObject):
         self.dataset_config = (dataset_config or DatasetConfig(source="")).snapshot()
         self.simulation_config = (simulation_config or SimulationConfig()).snapshot()
         self.parameters: Mapping[str, Any] = _freeze_mapping(parameters)
-        self.result_id: Optional[str] = None
-        self.started_at: Optional[datetime] = None
-        self.completed_at: Optional[datetime] = None
+        self.result_id: str | None = None
+        self.started_at: datetime | None = None
+        self.completed_at: datetime | None = None
         self.duration_seconds: float = 0.0
         self.status = ExperimentStatus.DRAFT
         self.run_hash: str = ""
         self.result_hash: str = ""
         self.trace: str = ""
-        self.tags: List[str] = list(tags or [])
+        self.tags: list[str] = list(tags or [])
 
         self.lifecycle.transition(
             LifecycleStage.DRAFT,
@@ -162,7 +163,7 @@ class ExperimentRun(BaseObject):
         content = self._to_hashable_dict()
         self.run_hash = deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "experiment_id": self.experiment_id,
             "run_number": self.run_number,
@@ -178,7 +179,7 @@ class ExperimentRun(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -201,7 +202,7 @@ class ExperimentRun(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExperimentRun":
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentRun:
         obj = super().from_dict(data)
         obj.experiment_id = data["experiment_id"]
         obj.run_number = int(data.get("run_number", 1))
@@ -210,9 +211,7 @@ class ExperimentRun(BaseObject):
         obj.parameters = _freeze_mapping(data.get("parameters", {}))
         obj.result_id = data.get("result_id")
         obj.started_at = parse_timestamp(data["started_at"]) if data.get("started_at") else None
-        obj.completed_at = (
-            parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
-        )
+        obj.completed_at = parse_timestamp(data["completed_at"]) if data.get("completed_at") else None
         obj.duration_seconds = float(data.get("duration_seconds", 0.0))
         obj.status = ExperimentStatus(data.get("status", "Draft"))
         obj.run_hash = data.get("run_hash", "")
@@ -258,16 +257,16 @@ class ExperimentResult(BaseObject):
     def __init__(
         self,
         run_id: str,
-        metrics: Optional[Dict[str, float]] = None,
-        statistics: Optional[Dict[str, Any]] = None,
-        performance: Optional[Dict[str, Any]] = None,
-        signals: Optional[List[Dict[str, Any]]] = None,
-        trades: Optional[List[Dict[str, Any]]] = None,
-        equity_curve: Optional[List[float]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metrics: dict[str, float] | None = None,
+        statistics: dict[str, Any] | None = None,
+        performance: dict[str, Any] | None = None,
+        signals: list[dict[str, Any]] | None = None,
+        trades: list[dict[str, Any]] | None = None,
+        equity_curve: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
         trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ExperimentResult|{run_id}"
@@ -279,16 +278,16 @@ class ExperimentResult(BaseObject):
         self.metrics: Mapping[str, float] = _freeze_mapping(metrics)
         self.statistics: Mapping[str, Any] = _freeze_mapping(statistics)
         self.performance: Mapping[str, Any] = _freeze_mapping(performance)
-        self.signals: List[Dict[str, Any]] = list(signals or [])
-        self.trades: List[Dict[str, Any]] = list(trades or [])
-        self.equity_curve: List[float] = list(equity_curve or [])
+        self.signals: list[dict[str, Any]] = list(signals or [])
+        self.trades: list[dict[str, Any]] = list(trades or [])
+        self.equity_curve: list[float] = list(equity_curve or [])
         self.metadata: Mapping[str, Any] = _freeze_mapping(metadata)
         self.result_hash: str = ""
         self.trace = trace
         # Observational backend execution telemetry (Phase 4.4). These are
         # intentionally NOT part of the deterministic ``result_hash``.
         self.backend_execution_time_ms: float = 0.0
-        self.backend_execution_timestamp: Optional[str] = None
+        self.backend_execution_timestamp: str | None = None
 
         self._update_hash()
 
@@ -323,7 +322,7 @@ class ExperimentResult(BaseObject):
         content = self._to_hashable_dict()
         self.result_hash = deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
             "metrics": dict(sorted(self.metrics.items())) if self.metrics else {},
@@ -348,7 +347,7 @@ class ExperimentResult(BaseObject):
             return True
         return canonical == self.result_hash
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -369,7 +368,7 @@ class ExperimentResult(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExperimentResult":
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentResult:
         obj = super().from_dict(data)
         obj.run_id = data["run_id"]
         obj.metrics = _freeze_mapping(data.get("metrics", {}))
@@ -390,9 +389,7 @@ class ExperimentResult(BaseObject):
         # does not match, the payload has been tampered with or corrupted.
         canonical = deterministic_hash(obj._to_hashable_dict())
         if stored_hash and stored_hash != canonical:
-            raise ValueError(
-                f"ExperimentResult hash mismatch: stored={stored_hash} computed={canonical}"
-            )
+            raise ValueError(f"ExperimentResult hash mismatch: stored={stored_hash} computed={canonical}")
         if not stored_hash:
             # Legacy payload without a stored hash → recompute deterministically.
             obj.result_hash = canonical

@@ -17,9 +17,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, List, Mapping, Tuple
+from typing import Any
 
 from ..machine_learning.dataset_contracts import ResearchDataset
 from .contracts import (
@@ -84,9 +85,7 @@ def validate_dataset(dataset: ResearchDataset) -> None:
     n_features = len(feature_names)
     for i, row in enumerate(features):
         if len(row) != n_features:
-            raise InvalidDatasetError(
-                f"feature row {i} has length {len(row)}; expected {n_features}"
-            )
+            raise InvalidDatasetError(f"feature row {i} has length {len(row)}; expected {n_features}")
         for j, v in enumerate(row):
             if v is None or not isinstance(v, (int, float)):
                 raise InvalidDatasetError(f"feature row {i} column {j} is not a number")
@@ -107,8 +106,8 @@ def validate_dataset(dataset: ResearchDataset) -> None:
 
 
 def _class_means(
-    features: Tuple[Tuple[float, ...], ...], labels: Tuple[float, ...]
-) -> Tuple[List[float], List[float], int, int]:
+    features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]
+) -> tuple[list[float], list[float], int, int]:
     n_features = len(features[0])
     pos_cnt = sum(1 for y in labels if y == 1.0)
     neg_cnt = sum(1 for y in labels if y == 0.0)
@@ -126,14 +125,12 @@ def _class_means(
     return pos_mean, neg_mean, pos_cnt, neg_cnt
 
 
-def _feature_weights(
-    features: Tuple[Tuple[float, ...], ...], labels: Tuple[float, ...]
-) -> List[float]:
+def _feature_weights(features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]) -> list[float]:
     pos_mean, neg_mean, _, _ = _class_means(features, labels)
     return [p - n for p, n in zip(pos_mean, neg_mean)]
 
 
-def _l1_normalize(weights: List[float]) -> List[float]:
+def _l1_normalize(weights: list[float]) -> list[float]:
     total = sum(abs(w) for w in weights)
     if total == 0.0:
         return [0.0] * len(weights)
@@ -141,8 +138,8 @@ def _l1_normalize(weights: List[float]) -> List[float]:
 
 
 def _best_separating_feature(
-    features: Tuple[Tuple[float, ...], ...], labels: Tuple[float, ...]
-) -> Tuple[int, float, float, float]:
+    features: tuple[tuple[float, ...], ...], labels: tuple[float, ...]
+) -> tuple[int, float, float, float]:
     pos_mean, neg_mean, _, _ = _class_means(features, labels)
     diffs = [p - n for p, n in zip(pos_mean, neg_mean)]
     index = max(range(len(diffs)), key=lambda j: abs(diffs[j]))
@@ -230,7 +227,7 @@ class Trainer:
             metadata={"trainer_version": TRAINING_VERSION},
         )
 
-    def predict(self, model: ModelContract, dataset: ResearchDataset) -> List[float]:
+    def predict(self, model: ModelContract, dataset: ResearchDataset) -> list[float]:
         """Apply a trained model deterministically to a dataset."""
         validate_dataset(dataset)
         if not isinstance(model, ModelContract):
@@ -239,7 +236,7 @@ class Trainer:
         parameters = dict(model.parameters)
         return [predictor(row, parameters) for row in dataset.features]
 
-    def _derive_parameters(self, dataset: ResearchDataset, model_type: ModelType) -> Dict[str, Any]:
+    def _derive_parameters(self, dataset: ResearchDataset, model_type: ModelType) -> dict[str, Any]:
         features = dataset.features
         labels = dataset.labels
         if model_type == ModelType.FEATURE_WEIGHT:

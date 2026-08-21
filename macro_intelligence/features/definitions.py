@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from macro_intelligence.features.enums import (
     CalculationMethod,
@@ -45,12 +45,12 @@ class FeatureDefinition:
     parameters: dict = field(default_factory=dict)
 
     # Dependencies
-    required_evidence: List[str] = field(default_factory=list)
-    prerequisite_features: List[str] = field(default_factory=list)
+    required_evidence: list[str] = field(default_factory=list)
+    prerequisite_features: list[str] = field(default_factory=list)
 
     # Validation
-    validation_rules: List[ValidationRule] = field(default_factory=list)
-    expected_range: Optional[tuple[float, float]] = None
+    validation_rules: list[ValidationRule] = field(default_factory=list)
+    expected_range: tuple[float, float] | None = None
 
     # Version
     version: str = "feat/def/v1"
@@ -105,9 +105,7 @@ class FeatureDefinition:
             unit=data.get("unit", ""),
             metadata=data.get("metadata", {}),
             created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get(
-                    "created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC))
-                )
+                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
             ),
         )
 
@@ -200,14 +198,14 @@ class FeatureValue:
     timestamp: datetime
 
     # Value
-    value: Optional[float]
+    value: float | None
 
     # Quality
     quality_score: float = 1.0
     is_valid: bool = True
 
     # Provenance
-    evidence_ids: List[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
     calculation_version: str = "calc/v1"
 
     # Generated
@@ -240,9 +238,7 @@ class FeatureValue:
             evidence_ids=data.get("evidence_ids", []),
             calculation_version=data.get("calculation_version", "calc/v1"),
             created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get(
-                    "created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC))
-                )
+                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
             ),
             version=data.get("version", "feat/val/v1"),
         )
@@ -340,9 +336,7 @@ class FeatureVector:
             version=data.get("version", "feat/vec/v1"),
             calculation_version=data.get("calculation_version", "calc/v1"),
             created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get(
-                    "created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC))
-                )
+                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
             ),
         )
 
@@ -391,11 +385,11 @@ class FeatureVector:
             created_at=self.created_at,
         )
 
-    def get_feature(self, feature_id: str) -> Optional[FeatureValue]:
+    def get_feature(self, feature_id: str) -> FeatureValue | None:
         """Get a feature by ID."""
         return self.features.get(feature_id)
 
-    def get_feature_values(self) -> dict[str, Optional[float]]:
+    def get_feature_values(self) -> dict[str, float | None]:
         """Get all feature values as dict."""
         return {fid: fvalue.value for fid, fvalue in self.features.items()}
 

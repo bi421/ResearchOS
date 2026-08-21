@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
-import sys
-import pandas as pd
 import glob
+import sys
+
+import pandas as pd
 
 sys.path.append("cpp_quant/python")
 from cpp_quant import CppQuant
@@ -60,9 +60,7 @@ print("=" * 70)
 for label, rule in timeframes:
     print(f"\n?? {label} ?????????? ?????...")
     df_tf = (
-        df.resample(rule)
-        .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
-        .dropna()
+        df.resample(rule).agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
     )
     print(f"   {len(df_tf)} candle")
 

@@ -13,7 +13,7 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 from researchos.engines.quant.models import CalculationVersion
 from researchos.engines.quant.statistics import (
@@ -21,7 +21,7 @@ from researchos.engines.quant.statistics import (
 )
 
 
-def win_rate(returns: List[float]) -> float:
+def win_rate(returns: list[float]) -> float:
     """
     Calculate the percentage of positive returns.
 
@@ -41,7 +41,7 @@ def win_rate(returns: List[float]) -> float:
     return wins / len(returns)
 
 
-def loss_rate(returns: List[float]) -> float:
+def loss_rate(returns: list[float]) -> float:
     """
     Calculate the percentage of negative returns.
 
@@ -61,7 +61,7 @@ def loss_rate(returns: List[float]) -> float:
     return losses / len(returns)
 
 
-def average_win(returns: List[float]) -> float:
+def average_win(returns: list[float]) -> float:
     """
     Calculate the average positive return.
 
@@ -77,7 +77,7 @@ def average_win(returns: List[float]) -> float:
     return sum(wins) / len(wins)
 
 
-def average_loss(returns: List[float]) -> float:
+def average_loss(returns: list[float]) -> float:
     """
     Calculate the average negative return.
 
@@ -93,7 +93,7 @@ def average_loss(returns: List[float]) -> float:
     return sum(losses) / len(losses)
 
 
-def win_loss_ratio(returns: List[float]) -> float:
+def win_loss_ratio(returns: list[float]) -> float:
     """
     Calculate the win/loss ratio.
 
@@ -116,7 +116,7 @@ def win_loss_ratio(returns: List[float]) -> float:
     return abs(avg_w / avg_l)
 
 
-def profit_factor(returns: List[float]) -> float:
+def profit_factor(returns: list[float]) -> float:
     """
     Calculate the profit factor.
 
@@ -142,7 +142,7 @@ def profit_factor(returns: List[float]) -> float:
     return total_wins / total_losses
 
 
-def consistency(returns: List[float]) -> float:
+def consistency(returns: list[float]) -> float:
     """
     Calculate the consistency score.
 
@@ -164,7 +164,7 @@ def consistency(returns: List[float]) -> float:
     return win_rate(returns)
 
 
-def max_consecutive_wins(returns: List[float]) -> int:
+def max_consecutive_wins(returns: list[float]) -> int:
     """
     Calculate the maximum consecutive winning periods.
 
@@ -187,7 +187,7 @@ def max_consecutive_wins(returns: List[float]) -> int:
     return max_streak
 
 
-def max_consecutive_losses(returns: List[float]) -> int:
+def max_consecutive_losses(returns: list[float]) -> int:
     """
     Calculate the maximum consecutive losing periods.
 
@@ -210,7 +210,7 @@ def max_consecutive_losses(returns: List[float]) -> int:
     return max_streak
 
 
-def distribution_analysis(returns: List[float], bins: int = 10) -> Dict[str, Any]:
+def distribution_analysis(returns: list[float], bins: int = 10) -> dict[str, Any]:
     """
     Analyse the distribution of returns.
 
@@ -275,9 +275,9 @@ def distribution_analysis(returns: List[float], bins: int = 10) -> Dict[str, Any
 
 
 def compute_performance_analytics(
-    returns: List[float],
+    returns: list[float],
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Compute a comprehensive set of research performance analytics.
 

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import Timeframe
@@ -66,13 +66,13 @@ class DatasetStatistics:
     gap_count: int = 0
     average_spread: float = 0.0
     average_volume: float = 0.0
-    first_timestamp: Optional[str] = None
-    last_timestamp: Optional[str] = None
+    first_timestamp: str | None = None
+    last_timestamp: str | None = None
     daily_coverage: float = 0.0
     trading_days: int = 0
     completeness: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize statistics to a dict (deterministic rounding)."""
         return {
             "record_count": self.record_count,
@@ -89,7 +89,7 @@ class DatasetStatistics:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DatasetStatistics":
+    def from_dict(cls, data: dict[str, Any]) -> DatasetStatistics:
         """Restore statistics from a dict."""
         return cls(
             record_count=int(data.get("record_count", 0)),
@@ -114,12 +114,12 @@ class DatasetStatistics:
         )
 
 
-def _record_timestamp(record: DataRecord) -> Optional[datetime]:
+def _record_timestamp(record: DataRecord) -> datetime | None:
     """Extract a record timestamp, if present."""
     return record.timestamp if hasattr(record, "timestamp") else None
 
 
-def _record_spread(record: DataRecord) -> Optional[float]:
+def _record_spread(record: DataRecord) -> float | None:
     """Extract a numeric spread from a record, if available."""
     if isinstance(record, (Quote, OrderBook)):
         spread = record.spread
@@ -220,7 +220,7 @@ def compute_dataset_statistics(
             stats.missing_percentage = min(100.0, 100.0 * missing_count / expected_total)
 
     # Average spread
-    spreads: List[float] = []
+    spreads: list[float] = []
     for record in sorted_records:
         spread = _record_spread(record)
         if spread is not None:
@@ -229,7 +229,7 @@ def compute_dataset_statistics(
         stats.average_spread = sum(spreads) / len(spreads)
 
     # Average volume
-    volumes: List[float] = []
+    volumes: list[float] = []
     for record in sorted_records:
         volumes.append(_record_volume(record))
     if volumes:

@@ -9,8 +9,6 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
-
 from macro_intelligence.statistics.descriptive import mean, std
 
 
@@ -37,10 +35,10 @@ def zscore(
 
 
 def zscores(
-    values: List[float],
-    mean_val: Optional[float] = None,
-    std_val: Optional[float] = None,
-) -> List[float]:
+    values: list[float],
+    mean_val: float | None = None,
+    std_val: float | None = None,
+) -> list[float]:
     """
     Calculate z-scores for a list of values.
 
@@ -65,10 +63,10 @@ def zscores(
 
 
 def rolling_zscore(
-    values: List[float],
+    values: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Tuple[float, float, float]]:
+    min_periods: int | None = None,
+) -> list[tuple[float, float, float]]:
     """
     Calculate rolling z-scores with mean and std.
 
@@ -125,9 +123,9 @@ def interpret_zscore(zscore: float) -> str:
 
 
 def zscore_threshold(
-    values: List[float],
+    values: list[float],
     threshold: float = 2.0,
-) -> List[bool]:
+) -> list[bool]:
     """
     Check which values exceed z-score threshold.
 

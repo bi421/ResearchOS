@@ -1,8 +1,9 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
-from researchos.quant_engine.backtest import BacktestEngine
+
 from researchos.ml_engine.strategy import Signal
+from researchos.quant_engine.backtest import BacktestEngine
 
 
 class Objective:
@@ -45,9 +46,7 @@ class Objective:
         keep_cols = ["ret1", "rsi", "macd", "macd_signal", "macd_diff", "bb_pos", "volatility"]
         if selected_cols:
             keep_cols = [c for c in keep_cols if c in selected_cols] + [
-                f"ret_lag_{lag}"
-                for lag in [1, 2, 3, 5, 10, 20]
-                if f"ret_lag_{lag}" in selected_cols
+                f"ret_lag_{lag}" for lag in [1, 2, 3, 5, 10, 20] if f"ret_lag_{lag}" in selected_cols
             ]
         else:
             keep_cols = keep_cols + [f"ret_lag_{lag}" for lag in [1, 2, 3, 5, 10, 20]]
@@ -84,9 +83,7 @@ class Objective:
         if use_vol:
             selected.append("volatility")
         if use_lags:
-            selected.extend(
-                ["ret_lag_1", "ret_lag_2", "ret_lag_3", "ret_lag_5", "ret_lag_10", "ret_lag_20"]
-            )
+            selected.extend(["ret_lag_1", "ret_lag_2", "ret_lag_3", "ret_lag_5", "ret_lag_10", "ret_lag_20"])
 
         # Train features
         train_feat = self.make_features(self.train_df, selected, target_horizon)

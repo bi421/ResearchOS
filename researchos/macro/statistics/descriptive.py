@@ -11,10 +11,9 @@ MIL-STAT-004: All outputs preserve provenance.
 from __future__ import annotations
 
 from math import sqrt
-from typing import Dict, List, Tuple
 
 
-def _py_min(values: List[float]) -> float:
+def _py_min(values: list[float]) -> float:
     """Internal min function using built-in min."""
     result = values[0]
     for v in values[1:]:
@@ -23,7 +22,7 @@ def _py_min(values: List[float]) -> float:
     return result
 
 
-def _py_max(values: List[float]) -> float:
+def _py_max(values: list[float]) -> float:
     """Internal max function using built-in max."""
     result = values[0]
     for v in values[1:]:
@@ -32,7 +31,7 @@ def _py_max(values: List[float]) -> float:
     return result
 
 
-def mean(values: List[float]) -> float:
+def mean(values: list[float]) -> float:
     """
     Calculate arithmetic mean.
 
@@ -51,7 +50,7 @@ def mean(values: List[float]) -> float:
     return sum(values) / len(values)
 
 
-def median(values: List[float]) -> float:
+def median(values: list[float]) -> float:
     """
     Calculate median.
 
@@ -78,7 +77,7 @@ def median(values: List[float]) -> float:
         return sorted_values[n // 2]
 
 
-def variance(values: List[float], sample: bool = True) -> float:
+def variance(values: list[float], sample: bool = True) -> float:
     """
     Calculate variance.
 
@@ -108,7 +107,7 @@ def variance(values: List[float], sample: bool = True) -> float:
         return sum(squared_diffs) / n
 
 
-def std(values: List[float], sample: bool = True) -> float:
+def std(values: list[float], sample: bool = True) -> float:
     """
     Calculate standard deviation.
 
@@ -122,7 +121,7 @@ def std(values: List[float], sample: bool = True) -> float:
     return sqrt(variance(values, sample))
 
 
-def skewness(values: List[float]) -> float:
+def skewness(values: list[float]) -> float:
     """
     Calculate skewness (third standardized moment).
 
@@ -153,7 +152,7 @@ def skewness(values: List[float]) -> float:
     return (n / ((n - 1) * (n - 2))) * summed
 
 
-def kurtosis(values: List[float]) -> float:
+def kurtosis(values: list[float]) -> float:
     """
     Calculate excess kurtosis (fourth standardized moment - 3).
 
@@ -181,12 +180,10 @@ def kurtosis(values: List[float]) -> float:
 
     # Excess kurtosis
     m4 = sum(((x - m) / s) ** 4 for x in values)
-    return ((n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3))) * m4 - (3 * (n - 1) ** 2) / (
-        (n - 2) * (n - 3)
-    )
+    return ((n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3))) * m4 - (3 * (n - 1) ** 2) / ((n - 2) * (n - 3))
 
 
-def min(values: List[float]) -> float:
+def min(values: list[float]) -> float:
     """
     Calculate minimum value.
 
@@ -205,7 +202,7 @@ def min(values: List[float]) -> float:
     return _py_min(values)
 
 
-def max(values: List[float]) -> float:
+def max(values: list[float]) -> float:
     """
     Calculate maximum value.
 
@@ -224,7 +221,7 @@ def max(values: List[float]) -> float:
     return _py_max(values)
 
 
-def percentile(values: List[float], p: float) -> float:
+def percentile(values: list[float], p: float) -> float:
     """
     Calculate percentile.
 
@@ -259,10 +256,10 @@ def percentile(values: List[float], p: float) -> float:
 
 
 def descriptive_statistics(
-    values: List[float],
+    values: list[float],
     include_skewness: bool = True,
     include_kurtosis: bool = True,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Calculate complete descriptive statistics.
 
@@ -313,7 +310,7 @@ def descriptive_statistics(
     return result
 
 
-def five_number_summary(values: List[float]) -> Dict[str, float]:
+def five_number_summary(values: list[float]) -> dict[str, float]:
     """
     Calculate five-number summary.
 
@@ -332,7 +329,7 @@ def five_number_summary(values: List[float]) -> Dict[str, float]:
     }
 
 
-def quartiles(values: List[float]) -> Tuple[float, float, float]:
+def quartiles(values: list[float]) -> tuple[float, float, float]:
     """
     Calculate quartiles.
 
@@ -349,7 +346,7 @@ def quartiles(values: List[float]) -> Tuple[float, float, float]:
     )
 
 
-def interquartile_range(values: List[float]) -> float:
+def interquartile_range(values: list[float]) -> float:
     """
     Calculate interquartile range.
 

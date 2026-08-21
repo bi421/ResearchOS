@@ -16,7 +16,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -65,15 +65,15 @@ class Experiment(BaseObject):
         name: str = "",
         description: str = "",
         experiment_type: str = "Backtest",
-        dataset_config: Optional[DatasetConfig] = None,
-        simulation_config: Optional[SimulationConfig] = None,
-        metric_definitions: Optional[List[MetricDefinition]] = None,
-        parameters: Optional[Dict[str, Any]] = None,
+        dataset_config: DatasetConfig | None = None,
+        simulation_config: SimulationConfig | None = None,
+        metric_definitions: list[MetricDefinition] | None = None,
+        parameters: dict[str, Any] | None = None,
         version: str = "1.0.0",
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         experiment_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Experiment|{hypothesis_id}|{name}|{experiment_type}"
@@ -87,13 +87,13 @@ class Experiment(BaseObject):
         self.experiment_type = experiment_type
         self.dataset_config = dataset_config or DatasetConfig(source="")
         self.simulation_config = simulation_config or SimulationConfig()
-        self.metric_definitions: List[MetricDefinition] = metric_definitions or []
-        self.parameters: Dict[str, Any] = parameters or {}
-        self.run_ids: List[str] = []
-        self.best_run_id: Optional[str] = None
+        self.metric_definitions: list[MetricDefinition] = metric_definitions or []
+        self.parameters: dict[str, Any] = parameters or {}
+        self.run_ids: list[str] = []
+        self.best_run_id: str | None = None
         self.experiment_hash: str = ""
         self.version = version
-        self.tags: List[str] = tags or []
+        self.tags: list[str] = tags or []
         self.experiment_trace = experiment_trace
         self.status = ExperimentStatus.DRAFT
         self.created_at = utc_now()
@@ -164,7 +164,7 @@ class Experiment(BaseObject):
         content = self._to_hashable_dict()
         self.experiment_hash = deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "hypothesis_id": self.hypothesis_id,
             "name": self.name,
@@ -184,7 +184,7 @@ class Experiment(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -208,7 +208,7 @@ class Experiment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Experiment":
+    def from_dict(cls, data: dict[str, Any]) -> Experiment:
         obj = super().from_dict(data)
         obj.hypothesis_id = data["hypothesis_id"]
         obj.name = data.get("name", "")
@@ -216,9 +216,7 @@ class Experiment(BaseObject):
         obj.experiment_type = data.get("experiment_type", "Backtest")
         obj.dataset_config = DatasetConfig.from_dict(data.get("dataset_config", {"source": ""}))
         obj.simulation_config = SimulationConfig.from_dict(data.get("simulation_config", {}))
-        obj.metric_definitions = [
-            MetricDefinition.from_dict(m) for m in data.get("metric_definitions", [])
-        ]
+        obj.metric_definitions = [MetricDefinition.from_dict(m) for m in data.get("metric_definitions", [])]
         obj.parameters = dict(data.get("parameters", {}))
         obj.run_ids = list(data.get("run_ids", []))
         obj.best_run_id = data.get("best_run_id")
@@ -227,7 +225,5 @@ class Experiment(BaseObject):
         obj.tags = list(data.get("tags", []))
         obj.experiment_trace = data.get("experiment_trace", "")
         obj.status = ExperimentStatus(data.get("status", "Draft"))
-        obj.created_at = (
-            parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
-        )
+        obj.created_at = parse_timestamp(data["created_at"]) if data.get("created_at") else utc_now()
         return obj

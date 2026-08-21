@@ -22,7 +22,7 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.quant_engine.backend import PythonQuantBackend
 from researchos.quant_engine.interface import QuantComputationInterface
@@ -48,7 +48,7 @@ class HistoricalSimulationEngine:
 
     def __init__(
         self,
-        backend: Optional[QuantComputationInterface] = None,
+        backend: QuantComputationInterface | None = None,
     ):
         """
         Initialize the simulation engine.
@@ -79,7 +79,7 @@ class HistoricalSimulationEngine:
     def replay(
         self,
         request: SimulationRequest,
-        prices: List[float],
+        prices: list[float],
     ) -> SimulationResult:
         """
         Execute a historical replay simulation.
@@ -102,10 +102,10 @@ class HistoricalSimulationEngine:
 
     def slice_prices(
         self,
-        prices: List[float],
+        prices: list[float],
         start_idx: int = 0,
-        end_idx: Optional[int] = None,
-    ) -> List[float]:
+        end_idx: int | None = None,
+    ) -> list[float]:
         """
         Slice a price series to a specific time window.
 
@@ -124,18 +124,16 @@ class HistoricalSimulationEngine:
             end_idx = len(prices)
 
         if start_idx < 0 or end_idx > len(prices) or start_idx >= end_idx:
-            raise ValueError(
-                f"Invalid slice indices: start={start_idx}, end={end_idx}, length={len(prices)}"
-            )
+            raise ValueError(f"Invalid slice indices: start={start_idx}, end={end_idx}, length={len(prices)}")
 
         return prices[start_idx:end_idx]
 
     def scenario_test(
         self,
         base_request: SimulationRequest,
-        prices: List[float],
-        parameter_variations: List[Dict[str, Any]],
-    ) -> List[SimulationResult]:
+        prices: list[float],
+        parameter_variations: list[dict[str, Any]],
+    ) -> list[SimulationResult]:
         """
         Run scenario testing with parameter variations.
 
@@ -151,7 +149,7 @@ class HistoricalSimulationEngine:
         Returns:
             List of SimulationResult (one per variation).
         """
-        results: List[SimulationResult] = []
+        results: list[SimulationResult] = []
 
         for i, overrides in enumerate(parameter_variations):
             # Deep copy of request parameters with overrides
@@ -177,10 +175,10 @@ class HistoricalSimulationEngine:
     def walk_forward(
         self,
         request: SimulationRequest,
-        prices: List[float],
+        prices: list[float],
         window_size: int = 252,
         step_size: int = 63,
-    ) -> List[SimulationResult]:
+    ) -> list[SimulationResult]:
         """
         Execute a walk-forward analysis.
 
@@ -198,11 +196,9 @@ class HistoricalSimulationEngine:
             List of SimulationResult (one per window).
         """
         if len(prices) < window_size:
-            raise ValueError(
-                f"Price series length ({len(prices)}) is less than window size ({window_size})"
-            )
+            raise ValueError(f"Price series length ({len(prices)}) is less than window size ({window_size})")
 
-        results: List[SimulationResult] = []
+        results: list[SimulationResult] = []
         num_windows = ((len(prices) - window_size) // step_size) + 1
 
         for i in range(num_windows):
@@ -230,9 +226,9 @@ class HistoricalSimulationEngine:
     def monte_carlo(
         self,
         request: SimulationRequest,
-        prices: List[float],
+        prices: list[float],
         num_simulations: int = 100,
-    ) -> List[SimulationResult]:
+    ) -> list[SimulationResult]:
         """
         Execute Monte Carlo simulations.
 
@@ -259,7 +255,7 @@ class HistoricalSimulationEngine:
         if not historical_returns:
             raise ValueError("No returns available for Monte Carlo simulation")
 
-        results: List[SimulationResult] = []
+        results: list[SimulationResult] = []
 
         for i in range(num_simulations):
             self._rng = random.Random(request.seed + i)

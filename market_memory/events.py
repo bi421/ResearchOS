@@ -11,7 +11,7 @@ Tracks scheduled and unscheduled events that impact:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -52,8 +52,8 @@ class MacroMarketEvent(BaseObject):
         expected_value: float = 0.0,
         previous_value: float = 0.0,
         source: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"MarketEvent|{event_type}|{timestamp.isoformat()}|{description[:100]}"
@@ -71,7 +71,7 @@ class MacroMarketEvent(BaseObject):
         self.previous_value = previous_value
         self.source = source
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "event_type": self.event_type,
             "timestamp": self.timestamp.isoformat(),
@@ -85,7 +85,7 @@ class MacroMarketEvent(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         # Legacy serialization pin — object_type stays "MarketEvent" so that
         # renamed-class dicts remain byte-identical with stored data.
@@ -106,7 +106,7 @@ class MacroMarketEvent(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroMarketEvent":
+    def from_dict(cls, data: dict) -> MacroMarketEvent:
         obj = super().from_dict(data)
         obj.event_type = data["event_type"]
         obj.timestamp = parse_timestamp(data["timestamp"])

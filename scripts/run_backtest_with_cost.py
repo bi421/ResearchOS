@@ -1,8 +1,9 @@
-import sys
-import time
-import pandas as pd
 import glob
 import json
+import sys
+import time
+
+import pandas as pd
 
 print("=" * 70)
 print("🚀 БОДИТ КОМИСС/SPREAD ТООЦООЛОЛ БҮХИЙ БЭКТЕСТ")

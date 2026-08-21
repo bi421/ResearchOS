@@ -11,7 +11,7 @@ that produced it.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 def content_hash(content: Any) -> str:
@@ -44,9 +44,9 @@ class StatisticalProvenance:
     This envelope is metadata only; it does not alter statistical behaviour.
     """
 
-    dataset_id: Optional[str] = None
-    dataset_version: Optional[str] = None
-    dataset_hash: Optional[str] = None
+    dataset_id: str | None = None
+    dataset_version: str | None = None
+    dataset_hash: str | None = None
     computation_method: str = ""
     method_version: str = ""
     parameters: dict = field(default_factory=dict)

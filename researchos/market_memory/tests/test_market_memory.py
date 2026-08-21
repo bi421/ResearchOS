@@ -322,9 +322,7 @@ class TestMarketMemoryRepository:
 
     def test_count_all(self):
         self.repo.save_snapshot(make_snapshot())
-        self.repo.save_regime(
-            MarketRegime("T", "XAUUSD", datetime(2025, 1, 1, tzinfo=timezone.utc))
-        )
+        self.repo.save_regime(MarketRegime("T", "XAUUSD", datetime(2025, 1, 1, tzinfo=timezone.utc)))
         self.repo.save_macro_state(MacroContextSnapshot(datetime(2025, 1, 1, tzinfo=timezone.utc)))
         self.repo.save_scenario(HistoricalScenario("Test"))
         counts = self.repo.count_all()
@@ -416,12 +414,8 @@ class TestSimilarity:
         assert score == 1.0
 
     def test_different_snapshots(self):
-        s1 = make_snapshot(
-            close=2000.0, volatility=0.5, open_val=1990.0, high_val=2010.0, low_val=1988.0
-        )
-        s2 = make_snapshot(
-            close=1950.0, volatility=2.0, open_val=1960.0, high_val=1970.0, low_val=1940.0
-        )
+        s1 = make_snapshot(close=2000.0, volatility=0.5, open_val=1990.0, high_val=2010.0, low_val=1988.0)
+        s2 = make_snapshot(close=1950.0, volatility=2.0, open_val=1960.0, high_val=1970.0, low_val=1940.0)
         score = compare_snapshots(s1, s2)
         assert 0.0 <= score <= 1.0
         assert score < 1.0

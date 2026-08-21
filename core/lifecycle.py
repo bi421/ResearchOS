@@ -13,7 +13,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 from researchos.core.timestamp import parse_timestamp, utc_now
 
@@ -54,9 +53,9 @@ class LifecycleTransition:
 
     stage: LifecycleStage
     timestamp: datetime
-    reason: Optional[str] = None
+    reason: str | None = None
 
-    def to_dict(self) -> Dict[str, any]:
+    def to_dict(self) -> dict[str, any]:
         return {
             "stage": self.stage.value,
             "timestamp": self.timestamp.isoformat(),
@@ -74,7 +73,7 @@ class Lifecycle:
     """
 
     def __init__(self, initial_stage: LifecycleStage = LifecycleStage.CREATED):
-        self.transitions: List[LifecycleTransition] = [
+        self.transitions: list[LifecycleTransition] = [
             LifecycleTransition(
                 stage=initial_stage,
                 timestamp=utc_now(),
@@ -90,7 +89,7 @@ class Lifecycle:
     def transition(
         self,
         stage: LifecycleStage,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> None:
         """
         Transition to a new lifecycle stage.
@@ -121,7 +120,7 @@ class Lifecycle:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Lifecycle":
+    def from_dict(cls, data: dict) -> Lifecycle:
         obj = cls.__new__(cls)
         obj.transitions = []
         for t in data.get("transitions", []):
@@ -134,7 +133,7 @@ class Lifecycle:
             )
         return obj
 
-    def to_dict(self) -> Dict[str, any]:
+    def to_dict(self) -> dict[str, any]:
         return {
             "current_stage": self.current_stage.value,
             "transitions": [t.to_dict() for t in self.transitions],

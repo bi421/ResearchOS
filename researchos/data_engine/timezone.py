@@ -25,7 +25,6 @@ Anything else is an error.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Dict
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
@@ -40,7 +39,7 @@ class TimezoneResolutionError(ValueError):
 
 
 # Common timezone offsets (minutes from UTC)
-_COMMON_OFFSETS: Dict[str, int] = {
+_COMMON_OFFSETS: dict[str, int] = {
     "UTC": 0,
     "GMT": 0,
     "EST": -300,
@@ -239,8 +238,7 @@ def _get_offset(timezone_name: str) -> int:
             minutes = int(parts[1]) if len(parts) > 1 else 0
             if not (0 <= minutes < 60):
                 raise TimezoneResolutionError(
-                    f"Invalid timezone offset minutes in {timezone_name!r} "
-                    "(minutes must be in [0, 60))."
+                    f"Invalid timezone offset minutes in {timezone_name!r} (minutes must be in [0, 60))."
                 )
             if hours < 0:
                 return hours * 60 - minutes
@@ -248,9 +246,7 @@ def _get_offset(timezone_name: str) -> int:
                 return hours * 60 + minutes
             return -minutes if stripped.startswith("-") else minutes
         except ValueError as exc:
-            raise TimezoneResolutionError(
-                f"Invalid numeric timezone offset: {timezone_name!r} ({exc})."
-            ) from None
+            raise TimezoneResolutionError(f"Invalid numeric timezone offset: {timezone_name!r} ({exc}).") from None
 
     raise TimezoneResolutionError(
         f"Unknown timezone: {timezone_name!r}. Must be a known "

@@ -3,7 +3,6 @@ Trading strategy framework.
 """
 
 from abc import ABC, abstractmethod
-from typing import List
 from dataclasses import dataclass
 
 
@@ -18,7 +17,7 @@ class Signal:
 
 class BaseStrategy(ABC):
     @abstractmethod
-    def generate_signals(self, prices: List[float]) -> List[Signal]:
+    def generate_signals(self, prices: list[float]) -> list[Signal]:
         pass
 
 
@@ -28,7 +27,7 @@ class RSIStrategy(BaseStrategy):
         self.oversold = oversold
         self.overbought = overbought
 
-    def generate_signals(self, prices: List[float]) -> List[Signal]:
+    def generate_signals(self, prices: list[float]) -> list[Signal]:
         from researchos.quant_engine.indicators import calculate_rsi
 
         rsi_values = calculate_rsi(prices, self.period)
@@ -38,13 +37,9 @@ class RSIStrategy(BaseStrategy):
             if idx >= len(prices):
                 break
             if rsi < self.oversold:
-                signals.append(
-                    Signal(idx, "BUY", prices[idx], 1.0 - rsi / 100, f"RSI={rsi:.1f} oversold")
-                )
+                signals.append(Signal(idx, "BUY", prices[idx], 1.0 - rsi / 100, f"RSI={rsi:.1f} oversold"))
             elif rsi > self.overbought:
-                signals.append(
-                    Signal(idx, "SELL", prices[idx], rsi / 100, f"RSI={rsi:.1f} overbought")
-                )
+                signals.append(Signal(idx, "SELL", prices[idx], rsi / 100, f"RSI={rsi:.1f} overbought"))
         return signals
 
 
@@ -54,7 +49,7 @@ class MACDStrategy(BaseStrategy):
         self.slow = slow
         self.signal = signal
 
-    def generate_signals(self, prices: List[float]) -> List[Signal]:
+    def generate_signals(self, prices: list[float]) -> list[Signal]:
         from researchos.quant_engine.indicators import calculate_macd
 
         macd, signal_line, histogram = calculate_macd(prices, self.fast, self.slow, self.signal)
@@ -74,7 +69,7 @@ class BollingerStrategy(BaseStrategy):
         self.period = period
         self.std_dev = std_dev
 
-    def generate_signals(self, prices: List[float]) -> List[Signal]:
+    def generate_signals(self, prices: list[float]) -> list[Signal]:
         from researchos.quant_engine.indicators import calculate_bollinger_bands
 
         upper, middle, lower = calculate_bollinger_bands(prices, self.period, self.std_dev)

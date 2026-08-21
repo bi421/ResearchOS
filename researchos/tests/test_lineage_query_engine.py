@@ -498,10 +498,7 @@ class TestDeterministicOrdering:
         engine2 = LineageQueryEngine(repo)
         assert engine1.explain(h["result"]).to_dict() == engine2.explain(h["result"]).to_dict()
         assert engine1.ancestors(h["result"]) == engine2.ancestors(h["result"])
-        assert (
-            engine1.lineage_tree(h["result"]).to_dict()
-            == engine2.lineage_tree(h["result"]).to_dict()
-        )
+        assert engine1.lineage_tree(h["result"]).to_dict() == engine2.lineage_tree(h["result"]).to_dict()
 
 
 class TestReadOnly:

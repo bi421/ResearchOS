@@ -6,15 +6,14 @@ ResearchOS - Бүх Lint Алдааг Автоматаар Засах + Self-Des
 - Git-тэй ажиллахад тохиромжтой
 """
 
-import os
-import re
-import sys
 import json
-import subprocess
+import re
 import shutil
-from pathlib import Path
-from datetime import datetime
+import subprocess
+import sys
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
 # ===== CONFIG =====
 PROJECT_ROOT = Path(__file__).parent.resolve()
@@ -42,7 +41,7 @@ def backup_file(filepath: Path):
 
 
 def read_file(filepath: Path) -> str:
-    with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+    with open(filepath, encoding="utf-8", errors="ignore") as f:
         return f.read()
 
 
@@ -86,12 +85,7 @@ def fix_e501(content: str, max_length: int = LINE_LENGTH) -> str:
 
             # String concatenation-оор таслах
             if len(line) > max_length:
-                line = (
-                    line[:max_length]
-                    + " \\\n"
-                    + " " * (len(line) - len(line.lstrip()))
-                    + line[max_length:]
-                )
+                line = line[:max_length] + " \\\n" + " " * (len(line) - len(line.lstrip())) + line[max_length:]
 
         fixed_lines.append(line)
 
@@ -130,13 +124,7 @@ def fix_e402(content: str) -> str:
     # Docstring + imports + code
     if docstring:
         # Docstring-ийн дараа хоосон мөр
-        return (
-            "\n".join(docstring)
-            + "\n"
-            + "\n".join(imports)
-            + "\n\n"
-            + "\n".join(code_lines).lstrip("\n")
-        )
+        return "\n".join(docstring) + "\n" + "\n".join(imports) + "\n\n" + "\n".join(code_lines).lstrip("\n")
     else:
         return "\n".join(imports) + "\n" + "\n".join(code_lines).lstrip("\n")
 
@@ -248,9 +236,7 @@ def fix_file(filepath: Path, errors: list) -> bool:
 def get_ruff_errors() -> list:
     """Ruff-аас алдааг JSON форматаар авах"""
     try:
-        result = subprocess.run(
-            RUFF_CMD.split(), cwd=PROJECT_ROOT, capture_output=True, text=True, check=False
-        )
+        result = subprocess.run(RUFF_CMD.split(), cwd=PROJECT_ROOT, capture_output=True, text=True, check=False)
         if result.stdout.strip():
             return json.loads(result.stdout)
         return []
@@ -306,7 +292,7 @@ def self_destruct():
     # Log-ыг хадгалах
     if LOG_FILE.exists():
         shutil.move(LOG_FILE, PROJECT_ROOT / "lint_fix_summary.txt")
-        log(f"📄 Log saved to: lint_fix_summary.txt")
+        log("📄 Log saved to: lint_fix_summary.txt")
 
     # Өөрийгөө устгах
     try:

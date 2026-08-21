@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import math
 import random
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class BetaPosterior:
     def posterior_mean(self) -> float:
         return self.alpha / (self.alpha + self.beta) if (self.alpha + self.beta) > 0 else 0.0
 
-    def update(self, successes: int, failures: int) -> "BetaPosterior":
+    def update(self, successes: int, failures: int) -> BetaPosterior:
         return BetaPosterior(
             alpha=self.alpha + successes,
             beta=self.beta + failures,
@@ -33,7 +33,7 @@ class BetaPosterior:
             prior_beta=self.prior_beta,
         )
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         return {
             "alpha": self.alpha,
             "beta": self.beta,
@@ -45,8 +45,8 @@ class BetaPosterior:
 class MarkovChain:
     """A discrete-time, finite-state Markov chain."""
 
-    transition_matrix: List[List[float]] = field(default_factory=list)
-    states: List[str] = field(default_factory=list)
+    transition_matrix: list[list[float]] = field(default_factory=list)
+    states: list[str] = field(default_factory=list)
 
     @property
     def num_states(self) -> int:
@@ -60,7 +60,7 @@ class MarkovChain:
         num_steps: int = 100,
         start_state: int = 0,
         seed: int = 42,
-    ) -> List[int]:
+    ) -> list[int]:
         rng = random.Random(seed)
         path = [start_state]
         state = start_state
@@ -78,7 +78,7 @@ class MarkovChain:
             state = next_state
         return path
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "states": self.states,
             "transition_matrix": self.transition_matrix,
@@ -131,7 +131,7 @@ class HiddenMarkovModel:
         self.transition = [[1.0 / num_states] * num_states for _ in range(num_states)]
         self.emission = [[1.0 / num_observations] * num_observations for _ in range(num_states)]
 
-    def forward(self, observations: Sequence[int]) -> List[List[float]]:
+    def forward(self, observations: Sequence[int]) -> list[list[float]]:
         """Forward algorithm — alpha probabilities."""
         T = len(observations)
         alpha = [[0.0] * self.num_states for _ in range(T)]
@@ -150,7 +150,7 @@ class HiddenMarkovModel:
         total = sum(alpha[-1])
         return math.log(total) if total > 0 else -float("inf")
 
-    def viterbi(self, observations: Sequence[int]) -> List[int]:
+    def viterbi(self, observations: Sequence[int]) -> list[int]:
         """Viterbi decoding — most likely hidden state sequence."""
         T = len(observations)
         if T == 0:
@@ -158,9 +158,7 @@ class HiddenMarkovModel:
         v = [[0.0] * self.num_states for _ in range(T)]
         back = [[0] * self.num_states for _ in range(T)]
         for s in range(self.num_states):
-            v[0][s] = math.log(self.start_prob[s] + 1e-12) + math.log(
-                self.emission[s][observations[0]] + 1e-12
-            )
+            v[0][s] = math.log(self.start_prob[s] + 1e-12) + math.log(self.emission[s][observations[0]] + 1e-12)
         for t in range(1, T):
             for s in range(self.num_states):
                 best = float("-inf")

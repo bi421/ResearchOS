@@ -10,8 +10,6 @@ MIL-ECM-009: Econometrics owns Granger causality.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.macro.econometrics.matrix import matmul, solve, transpose
 from researchos.macro.econometrics.models import TestResult
 from researchos.macro.statistics.distributions import t_distribution_p_value
@@ -21,8 +19,8 @@ GRANGER_VERSION = "ecm/granger/v1"
 
 
 def _ols_residual_rss(
-    y: List[float],
-    X: List[List[float]],
+    y: list[float],
+    X: list[list[float]],
 ) -> float:
     """Residual sum of squares from OLS of y on X."""
     Xt = transpose(X)
@@ -37,12 +35,12 @@ def _ols_residual_rss(
 
 
 def granger_causality(
-    x: List[float],
-    y: List[float],
+    x: list[float],
+    y: list[float],
     max_lag: int = 1,
-    dataset_id: Optional[str] = None,
-    dataset_version: Optional[str] = None,
-    dataset_hash: Optional[str] = None,
+    dataset_id: str | None = None,
+    dataset_version: str | None = None,
+    dataset_hash: str | None = None,
 ) -> TestResult:
     """
     Granger causality test: does x Granger-cause y?

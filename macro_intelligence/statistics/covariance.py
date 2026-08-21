@@ -9,12 +9,10 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from macro_intelligence.statistics.descriptive import mean
 
 
-def covariance(x: List[float], y: List[float], sample: bool = True) -> float:
+def covariance(x: list[float], y: list[float], sample: bool = True) -> float:
     """
     Calculate covariance between two series.
 
@@ -48,11 +46,11 @@ def covariance(x: List[float], y: List[float], sample: bool = True) -> float:
 
 
 def rolling_covariance(
-    x: List[float],
-    y: List[float],
+    x: list[float],
+    y: list[float],
     window: int,
-    min_periods: Optional[int] = None,
-) -> List[Optional[float]]:
+    min_periods: int | None = None,
+) -> list[float | None]:
     """
     Calculate rolling covariance.
 
@@ -91,7 +89,7 @@ def correlation_from_covariance(
     cov_xy: float,
     std_x: float,
     std_y: float,
-) -> Optional[float]:
+) -> float | None:
     """
     Calculate correlation from covariance and standard deviations.
 
@@ -109,7 +107,7 @@ def correlation_from_covariance(
     return cov_xy / (std_x * std_y)
 
 
-def covariance_matrix(data: List[List[float]]) -> List[List[float]]:
+def covariance_matrix(data: list[list[float]]) -> list[list[float]]:
     """
     Calculate covariance matrix.
 

@@ -87,16 +87,12 @@ def detect_monetary(features: FeatureVector) -> DetectionEvidence:
 
     # Combine signals
     signal = _combine_monetary_signals(policy_score, curve_score, real_score, tightness_score)
-    confidence = _compute_monetary_confidence(
-        policy_score, curve_score, real_score, tightness_score
-    )
+    confidence = _compute_monetary_confidence(policy_score, curve_score, real_score, tightness_score)
 
     return _build_evidence(signal, confidence, factors)
 
 
-def _classify_policy_direction(
-    direction: str | None, fed_rate: float | None, factors: dict[str, float]
-) -> str:
+def _classify_policy_direction(direction: str | None, fed_rate: float | None, factors: dict[str, float]) -> str:
     """Classify monetary policy direction."""
     if direction is None:
         return "neutral"

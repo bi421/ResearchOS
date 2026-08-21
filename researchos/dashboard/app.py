@@ -1,8 +1,9 @@
+import asyncio
+import json
+from datetime import datetime
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-import json
-import asyncio
-from datetime import datetime
 
 app = FastAPI()
 

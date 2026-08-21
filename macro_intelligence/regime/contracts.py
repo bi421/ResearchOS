@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from macro_intelligence.provenance.chain import ProvenanceChain
 from macro_intelligence.time.normalizer import TimeNormalizer
@@ -167,7 +167,7 @@ class RegimeAssessment:
     employment_state: str
     risk_state: str
     confidence: RegimeConfidence
-    evidence: List[RegimeEvidence] = field(default_factory=list)
+    evidence: list[RegimeEvidence] = field(default_factory=list)
     severity: str = "normal"
     notes: str = ""
 
@@ -255,7 +255,7 @@ class RegimeSnapshot:
     timestamp: datetime
     assessment: RegimeAssessment
     version: str = "regime/contracts/v1"
-    provenance: Optional[ProvenanceChain] = None
+    provenance: ProvenanceChain | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
@@ -331,9 +331,9 @@ class MacroRegime:
     risk_state: str
     severity: str
     confidence: RegimeConfidence
-    evidence: List[RegimeEvidence] = field(default_factory=list)
+    evidence: list[RegimeEvidence] = field(default_factory=list)
     version: str = "regime/contracts/v1"
-    provenance: Optional[ProvenanceChain] = None
+    provenance: ProvenanceChain | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""

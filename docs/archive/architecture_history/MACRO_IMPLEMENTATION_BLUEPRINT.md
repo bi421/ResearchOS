@@ -743,6 +743,7 @@ from macro_intelligence.contracts.series import NormalizedSeries, FrequencyEnum
 from macro_intelligence.contracts.evidence import EvidenceObject
 from macro_intelligence.contracts.event import MacroEvent, EventTypeEnum
 
+
 @pytest.fixture
 def sample_series():
     """Sample NormalizedSeries for testing."""
@@ -760,6 +761,7 @@ def sample_series():
         quality_score=0.95,
         metadata={},
     )
+
 
 @pytest.fixture
 def sample_evidence(sample_series):
@@ -786,6 +788,7 @@ def sample_evidence(sample_series):
         ),
     )
 
+
 @pytest.fixture
 def sample_event():
     """Sample MacroEvent for testing."""
@@ -806,6 +809,7 @@ def sample_event():
             historical_similarity="20220310_001",
         ),
     )
+
 
 @pytest.fixture
 def test_storage(tmp_path):
@@ -848,12 +852,12 @@ pytest tests/unit/test_validation/test_schema.py -v
 class SchemaMigration:
     """
     Handles schema migrations for storage layer.
-    
+
     Migration versions:
     - v1: Initial schema (current)
     - v2: Future schema changes
     """
-    
+
     CURRENT_VERSION = "v1"
     MIGRATIONS = {
         "v1": {
@@ -862,15 +866,15 @@ class SchemaMigration:
             "tables": ["series", "evidence", "events"],
         }
     }
-    
+
     def check_migration_status(self, storage_path: Path) -> MigrationStatus:
         """Check current migration status."""
         ...
-    
+
     def apply_migration(self, from_version: str, to_version: str) -> None:
         """Apply migration from version to version."""
         ...
-    
+
     def validate_schema(self, storage_path: Path) -> bool:
         """Validate storage schema is correct."""
         ...
@@ -891,9 +895,10 @@ class SchemaMigration:
 # New fields have default values
 # Removed fields are logged but not deleted
 
+
 class BackwardCompatibility:
     """Ensures backward compatibility across versions."""
-    
+
     def validate_compatibility(self, old_version: str, new_version: str) -> bool:
         """Validate compatibility between versions."""
         # Check that all old fields exist in new version
@@ -986,21 +991,25 @@ twine upload dist/*
 from pydantic import BaseModel
 from typing import Optional
 
+
 class APICredentials(BaseModel):
     fred_api_key: str = ""
     bls_api_key: str = ""
     cboe_api_key: str = ""
+
 
 class StorageConfig(BaseModel):
     parquet_root: str = ".agnes/data/macro/parquet"
     json_root: str = ".agnes/data/macro/json"
     compression: str = "snappy"
 
+
 class SourceConfig(BaseModel):
     enabled: bool = True
     polling_interval_minutes: int = 1440
     max_retries: int = 3
     timeout_seconds: int = 30
+
 
 class MILConfig(BaseModel):
     api_credentials: APICredentials = APICredentials()
@@ -1060,18 +1069,18 @@ sources:
     polling_interval_minutes: 1440
     max_retries: 3
     timeout_seconds: 30
-  
+
   bls:
     enabled: true
     api_key: "${BLS_API_KEY}"
     polling_interval_minutes: 1440
     max_retries: 3
     timeout_seconds: 30
-  
+
   treasury:
     enabled: true
     polling_interval_minutes: 1440
-  
+
   cboe:
     enabled: true
     api_key: "${CBOE_API_KEY}"

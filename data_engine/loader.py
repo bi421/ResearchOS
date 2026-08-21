@@ -17,7 +17,7 @@ Usage:
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.csv_loader import FORMAT_MT5, FORMAT_TRADINGVIEW, CsvLoader
@@ -32,7 +32,7 @@ class DataLoader:
     """
 
     # Registry: Maps symbol -> configuration for file resolution
-    _CONFIG: Dict[str, Dict[str, Any]] = {
+    _CONFIG: dict[str, dict[str, Any]] = {
         # =========================================================
         # ❄️ FROZEN (Legacy) - XAUUSD (Read-only, do not modify)
         # =========================================================
@@ -57,7 +57,7 @@ class DataLoader:
         # 🔮 Future Junk coins (e.g., pepeusdt) can be added here later
     }
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or self._CONFIG
         self._csv_loader = CsvLoader()
 
@@ -66,10 +66,10 @@ class DataLoader:
         cls,
         symbol: str,
         timeframe: str,
-        file_path: Optional[str] = None,
-        force_format: Optional[str] = None,
+        file_path: str | None = None,
+        force_format: str | None = None,
         **kwargs,
-    ) -> List[Candle]:
+    ) -> list[Candle]:
         """
         Universal load function for all assets.
 
@@ -118,22 +118,16 @@ class DataLoader:
                 matches = fallback_matches
 
         if not matches:
-            raise FileNotFoundError(
-                f"No file found for {symbol} {timeframe} in {base}. Searched pattern: {pattern}"
-            )
+            raise FileNotFoundError(f"No file found for {symbol} {timeframe} in {base}. Searched pattern: {pattern}")
 
         # Use the first match (or enhance later to pick the most recent)
         resolved_path = str(matches[0])
         print(f"[DataLoader] Resolved path: {resolved_path}")
 
-        return cls._load_from_path(
-            resolved_path, symbol, timeframe, force_format or config.get("format"), **kwargs
-        )
+        return cls._load_from_path(resolved_path, symbol, timeframe, force_format or config.get("format"), **kwargs)
 
     @classmethod
-    def _load_from_path(
-        cls, path: str, symbol: str, timeframe: str, format_type: Optional[str], **kwargs
-    ) -> List[Candle]:
+    def _load_from_path(cls, path: str, symbol: str, timeframe: str, format_type: str | None, **kwargs) -> list[Candle]:
         """Delegate to CsvLoader with the given path."""
         loader = CsvLoader()
 
@@ -141,19 +135,17 @@ class DataLoader:
         if format_type == FORMAT_MT5:
             return loader.load_mt5_candles(path, symbol=symbol, timeframe=timeframe, **kwargs)
         elif format_type == FORMAT_TRADINGVIEW:
-            return loader.load_tradingview_candles(
-                path, symbol=symbol, timeframe=timeframe, **kwargs
-            )
+            return loader.load_tradingview_candles(path, symbol=symbol, timeframe=timeframe, **kwargs)
         else:
             # Auto-detect format and columns (handles generic, mt5, tradingview)
             return loader.load_candles_auto(path, symbol=symbol, timeframe=timeframe, **kwargs)
 
     @classmethod
-    def register(cls, symbol: str, config: Dict[str, Any]) -> None:
+    def register(cls, symbol: str, config: dict[str, Any]) -> None:
         """Dynamically register a new asset (useful for future crypto)."""
         cls._CONFIG[symbol.lower()] = config
 
     @classmethod
-    def list_supported(cls) -> List[str]:
+    def list_supported(cls) -> list[str]:
         """List all registered symbols."""
         return list(cls._CONFIG.keys())

@@ -9,8 +9,6 @@ Confidence is derived from 5 sources and adjusted by penalties and boosters.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
@@ -68,10 +66,10 @@ class Confidence(BaseObject):
         historical_precedent: float = 0.0,
         model_uncertainty: float = 0.0,
         recency: float = 0.0,
-        penalties: Optional[List[str]] = None,
-        boosters: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        penalties: list[str] | None = None,
+        boosters: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Confidence|{target_id}|{target_type}"
@@ -86,8 +84,8 @@ class Confidence(BaseObject):
         self.historical_precedent = historical_precedent
         self.model_uncertainty = model_uncertainty
         self.recency = recency
-        self.penalties: List[str] = penalties or []
-        self.boosters: List[str] = boosters or []
+        self.penalties: list[str] = penalties or []
+        self.boosters: list[str] = boosters or []
 
         # Compute confidence value
         self.value = self._compute_value()
@@ -195,7 +193,7 @@ class Confidence(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Confidence":
+    def from_dict(cls, data: dict) -> Confidence:
         obj = super().from_dict(data)
         obj.target_id = data["target_id"]
         obj.target_type = data["target_type"]
@@ -226,9 +224,9 @@ class ConfidenceReport(BaseObject):
     def __init__(
         self,
         research_id: str,
-        confidences: Optional[List[Confidence]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        confidences: list[Confidence] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ConfidenceReport|{research_id}"
@@ -236,8 +234,8 @@ class ConfidenceReport(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.research_id = research_id
-        self.confidences: List[Confidence] = confidences or []
-        self._confidence_ids: List[str] = []
+        self.confidences: list[Confidence] = confidences or []
+        self._confidence_ids: list[str] = []
 
     @property
     def overall_confidence(self) -> float:
@@ -250,7 +248,7 @@ class ConfidenceReport(BaseObject):
         """Add a confidence estimate to the report."""
         self.confidences.append(confidence)
 
-    def get_by_target(self, target_id: str) -> Optional[Confidence]:
+    def get_by_target(self, target_id: str) -> Confidence | None:
         """Get confidence for a specific target."""
         for c in self.confidences:
             if c.target_id == target_id:
@@ -258,13 +256,13 @@ class ConfidenceReport(BaseObject):
         return None
 
     @property
-    def confidence_ids(self) -> List[str]:
+    def confidence_ids(self) -> list[str]:
         if self.confidences:
             return [c.id for c in self.confidences]
         return self._confidence_ids
 
     @confidence_ids.setter
-    def confidence_ids(self, value: List[str]) -> None:
+    def confidence_ids(self, value: list[str]) -> None:
         self._confidence_ids = value
 
     def to_dict(self) -> dict:
@@ -278,7 +276,7 @@ class ConfidenceReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ConfidenceReport":
+    def from_dict(cls, data: dict) -> ConfidenceReport:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.confidences = []

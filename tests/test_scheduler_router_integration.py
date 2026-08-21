@@ -19,8 +19,6 @@ Verifies that the router now behaves as an adaptive production scheduler:
 
 from __future__ import annotations
 
-from typing import List
-
 from researchos.experiments.contracts import DatasetConfig, SimulationConfig
 from researchos.experiments.experiment import Experiment
 from researchos.experiments.result import ExperimentResult
@@ -44,7 +42,7 @@ from researchos.quant_engine.scheduler import (
 _V1 = CalculationVersion.CALCULATION_V1
 
 
-def _prices(n: int, base: float = 100.0) -> List[float]:
+def _prices(n: int, base: float = 100.0) -> list[float]:
     return [base + i * 0.1 for i in range(n)]
 
 
@@ -306,10 +304,7 @@ class TestRecalibration:
         assert new_profile.version == "2.0.0"
         assert new_profile.measured() > 0
         # The recalibrated profile now contains history entries for both backends.
-        assert (
-            new_profile.estimate_ms("FastBackend", "calculate_returns", DatasetSizeClass.SMALL)
-            is not None
-        )
+        assert new_profile.estimate_ms("FastBackend", "calculate_returns", DatasetSizeClass.SMALL) is not None
 
     def test_recalibration_is_explicit_and_versioned(self):
         router = BackendRouter(candidates=[_FastBackend()])
@@ -378,7 +373,4 @@ class TestExperimentPropagation:
 
         restored = ExperimentResult.from_dict(result.to_dict())
         assert restored.backend_execution_time_ms == result.backend_execution_time_ms
-        assert (
-            restored.statistics["backend_fallback_count"]
-            == result.statistics["backend_fallback_count"]
-        )
+        assert restored.statistics["backend_fallback_count"] == result.statistics["backend_fallback_count"]

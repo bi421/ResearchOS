@@ -13,12 +13,12 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List
+from typing import Any
 
 from researchos.quant_engine.models import CalculationVersion
 
 
-def _validate_returns(returns: List[float], min_samples: int = 2) -> None:
+def _validate_returns(returns: list[float], min_samples: int = 2) -> None:
     """Validate that returns data is sufficient for calculation."""
     if not returns:
         raise ValueError("Cannot compute statistics on empty dataset")
@@ -26,13 +26,13 @@ def _validate_returns(returns: List[float], min_samples: int = 2) -> None:
         raise ValueError(f"Insufficient samples: need at least {min_samples}, got {len(returns)}")
 
 
-def mean(returns: List[float]) -> float:
+def mean(returns: list[float]) -> float:
     """Compute the arithmetic mean of a list of returns."""
     _validate_returns(returns, min_samples=1)
     return sum(returns) / len(returns)
 
 
-def variance(returns: List[float], ddof: int = 1) -> float:
+def variance(returns: list[float], ddof: int = 1) -> float:
     """
     Compute the variance of returns.
 
@@ -59,7 +59,7 @@ def variance(returns: List[float], ddof: int = 1) -> float:
     return squared_diffs / (len(returns) - ddof)
 
 
-def standard_deviation(returns: List[float], ddof: int = 1) -> float:
+def standard_deviation(returns: list[float], ddof: int = 1) -> float:
     """
     Compute the standard deviation of returns.
 
@@ -77,10 +77,10 @@ def standard_deviation(returns: List[float], ddof: int = 1) -> float:
 
 
 def rolling_volatility(
-    returns: List[float],
+    returns: list[float],
     window: int = 21,
     ddof: int = 1,
-) -> List[float]:
+) -> list[float]:
     """
     Compute rolling volatility over a sliding window.
 
@@ -99,7 +99,7 @@ def rolling_volatility(
     if len(returns) < window:
         raise ValueError(f"Window size {window} exceeds data length {len(returns)}")
 
-    vols: List[float] = []
+    vols: list[float] = []
     for i in range(len(returns) - window + 1):
         window_returns = returns[i : i + window]
         vols.append(standard_deviation(window_returns, ddof=ddof))
@@ -108,7 +108,7 @@ def rolling_volatility(
 
 
 def volatility_change(
-    returns: List[float],
+    returns: list[float],
     window: int = 21,
     ddof: int = 1,
 ) -> float:
@@ -132,9 +132,7 @@ def volatility_change(
     """
     min_required = window * 2
     if len(returns) < min_required:
-        raise ValueError(
-            f"Need at least {min_required} returns for volatility change, got {len(returns)}"
-        )
+        raise ValueError(f"Need at least {min_required} returns for volatility change, got {len(returns)}")
 
     early = returns[:window]
     recent = returns[-window:]
@@ -150,7 +148,7 @@ def volatility_change(
     return (recent_vol - early_vol) / early_vol
 
 
-def skewness(returns: List[float]) -> float:
+def skewness(returns: list[float]) -> float:
     """
     Compute the skewness of the return distribution.
 
@@ -177,7 +175,7 @@ def skewness(returns: List[float]) -> float:
     return (n / ((n - 1) * (n - 2))) * cubed_deviations
 
 
-def kurtosis(returns: List[float], excess: bool = True) -> float:
+def kurtosis(returns: list[float], excess: bool = True) -> float:
     """
     Compute the kurtosis of the return distribution.
 
@@ -239,10 +237,10 @@ def z_score(value: float, population_mean: float, population_std: float) -> floa
 
 
 def calculate_returns_from_prices(
-    prices: List[float],
+    prices: list[float],
     return_type: str = "percentage",
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-) -> List[float]:
+) -> list[float]:
     """
     Calculate returns from an ordered price series.
 
@@ -269,7 +267,7 @@ def calculate_returns_from_prices(
     if calculation_version != CalculationVersion.CALCULATION_V1:
         raise ValueError(f"Unsupported calculation version: {calculation_version}")
 
-    returns: List[float] = []
+    returns: list[float] = []
 
     if return_type == "absolute":
         for i in range(1, len(prices)):
@@ -292,15 +290,12 @@ def calculate_returns_from_prices(
                 returns.append(math.log(prices[i] / prev))
 
     else:
-        raise ValueError(
-            f"Unrecognized return_type '{return_type}'. "
-            "Expected 'absolute', 'percentage', or 'log'."
-        )
+        raise ValueError(f"Unrecognized return_type '{return_type}'. Expected 'absolute', 'percentage', or 'log'.")
 
     return returns
 
 
-def regression_slope(y: List[float]) -> float:
+def regression_slope(y: list[float]) -> float:
     """Least-squares slope of ``y`` vs the implicit index x = 0..n-1.
 
     Mirrors ``quant::statistics::Regression::slope`` (C++ OLS, O(n)) so the
@@ -328,7 +323,7 @@ def regression_slope(y: List[float]) -> float:
     return sxy / sxx
 
 
-def regression_intercept(y: List[float]) -> float:
+def regression_intercept(y: list[float]) -> float:
     """Least-squares intercept of ``y`` vs the implicit index x = 0..n-1.
 
     Mirrors ``quant::statistics::Regression::intercept`` (C++ OLS, O(n)).
@@ -353,7 +348,7 @@ def regression_intercept(y: List[float]) -> float:
     return ybar - beta * xbar
 
 
-def _regression_accumulate(x: List[float], y: List[float]) -> Any:
+def _regression_accumulate(x: list[float], y: list[float]) -> Any:
     """One-pass OLS sufficient statistics (mirrors C++ ``accumulate``)."""
     n = len(x)
     sum_x = sum(x)
@@ -372,7 +367,7 @@ def _regression_accumulate(x: List[float], y: List[float]) -> Any:
     return {"xbar": xbar, "ybar": ybar, "sxx": sxx, "syy": syy, "sxy": sxy}
 
 
-def _validate_pair(x: List[float], y: List[float]) -> None:
+def _validate_pair(x: list[float], y: list[float]) -> None:
     if len(x) != len(y):
         raise ValueError("x and y size mismatch")
     if len(x) < 2:
@@ -381,7 +376,7 @@ def _validate_pair(x: List[float], y: List[float]) -> None:
         raise ValueError("series contains NaN or Inf")
 
 
-def regression_correlation(x: List[float], y: List[float]) -> float:
+def regression_correlation(x: list[float], y: list[float]) -> float:
     """Pearson correlation coefficient between ``x`` and ``y``.
 
     Mirrors ``quant::statistics::Regression::correlation`` (C++ OLS, O(n)).
@@ -394,7 +389,7 @@ def regression_correlation(x: List[float], y: List[float]) -> float:
     return max(-1.0, min(1.0, r))
 
 
-def regression_r_squared(x: List[float], y: List[float]) -> float:
+def regression_r_squared(x: list[float], y: list[float]) -> float:
     """Coefficient of determination R^2 = r^2 for the (x, y) fit.
 
     Mirrors ``quant::statistics::Regression::r_squared`` (C++ OLS, O(n)).
@@ -408,7 +403,7 @@ def regression_r_squared(x: List[float], y: List[float]) -> float:
     return clamped * clamped
 
 
-def regression_standard_error(x: List[float], y: List[float]) -> float:
+def regression_standard_error(x: list[float], y: list[float]) -> float:
     """Residual standard error of the (x, y) least-squares fit.
 
     Mirrors ``quant::statistics::Regression::standard_error`` (C++ OLS, O(n)).
@@ -427,7 +422,7 @@ def regression_standard_error(x: List[float], y: List[float]) -> float:
     return math.sqrt(sse / (n - 2.0))
 
 
-def rolling_mean(data: List[float], window: int) -> List[float]:
+def rolling_mean(data: list[float], window: int) -> list[float]:
     """Rolling arithmetic mean over a sliding window.
 
     Mirrors ``quant::RollingWindow::mean`` (C++ O(n) incremental).  Output
@@ -441,7 +436,7 @@ def rolling_mean(data: List[float], window: int) -> List[float]:
     if len(data) < window:
         raise ValueError("window size exceeds data length")
     n = len(data)
-    out: List[float] = []
+    out: list[float] = []
     s = sum(data[:window])
     out.append(s / window)
     for i in range(window, n):
@@ -451,7 +446,7 @@ def rolling_mean(data: List[float], window: int) -> List[float]:
     return out
 
 
-def rolling_volatility_incremental(data: List[float], window: int, ddof: int = 1) -> List[float]:
+def rolling_volatility_incremental(data: list[float], window: int, ddof: int = 1) -> list[float]:
     """Rolling volatility (standard deviation) over a sliding window.
 
     Mirrors ``quant::RollingWindow::volatility`` (C++ O(n) incremental one-pass
@@ -474,7 +469,7 @@ def rolling_volatility_incremental(data: List[float], window: int, ddof: int = 1
         raise ValueError("ddof must be in [0, window)")
     n = len(data)
     denom = float(window - ddof)
-    out: List[float] = []
+    out: list[float] = []
     s = 0.0
     s2 = 0.0
     for i in range(window):
@@ -500,7 +495,7 @@ def rolling_volatility_incremental(data: List[float], window: int, ddof: int = 1
     return out
 
 
-def rolling_variance_incremental(data: List[float], window: int, ddof: int = 1) -> List[float]:
+def rolling_variance_incremental(data: list[float], window: int, ddof: int = 1) -> list[float]:
     """Rolling variance over a sliding window.
 
     Mirrors ``quant::RollingWindow::variance`` (C++ O(n) incremental one-pass
@@ -522,7 +517,7 @@ def rolling_variance_incremental(data: List[float], window: int, ddof: int = 1) 
         raise ValueError("ddof must be in [0, window)")
     n = len(data)
     denom = float(window - ddof)
-    out: List[float] = []
+    out: list[float] = []
     s = 0.0
     s2 = 0.0
     for i in range(window):
@@ -549,9 +544,9 @@ def rolling_variance_incremental(data: List[float], window: int, ddof: int = 1) 
 
 
 def compute_statistics(
-    returns: List[float],
+    returns: list[float],
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Calculate a comprehensive set of statistical summaries.
 
@@ -571,7 +566,7 @@ def compute_statistics(
         raise ValueError(f"Unsupported calculation version: {calculation_version}")
 
     n = len(returns)
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "count": n,
         "sum": sum(returns),
         "mean": mean(returns),

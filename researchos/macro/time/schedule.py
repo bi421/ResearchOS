@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from researchos.macro.time.enums import (
     ReleaseStatus,
@@ -35,15 +35,15 @@ class PlannedRelease:
 
     # Timing
     planned_time: datetime
-    actual_time: Optional[datetime] = None
-    estimated_time: Optional[datetime] = None
+    actual_time: datetime | None = None
+    estimated_time: datetime | None = None
 
     # Status
     status: ReleaseStatus = ReleaseStatus.PLANNED
 
     # Deviation
     delay_minutes: int = 0
-    cancellation_reason: Optional[str] = None
+    cancellation_reason: str | None = None
 
     # Metadata
     source: str = ""
@@ -61,15 +61,9 @@ class PlannedRelease:
             "event_id": self.event_id,
             "series_id": self.series_id,
             "planned_time": TimeNormalizer.get_deterministic_timestamp(self.planned_time),
-            "actual_time": (
-                TimeNormalizer.get_deterministic_timestamp(self.actual_time)
-                if self.actual_time
-                else None
-            ),
+            "actual_time": (TimeNormalizer.get_deterministic_timestamp(self.actual_time) if self.actual_time else None),
             "estimated_time": (
-                TimeNormalizer.get_deterministic_timestamp(self.estimated_time)
-                if self.estimated_time
-                else None
+                TimeNormalizer.get_deterministic_timestamp(self.estimated_time) if self.estimated_time else None
             ),
             "status": self.status.value,
             "delay_minutes": self.delay_minutes,
@@ -90,9 +84,7 @@ class PlannedRelease:
             series_id=data["series_id"],
             planned_time=TimeNormalizer.parse_deterministic_timestamp(data["planned_time"]),
             actual_time=(
-                TimeNormalizer.parse_deterministic_timestamp(data["actual_time"])
-                if data.get("actual_time")
-                else None
+                TimeNormalizer.parse_deterministic_timestamp(data["actual_time"]) if data.get("actual_time") else None
             ),
             estimated_time=(
                 TimeNormalizer.parse_deterministic_timestamp(data["estimated_time"])
@@ -106,9 +98,7 @@ class PlannedRelease:
             confidence=data.get("confidence", 0.0),
             metadata=data.get("metadata", {}),
             created_at=TimeNormalizer.parse_deterministic_timestamp(
-                data.get(
-                    "created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC))
-                )
+                data.get("created_at", TimeNormalizer.get_deterministic_timestamp(datetime.now(UTC)))
             ),
             version=data.get("version", "time/schedule/v1"),
         )
@@ -140,11 +130,7 @@ class PlannedRelease:
             "event_id": self.event_id,
             "series_id": self.series_id,
             "planned_time": TimeNormalizer.get_deterministic_timestamp(self.planned_time),
-            "actual_time": (
-                TimeNormalizer.get_deterministic_timestamp(self.actual_time)
-                if self.actual_time
-                else None
-            ),
+            "actual_time": (TimeNormalizer.get_deterministic_timestamp(self.actual_time) if self.actual_time else None),
             "status": self.status.value,
             "delay_minutes": self.delay_minutes,
         }
@@ -206,7 +192,7 @@ class ReleaseSchedule:
         sorted_releases = sorted(self.releases, key=lambda r: r.planned_time)
         object.__setattr__(self, "releases", sorted_releases)
 
-    def get_release(self, release_id: str) -> Optional[PlannedRelease]:
+    def get_release(self, release_id: str) -> PlannedRelease | None:
         """Get release by ID."""
         for release in self.releases:
             if release.release_id == release_id:
@@ -222,11 +208,9 @@ class ReleaseSchedule:
         start_utc = TimeNormalizer.to_utc(start)
         end_utc = TimeNormalizer.to_utc(end)
 
-        return [
-            release for release in self.releases if start_utc <= release.planned_time <= end_utc
-        ]
+        return [release for release in self.releases if start_utc <= release.planned_time <= end_utc]
 
-    def get_latest_release(self) -> Optional[PlannedRelease]:
+    def get_latest_release(self) -> PlannedRelease | None:
         """Get latest release."""
         return self.releases[-1] if self.releases else None
 

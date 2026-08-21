@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
 import glob
-import time
 import sys
+import time
+
+import numpy as np
+import pandas as pd
 
 # C++ бэкенд импорт
 try:
@@ -46,9 +47,7 @@ class MillionCandleCPPAnalyzer:
                     dtype={"datetime": str},  # эхлээд текстээр
                 )
                 # datetime хувиргах
-                df["datetime"] = pd.to_datetime(
-                    df["datetime"], format="%Y%m%d %H:%M:%S", errors="coerce"
-                )
+                df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d %H:%M:%S", errors="coerce")
                 # Хэрэв хувиргалт амжилтгүй бол алгасах
                 df = df.dropna(subset=["datetime"])
                 if not df.empty:

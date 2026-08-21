@@ -7,7 +7,6 @@ Verification-only tests for the ResearchPipeline.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import List
 
 import pytest
 
@@ -46,7 +45,7 @@ def ts(year=2024, month=1, day=1):
     return datetime(year, month, day, tzinfo=timezone.utc)
 
 
-def collect_audits(repo) -> List[AuditEntry]:
+def collect_audits(repo) -> list[AuditEntry]:
     """Collect all AuditEntry objects from the repository in creation order."""
     return [o for o in repo.get_all() if isinstance(o, AuditEntry)]
 
@@ -309,9 +308,7 @@ class TestPhase1_RuntimeFlow:
         ct = pipeline.detect_contradiction(r.id, "Internal", "Data conflict")
         rp = pipeline.generate_report(r.id, "Full Report")
         v = pipeline.validate_research(r.id, rp.id, overall_status="Accurate", quality_score=0.85)
-        k = pipeline.extract_knowledge(
-            "Relationship", "CPI", "impacts", "Fed", source_references=[r.id]
-        )
+        k = pipeline.extract_knowledge("Relationship", "CPI", "impacts", "Fed", source_references=[r.id])
         ca = pipeline.assess_cognitive("trader-1", r.id, knowledge_score=0.8)
 
         # Every object retrievable from repo
@@ -343,9 +340,7 @@ class TestPhase2_Reproducibility:
         pipeline.detect_contradiction(r.id, "Internal", "Repro conflict")
         rp = pipeline.generate_report(r.id, "Repro Report")
         pipeline.validate_research(r.id, rp.id, overall_status="Accurate", quality_score=0.85)
-        pipeline.extract_knowledge(
-            "Relationship", "CPI", "impacts", "Fed", source_references=[r.id]
-        )
+        pipeline.extract_knowledge("Relationship", "CPI", "impacts", "Fed", source_references=[r.id])
         pipeline.assess_cognitive("trader-1", r.id, knowledge_score=0.8)
         return pipeline, repo
 
@@ -645,9 +640,7 @@ class TestPhase4_RepositoryIntegrity:
             storage = ResearchRepository(db_path)
             storage.save_object(Observation(source="T", timestamp=ts(), value=1.0))
             storage.save_object(Observation(source="T", timestamp=ts(), value=2.0))
-            storage.save_object(
-                Evidence(observation_id="o1", hypothesis_id="h1", interpretation="t")
-            )
+            storage.save_object(Evidence(observation_id="o1", hypothesis_id="h1", interpretation="t"))
 
             assert storage.object_count("Observation") == 2
             assert storage.object_count("Evidence") == 1
@@ -797,9 +790,7 @@ class TestPhase6_Serialization:
         assert reg2.evidence_ids == ["e1", "e2"]
 
     def test_interpretation_round_trip(self):
-        interp = Interpretation(
-            evidence_ids=["e1"], rule_applied="rule1", context="test", conclusion="insight"
-        )
+        interp = Interpretation(evidence_ids=["e1"], rule_applied="rule1", context="test", conclusion="insight")
         d = interp.to_dict()
         interp2 = Interpretation.from_dict(d)
         assert interp.id == interp2.id

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from macro_intelligence.features.definitions import FeatureDefinition
 from macro_intelligence.features.enums import FeatureCategory
@@ -28,9 +28,9 @@ class FeatureMetadata:
     version: str
     calculation_version: str
     created_at: datetime
-    last_calculated: Optional[datetime] = None
+    last_calculated: datetime | None = None
     calculation_count: int = 0
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
@@ -82,9 +82,9 @@ class FeatureRegistry:
     """
 
     def __init__(self):
-        self.features: Dict[str, FeatureDefinition] = {}
-        self.metadata: Dict[str, FeatureMetadata] = {}
-        self.versions: Dict[str, str] = {}
+        self.features: dict[str, FeatureDefinition] = {}
+        self.metadata: dict[str, FeatureMetadata] = {}
+        self.versions: dict[str, str] = {}
 
     def register(
         self,
@@ -117,7 +117,7 @@ class FeatureRegistry:
         # Track version
         self.versions[definition.feature_id] = definition.version
 
-    def get(self, feature_id: str) -> Optional[FeatureDefinition]:
+    def get(self, feature_id: str) -> FeatureDefinition | None:
         """
         Get a feature definition by ID.
 
@@ -126,7 +126,7 @@ class FeatureRegistry:
         """
         return self.features.get(feature_id)
 
-    def get_metadata(self, feature_id: str) -> Optional[FeatureMetadata]:
+    def get_metadata(self, feature_id: str) -> FeatureMetadata | None:
         """
         Get metadata for a feature.
 
@@ -138,7 +138,7 @@ class FeatureRegistry:
     def get_by_category(
         self,
         category: FeatureCategory,
-    ) -> List[FeatureDefinition]:
+    ) -> list[FeatureDefinition]:
         """
         Get all features in a category.
 
@@ -147,7 +147,7 @@ class FeatureRegistry:
         """
         return [feat for feat in self.features.values() if feat.category == category]
 
-    def get_all(self) -> List[FeatureDefinition]:
+    def get_all(self) -> list[FeatureDefinition]:
         """
         Get all registered features.
 
@@ -156,7 +156,7 @@ class FeatureRegistry:
         """
         return list(self.features.values())
 
-    def get_dependency_graph(self) -> Dict[str, List[str]]:
+    def get_dependency_graph(self) -> dict[str, list[str]]:
         """
         Get complete dependency graph.
 
@@ -170,7 +170,7 @@ class FeatureRegistry:
             graph[feature_id] = dependencies
         return graph
 
-    def get_topological_order(self) -> List[str]:
+    def get_topological_order(self) -> list[str]:
         """
         Get topological order for feature calculation.
 
@@ -210,7 +210,7 @@ class FeatureRegistry:
 
         return ordered
 
-    def get_version(self, feature_id: str) -> Optional[str]:
+    def get_version(self, feature_id: str) -> str | None:
         """
         Get version for a feature.
 
@@ -219,7 +219,7 @@ class FeatureRegistry:
         """
         return self.versions.get(feature_id)
 
-    def get_calculation_version(self, feature_id: str) -> Optional[str]:
+    def get_calculation_version(self, feature_id: str) -> str | None:
         """
         Get calculation version for a feature.
 
@@ -290,9 +290,7 @@ class FeatureRegistry:
         return {
             "total_features": len(self.features),
             "total_versions": len(set(self.versions.values())),
-            "features_by_category": {
-                cat.value: len(self.get_by_category(cat)) for cat in FeatureCategory
-            },
+            "features_by_category": {cat.value: len(self.get_by_category(cat)) for cat in FeatureCategory},
             "total_calculations": sum(m.calculation_count for m in self.metadata.values()),
             "features_with_errors": sum(1 for m in self.metadata.values() if m.errors),
         }

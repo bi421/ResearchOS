@@ -40,9 +40,7 @@ df_h1 = df_h1.with_columns(
     ]
 )
 df_h1 = df_h1.with_columns((pl.col("close") / pl.col("close").shift(1) - 1).alias("ret"))
-df_h1 = df_h1.with_columns(
-    (pl.when(pl.col("sma50") > pl.col("sma200")).then(1).otherwise(0)).alias("pos")
-)
+df_h1 = df_h1.with_columns((pl.when(pl.col("sma50") > pl.col("sma200")).then(1).otherwise(0)).alias("pos"))
 df_h1 = df_h1.with_columns((pl.col("pos").shift(1) * pl.col("ret")).alias("strat_ret"))
 df_h1 = df_h1.filter(pl.col("sma200").is_not_null())
 

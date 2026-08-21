@@ -10,15 +10,14 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from math import sqrt
-from typing import List, Optional, Tuple
 
 from researchos.macro.statistics.descriptive import mean
 
 
 def cusum(
-    values: List[float],
-    threshold: Optional[float] = None,
-) -> List[Tuple[int, float]]:
+    values: list[float],
+    threshold: float | None = None,
+) -> list[tuple[int, float]]:
     """
     CUSUM (Cumulative Sum) change point detection.
 
@@ -68,10 +67,10 @@ def cusum(
 
 
 def detect_change_points(
-    values: List[float],
+    values: list[float],
     method: str = "cusum",
     **kwargs,
-) -> List[int]:
+) -> list[int]:
     """
     Detect change points using specified method.
 
@@ -91,9 +90,9 @@ def detect_change_points(
 
 
 def structural_break_test(
-    values: List[float],
-    break_point: Optional[int] = None,
-) -> Tuple[float, bool]:
+    values: list[float],
+    break_point: int | None = None,
+) -> tuple[float, bool]:
     """
     Simple structural break test.
 
@@ -131,7 +130,7 @@ def structural_break_test(
 
 
 def _structural_break_stat(
-    values: List[float],
+    values: list[float],
     break_point: int,
 ) -> float:
     """

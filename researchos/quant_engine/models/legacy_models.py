@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.identity import deterministic_hash
 
@@ -84,9 +84,9 @@ class SimulationRequest:
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1
     start_time: str = ""
     end_time: str = ""
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     seed: int = 42
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
     def compute_input_hash(self) -> str:
         """Compute a deterministic hash of all input parameters."""
@@ -102,7 +102,7 @@ class SimulationRequest:
         }
         return deterministic_hash(content)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "dataset_reference": self.dataset_reference,
             "dataset_version": self.dataset_version,
@@ -116,13 +116,11 @@ class SimulationRequest:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SimulationRequest":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationRequest:
         return cls(
             dataset_reference=data["dataset_reference"],
             dataset_version=data.get("dataset_version", "1.0.0"),
-            calculation_version=CalculationVersion(
-                data.get("calculation_version", "CALCULATION_V1")
-            ),
+            calculation_version=CalculationVersion(data.get("calculation_version", "CALCULATION_V1")),
             start_time=data.get("start_time", ""),
             end_time=data.get("end_time", ""),
             parameters=dict(data.get("parameters", {})),
@@ -177,9 +175,9 @@ class Signal:
     timestamp: str
     side: OrderSide
     confidence: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "bar_index": self.bar_index,
             "timestamp": self.timestamp,
@@ -189,7 +187,7 @@ class Signal:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Signal":
+    def from_dict(cls, data: dict[str, Any]) -> Signal:
         return cls(
             bar_index=data["bar_index"],
             timestamp=data["timestamp"],
@@ -221,12 +219,12 @@ class Order:
     side: OrderSide
     order_type: OrderType
     quantity: float
-    limit_price: Optional[float] = None
+    limit_price: float | None = None
     status: OrderStatus = OrderStatus.PENDING
     bar_index: int = 0
     timestamp: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "signal_index": self.signal_index,
             "side": self.side.value,
@@ -239,7 +237,7 @@ class Order:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Order":
+    def from_dict(cls, data: dict[str, Any]) -> Order:
         return cls(
             signal_index=data["signal_index"],
             side=OrderSide(data["side"]),
@@ -277,7 +275,7 @@ class OrderFill:
     bar_index: int = 0
     timestamp: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "order": self.order.to_dict(),
             "fill_price": self.fill_price,
@@ -289,7 +287,7 @@ class OrderFill:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OrderFill":
+    def from_dict(cls, data: dict[str, Any]) -> OrderFill:
         return cls(
             order=Order.from_dict(data["order"]),
             fill_price=float(data["fill_price"]),
@@ -330,7 +328,7 @@ class Position:
     bar_index: int = 0
     timestamp: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "side": self.side.value,
@@ -344,7 +342,7 @@ class Position:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Position":
+    def from_dict(cls, data: dict[str, Any]) -> Position:
         return cls(
             symbol=data["symbol"],
             side=OrderSide(data["side"]),
@@ -383,7 +381,7 @@ class Trade:
     entry_bar_index: int = 0
     exit_bar_index: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "entry_fill": self.entry_fill.to_dict(),
             "exit_fill": self.exit_fill.to_dict(),
@@ -395,7 +393,7 @@ class Trade:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Trade":
+    def from_dict(cls, data: dict[str, Any]) -> Trade:
         return cls(
             entry_fill=OrderFill.from_dict(data["entry_fill"]),
             exit_fill=OrderFill.from_dict(data["exit_fill"]),
@@ -441,22 +439,22 @@ class SimulationResult:
     dataset_reference: str
     dataset_version: str = "1.0.0"
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     start_time: str = ""
     end_time: str = ""
     input_hash: str = ""
     result_hash: str = ""
     execution_timestamp: str = ""
-    returns: List[float] = field(default_factory=list)
-    equity_curve: List[float] = field(default_factory=list)
-    metrics: Dict[str, float] = field(default_factory=dict)
-    statistics: Dict[str, Any] = field(default_factory=dict)
-    performance: Dict[str, Any] = field(default_factory=dict)
-    trades: List[Dict[str, Any]] = field(default_factory=list)
-    signals: List[Dict[str, Any]] = field(default_factory=list)
-    positions: List[Dict[str, Any]] = field(default_factory=list)
-    execution_stats: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    returns: list[float] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
+    metrics: dict[str, float] = field(default_factory=dict)
+    statistics: dict[str, Any] = field(default_factory=dict)
+    performance: dict[str, Any] = field(default_factory=dict)
+    trades: list[dict[str, Any]] = field(default_factory=list)
+    signals: list[dict[str, Any]] = field(default_factory=list)
+    positions: list[dict[str, Any]] = field(default_factory=list)
+    execution_stats: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def compute_result_hash(self) -> str:
         """Compute a deterministic hash of this result's content."""
@@ -482,7 +480,7 @@ class SimulationResult:
         }
         return deterministic_hash(content)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "simulation_id": self.simulation_id,
             "dataset_reference": self.dataset_reference,
@@ -507,14 +505,12 @@ class SimulationResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SimulationResult":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationResult:
         return cls(
             simulation_id=data["simulation_id"],
             dataset_reference=data.get("dataset_reference", ""),
             dataset_version=data.get("dataset_version", "1.0.0"),
-            calculation_version=CalculationVersion(
-                data.get("calculation_version", "CALCULATION_V1")
-            ),
+            calculation_version=CalculationVersion(data.get("calculation_version", "CALCULATION_V1")),
             parameters=dict(data.get("parameters", {})),
             start_time=data.get("start_time", ""),
             end_time=data.get("end_time", ""),

@@ -52,9 +52,7 @@ def signal(df):
     df["ma_trend"] = df["close"].rolling(200).mean()
     df["tr"] = np.maximum(
         df["high"] - df["low"],
-        np.maximum(
-            (df["high"] - df["close"].shift()).abs(), (df["low"] - df["close"].shift()).abs()
-        ),
+        np.maximum((df["high"] - df["close"].shift()).abs(), (df["low"] - df["close"].shift()).abs()),
     )
     df["atr"] = df["tr"].rolling(14).mean()
     median_atr = df["atr"].median()

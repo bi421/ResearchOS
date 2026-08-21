@@ -24,9 +24,10 @@ from __future__ import annotations
 import enum
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Tuple
+from typing import Any
 
 from researchos.quant_engine.models.contracts import (  # noqa: E402
     ModelContract as RegistryModelContract,
@@ -120,7 +121,7 @@ class EvidenceNodeDescriptor:
     def __hash__(self) -> int:
         return hash((self.node_id, self.node_type, _freeze(self.metadata)))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "node_id": self.node_id,
             "node_type": self.node_type,
@@ -128,7 +129,7 @@ class EvidenceNodeDescriptor:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceNodeDescriptor":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvidenceNodeDescriptor:
         return cls(
             node_id=str(data["node_id"]),
             node_type=str(data["node_type"]),
@@ -173,7 +174,7 @@ class EvidenceEdgeDescriptor:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "edge_id": self.edge_id,
             "source_id": self.source_id,
@@ -183,7 +184,7 @@ class EvidenceEdgeDescriptor:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceEdgeDescriptor":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvidenceEdgeDescriptor:
         return cls(
             edge_id=str(data["edge_id"]),
             source_id=str(data["source_id"]),
@@ -241,15 +242,15 @@ class PipelineReport:
     pipeline_id: str
     status: PipelineStatus
     dataset_hash: str
-    feature_names: Tuple[str, ...]
+    feature_names: tuple[str, ...]
     label_name: str
     sample_count: int
     feature_count: int
     validation: ValidationResult
     training: TrainingResult
     model_contract: RegistryModelContract
-    nodes: Tuple[EvidenceNodeDescriptor, ...] = ()
-    edges: Tuple[EvidenceEdgeDescriptor, ...] = ()
+    nodes: tuple[EvidenceNodeDescriptor, ...] = ()
+    edges: tuple[EvidenceEdgeDescriptor, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
     created_at: str = ""
 
@@ -322,7 +323,7 @@ class PipelineReport:
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "pipeline_id": self.pipeline_id,
@@ -342,7 +343,7 @@ class PipelineReport:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "PipelineReport":
+    def from_dict(cls, data: Mapping[str, Any]) -> PipelineReport:
         """Reconstruct a ``PipelineReport`` from a ``to_dict()`` mapping."""
         return cls(
             pipeline_id=str(data["pipeline_id"]),

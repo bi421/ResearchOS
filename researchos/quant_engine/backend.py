@@ -15,7 +15,7 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 from researchos.core.timestamp import utc_now
 from researchos.quant_engine.capabilities import (
@@ -86,7 +86,7 @@ class PythonQuantBackend(QuantComputationInterface):
             explicit_typing=True,
         )
 
-    def _extract_prices(self, dataset: Any) -> List[float]:
+    def _extract_prices(self, dataset: Any) -> list[float]:
         """
         Normalize a dataset contract into a deterministic close-price series.
 
@@ -140,15 +140,15 @@ class PythonQuantBackend(QuantComputationInterface):
 
     def calculate_returns(
         self,
-        prices: List[float],
+        prices: list[float],
         return_type: str = "percentage",
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         return calculate_returns_from_prices(prices, return_type, calculation_version)
 
     def calculate_volatility(
         self,
-        returns: List[float],
+        returns: list[float],
         method: str = "standard_deviation",
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
     ) -> float:
@@ -170,34 +170,31 @@ class PythonQuantBackend(QuantComputationInterface):
         elif method == "change":
             return volatility_change(returns)
         else:
-            raise ValueError(
-                f"Unrecognized method '{method}'. "
-                "Expected 'standard_deviation', 'rolling', or 'change'."
-            )
+            raise ValueError(f"Unrecognized method '{method}'. Expected 'standard_deviation', 'rolling', or 'change'.")
 
     def calculate_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
         return max_drawdown(equity_curve)
 
     def calculate_statistics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return compute_statistics(returns, calculation_version)
 
     def calculate_metrics(
         self,
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         metrics = compute_all_metrics(
             returns,
             equity_curve,
@@ -207,16 +204,14 @@ class PythonQuantBackend(QuantComputationInterface):
         if "max_drawdown" in metrics:
             metrics["max_drawdown"] = round(float(metrics["max_drawdown"]), 8)
             if metrics["max_drawdown"] != 0.0 and "mean_return" in metrics:
-                metrics["calmar_ratio"] = (
-                    float(metrics["mean_return"]) * 252 / abs(metrics["max_drawdown"])
-                )
+                metrics["calmar_ratio"] = float(metrics["mean_return"]) * 252 / abs(metrics["max_drawdown"])
         return metrics
 
     def calculate_performance_analytics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return compute_performance_analytics(returns, calculation_version)
 
     def run_simulation(
@@ -256,9 +251,7 @@ class PythonQuantBackend(QuantComputationInterface):
         input_hash = request.compute_input_hash()
         sim_id = f"sim_{input_hash[:16]}"
 
-        returns = self.calculate_returns(
-            prices, return_type="percentage", calculation_version=calculation_version
-        )
+        returns = self.calculate_returns(prices, return_type="percentage", calculation_version=calculation_version)
 
         initial_capital = request.parameters.get("initial_capital", 100000.0)
         equity_curve = [initial_capital]
@@ -378,9 +371,9 @@ class PythonQuantBackend(QuantComputationInterface):
 
     def _build_equity_curve(
         self,
-        returns: List[float],
+        returns: list[float],
         initial_capital: float = 100000.0,
-    ) -> List[float]:
+    ) -> list[float]:
         equity = [initial_capital]
         for r in returns:
             equity.append(equity[-1] * (1.0 + r))

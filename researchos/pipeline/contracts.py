@@ -13,9 +13,10 @@ Design rules:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Dict, Mapping
+from typing import Any
 
 from researchos.orchestration.contracts import PipelineReport
 
@@ -103,7 +104,7 @@ class PipelineRecord:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "pipeline_id": self.pipeline_id,
@@ -114,7 +115,7 @@ class PipelineRecord:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "PipelineRecord":
+    def from_dict(cls, data: Mapping[str, Any]) -> PipelineRecord:
         """Reconstruct a ``PipelineRecord`` from a ``to_dict()`` mapping.
 
         Raises:

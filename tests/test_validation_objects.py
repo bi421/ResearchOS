@@ -127,7 +127,5 @@ class TestFailureAnalysis:
         assert fa.severity_scores[0]["severity"] == 0.7
 
     def test_improvement_areas(self):
-        fa = FailureAnalysis(
-            "val_001", "res_001", improvement_areas=["Signal processing", "Risk assessment"]
-        )
+        fa = FailureAnalysis("val_001", "res_001", improvement_areas=["Signal processing", "Risk assessment"])
         assert len(fa.improvement_areas) == 2

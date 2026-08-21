@@ -1,8 +1,9 @@
 import json
+
 from statsmodels.stats.multitest import multipletests
 
 # Үр дүнгийн файлыг унших
-with open("data/curated/xauusd/phase51_h1_horizon_sweep.json", "r", encoding="utf-8") as f:
+with open("data/curated/xauusd/phase51_h1_horizon_sweep.json", encoding="utf-8") as f:
     results = json.load(f)
 
 # Бүх p-value-г цуглуулах

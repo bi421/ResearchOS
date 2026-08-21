@@ -17,7 +17,7 @@ Modules:
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Sequence, Tuple
+from collections.abc import Sequence
 
 from researchos.engines.quant.historical.contracts import (
     DrawdownStatistics,
@@ -53,7 +53,7 @@ def pattern_frequencies(
     returns: ReturnSeries,
     window: int = 5,
     up_threshold: float = 0.0,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Frequency of N-day consecutive up/down patterns.
 
@@ -64,7 +64,7 @@ def pattern_frequencies(
     if window <= 0 or n < window + 1:
         return {}
     ups = [1 if r > up_threshold else 0 for r in returns.returns]
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for i in range(len(ups) - window):
         pattern = "".join("U" if ups[i + j] else "D" for j in range(window))
         counts[pattern] = counts.get(pattern, 0) + 1
@@ -72,12 +72,12 @@ def pattern_frequencies(
     return {k: v / total for k, v in counts.items()}
 
 
-def consecutive_streaks(returns: ReturnSeries) -> Dict[str, float]:
+def consecutive_streaks(returns: ReturnSeries) -> dict[str, float]:
     """Distribution of consecutive positive/negative streak lengths."""
     returns.validate()
     [1 if r > 0 else (1 if r == 0 else 0) for r in returns.returns]
-    pos_counts: Dict[int, int] = {}
-    neg_counts: Dict[int, int] = {}
+    pos_counts: dict[int, int] = {}
+    neg_counts: dict[int, int] = {}
     pos_streak = 0
     neg_streak = 0
     for r in returns.returns:
@@ -110,7 +110,7 @@ def detect_market_regimes(
     returns: ReturnSeries,
     lookback: int = 20,
     vol_percentile: float = 0.7,
-) -> List[RegimeStatistics]:
+) -> list[RegimeStatistics]:
     """Segment returns into market state regimes."""
     returns.validate()
     n = returns.length
@@ -118,8 +118,8 @@ def detect_market_regimes(
         return []
 
     # Rolling mean & vol to classify states per window.
-    states: List[MarketState] = []
-    rolling_vols: List[float] = []
+    states: list[MarketState] = []
+    rolling_vols: list[float] = []
     for i in range(lookback - 1, n):
         window = returns.returns[i - lookback + 1 : i + 1]
         m = _mean(window)
@@ -140,7 +140,7 @@ def detect_market_regimes(
         return []
 
     # Segment contiguous runs of the same state.
-    segments: List[Tuple[MarketState, int, int]] = []
+    segments: list[tuple[MarketState, int, int]] = []
     start = 0
     current = states[0]
     for i in range(1, len(states)):
@@ -150,7 +150,7 @@ def detect_market_regimes(
             current = states[i]
     segments.append((current, start, len(states) - 1))
 
-    out: List[RegimeStatistics] = []
+    out: list[RegimeStatistics] = []
     for state, s, e in segments:
         # Convert back to full-series indices (offset by lookback-1).
         full_s = s + (lookback - 1)
@@ -178,7 +178,7 @@ def detect_market_regimes(
 def monthly_seasonality(returns: ReturnSeries) -> SeasonalityProfile:
     """Average return and hit rate by month index (0-11)."""
     returns.validate()
-    months: Dict[int, List[float]] = {}
+    months: dict[int, list[float]] = {}
     for i, r in enumerate(returns.returns):
         months.setdefault(i % 12, []).append(r)
     periods = {}
@@ -196,7 +196,7 @@ def monthly_seasonality(returns: ReturnSeries) -> SeasonalityProfile:
 def weekly_seasonality(returns: ReturnSeries) -> SeasonalityProfile:
     """Average return and hit rate by weekday index (0-6)."""
     returns.validate()
-    days: Dict[int, List[float]] = {}
+    days: dict[int, list[float]] = {}
     for i, r in enumerate(returns.returns):
         days.setdefault(i % 7, []).append(r)
     periods = {}
@@ -216,7 +216,7 @@ def weekly_seasonality(returns: ReturnSeries) -> SeasonalityProfile:
 # ──────────────────────────────────────────────
 
 
-def session_statistics(returns: ReturnSeries) -> Dict[str, float]:
+def session_statistics(returns: ReturnSeries) -> dict[str, float]:
     """Summary statistics per session (whole-series aggregates)."""
     returns.validate()
     vals = returns.returns
@@ -234,7 +234,7 @@ def session_statistics(returns: ReturnSeries) -> Dict[str, float]:
 def volatility_clustering(
     returns: ReturnSeries,
     window: int = 20,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Autocorrelation of |returns| / squared returns → clustering measure."""
     returns.validate()
     n = returns.length
@@ -243,7 +243,7 @@ def volatility_clustering(
     abs_r = [abs(r) for r in returns.returns]
     sq_r = [r * r for r in returns.returns]
 
-    def _acf(values: List[float], lag: int = 1) -> float:
+    def _acf(values: list[float], lag: int = 1) -> float:
         m = _mean(values)
         num = sum((values[i] - m) * (values[i - lag] - m) for i in range(lag, len(values)))
         den = sum((v - m) ** 2 for v in values)
@@ -265,7 +265,7 @@ def volatility_clustering(
 # ──────────────────────────────────────────────
 
 
-def trend_persistence(returns: ReturnSeries, window: int = 10) -> Dict[str, float]:
+def trend_persistence(returns: ReturnSeries, window: int = 10) -> dict[str, float]:
     """Fraction of windows where return sign is maintained for N periods."""
     returns.validate()
     n = returns.length
@@ -290,7 +290,7 @@ def trend_persistence(returns: ReturnSeries, window: int = 10) -> Dict[str, floa
     return {"persistence_ratio": persist / total, "reversal_ratio": reverse / total}
 
 
-def breakout_frequency(returns: ReturnSeries, window: int = 20) -> Dict[str, float]:
+def breakout_frequency(returns: ReturnSeries, window: int = 20) -> dict[str, float]:
     """Frequency of 2-day-range breakouts."""
     returns.validate()
     n = returns.length
@@ -315,7 +315,7 @@ def breakout_frequency(returns: ReturnSeries, window: int = 20) -> Dict[str, flo
     return {"breakout_up": up / total, "breakout_down": down / total}
 
 
-def mean_reversion_frequency(returns: ReturnSeries, window: int = 5) -> Dict[str, float]:
+def mean_reversion_frequency(returns: ReturnSeries, window: int = 5) -> dict[str, float]:
     """Frequency of return sign reversal after an N-day move."""
     returns.validate()
     n = returns.length
@@ -356,8 +356,8 @@ def drawdown_statistics(returns: ReturnSeries) -> DrawdownStatistics:
     dd_start = 0
     dd_depth = 0.0
     max_dd = 0.0
-    drawdowns: List[Tuple[float, int]] = []  # (depth, length)
-    recovery_periods: List[int] = []
+    drawdowns: list[tuple[float, int]] = []  # (depth, length)
+    recovery_periods: list[int] = []
     in_drawdown = False
 
     for i, v in enumerate(price):
@@ -405,7 +405,7 @@ def drawdown_statistics(returns: ReturnSeries) -> DrawdownStatistics:
     )
 
 
-def recovery_statistics(returns: ReturnSeries) -> Dict[str, float]:
+def recovery_statistics(returns: ReturnSeries) -> dict[str, float]:
     """Recovery time after maximum drawdown."""
     ds = drawdown_statistics(returns)
     if ds.recovery_periods:

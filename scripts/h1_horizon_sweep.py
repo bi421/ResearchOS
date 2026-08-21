@@ -1,11 +1,12 @@
-import pandas as pd
-import numpy as np
 import json
+import warnings
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy.stats import binomtest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from scipy.stats import binomtest
-import warnings
 
 warnings.filterwarnings("ignore")
 
@@ -81,9 +82,7 @@ for h in horizons:
             X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
             y_train, y_test = y_clean.iloc[:split_idx], y_clean.iloc[split_idx:]
 
-            model = RandomForestClassifier(
-                n_estimators=100, max_depth=6, class_weight="balanced", random_state=42
-            )
+            model = RandomForestClassifier(n_estimators=100, max_depth=6, class_weight="balanced", random_state=42)
             model.fit(X_train, y_train)
 
             y_pred = model.predict(X_test)

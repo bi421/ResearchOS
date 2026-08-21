@@ -10,7 +10,7 @@ MIL-STAT-002: Statistical functions are pure.
 from __future__ import annotations
 
 from math import exp, lgamma, log, sqrt
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.macro.statistics.descriptive import (
     kurtosis,
@@ -21,7 +21,7 @@ from researchos.macro.statistics.descriptive import (
 )
 
 
-def empirical_distribution(values: List[float]) -> Dict[str, Any]:
+def empirical_distribution(values: list[float]) -> dict[str, Any]:
     """
     Calculate empirical distribution statistics.
 
@@ -62,9 +62,9 @@ def empirical_distribution(values: List[float]) -> Dict[str, Any]:
 
 
 def quantiles(
-    values: List[float],
-    probabilities: List[float] = None,
-) -> Dict[float, float]:
+    values: list[float],
+    probabilities: list[float] = None,
+) -> dict[float, float]:
     """
     Calculate quantiles.
 
@@ -87,8 +87,8 @@ def quantiles(
 
 
 def distribution_analysis(
-    values: List[float],
-) -> Dict[str, Any]:
+    values: list[float],
+) -> dict[str, Any]:
     """
     Complete distribution analysis.
 
@@ -152,7 +152,7 @@ def distribution_analysis(
 
 def z_score_from_distribution(
     value: float,
-    distribution_params: Dict[str, float],
+    distribution_params: dict[str, float],
 ) -> float:
     """
     Calculate z-score from distribution parameters.
@@ -284,7 +284,7 @@ def t_distribution_p_value(t: float, df: int) -> float:
     return max(0.0, min(1.0, p))
 
 
-def p_value_from_correlation(correlation: float, n: int) -> Optional[float]:
+def p_value_from_correlation(correlation: float, n: int) -> float | None:
     """
     Approximate two-tailed p-value for a Pearson correlation.
 

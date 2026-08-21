@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.engines.data.dataset import HistoricalDataset
 from researchos.engines.data.iterator import HistoricalIterator
@@ -37,10 +37,10 @@ class ReplayBar:
     """
 
     close: float
-    timestamp: Optional[datetime] = None
+    timestamp: datetime | None = None
 
 
-def _iso(dt: Optional[datetime]) -> str:
+def _iso(dt: datetime | None) -> str:
     if dt is None:
         return ""
     return dt.isoformat()
@@ -59,7 +59,7 @@ class ReplayEngine:
         self,
         strategy: StrategyEvaluationInterface,
         execution: ExecutionSimulationLayer,
-        as_of: Optional[datetime] = None,
+        as_of: datetime | None = None,
     ) -> None:
         self.strategy = strategy
         self.execution = execution
@@ -67,16 +67,13 @@ class ReplayEngine:
 
     # ── bar extraction ────────────────────────────────────────────
 
-    def _extract_bars(self, dataset: Any) -> List[Any]:
+    def _extract_bars(self, dataset: Any) -> list[Any]:
         """Return a chronologically-sorted list of bar-like objects."""
         if dataset is None:
             # Deterministic synthetic daily bars for testing/demo.
             base = 100.0
             start = datetime(2020, 1, 1)
-            return [
-                ReplayBar(close=base * (1.0 + 0.0001 * i), timestamp=start + timedelta(days=i))
-                for i in range(252)
-            ]
+            return [ReplayBar(close=base * (1.0 + 0.0001 * i), timestamp=start + timedelta(days=i)) for i in range(252)]
 
         if isinstance(dataset, HistoricalDataset):
             return list(HistoricalIterator(dataset, as_of=self.as_of))
@@ -94,15 +91,11 @@ class ReplayEngine:
                 # Candle-like without timestamps — synthesize deterministic times.
                 start = datetime(2020, 1, 1)
                 return [
-                    ReplayBar(close=float(c.close), timestamp=start + timedelta(days=i))
-                    for i, c in enumerate(dataset)
+                    ReplayBar(close=float(c.close), timestamp=start + timedelta(days=i)) for i, c in enumerate(dataset)
                 ]
             if isinstance(first, (int, float)):
                 start = datetime(2020, 1, 1)
-                return [
-                    ReplayBar(close=float(p), timestamp=start + timedelta(days=i))
-                    for i, p in enumerate(dataset)
-                ]
+                return [ReplayBar(close=float(p), timestamp=start + timedelta(days=i)) for i, p in enumerate(dataset)]
             if isinstance(first, dict) and "close" in first:
                 start = datetime(2020, 1, 1)
                 bars = []
@@ -122,7 +115,7 @@ class ReplayEngine:
 
     # ── replay ────────────────────────────────────────────────────
 
-    def run(self, dataset: Any) -> Dict[str, Any]:
+    def run(self, dataset: Any) -> dict[str, Any]:
         """
         Run the backtest replay over the dataset.
 
@@ -142,7 +135,7 @@ class ReplayEngine:
         if len(bars) < 2:
             raise ValueError(f"Need at least 2 bars for replay, got {len(bars)}")
 
-        history: List[Any] = []
+        history: list[Any] = []
         for i, bar in enumerate(bars):
             ts = getattr(bar, "timestamp", None)
             signal = self.strategy.evaluate(bar, list(history), i)

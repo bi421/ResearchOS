@@ -1,7 +1,9 @@
-import yfinance as yf
 from datetime import datetime
-from researchos.data_engine.dataset import HistoricalDataset
+
+import yfinance as yf
+
 from researchos.data_engine.candle import Candle
+from researchos.data_engine.dataset import HistoricalDataset
 from researchos.data_engine.repository import SqliteDatasetRepository
 
 # Download BTCUSD data

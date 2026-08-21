@@ -11,7 +11,6 @@ that is tracked and immutable.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from researchos.core.timestamp import utc_now
 
@@ -35,20 +34,20 @@ class Version:
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    def __lt__(self, other: "Version") -> bool:
+    def __lt__(self, other: Version) -> bool:
         return (self.major, self.minor, self.patch) < (
             other.major,
             other.minor,
             other.patch,
         )
 
-    def bump_major(self) -> "Version":
+    def bump_major(self) -> Version:
         return Version(self.major + 1, 0, 0)
 
-    def bump_minor(self) -> "Version":
+    def bump_minor(self) -> Version:
         return Version(self.major, self.minor + 1, 0)
 
-    def bump_patch(self) -> "Version":
+    def bump_patch(self) -> Version:
         return Version(self.major, self.minor, self.patch + 1)
 
 
@@ -60,7 +59,7 @@ class VersionHistory:
     All changes are tracked with timestamps and reasons.
     """
 
-    versions: List[Dict[str, any]] = field(default_factory=list)
+    versions: list[dict[str, any]] = field(default_factory=list)
 
     def __init__(self, initial_version: Version = None):
         self.versions = []
@@ -71,7 +70,7 @@ class VersionHistory:
         self,
         version: Version,
         reason: str,
-        author: Optional[str] = None,
+        author: str | None = None,
     ) -> None:
         """
         Add a new version entry to the history.
@@ -91,7 +90,7 @@ class VersionHistory:
         )
 
     @property
-    def current_version(self) -> Optional[Version]:
+    def current_version(self) -> Version | None:
         """Get the current version."""
         if not self.versions:
             return None
@@ -99,5 +98,5 @@ class VersionHistory:
         parts = v_str.split(".")
         return Version(int(parts[0]), int(parts[1]), int(parts[2]))
 
-    def to_dict(self) -> Dict[str, any]:
+    def to_dict(self) -> dict[str, any]:
         return {"versions": self.versions}

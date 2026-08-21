@@ -1,10 +1,10 @@
-import sys
 import json
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path("cpp_quant_engine/python").resolve()))
 
-from cpp_quant_engine import CppQuantEngineBackend, BacktestRequest, Candle
+from cpp_quant_engine import BacktestRequest, Candle, CppQuantEngineBackend
 
 print("=" * 60)
 print("🚀 C++ BACKEND SWEEP: Зөв signal формат")

@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
+
 from researchos.quant_engine.vectorized_backtest import vectorized_backtest
 
 
@@ -39,9 +40,7 @@ def make_features(df, selected, target_horizon=1):
     if "vol" in selected:
         keep_cols.append("volatility")
     if "lags" in selected:
-        keep_cols.extend(
-            ["ret_lag_1", "ret_lag_2", "ret_lag_3", "ret_lag_5", "ret_lag_10", "ret_lag_20"]
-        )
+        keep_cols.extend(["ret_lag_1", "ret_lag_2", "ret_lag_3", "ret_lag_5", "ret_lag_10", "ret_lag_20"])
     df["target"] = (close.shift(-target_horizon) > close).astype(int)
     df = df.replace([np.inf, -np.inf], np.nan).ffill().fillna(0)
     return df[keep_cols + ["target"]]
@@ -85,9 +84,7 @@ class AutoMLObjective:
         scaler = StandardScaler()
         X_train_s = scaler.fit_transform(X_train)
         X_val_s = scaler.transform(X_val)
-        model = RandomForestClassifier(
-            n_estimators=n_estimators, max_depth=max_depth, random_state=42
-        )
+        model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
         model.fit(X_train_s, y_train)
         val_probs = model.predict_proba(X_val_s)[:, 1]
         signals = []

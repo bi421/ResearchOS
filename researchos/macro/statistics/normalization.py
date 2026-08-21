@@ -9,16 +9,14 @@ MIL-STAT-002: Statistical functions are pure.
 
 from __future__ import annotations
 
-from typing import List
-
 from researchos.macro.statistics.descriptive import mean, percentile, std
 
 
 def min_max_normalize(
-    values: List[float],
+    values: list[float],
     new_min: float = 0.0,
     new_max: float = 1.0,
-) -> List[float]:
+) -> list[float]:
     """
     Normalize values to [new_min, new_max] range.
 
@@ -45,7 +43,7 @@ def min_max_normalize(
     return [new_min + (v - old_min) * (new_max - new_min) / (old_max - old_min) for v in values]
 
 
-def zscore_normalize(values: List[float]) -> List[float]:
+def zscore_normalize(values: list[float]) -> list[float]:
     """
     Normalize values using z-score standardization.
 
@@ -71,10 +69,10 @@ def zscore_normalize(values: List[float]) -> List[float]:
 
 
 def robust_scale(
-    values: List[float],
+    values: list[float],
     center: bool = True,
     scale: bool = True,
-) -> List[float]:
+) -> list[float]:
     """
     Normalize values using robust scaling (median and IQR).
 
@@ -109,10 +107,10 @@ def robust_scale(
 
 
 def normalize(
-    values: List[float],
+    values: list[float],
     method: str = "zscore",
     **kwargs,
-) -> List[float]:
+) -> list[float]:
     """
     Normalize values using specified method.
 
@@ -140,10 +138,10 @@ def normalize(
 
 
 def batch_normalize(
-    data: List[List[float]],
+    data: list[list[float]],
     method: str = "zscore",
     fit_on_first: bool = True,
-) -> List[List[float]]:
+) -> list[list[float]]:
     """
     Normalize multiple time series consistently.
 

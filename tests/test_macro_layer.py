@@ -2,10 +2,10 @@
 Test Market Intelligence Layer.
 """
 
-from researchos.data_engine.repository import SqliteDatasetRepository
-from researchos.data_engine.macro_provider import MacroFactorProvider
 from researchos.data_engine.contracts import Timeframe
 from researchos.data_engine.macro_analyzer import MacroAnalyzer
+from researchos.data_engine.macro_provider import MacroFactorProvider
+from researchos.data_engine.repository import SqliteDatasetRepository
 
 # 1. Init
 repo = SqliteDatasetRepository("researchos.db")

@@ -1,10 +1,9 @@
 import numpy as np
-from typing import List, Tuple
 
 
 def vectorized_backtest_with_tpsl(
-    prices: List[float],
-    signals: List[Tuple[str, float]],
+    prices: list[float],
+    signals: list[tuple[str, float]],
     initial_capital: float = 100000.0,
     commission: float = 0.001,
     slippage: float = 0.0005,

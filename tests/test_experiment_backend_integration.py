@@ -35,8 +35,7 @@ from __future__ import annotations
 
 import random
 from datetime import datetime, timezone
-from typing import Any, Dict, List
-
+from typing import Any
 
 from researchos.experiments.contracts import DatasetConfig, SimulationConfig
 from researchos.experiments.experiment import Experiment
@@ -55,14 +54,14 @@ from researchos.quant_engine.models import (
 # ──────────────────────────────────────────────
 
 
-def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> List[float]:
+def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> list[float]:
     """Deterministic synthetic price series."""
     return [base * (1.0 + drift * i) for i in range(n)]
 
 
-def _make_dataset_contract() -> List[Dict[str, Any]]:
+def _make_dataset_contract() -> list[dict[str, Any]]:
     """A list-of-dicts OHLCV-style dataset contract (backend must normalize)."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     ts = datetime(2020, 1, 1, tzinfo=timezone.utc)
     price = 100.0
     for i in range(252):
@@ -260,7 +259,7 @@ class TestBoundary:
     def test_runner_forwards_dataset_contract(self):
         """The runner must pass the dataset contract through to the backend
         without parsing OHLCV itself."""
-        captured: Dict[str, Any] = {}
+        captured: dict[str, Any] = {}
 
         class RecordingBackend(PythonQuantBackend):
             def run_simulation(

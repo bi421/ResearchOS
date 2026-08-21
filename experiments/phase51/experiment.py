@@ -25,8 +25,8 @@ Guarantees:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Tuple
 
 from researchos.quant_engine.machine_learning.dataset_builder import DatasetBuilder
 from researchos.quant_engine.machine_learning.labels import multiclass_label
@@ -56,7 +56,7 @@ class Phase51Config:
     validation_size: int = 200
     step_size: int = 200
     n_bins: int = 10
-    feature_indices: Optional[Sequence[int]] = None
+    feature_indices: Sequence[int] | None = None
     min_sample_count: int = 100
     significance_level: float = 0.05
     # Cost model (strings consumed by parse_cost_spec / ExecutionSimulationLayer)
@@ -66,7 +66,7 @@ class Phase51Config:
     cost_applied: bool = True
     # Feature used for the single-axis estimator (default: trend_state).
     # Defaults to the 'trend_state' column index if available.
-    estimator_feature: Optional[int] = None
+    estimator_feature: int | None = None
 
 
 def _build_dataset(close, high, low, volume, horizon: int, threshold: float):
@@ -91,17 +91,13 @@ def _evaluate_model(
     est: EmpiricalProbabilityEstimator,
     val_features,
     val_labels: Sequence[float],
-) -> Tuple[ModelResult, List[int], List[Dict[int, float]]]:
-    preds: List[int] = []
-    probs: List[Dict[int, float]] = []
+) -> tuple[ModelResult, list[int], list[dict[int, float]]]:
+    preds: list[int] = []
+    probs: list[dict[int, float]] = []
     for row in val_features:
         preds.append(est.predict_class(row))
         probs.append(est.predict_proba(row))
-    acc = (
-        sum(1 for p, a in zip(preds, val_labels) if int(p) == int(a)) / len(val_labels)
-        if val_labels
-        else 0.0
-    )
+    acc = sum(1 for p, a in zip(preds, val_labels) if int(p) == int(a)) / len(val_labels) if val_labels else 0.0
     # Brier via probs (reuse calibration helper).
     from .calibration import _brier_from_proba
 
@@ -137,7 +133,7 @@ def run_phase51(
     high,
     low,
     volume,
-    config: Optional[Phase51Config] = None,
+    config: Phase51Config | None = None,
 ) -> Phase51Result:
     """Run the Phase 5.1 walk-forward experiment on OHLCV data.
 
@@ -172,11 +168,11 @@ def run_phase51(
     names = dataset.feature_names
     feat_idx = _feature_index(cfg, names)
 
-    all_model_preds: List[int] = []
-    all_base_preds: List[int] = []
-    all_actuals: List[float] = []
-    all_probs: List[Dict[int, float]] = []
-    all_close_at_val: List[float] = []
+    all_model_preds: list[int] = []
+    all_base_preds: list[int] = []
+    all_actuals: list[float] = []
+    all_probs: list[dict[int, float]] = []
+    all_close_at_val: list[float] = []
 
     # --- Chronological walk-forward. ----------------------------------
     train_size = cfg.train_size
@@ -193,9 +189,7 @@ def run_phase51(
         val_close = list(close[val_start : val_start + val_size])
 
         # Fit estimator on training ONLY.
-        est = EmpiricalProbabilityEstimator(n_bins=cfg.n_bins, feature_indices=[feat_idx]).fit(
-            tr_feat, tr_lab
-        )
+        est = EmpiricalProbabilityEstimator(n_bins=cfg.n_bins, feature_indices=[feat_idx]).fit(tr_feat, tr_lab)
 
         # Baseline fit on training ONLY.
         base_pred = baseline_always_predict(tr_lab, val_lab)
@@ -248,9 +242,7 @@ def run_phase51(
     )
 
     # --- Significance. ------------------------------------------------
-    significance = evaluate_significance(
-        all_model_preds, all_base_preds, all_actuals, cfg.significance_level
-    )
+    significance = evaluate_significance(all_model_preds, all_base_preds, all_actuals, cfg.significance_level)
 
     # --- Self-validation. ---------------------------------------------
     flags = aggregate_outcome(
@@ -305,11 +297,7 @@ def run_phase51(
 
 def _baseline_like(predictions: Sequence[int], actuals: Sequence[float]) -> BaselineResult:
     """Reconstruct a BaselineResult from aggregated validation predictions."""
-    acc = (
-        sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a)) / len(actuals)
-        if actuals
-        else 0.0
-    )
+    acc = sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a)) / len(actuals) if actuals else 0.0
     n = len(actuals)
     brier = 0.0
     for p, a in zip(predictions, actuals):
@@ -351,16 +339,12 @@ def _baseline_like(predictions: Sequence[int], actuals: Sequence[float]) -> Base
 def _model_like(
     predictions: Sequence[int],
     actuals: Sequence[float],
-    probs: Sequence[Dict[int, float]],
+    probs: Sequence[dict[int, float]],
 ) -> ModelResult:
     """Reconstruct a ModelResult from aggregated validation predictions."""
     from .calibration import _brier_from_proba
 
-    acc = (
-        sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a)) / len(actuals)
-        if actuals
-        else 0.0
-    )
+    acc = sum(1 for p, a in zip(predictions, actuals) if int(p) == int(a)) / len(actuals) if actuals else 0.0
     brier = _brier_from_proba(probs, actuals)
 
     def _prec(pp: int) -> float:

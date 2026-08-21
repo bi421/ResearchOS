@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
 import glob
-import time
 import sys
+import time
+
+import numpy as np
+import pandas as pd
 
 # C++ бэкенд импорт
 try:

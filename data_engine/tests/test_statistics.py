@@ -219,8 +219,7 @@ class TestDatasetStatisticsRecordTypes:
 
     def test_tick_average_volume(self):
         ticks = [
-            Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i), price=2000.0, volume=2.0)
-            for i in range(3)
+            Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i), price=2000.0, volume=2.0) for i in range(3)
         ]
         ds = HistoricalDataset(symbol="XAU/USD", timeframe="tick", records=ticks)
         stats = compute_dataset_statistics(ds)

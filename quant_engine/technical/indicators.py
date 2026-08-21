@@ -13,7 +13,6 @@ Research-only numerical computation.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional
 
 from researchos.quant_engine.technical.contracts import Bars
 
@@ -22,8 +21,8 @@ from researchos.quant_engine.technical.contracts import Bars
 # ──────────────────────────────────────────────
 
 
-def _sma(values: List[float], period: int) -> List[Optional[float]]:
-    out: List[Optional[float]] = [None] * len(values)
+def _sma(values: list[float], period: int) -> list[float | None]:
+    out: list[float | None] = [None] * len(values)
     if period <= 0 or len(values) < period:
         return out
     running = 0.0
@@ -36,12 +35,12 @@ def _sma(values: List[float], period: int) -> List[Optional[float]]:
     return out
 
 
-def _ema(values: List[float], period: int) -> List[Optional[float]]:
-    out: List[Optional[float]] = [None] * len(values)
+def _ema(values: list[float], period: int) -> list[float | None]:
+    out: list[float | None] = [None] * len(values)
     if period <= 0 or len(values) == 0:
         return out
     alpha = 2.0 / (period + 1.0)
-    prev: Optional[float] = None
+    prev: float | None = None
     for i, v in enumerate(values):
         if prev is None:
             prev = v
@@ -51,8 +50,8 @@ def _ema(values: List[float], period: int) -> List[Optional[float]]:
     return out
 
 
-def _wma(values: List[float], period: int) -> List[Optional[float]]:
-    out: List[Optional[float]] = [None] * len(values)
+def _wma(values: list[float], period: int) -> list[float | None]:
+    out: list[float | None] = [None] * len(values)
     if period <= 0 or len(values) < period:
         return out
     weight_sum = period * (period + 1) / 2.0
@@ -64,13 +63,13 @@ def _wma(values: List[float], period: int) -> List[Optional[float]]:
     return out
 
 
-def _wilder_rma(values: List[float], period: int) -> List[Optional[float]]:
+def _wilder_rma(values: list[float], period: int) -> list[float | None]:
     """Wilder's smoothing (RMA) used by RSI / ATR / ADX."""
-    out: List[Optional[float]] = [None] * len(values)
+    out: list[float | None] = [None] * len(values)
     if period <= 0 or len(values) < period:
         return out
     alpha = 1.0 / period
-    prev: Optional[float] = None
+    prev: float | None = None
     for i, v in enumerate(values):
         if i == period - 1:
             # First RMA = simple mean of first `period` values.
@@ -82,8 +81,8 @@ def _wilder_rma(values: List[float], period: int) -> List[Optional[float]]:
     return out
 
 
-def _true_range(bars: Bars) -> List[float]:
-    tr: List[float] = []
+def _true_range(bars: Bars) -> list[float]:
+    tr: list[float] = []
     for i in range(bars.length):
         if i == 0:
             tr.append(bars.high[0] - bars.low[0])
@@ -99,7 +98,7 @@ def _true_range(bars: Bars) -> List[float]:
     return tr
 
 
-def _pad(values: List[float], warmup: int) -> List[Optional[float]]:
+def _pad(values: list[float], warmup: int) -> list[float | None]:
     """Pad the front of a series with None so it aligns to input length."""
     return [None] * warmup + list(values)
 
@@ -109,19 +108,19 @@ def _pad(values: List[float], warmup: int) -> List[Optional[float]]:
 # ──────────────────────────────────────────────
 
 
-def sma(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def sma(bars: Bars, period: int = 20) -> list[float | None]:
     return _sma(bars.close, period)
 
 
-def ema(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def ema(bars: Bars, period: int = 20) -> list[float | None]:
     return _ema(bars.close, period)
 
 
-def wma(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def wma(bars: Bars, period: int = 20) -> list[float | None]:
     return _wma(bars.close, period)
 
 
-def hma(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def hma(bars: Bars, period: int = 20) -> list[float | None]:
     """
     Hull Moving Average.
 
@@ -133,14 +132,14 @@ def hma(bars: Bars, period: int = 20) -> List[Optional[float]]:
     wma_full = _wma(bars.close, n)
 
     length = len(bars.close)
-    raw: List[Optional[float]] = [None] * length
+    raw: list[float | None] = [None] * length
     for i in range(length):
         if wma_half[i] is not None and wma_full[i] is not None:
             raw[i] = 2.0 * wma_half[i] - wma_full[i]  # type: ignore[operator]
 
     # WMA over the raw series, skipping None warm-up.
     sqrt_n = max(1, int(math.sqrt(n)))
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     weight_sum = sqrt_n * (sqrt_n + 1) / 2.0
     for i in range(length):
         if raw[i] is None:
@@ -159,10 +158,10 @@ def hma(bars: Bars, period: int = 20) -> List[Optional[float]]:
     return out
 
 
-def vwma(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def vwma(bars: Bars, period: int = 20) -> list[float | None]:
     """Volume-Weighted Moving Average."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     if length < period or period <= 0:
         return out
     pv = 0.0
@@ -183,15 +182,15 @@ def vwma(bars: Bars, period: int = 20) -> List[Optional[float]]:
 # ──────────────────────────────────────────────
 
 
-def rsi(bars: Bars, period: int = 14) -> List[Optional[float]]:
+def rsi(bars: Bars, period: int = 14) -> list[float | None]:
     """Relative Strength Index (Wilder's smoothing)."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     if length < period + 1:
         return out
 
-    gains: List[float] = []
-    losses: List[float] = []
+    gains: list[float] = []
+    losses: list[float] = []
     for i in range(1, length):
         delta = bars.close[i] - bars.close[i - 1]
         gains.append(max(delta, 0.0))
@@ -218,10 +217,10 @@ def stochastic(
     period: int = 14,
     smooth_k: int = 3,
     smooth_d: int = 3,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """Stochastic Oscillator (%K and %D)."""
     length = bars.length
-    raw_k: List[Optional[float]] = [None] * length
+    raw_k: list[float | None] = [None] * length
     if length < period:
         return {"k": raw_k, "d": [None] * length}
 
@@ -235,7 +234,7 @@ def stochastic(
 
     k = _sma([v for v in raw_k if v is not None], smooth_k) if smooth_k > 0 else raw_k
     # Re-align smoothed K.
-    k_aligned: List[Optional[float]] = [None] * length
+    k_aligned: list[float | None] = [None] * length
     idx = 0
     for i in range(length):
         if raw_k[i] is not None:
@@ -245,7 +244,7 @@ def stochastic(
 
     k_vals = [v for v in k_aligned if v is not None]
     d = _sma(k_vals, smooth_d) if smooth_d > 0 else k_vals
-    d_aligned: List[Optional[float]] = [None] * length
+    d_aligned: list[float | None] = [None] * length
     di = 0
     for i in range(length):
         if k_aligned[i] is not None:
@@ -256,10 +255,10 @@ def stochastic(
     return {"k": k_aligned, "d": d_aligned}
 
 
-def cci(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def cci(bars: Bars, period: int = 20) -> list[float | None]:
     """Commodity Channel Index."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     if length < period:
         return out
     tp = [(h + low + c) / 3.0 for h, low, c in zip(bars.high, bars.low, bars.close)]
@@ -276,10 +275,10 @@ def cci(bars: Bars, period: int = 20) -> List[Optional[float]]:
     return out
 
 
-def roc(bars: Bars, period: int = 12) -> List[Optional[float]]:
+def roc(bars: Bars, period: int = 12) -> list[float | None]:
     """Rate of Change (percent)."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     for i in range(period, length):
         prev = bars.close[i - period]
         if prev == 0:
@@ -289,10 +288,10 @@ def roc(bars: Bars, period: int = 12) -> List[Optional[float]]:
     return out
 
 
-def momentum(bars: Bars, period: int = 12) -> List[Optional[float]]:
+def momentum(bars: Bars, period: int = 12) -> list[float | None]:
     """Momentum (absolute change)."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     for i in range(period, length):
         out[i] = bars.close[i] - bars.close[i - period]
     return out
@@ -303,7 +302,7 @@ def momentum(bars: Bars, period: int = 12) -> List[Optional[float]]:
 # ──────────────────────────────────────────────
 
 
-def atr(bars: Bars, period: int = 14) -> List[Optional[float]]:
+def atr(bars: Bars, period: int = 14) -> list[float | None]:
     """Average True Range (Wilder's)."""
     tr = _true_range(bars)
     return _wilder_rma(tr, period)
@@ -313,12 +312,12 @@ def bollinger_bands(
     bars: Bars,
     period: int = 20,
     std_dev: float = 2.0,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """Bollinger Bands (upper, middle, lower)."""
     length = bars.length
     middle = _sma(bars.close, period)
-    upper: List[Optional[float]] = [None] * length
-    lower: List[Optional[float]] = [None] * length
+    upper: list[float | None] = [None] * length
+    lower: list[float | None] = [None] * length
     for i in range(period - 1, length):
         m = middle[i]
         if m is None:
@@ -337,13 +336,13 @@ def keltner_channel(
     period: int = 20,
     atr_period: int = 10,
     multiplier: float = 2.0,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """Keltner Channel (upper, middle, lower) using EMA + ATR."""
     middle = _ema(bars.close, period)
     atr_vals = atr(bars, atr_period)
     length = bars.length
-    upper: List[Optional[float]] = [None] * length
-    lower: List[Optional[float]] = [None] * length
+    upper: list[float | None] = [None] * length
+    lower: list[float | None] = [None] * length
     for i in range(length):
         if middle[i] is not None and atr_vals[i] is not None:
             upper[i] = middle[i] + multiplier * atr_vals[i]
@@ -354,12 +353,12 @@ def keltner_channel(
 def donchian_channel(
     bars: Bars,
     period: int = 20,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """Donchian Channel (upper, middle, lower)."""
     length = bars.length
-    upper: List[Optional[float]] = [None] * length
-    lower: List[Optional[float]] = [None] * length
-    middle: List[Optional[float]] = [None] * length
+    upper: list[float | None] = [None] * length
+    lower: list[float | None] = [None] * length
+    middle: list[float | None] = [None] * length
     for i in range(period - 1, length):
         window_high = bars.high[i - period + 1 : i + 1]
         window_low = bars.low[i - period + 1 : i + 1]
@@ -376,10 +375,10 @@ def donchian_channel(
 # ──────────────────────────────────────────────
 
 
-def obv(bars: Bars) -> List[Optional[float]]:
+def obv(bars: Bars) -> list[float | None]:
     """On-Balance Volume."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     if length == 0:
         return out
     out[0] = bars.volume[0]
@@ -393,10 +392,10 @@ def obv(bars: Bars) -> List[Optional[float]]:
     return out
 
 
-def vwap(bars: Bars) -> List[Optional[float]]:
+def vwap(bars: Bars) -> list[float | None]:
     """Session VWAP over the provided bar series (cumulative)."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     pv = 0.0
     vol = 0.0
     for i in range(length):
@@ -410,17 +409,17 @@ def vwap(bars: Bars) -> List[Optional[float]]:
     return out
 
 
-def mfi(bars: Bars, period: int = 14) -> List[Optional[float]]:
+def mfi(bars: Bars, period: int = 14) -> list[float | None]:
     """Money Flow Index."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     if length < period + 1:
         return out
     typical = [(h + low + c) / 3.0 for h, low, c in zip(bars.high, bars.low, bars.close)]
     raw_money = [t * v for t, v in zip(typical, bars.volume)]
 
-    pos: List[float] = []
-    neg: List[float] = []
+    pos: list[float] = []
+    neg: list[float] = []
     for i in range(1, length):
         if typical[i] > typical[i - 1]:
             pos.append(raw_money[i])
@@ -447,10 +446,10 @@ def mfi(bars: Bars, period: int = 14) -> List[Optional[float]]:
     return out
 
 
-def cmf(bars: Bars, period: int = 20) -> List[Optional[float]]:
+def cmf(bars: Bars, period: int = 20) -> list[float | None]:
     """Chaikin Money Flow."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     if length < period:
         return out
     for i in range(period - 1, length):
@@ -470,10 +469,10 @@ def cmf(bars: Bars, period: int = 20) -> List[Optional[float]]:
     return out
 
 
-def accumulation_distribution(bars: Bars) -> List[Optional[float]]:
+def accumulation_distribution(bars: Bars) -> list[float | None]:
     """Accumulation / Distribution Line."""
     length = bars.length
-    out: List[Optional[float]] = [None] * length
+    out: list[float | None] = [None] * length
     ad = 0.0
     for i in range(length):
         high = bars.high[i]
@@ -493,15 +492,15 @@ def accumulation_distribution(bars: Bars) -> List[Optional[float]]:
 # ──────────────────────────────────────────────
 
 
-def dmi(bars: Bars, period: int = 14) -> Dict[str, List[Optional[float]]]:
+def dmi(bars: Bars, period: int = 14) -> dict[str, list[float | None]]:
     """
     Directional Movement Indicators: +DI, -DI, ADX, ADXR.
 
     Returns dict with keys "+di", "-di", "adx", "adxr".
     """
     length = bars.length
-    plus_dm: List[float] = [0.0] * length
-    minus_dm: List[float] = [0.0] * length
+    plus_dm: list[float] = [0.0] * length
+    minus_dm: list[float] = [0.0] * length
     tr = _true_range(bars)
 
     for i in range(1, length):
@@ -514,9 +513,9 @@ def dmi(bars: Bars, period: int = 14) -> Dict[str, List[Optional[float]]]:
     plus_rma = _wilder_rma(plus_dm, period)
     minus_rma = _wilder_rma(minus_dm, period)
 
-    plus_di: List[Optional[float]] = [None] * length
-    minus_di: List[Optional[float]] = [None] * length
-    dx: List[Optional[float]] = [None] * length
+    plus_di: list[float | None] = [None] * length
+    minus_di: list[float | None] = [None] * length
+    dx: list[float | None] = [None] * length
 
     for i in range(length):
         t = tr_rma[i]
@@ -538,7 +537,7 @@ def dmi(bars: Bars, period: int = 14) -> Dict[str, List[Optional[float]]]:
 
     dx_vals = [v for v in dx if v is not None]
     adx_raw = _wilder_rma(dx_vals, period)
-    adx: List[Optional[float]] = [None] * length
+    adx: list[float | None] = [None] * length
     idx = 0
     for i in range(length):
         if dx[i] is not None:
@@ -546,7 +545,7 @@ def dmi(bars: Bars, period: int = 14) -> Dict[str, List[Optional[float]]]:
                 adx[i] = adx_raw[idx]
             idx += 1
 
-    adxr: List[Optional[float]] = [None] * length
+    adxr: list[float | None] = [None] * length
     for i in range(length):
         if adx[i] is not None:
             prev = adx[i - period] if i - period >= 0 else None
@@ -556,7 +555,7 @@ def dmi(bars: Bars, period: int = 14) -> Dict[str, List[Optional[float]]]:
     return {"+di": plus_di, "-di": minus_di, "adx": adx, "adxr": adxr}
 
 
-def adx(bars: Bars, period: int = 14) -> List[Optional[float]]:
+def adx(bars: Bars, period: int = 14) -> list[float | None]:
     return dmi(bars, period)["adx"]
 
 
@@ -570,20 +569,20 @@ def macd(
     fast: int = 12,
     slow: int = 26,
     signal: int = 9,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """MACD line, signal line, and histogram."""
     ema_fast = _ema(bars.close, fast)
     ema_slow = _ema(bars.close, slow)
     length = bars.length
 
-    macd_line: List[Optional[float]] = [None] * length
+    macd_line: list[float | None] = [None] * length
     for i in range(length):
         if ema_fast[i] is not None and ema_slow[i] is not None:
             macd_line[i] = ema_fast[i] - ema_slow[i]
 
     macd_vals = [v for v in macd_line if v is not None]
     signal_raw = _ema(macd_vals, signal)
-    signal_line: List[Optional[float]] = [None] * length
+    signal_line: list[float | None] = [None] * length
     idx = 0
     for i in range(length):
         if macd_line[i] is not None:
@@ -591,7 +590,7 @@ def macd(
                 signal_line[i] = signal_raw[idx]
             idx += 1
 
-    histogram: List[Optional[float]] = [None] * length
+    histogram: list[float | None] = [None] * length
     for i in range(length):
         if macd_line[i] is not None and signal_line[i] is not None:
             histogram[i] = macd_line[i] - signal_line[i]
@@ -612,7 +611,7 @@ def supertrend(
     bars: Bars,
     period: int = 10,
     multiplier: float = 3.0,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """
     SuperTrend indicator.
 
@@ -624,10 +623,10 @@ def supertrend(
     """
     length = bars.length
     atr_series = atr(bars, period)
-    supertrend_out: List[Optional[float]] = [None] * length
-    upper_band_out: List[Optional[float]] = [None] * length
-    lower_band_out: List[Optional[float]] = [None] * length
-    trend_out: List[Optional[float]] = [None] * length
+    supertrend_out: list[float | None] = [None] * length
+    upper_band_out: list[float | None] = [None] * length
+    lower_band_out: list[float | None] = [None] * length
+    trend_out: list[float | None] = [None] * length
 
     if length == 0 or period <= 0:
         return {
@@ -637,8 +636,8 @@ def supertrend(
             "trend": trend_out,
         }
 
-    prev_upper: Optional[float] = None
-    prev_lower: Optional[float] = None
+    prev_upper: float | None = None
+    prev_lower: float | None = None
     prev_trend: float = 1.0
 
     for i in range(length):
@@ -701,7 +700,7 @@ def ichimoku_cloud(
     kijun_period: int = 26,
     senkou_b_period: int = 52,
     displacement: int = 26,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """
     Ichimoku Kinko Hyo (Cloud) indicator.
 
@@ -713,11 +712,11 @@ def ichimoku_cloud(
         - chikou_span: Lagging Span
     """
     length = bars.length
-    tenkan: List[Optional[float]] = [None] * length
-    kijun: List[Optional[float]] = [None] * length
-    senkou_a: List[Optional[float]] = [None] * length
-    senkou_b: List[Optional[float]] = [None] * length
-    chikou: List[Optional[float]] = [None] * length
+    tenkan: list[float | None] = [None] * length
+    kijun: list[float | None] = [None] * length
+    senkou_a: list[float | None] = [None] * length
+    senkou_b: list[float | None] = [None] * length
+    chikou: list[float | None] = [None] * length
 
     def _hl_mid(start_idx: int, end_idx: int) -> float:
         h = max(bars.high[start_idx : end_idx + 1])
@@ -756,7 +755,7 @@ def parabolic_sar(
     bars: Bars,
     af_step: float = 0.02,
     af_max: float = 0.2,
-) -> Dict[str, List[Optional[float]]]:
+) -> dict[str, list[float | None]]:
     """
     Parabolic Stop and Reverse (PSAR) indicator.
 
@@ -765,8 +764,8 @@ def parabolic_sar(
         - trend: Trend direction (+1.0 for uptrend, -1.0 for downtrend)
     """
     length = bars.length
-    psar_out: List[Optional[float]] = [None] * length
-    trend_out: List[Optional[float]] = [None] * length
+    psar_out: list[float | None] = [None] * length
+    trend_out: list[float | None] = [None] * length
 
     if length < 2:
         return {"psar": psar_out, "trend": trend_out}

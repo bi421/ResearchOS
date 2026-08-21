@@ -1,11 +1,11 @@
-import sys
 import json
+import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path("cpp_quant_engine/python").resolve()))
 
-from cpp_quant_engine import CppQuantEngineBackend, BacktestRequest, Candle
+from cpp_quant_engine import BacktestRequest, Candle, CppQuantEngineBackend
 
 print("=" * 70)
 print("🚀 PRODUCTION TEST: 1.7 САЯ ЛАА ДЭЭР C++ BACKEND")

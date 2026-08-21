@@ -26,27 +26,18 @@ def validate_dataset(dataset) -> None:
 def validate_shapes(dataset) -> None:
     """Ensure features, labels and sample_count agree on the row count."""
     if len(dataset.features) != dataset.sample_count:
-        raise ValueError(
-            f"features length {len(dataset.features)} != sample_count {dataset.sample_count}"
-        )
+        raise ValueError(f"features length {len(dataset.features)} != sample_count {dataset.sample_count}")
     if len(dataset.labels) != dataset.sample_count:
-        raise ValueError(
-            f"labels length {len(dataset.labels)} != sample_count {dataset.sample_count}"
-        )
+        raise ValueError(f"labels length {len(dataset.labels)} != sample_count {dataset.sample_count}")
 
 
 def validate_feature_count(dataset) -> None:
     """Ensure every feature row has exactly ``feature_count`` columns."""
     for idx, row in enumerate(dataset.features):
         if len(row) != dataset.feature_count:
-            raise ValueError(
-                f"feature row {idx} has {len(row)} columns, expected {dataset.feature_count}"
-            )
+            raise ValueError(f"feature row {idx} has {len(row)} columns, expected {dataset.feature_count}")
     if len(dataset.feature_names) != dataset.feature_count:
-        raise ValueError(
-            f"feature_names length {len(dataset.feature_names)} != "
-            f"feature_count {dataset.feature_count}"
-        )
+        raise ValueError(f"feature_names length {len(dataset.feature_names)} != feature_count {dataset.feature_count}")
 
 
 def validate_no_none(dataset) -> None:
@@ -78,10 +69,7 @@ def validate_alignment(dataset) -> None:
     guaranteed structurally when both sequences have the same length.
     """
     if len(dataset.features) != len(dataset.labels):
-        raise ValueError(
-            f"alignment violated: {len(dataset.features)} feature rows vs "
-            f"{len(dataset.labels)} labels"
-        )
+        raise ValueError(f"alignment violated: {len(dataset.features)} feature rows vs {len(dataset.labels)} labels")
 
 
 __all__ = [

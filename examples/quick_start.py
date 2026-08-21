@@ -1,6 +1,6 @@
 """Quick start example for ResearchOS."""
 
-from researchos import Research, Observation, Evidence, Hypothesis, Scenario
+from researchos import Evidence, Hypothesis, Observation, Research, Scenario
 
 
 def main():
