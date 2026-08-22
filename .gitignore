@@ -35,3 +35,7 @@ cpp_quant/*.so
 
 # Лог файлууд
 *.log
+
+cpp_quant_engine/build-debug/
+cpp_quant_engine/build-release/
+cpp_quant_engine/build-sanitize/
