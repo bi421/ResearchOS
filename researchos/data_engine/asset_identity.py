@@ -122,13 +122,7 @@ def assert_not_gold_futures(symbol: str, yf_symbol: str) -> None:
         DataIdentityError: if *yf_symbol* is a COMEX gold futures contract.
     """
     if is_gold_futures_symbol(yf_symbol):
-        raise DataIdentityError(
-            f"Data-identity violation: '{yf_symbol}' is a COMEX gold FUTURES "
-            f"contract and must NEVER be treated as {symbol} spot. XAUUSD spot "
-            f"must use the curated historical dataset loaded via "
-            f"researchos.data_engine.csv_loader.CsvLoader, or the spot proxy "
-            f"'{XAUUSD_SPOT_YFINANCE}' for a delayed engineering reference only."
-        )
+        raise DataIdentityError(f"Data-identity violation: '{yf_symbol}' is a COMEX gold FUTURES contract and must NEVER be treated as {symbol} spot. XAUUSD spot must use the curated historical dataset loaded via researchos.data_engine.csv_loader.CsvLoader, or the spot proxy '{XAUUSD_SPOT_YFINANCE}' for a delayed engineering reference only.")
 
 
 def assert_xauusd_identity(symbol: str, yf_symbol: str) -> None:

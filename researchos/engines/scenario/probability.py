@@ -164,14 +164,7 @@ class ProbabilityAssessment(BaseObject):
 
         self.lifecycle.transition(
             LifecycleStage.ANALYZED,
-            reason=(
-                f"Probability assessed: "
-                f"B={self.bullish_probability:.4f}, "
-                f"Be={self.bearish_probability:.4f}, "
-                f"N={self.neutral_probability:.4f}, "
-                f"confidence={self.confidence:.4f}, "
-                f"sample_size={self.sample_size}"
-            ),
+            reason=(f"Probability assessed: B={self.bullish_probability:.4f}, Be={self.bearish_probability:.4f}, N={self.neutral_probability:.4f}, confidence={self.confidence:.4f}, sample_size={self.sample_size}"),
         )
 
     # ------------------------------------------------------------------

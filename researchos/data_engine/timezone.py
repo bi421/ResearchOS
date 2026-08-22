@@ -25,6 +25,7 @@ Anything else is an error.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
@@ -201,12 +202,7 @@ def _resolve_zone(timezone_name: str):
     try:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError):
-        raise TimezoneResolutionError(
-            f"Unknown IANA timezone: {timezone_name!r}. Timezone names "
-            "must be a known abbreviation (e.g. 'EST'), a numeric "
-            "offset (e.g. '+05:30'), or a valid IANA zone "
-            "(e.g. 'America/New_York'). Never silently treated as UTC."
-        ) from None
+        raise TimezoneResolutionError(f"Unknown IANA timezone: {timezone_name!r}. Timezone names must be a known abbreviation (e.g. 'EST'), a numeric offset (e.g. '+05:30'), or a valid IANA zone (e.g. 'America/New_York'). Never silently treated as UTC.") from None
 
 
 def _get_offset(timezone_name: str) -> int:
@@ -246,9 +242,4 @@ def _get_offset(timezone_name: str) -> int:
         except ValueError as exc:
             raise TimezoneResolutionError(f"Invalid numeric timezone offset: {timezone_name!r} ({exc}).") from None
 
-    raise TimezoneResolutionError(
-        f"Unknown timezone: {timezone_name!r}. Must be a known "
-        "abbreviation (e.g. 'EST'), a numeric offset (e.g. '+05:30'), "
-        "or a valid IANA zone (e.g. 'America/New_York'). Never "
-        "silently treated as UTC."
-    )
+    raise TimezoneResolutionError(f"Unknown timezone: {timezone_name!r}. Must be a known abbreviation (e.g. 'EST'), a numeric offset (e.g. '+05:30'), or a valid IANA zone (e.g. 'America/New_York'). Never silently treated as UTC.")

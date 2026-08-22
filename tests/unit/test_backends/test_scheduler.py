@@ -193,9 +193,7 @@ class TestBackendScheduler:
         assert decision.profile_version == ""
 
     def test_profile_selects_fastest(self):
-        profile = (
-            CertifiedPerformanceProfile().add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)).add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
-        )
+        profile = CertifiedPerformanceProfile().add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)).add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         scheduler = BackendScheduler(profile=profile)
         decision = scheduler.decide(
             "calculate_returns",

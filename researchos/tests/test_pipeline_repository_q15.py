@@ -559,17 +559,17 @@ class TestDependencyAudit(unittest.TestCase):
 
     def test_stdlib_only_imports(self):
         allowed_roots = {
-    '__future__',
-    'json',
-    'typing',
-    'researchos',
-    'os',
-    'dataclasses',
-    'hashlib',
-    'types',
-    'collections',           # ← Python stdlib
-    'collections.abc',       # ← Python 3.3+ stdlib
-}
+            "__future__",
+            "json",
+            "typing",
+            "researchos",
+            "os",
+            "dataclasses",
+            "hashlib",
+            "types",
+            "collections",  # ← Python stdlib
+            "collections.abc",  # ← Python 3.3+ stdlib
+        }
         import re
 
         for name, source in self._module_sources():

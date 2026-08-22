@@ -1,4 +1,4 @@
-# ResearchOS v2 � Data Layer Architecture
+﻿# ResearchOS v2 — Data Layer Architecture
 
 Version: v2.0
 Layer: 01 / 10

@@ -120,13 +120,7 @@ class ConfidenceCalculator:
         Returns:
             A float in [0.0, 1.0].
         """
-        contribution = (
-            self._weights["evidence_quality"] * self._clamp(components.evidence_quality)
-            + self._weights["feature_quality"] * self._clamp(components.feature_quality)
-            + self._weights["relationship_stability"] * self._clamp(components.relationship_stability)
-            + self._weights["regime_confidence"] * self._clamp(components.regime_confidence)
-            + self._weights["historical_consistency"] * self._clamp(components.historical_consistency)
-        )
+        contribution = self._weights["evidence_quality"] * self._clamp(components.evidence_quality) + self._weights["feature_quality"] * self._clamp(components.feature_quality) + self._weights["relationship_stability"] * self._clamp(components.relationship_stability) + self._weights["regime_confidence"] * self._clamp(components.regime_confidence) + self._weights["historical_consistency"] * self._clamp(components.historical_consistency)
         return round(contribution, 4)
 
     def to_dict(self) -> dict[str, Any]:

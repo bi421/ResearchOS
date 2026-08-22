@@ -114,12 +114,7 @@ RULES: dict[str, KnowledgeRule] = {
     "REGIME_PERSISTENCE": KnowledgeRule(
         rule_id="KNOW-001",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF regime persists for at least REGIME_PERSISTENCE_MIN_PERIODS "
-            "AND regime confidence >= REGIME_PERSISTENCE_MIN_CONFIDENCE "
-            "AND continuation probability >= REGIME_PERSISTENCE_MIN_CONTINUATION "
-            "THEN REGIME_PERSISTENCE knowledge"
-        ),
+        description=("IF regime persists for at least REGIME_PERSISTENCE_MIN_PERIODS AND regime confidence >= REGIME_PERSISTENCE_MIN_CONFIDENCE AND continuation probability >= REGIME_PERSISTENCE_MIN_CONTINUATION THEN REGIME_PERSISTENCE knowledge"),
         parameters={
             "min_periods": REGIME_PERSISTENCE_MIN_PERIODS,
             "min_confidence": REGIME_PERSISTENCE_MIN_CONFIDENCE,
@@ -137,12 +132,7 @@ RULES: dict[str, KnowledgeRule] = {
     "PERSISTENT_RELATIONSHIP": KnowledgeRule(
         rule_id="KNOW-003",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF correlation stability (rolling std) <= PERSISTENT_RELATIONSHIP_MIN_STABILITY "
-            "AND abs(overall correlation) >= PERSISTENT_RELATIONSHIP_MIN_ABS_CORR "
-            "AND sample size >= PERSISTENT_RELATIONSHIP_MIN_SAMPLE "
-            "THEN PERSISTENT_RELATIONSHIP knowledge"
-        ),
+        description=("IF correlation stability (rolling std) <= PERSISTENT_RELATIONSHIP_MIN_STABILITY AND abs(overall correlation) >= PERSISTENT_RELATIONSHIP_MIN_ABS_CORR AND sample size >= PERSISTENT_RELATIONSHIP_MIN_SAMPLE THEN PERSISTENT_RELATIONSHIP knowledge"),
         parameters={
             "min_stability": PERSISTENT_RELATIONSHIP_MIN_STABILITY,
             "min_abs_corr": PERSISTENT_RELATIONSHIP_MIN_ABS_CORR,
@@ -177,9 +167,7 @@ RULES: dict[str, KnowledgeRule] = {
     "RISK_OFF_SAFE_HAVEN": KnowledgeRule(
         rule_id="KNOW-007",
         rule_version=KNOWLEDGE_RULES_VERSION,
-        description=(
-            "IF risk regime is risk-off AND risk confidence >= RISK_OFF_MIN_CONFIDENCE AND abs(safe-haven correlation) >= RISK_OFF_MIN_ABS_SAFE_HAVEN_CORR THEN RISK_OFF_SAFE_HAVEN knowledge"
-        ),
+        description=("IF risk regime is risk-off AND risk confidence >= RISK_OFF_MIN_CONFIDENCE AND abs(safe-haven correlation) >= RISK_OFF_MIN_ABS_SAFE_HAVEN_CORR THEN RISK_OFF_SAFE_HAVEN knowledge"),
         parameters={
             "min_confidence": RISK_OFF_MIN_CONFIDENCE,
             "min_abs_safe_haven_corr": RISK_OFF_MIN_ABS_SAFE_HAVEN_CORR,

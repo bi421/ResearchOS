@@ -40,9 +40,7 @@ def main():
 
     for th in thresholds:
         result, metrics = run_ml_backtest(df_h, model_type=model_type, threshold=th, train_ratio=0.7, retrain=True)
-        print(
-            f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%} | {metrics['test_accuracy']:7.2%}"
-        )
+        print(f"{th:5.2f}     | {result.num_trades:6d} | {result.total_return:7.2%} | {result.sharpe_ratio:6.2f} | {result.max_drawdown:6.2%} | {result.win_rate:7.2%} | {metrics['test_accuracy']:7.2%}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# ResearchOS v2 — Knowledge Layer Architecture
+# ResearchOS v2 â€” Knowledge Layer Architecture
 
 Version: v2.0
 Layer: 03 / 10

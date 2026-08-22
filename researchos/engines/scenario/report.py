@@ -376,19 +376,8 @@ def generate_decision_report(
     evidence_summary = f"Total evidence: {score.evidence_count} items from {len(source_counts)} sources. " + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items()))
 
     # Human-readable summary
-    directional_label = (
-        "Bullish" if probability.bullish_probability > probability.bearish_probability else "Bearish" if probability.bearish_probability > probability.bullish_probability else "Neutral"
-    )
-    summary = (
-        f"{directional_label} bias for {context.asset} ({context.timeframe}) "
-        f"with {probability.confidence:.0%} confidence. "
-        f"Bullish={probability.bullish_probability:.1%}, "
-        f"Bearish={probability.bearish_probability:.1%}, "
-        f"Neutral={probability.neutral_probability:.1%}. "
-        f"Based on {len(reasoning_steps)} reasoning steps, "
-        f"{score.evidence_count} evidence items, "
-        f"{len(context.historical_scenario_ids)} historical matches."
-    )
+    directional_label = "Bullish" if probability.bullish_probability > probability.bearish_probability else "Bearish" if probability.bearish_probability > probability.bullish_probability else "Neutral"
+    summary = f"{directional_label} bias for {context.asset} ({context.timeframe}) with {probability.confidence:.0%} confidence. Bullish={probability.bullish_probability:.1%}, Bearish={probability.bearish_probability:.1%}, Neutral={probability.neutral_probability:.1%}. Based on {len(reasoning_steps)} reasoning steps, {score.evidence_count} evidence items, {len(context.historical_scenario_ids)} historical matches."
 
     return DecisionReport(
         asset=context.asset,

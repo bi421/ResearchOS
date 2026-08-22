@@ -1,4 +1,4 @@
-# ResearchOS v2 — Debate Layer Architecture
+# ResearchOS v2 â€” Debate Layer Architecture
 
 Version: v2.0
 Layer: 07 / 10

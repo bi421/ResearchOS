@@ -177,12 +177,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=2,
-            description=(
-                f"Evidence direction breakdown: "
-                f"Bullish={bullish_items}, Bearish={bearish_items}, Neutral={neutral_items}. "
-                f"Scores: B={score.bullish_score:.4f}, Be={score.bearish_score:.4f}, "
-                f"N={score.neutral_score:.4f}"
-            ),
+            description=(f"Evidence direction breakdown: Bullish={bullish_items}, Bearish={bearish_items}, Neutral={neutral_items}. Scores: B={score.bullish_score:.4f}, Be={score.bearish_score:.4f}, N={score.neutral_score:.4f}"),
             inputs=[score.id],
             outputs=[],
             rule="DirectionBreakdown",
@@ -296,11 +291,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=8,
-            description=(
-                f"Confidence assessment: composite={score.confidence_score:.4f}, "
-                f"avg_item_confidence={avg_confidence:.4f}. "
-                f"Based on {score.evidence_count} items from {len(evidence_confidences)} sources."
-            ),
+            description=(f"Confidence assessment: composite={score.confidence_score:.4f}, avg_item_confidence={avg_confidence:.4f}. Based on {score.evidence_count} items from {len(evidence_confidences)} sources."),
             inputs=[score.id],
             outputs=[],
             rule="ConfidenceAssessment",
@@ -332,14 +323,7 @@ class DecisionReasoner:
         """Step 10: Probability calculation."""
         return ReasoningStep(
             order=10,
-            description=(
-                f"Probability calculation (v{probability.calculation_version}): "
-                f"WeightedEvidence method. "
-                f"Bullish={probability.bullish_probability:.2%}, "
-                f"Bearish={probability.bearish_probability:.2%}, "
-                f"Neutral={probability.neutral_probability:.2%}. "
-                f"Sum={probability.bullish_probability + probability.bearish_probability + probability.neutral_probability:.4f}"
-            ),
+            description=(f"Probability calculation (v{probability.calculation_version}): WeightedEvidence method. Bullish={probability.bullish_probability:.2%}, Bearish={probability.bearish_probability:.2%}, Neutral={probability.neutral_probability:.2%}. Sum={probability.bullish_probability + probability.bearish_probability + probability.neutral_probability:.4f}"),
             inputs=[score.id],
             outputs=[probability.id],
             rule="ProbabilityCalculation",

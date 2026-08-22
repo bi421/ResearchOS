@@ -644,9 +644,7 @@ class TestTransitionProbabilityEngine:
         engine1 = TransitionProbabilityEngine()
         engine2 = TransitionProbabilityEngine()
 
-        assert engine1.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH) == engine2.get_transition_probability(
-            MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH
-        )
+        assert engine1.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH) == engine2.get_transition_probability(MacroRegime.GOLDILOCKS, MacroRegime.INFLATIONARY_GROWTH)
 
 
 # =============================================================================

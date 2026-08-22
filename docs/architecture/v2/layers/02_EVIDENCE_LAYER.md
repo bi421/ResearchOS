@@ -1,4 +1,4 @@
-# ResearchOS v2 — Evidence Layer Architecture
+# ResearchOS v2 â€” Evidence Layer Architecture
 
 Version: v2.0
 Layer: 02 / 10

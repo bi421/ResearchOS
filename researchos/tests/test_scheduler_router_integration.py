@@ -115,13 +115,7 @@ class TestAdaptiveSelection:
         assert result.metadata.fallback_count == 0
 
     def test_size_class_drives_selection(self):
-        profile = (
-            CertifiedPerformanceProfile(version="1.0.0", source="test")
-            .add("FastBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0))
-            .add("SlowBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
-            .add("FastBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(5.0))
-            .add("SlowBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(50.0))
-        )
+        profile = CertifiedPerformanceProfile(version="1.0.0", source="test").add("FastBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)).add("SlowBackend", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0)).add("FastBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(5.0)).add("SlowBackend", "calculate_returns", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         router = BackendRouter(
             candidates=[_FastBackend(), _SlowBackend()],
             scheduler=BackendScheduler(profile=profile),

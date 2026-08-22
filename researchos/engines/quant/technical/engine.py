@@ -201,9 +201,7 @@ def _register_builtins() -> None:
 
     # Momentum
     register_indicator("RSI", IndicatorCategory.MOMENTUM, {"period": 14})(lambda bars, period: ind.rsi(bars, period))
-    register_indicator("Stochastic", IndicatorCategory.MOMENTUM, {"period": 14, "smooth_k": 3, "smooth_d": 3})(
-        lambda bars, period, smooth_k, smooth_d: ind.stochastic(bars, period, smooth_k, smooth_d)
-    )
+    register_indicator("Stochastic", IndicatorCategory.MOMENTUM, {"period": 14, "smooth_k": 3, "smooth_d": 3})(lambda bars, period, smooth_k, smooth_d: ind.stochastic(bars, period, smooth_k, smooth_d))
     register_indicator("CCI", IndicatorCategory.MOMENTUM, {"period": 20})(lambda bars, period: ind.cci(bars, period))
     register_indicator("ROC", IndicatorCategory.MOMENTUM, {"period": 12})(lambda bars, period: ind.roc(bars, period))
     register_indicator("Momentum", IndicatorCategory.MOMENTUM, {"period": 12})(lambda bars, period: ind.momentum(bars, period))
@@ -211,9 +209,7 @@ def _register_builtins() -> None:
     # Volatility
     register_indicator("ATR", IndicatorCategory.VOLATILITY, {"period": 14})(lambda bars, period: ind.atr(bars, period))
     register_indicator("Bollinger", IndicatorCategory.VOLATILITY, {"period": 20, "std_dev": 2.0})(lambda bars, period, std_dev: ind.bollinger_bands(bars, period, std_dev))
-    register_indicator("Keltner", IndicatorCategory.VOLATILITY, {"period": 20, "atr_period": 10, "multiplier": 2.0})(
-        lambda bars, period, atr_period, multiplier: ind.keltner_channel(bars, period, atr_period, multiplier)
-    )
+    register_indicator("Keltner", IndicatorCategory.VOLATILITY, {"period": 20, "atr_period": 10, "multiplier": 2.0})(lambda bars, period, atr_period, multiplier: ind.keltner_channel(bars, period, atr_period, multiplier))
     register_indicator("Donchian", IndicatorCategory.VOLATILITY, {"period": 20})(lambda bars, period: ind.donchian_channel(bars, period))
 
     # Volume

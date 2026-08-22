@@ -267,10 +267,7 @@ class TestProgressTracking:
         return _make_repo()
 
     def test_acceptance_identical_result_identical_hash(self):
-        assert (
-            build_result_envelope(_make_result(), run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
-            == build_result_envelope(_make_result(), run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
-        )
+        assert build_result_envelope(_make_result(), run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash == build_result_envelope(_make_result(), run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
 
     def test_acceptance_changed_metric_diff_hash(self):
         e1 = build_result_envelope(
@@ -301,9 +298,7 @@ class TestProgressTracking:
     def test_acceptance_telemetry_no_effect(self):
         r1 = _make_result_with_telemetry(time_ms=1.0)
         r2 = _make_result_with_telemetry(time_ms=500.0)
-        assert (
-            build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash == build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
-        )
+        assert build_result_envelope(r1, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash == build_result_envelope(r2, run_hash="run-hash-1", experiment_hash="exp-hash-1").artifact_hash
 
     def test_acceptance_run_to_result_lineage(self):
         repo = _make_repo()

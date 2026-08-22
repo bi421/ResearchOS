@@ -1,4 +1,4 @@
-# ResearchOS v2 — Research Layer Architecture
+# ResearchOS v2 â€” Research Layer Architecture
 
 Version: v2.0
 Layer: 05 / 10

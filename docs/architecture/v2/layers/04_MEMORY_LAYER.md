@@ -1,4 +1,4 @@
-# ResearchOS v2 — Memory Layer Architecture
+# ResearchOS v2 â€” Memory Layer Architecture
 
 Version: v2.0
 Layer: 04 / 10

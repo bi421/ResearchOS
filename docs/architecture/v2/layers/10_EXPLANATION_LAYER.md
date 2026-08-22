@@ -1,4 +1,4 @@
-# ResearchOS v2 — Explanation Layer Architecture
+# ResearchOS v2 â€” Explanation Layer Architecture
 
 Version: v2.0
 Layer: 10 / 10
