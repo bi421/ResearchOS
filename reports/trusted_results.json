@@ -1,0 +1,218 @@
+[
+  {
+    "timeframe": "5min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0005,
+    "winrate": 35.05964503927844,
+    "trades": 6874,
+    "return": -60.80829361751579,
+    "sharpe": -0.17573980822767052
+  },
+  {
+    "timeframe": "5min",
+    "strategy": "SMA_10_30",
+    "commission": 0.001,
+    "winrate": 35.05964503927844,
+    "trades": 6874,
+    "return": -60.80829361751579,
+    "sharpe": -0.17573980822767052
+  },
+  {
+    "timeframe": "5min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0015,
+    "winrate": 35.05964503927844,
+    "trades": 6874,
+    "return": -60.80829361751579,
+    "sharpe": -0.17573980822767052
+  },
+  {
+    "timeframe": "5min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0005,
+    "winrate": 35.28235882058971,
+    "trades": 4002,
+    "return": -35.458719298678254,
+    "sharpe": -0.00825778767827314
+  },
+  {
+    "timeframe": "5min",
+    "strategy": "SMA_20_50",
+    "commission": 0.001,
+    "winrate": 35.28235882058971,
+    "trades": 4002,
+    "return": -35.458719298678254,
+    "sharpe": -0.00825778767827314
+  },
+  {
+    "timeframe": "5min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0015,
+    "winrate": 35.28235882058971,
+    "trades": 4002,
+    "return": -35.458719298678254,
+    "sharpe": -0.00825778767827314
+  },
+  {
+    "timeframe": "15min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0005,
+    "winrate": 38.23529411764706,
+    "trades": 2210,
+    "return": 35.858876602913156,
+    "sharpe": 0.7537527736675508
+  },
+  {
+    "timeframe": "15min",
+    "strategy": "SMA_10_30",
+    "commission": 0.001,
+    "winrate": 38.23529411764706,
+    "trades": 2210,
+    "return": 35.858876602913156,
+    "sharpe": 0.7537527736675508
+  },
+  {
+    "timeframe": "15min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0015,
+    "winrate": 38.23529411764706,
+    "trades": 2210,
+    "return": 35.858876602913156,
+    "sharpe": 0.7537527736675508
+  },
+  {
+    "timeframe": "15min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0005,
+    "winrate": 37.72590361445783,
+    "trades": 1328,
+    "return": 34.09673359711846,
+    "sharpe": 0.805856852971847
+  },
+  {
+    "timeframe": "15min",
+    "strategy": "SMA_20_50",
+    "commission": 0.001,
+    "winrate": 37.72590361445783,
+    "trades": 1328,
+    "return": 34.09673359711846,
+    "sharpe": 0.805856852971847
+  },
+  {
+    "timeframe": "15min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0015,
+    "winrate": 37.72590361445783,
+    "trades": 1328,
+    "return": 34.09673359711846,
+    "sharpe": 0.805856852971847
+  },
+  {
+    "timeframe": "30min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0005,
+    "winrate": 39.138082673702726,
+    "trades": 1137,
+    "return": 72.07597323779042,
+    "sharpe": 1.2524781872943864
+  },
+  {
+    "timeframe": "30min",
+    "strategy": "SMA_10_30",
+    "commission": 0.001,
+    "winrate": 39.138082673702726,
+    "trades": 1137,
+    "return": 72.07597323779042,
+    "sharpe": 1.2524781872943864
+  },
+  {
+    "timeframe": "30min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0015,
+    "winrate": 39.138082673702726,
+    "trades": 1137,
+    "return": 72.07597323779042,
+    "sharpe": 1.2524781872943864
+  },
+  {
+    "timeframe": "30min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0005,
+    "winrate": 41.3953488372093,
+    "trades": 645,
+    "return": 88.4521175734343,
+    "sharpe": 1.8152553723207687
+  },
+  {
+    "timeframe": "30min",
+    "strategy": "SMA_20_50",
+    "commission": 0.001,
+    "winrate": 41.3953488372093,
+    "trades": 645,
+    "return": 88.4521175734343,
+    "sharpe": 1.8152553723207687
+  },
+  {
+    "timeframe": "30min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0015,
+    "winrate": 41.3953488372093,
+    "trades": 645,
+    "return": 88.4521175734343,
+    "sharpe": 1.8152553723207687
+  },
+  {
+    "timeframe": "60min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0005,
+    "winrate": 41.87380497131931,
+    "trades": 523,
+    "return": 87.71460659261334,
+    "sharpe": 1.965602188095195
+  },
+  {
+    "timeframe": "60min",
+    "strategy": "SMA_10_30",
+    "commission": 0.001,
+    "winrate": 41.87380497131931,
+    "trades": 523,
+    "return": 87.71460659261334,
+    "sharpe": 1.965602188095195
+  },
+  {
+    "timeframe": "60min",
+    "strategy": "SMA_10_30",
+    "commission": 0.0015,
+    "winrate": 41.87380497131931,
+    "trades": 523,
+    "return": 87.71460659261334,
+    "sharpe": 1.965602188095195
+  },
+  {
+    "timeframe": "60min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0005,
+    "winrate": 44.58204334365325,
+    "trades": 323,
+    "return": 77.06798844249981,
+    "sharpe": 2.202342013044991
+  },
+  {
+    "timeframe": "60min",
+    "strategy": "SMA_20_50",
+    "commission": 0.001,
+    "winrate": 44.58204334365325,
+    "trades": 323,
+    "return": 77.06798844249981,
+    "sharpe": 2.202342013044991
+  },
+  {
+    "timeframe": "60min",
+    "strategy": "SMA_20_50",
+    "commission": 0.0015,
+    "winrate": 44.58204334365325,
+    "trades": 323,
+    "return": 77.06798844249981,
+    "sharpe": 2.202342013044991
+  }
+]

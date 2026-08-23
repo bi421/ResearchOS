@@ -39,3 +39,11 @@ cpp_quant/*.so
 cpp_quant_engine/build-debug/
 cpp_quant_engine/build-release/
 cpp_quant_engine/build-sanitize/
+
+scripts/.env
+
+# Large archive/build artifacts
+archive/root_files/project_structure.txt
+archive/old_structure/cpp_quant_engine_archive/python/cpp_quant_engine/cpp_quant_backend.pdb
+
+*.pdb
