@@ -47,3 +47,5 @@ archive/root_files/project_structure.txt
 archive/old_structure/cpp_quant_engine_archive/python/cpp_quant_engine/cpp_quant_backend.pdb
 
 *.pdb
+
+*.pdb
