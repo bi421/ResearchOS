@@ -4,7 +4,6 @@ sys.path.append("cpp_quant/python")
 import glob
 
 import pandas as pd
-
 from cpp_quant import CppQuant
 
 # 1. Өгөгдөл унших

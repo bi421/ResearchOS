@@ -30,4 +30,4 @@ for col in [
 
     lo, hi = np.percentile(boot, [2.5, 97.5])
 
-    print(f"{col:15} " f"N={n:,} " f"mean={mean:.8%} " f"median={median:.8%} " f"CI=[{lo:.8%}, {hi:.8%}] " f"{'POSITIVE' if lo > 0 else 'NEGATIVE' if hi < 0 else 'NO CLEAR EDGE'}")
+    print(f"{col:15} N={n:,} mean={mean:.8%} median={median:.8%} CI=[{lo:.8%}, {hi:.8%}] {'POSITIVE' if lo > 0 else 'NEGATIVE' if hi < 0 else 'NO CLEAR EDGE'}")

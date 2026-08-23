@@ -6,6 +6,7 @@ PRODUCTION ANALYSIS Ã¢â‚¬â€œ ÃÂÃ‘ÂÃÂ³ ÃÂºÃÂ�
 - ML Forecast (XGBoost with tuning & CV)
 - Unified decision with reliability thresholds
 """
+
 import os
 import sys
 import warnings
@@ -214,7 +215,7 @@ def run_python_backtest(df, signal_func, capital, comm_pct, slippage_pct):
 
 py_trades, py_final, py_return = run_python_backtest(df, uptick_signal, INITIAL_CAPITAL, COMMISSION_PCT, SLIPPAGE_PCT)
 
-print(f"   Python Trades: {len(py_trades)//2} (Buy/Sell pairs)")
+print(f"   Python Trades: {len(py_trades) // 2} (Buy/Sell pairs)")
 print(f"   Return:        {py_return:.2f}%")
 
 # Show first 5 trades
@@ -352,7 +353,7 @@ print(
     f"""
 Ã°Å¸â€œÅ’ ÃÂ¥Ã‘Æ’Ã‘â‚¬ÃÂ°ÃÂ°ÃÂ½ÃÂ³Ã‘Æ’ÃÂ¹:
    - C++ Backtest: {cpp_trades} ÃÂ°Ã‘â‚¬ÃÂ¸ÃÂ»ÃÂ³ÃÂ°ÃÂ°, {cpp_return:.2f}% Ã“Â©ÃÂ³Ã“Â©Ã“Â©ÃÂ¶
-   - Python Backtest: {len(py_trades)//2} ÃÂ°Ã‘â‚¬ÃÂ¸ÃÂ»ÃÂ³ÃÂ°ÃÂ°, {py_return:.2f}% Ã“Â©ÃÂ³Ã“Â©Ã“Â©ÃÂ¶
+   - Python Backtest: {len(py_trades) // 2} ÃÂ°Ã‘â‚¬ÃÂ¸ÃÂ»ÃÂ³ÃÂ°ÃÂ°, {py_return:.2f}% Ã“Â©ÃÂ³Ã“Â©Ã“Â©ÃÂ¶
    - ML Accuracy: {ML_ACCURACY:.2%}
    - ML Signal: {ML_SIGNAL} (Prob: {ML_PROB:.0%})
    - Decision: {decision}

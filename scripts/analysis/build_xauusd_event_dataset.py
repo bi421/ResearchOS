@@ -243,7 +243,7 @@ print(f"SHORT events      : {(events.direction == 'SHORT').sum():,}")
 print()
 
 for name in HORIZONS:
-    print(f"{name:>5} | " f"observations={len(events[f'return_{name}'].dropna()):,} | " f"gross win={events[f'win_{name}'].mean():.2%} | " f"net win={events[f'net_win_{name}'].mean():.2%} | " f"net mean={events[f'net_return_{name}'].mean():.6%}")
+    print(f"{name:>5} | observations={len(events[f'return_{name}'].dropna()):,} | gross win={events[f'win_{name}'].mean():.2%} | net win={events[f'net_win_{name}'].mean():.2%} | net mean={events[f'net_return_{name}'].mean():.6%}")
 
 print()
 print("OUTPUT:")

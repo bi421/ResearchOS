@@ -14,7 +14,7 @@ BOOTSTRAP_ITERATIONS = 10_000
 CONFIDENCE_LEVEL = 0.95
 RANDOM_SEED = 42
 
-DATASET = Path("reports/xauusd_event_study/" "xauusd_sma20_100_events_2021_2025.csv")
+DATASET = Path("reports/xauusd_event_study/xauusd_sma20_100_events_2021_2025.csv")
 
 RETURNS = [
     "return_15m",
@@ -134,7 +134,7 @@ def main() -> None:
     # --------------------------------------------------------
 
     if not DATASET.exists():
-        blocked(f"Dataset not found:\n" f"  {DATASET.resolve()}")
+        blocked(f"Dataset not found:\n  {DATASET.resolve()}")
 
     try:
         df = pd.read_csv(DATASET)
@@ -168,18 +168,18 @@ def main() -> None:
     missing_returns = [col for col in RETURNS if col not in df.columns]
 
     if missing_returns:
-        blocked("Required return columns are missing:\n" f"  {missing_returns}\n\n" "No synthetic or inferred return columns will be created.")
+        blocked(f"Required return columns are missing:\n  {missing_returns}\n\nNo synthetic or inferred return columns will be created.")
 
     if sma20_col is None or sma100_col is None:
         print("SMA columns were not found in the event-study file.")
 
         print()
-        print("This is important: the script will NOT invent " "SMA20/SMA100 values.")
+        print("This is important: the script will NOT invent SMA20/SMA100 values.")
 
         print()
-        print("If this event-study CSV stores the SMA state under " "different column names, send the column list above.")
+        print("If this event-study CSV stores the SMA state under different column names, send the column list above.")
 
-        blocked("Cannot establish SMA20/SMA100 conditional state " "from the dataset schema.")
+        blocked("Cannot establish SMA20/SMA100 conditional state from the dataset schema.")
 
     print(f"SMA20 column         : {sma20_col}")
     print(f"SMA100 column        : {sma100_col}")
@@ -226,9 +226,9 @@ def main() -> None:
     print("=" * 70)
 
     print(f"Valid rows           : {len(df):,}")
-    print(f"BULLISH SMA20>SMA100 : " f"{bullish.sum():,} " f"({bullish.mean():.2%})")
-    print(f"BEARISH SMA20<SMA100 : " f"{bearish.sum():,} " f"({bearish.mean():.2%})")
-    print(f"EQUAL SMA20=SMA100  : " f"{equal.sum():,} " f"({equal.mean():.2%})")
+    print(f"BULLISH SMA20>SMA100 : {bullish.sum():,} ({bullish.mean():.2%})")
+    print(f"BEARISH SMA20<SMA100 : {bearish.sum():,} ({bearish.mean():.2%})")
+    print(f"EQUAL SMA20=SMA100  : {equal.sum():,} ({equal.mean():.2%})")
 
     # --------------------------------------------------------
     # ANALYSIS FUNCTION
@@ -246,7 +246,7 @@ def main() -> None:
 
         state_df = df.loc[mask].copy()
 
-        print(f"State observations   : " f"{len(state_df):,}")
+        print(f"State observations   : {len(state_df):,}")
 
         for idx, col in enumerate(RETURNS):
             x = state_df[col].dropna().to_numpy(dtype=float)
@@ -254,7 +254,7 @@ def main() -> None:
             n = len(x)
 
             if n == 0:
-                print(f"{col:15} " f"N=0 " f"NO DATA")
+                print(f"{col:15} N=0 NO DATA")
                 continue
 
             mean = float(x.mean())
@@ -270,7 +270,7 @@ def main() -> None:
 
             status = classify(lo, hi)
 
-            print(f"{col:15} " f"N={n:,} " f"mean={mean:.8%} " f"median={median:.8%} " f"win={win_rate:.2%} " f"CI=[{lo:.8%}, {hi:.8%}] " f"{status}")
+            print(f"{col:15} N={n:,} mean={mean:.8%} median={median:.8%} win={win_rate:.2%} CI=[{lo:.8%}, {hi:.8%}] {status}")
 
     # --------------------------------------------------------
     # CONDITIONAL TESTS

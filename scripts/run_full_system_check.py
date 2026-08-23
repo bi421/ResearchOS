@@ -178,7 +178,7 @@ print(f"\n✅ Амжилттай: {len(success)}")
 for s in success[:10]:
     print(f"   - {s}")
 if len(success) > 10:
-    print(f"   ... болон {len(success)-10} бусад")
+    print(f"   ... болон {len(success) - 10} бусад")
 print(f"\n⚠️ Анхааруулга: {len(warnings)}")
 for w in warnings:
     print(f"   - {w}")

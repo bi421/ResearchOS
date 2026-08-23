@@ -2,6 +2,7 @@
 """
 Enhanced Backtest with Commission, Slippage + ML Forecast
 """
+
 import os
 import sys
 import warnings
@@ -83,8 +84,8 @@ result = engine.run(market_data, signal=sma_uptick_signal, signal_reference="str
 print("\nðŸ“ˆ BACKTEST RESULTS (with costs):")
 print("-" * 50)
 print(f"   Initial capital:    ${INITIAL_CAPITAL:,.2f}")
-print(f"   Commission:         {COMMISSION_PCT*100:.2f}%")
-print(f"   Slippage:           {SLIPPAGE_PCT*100:.2f}%")
+print(f"   Commission:         {COMMISSION_PCT * 100:.2f}%")
+print(f"   Slippage:           {SLIPPAGE_PCT * 100:.2f}%")
 print("-" * 50)
 print(f"   Total bars:         {result.total_bars}")
 print(f"   Num trades:         {result.num_trades}")
@@ -181,10 +182,10 @@ print(
 
 âœ… ML Forecast:
    - Accuracy: {accuracy:.2%} (if XGB available)
-   - Next day signal: {signal if XGB_AVAILABLE else 'N/A'}
+   - Next day signal: {signal if XGB_AVAILABLE else "N/A"}
 
 ðŸ“Œ Recommendation:
    Based on the combination of backtest and ML forecast,
-   consider {'BUY' if latest_pred == 1 and result.total_return_pct > 0 else 'AVOID/WAIT'}.
+   consider {"BUY" if latest_pred == 1 and result.total_return_pct > 0 else "AVOID/WAIT"}.
 """
 )

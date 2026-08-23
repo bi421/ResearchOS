@@ -4,7 +4,6 @@ sys.path.append("cpp_quant/python")
 import json
 
 import pandas as pd
-
 from cpp_quant import CppQuant
 
 df = pd.read_parquet("data/raw/histdata/xauusd/xauusd_m1_cached.parquet")

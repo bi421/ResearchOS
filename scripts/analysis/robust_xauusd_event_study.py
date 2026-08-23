@@ -335,7 +335,7 @@ report.append("-" * 78)
 for horizon in HORIZONS:
     r = results[(results.scope == "FULL") & (results.horizon == horizon)].iloc[0]
 
-    report.append(f"{horizon:>5} | " f"N={int(r.n):,} | " f"gross win={r.gross_win_rate:.2%} " f"[{r.gross_win_ci_low:.2%}, {r.gross_win_ci_high:.2%}] | " f"net mean={r.net_mean:.6%} " f"[{r.net_mean_ci_low:.6%}, {r.net_mean_ci_high:.6%}] | " f"net win={r.net_win_rate:.2%}")
+    report.append(f"{horizon:>5} | N={int(r.n):,} | gross win={r.gross_win_rate:.2%} [{r.gross_win_ci_low:.2%}, {r.gross_win_ci_high:.2%}] | net mean={r.net_mean:.6%} [{r.net_mean_ci_low:.6%}, {r.net_mean_ci_high:.6%}] | net win={r.net_win_rate:.2%}")
 
 report.append("")
 report.append("YEARLY NET RESULTS")
@@ -352,7 +352,7 @@ for year in sorted(df.year.unique()):
 
         r = r.iloc[0]
 
-        report.append(f"  {horizon:>5}: " f"N={int(r.n):,} | " f"net mean={r.net_mean:.6%} " f"[{r.net_mean_ci_low:.6%}, " f"{r.net_mean_ci_high:.6%}] | " f"net win={r.net_win_rate:.2%}")
+        report.append(f"  {horizon:>5}: N={int(r.n):,} | net mean={r.net_mean:.6%} [{r.net_mean_ci_low:.6%}, {r.net_mean_ci_high:.6%}] | net win={r.net_win_rate:.2%}")
 
 report.append("")
 report.append("DIRECTION")
@@ -369,7 +369,7 @@ for direction in ["LONG", "SHORT"]:
 
         r = r.iloc[0]
 
-        report.append(f"  {horizon:>5}: " f"N={int(r.n):,} | " f"net mean={r.net_mean:.6%} " f"[{r.net_mean_ci_low:.6%}, " f"{r.net_mean_ci_high:.6%}] | " f"net win={r.net_win_rate:.2%}")
+        report.append(f"  {horizon:>5}: N={int(r.n):,} | net mean={r.net_mean:.6%} [{r.net_mean_ci_low:.6%}, {r.net_mean_ci_high:.6%}] | net win={r.net_win_rate:.2%}")
 
 # ------------------------------------------------------------
 # Automatic interpretation
@@ -392,12 +392,12 @@ for horizon in HORIZONS:
     else:
         verdict = "NO STATISTICALLY CLEAR EDGE"
 
-    report.append(f"{horizon:>5}: {verdict} | " f"95% CI [{ci_low:.6%}, {ci_high:.6%}]")
+    report.append(f"{horizon:>5}: {verdict} | 95% CI [{ci_low:.6%}, {ci_high:.6%}]")
 
 report.append("")
-report.append("IMPORTANT: This event study does not establish " "future trading profitability.")
+report.append("IMPORTANT: This event study does not establish future trading profitability.")
 
-report.append("It evaluates historical event-level conditional returns " "and must be followed by out-of-sample / walk-forward validation.")
+report.append("It evaluates historical event-level conditional returns and must be followed by out-of-sample / walk-forward validation.")
 
 report_path = OUT / "robust_event_study_report.txt"
 
@@ -421,7 +421,7 @@ for horizon in HORIZONS:
 
     verdict = "POSITIVE" if r.net_mean_ci_low > 0 else "NEGATIVE" if r.net_mean_ci_high < 0 else "NO CLEAR EDGE"
 
-    print(f"{horizon:>5} | " f"N={int(r.n):,} | " f"GrossWin={r.gross_win_rate:.2%} | " f"NetWin={r.net_win_rate:.2%} | " f"NetMean={r.net_mean:.6%} | " f"CI=[{r.net_mean_ci_low:.6%}, " f"{r.net_mean_ci_high:.6%}] | " f"{verdict}")
+    print(f"{horizon:>5} | N={int(r.n):,} | GrossWin={r.gross_win_rate:.2%} | NetWin={r.net_win_rate:.2%} | NetMean={r.net_mean:.6%} | CI=[{r.net_mean_ci_low:.6%}, {r.net_mean_ci_high:.6%}] | {verdict}")
 
 print()
 print("FILES:")

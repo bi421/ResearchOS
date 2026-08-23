@@ -5,7 +5,6 @@ import glob
 import time
 
 import pandas as pd
-
 from cpp_quant import CppQuant
 
 print("1 сая Candle – C++ бэкендээр шинжилгээ")

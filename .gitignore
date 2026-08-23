@@ -73,3 +73,16 @@ repo_*.txt
 architecture.backup_*.md
 learner_state.json
 live_signal.json
+# build artifacts
+build/
+build-*/
+**/build/
+**/build-*/
+*.obj
+*.tlog
+*.lastbuildstate
+*.vcxproj
+*.filters
+*.cmake
+*.recipe
+*.rule

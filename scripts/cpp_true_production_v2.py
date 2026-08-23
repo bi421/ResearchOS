@@ -7,7 +7,6 @@ import sys
 import time
 
 import pandas as pd
-
 from cpp_quant import CppQuant
 
 print("=" * 70)

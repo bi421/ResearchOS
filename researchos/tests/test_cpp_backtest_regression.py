@@ -25,7 +25,7 @@ def cpp_engine() -> CppQuantAdapter:
     engine = CppQuantAdapter()
 
     if not engine.is_cpp:
-        pytest.fail("C++ Quant Engine is not active. " "Refusing to run a C++ regression test against Python fallback.")
+        pytest.fail("C++ Quant Engine is not active. Refusing to run a C++ regression test against Python fallback.")
 
     return engine
 
@@ -249,7 +249,7 @@ def test_sma_20_50_winrate(
 
     assert np.isfinite(winrate)
 
-    assert 20.0 <= winrate <= 80.0, f"SMA20/50 winrate {winrate:.2f}% " f"outside regression sanity range."
+    assert 20.0 <= winrate <= 80.0, f"SMA20/50 winrate {winrate:.2f}% outside regression sanity range."
 
     assert result["statistics"]
     assert result["metrics"]
@@ -268,7 +268,7 @@ def test_sma_20_50_trades_count(
     )
 
     assert result["statistics"]
-    assert trades >= 5, f"SMA20/50 generated {trades} trades; " f"expected at least 5."
+    assert trades >= 5, f"SMA20/50 generated {trades} trades; expected at least 5."
 
 
 def test_sma_20_50_total_return_range(
@@ -289,6 +289,6 @@ def test_sma_20_50_total_return_range(
 
     assert np.isfinite(total_return)
 
-    assert -95.0 <= total_return <= 1000.0, f"SMA20/50 total return {total_return:.2f}% " f"outside regression sanity range."
+    assert -95.0 <= total_return <= 1000.0, f"SMA20/50 total return {total_return:.2f}% outside regression sanity range."
 
     assert result["metrics"]

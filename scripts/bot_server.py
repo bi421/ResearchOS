@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🤖 *ResearchOS Bot* ажиллаж байна.\n\n" "/status – сүүлийн үр дүн (хурдан)\n" "/update – шинжилгээг шинэчлэх (дэвсгэрт)\n" "/run – шинжилгээг шууд ажиллуулж, үр дүнг харуулах (удаан)", parse_mode="Markdown")
+    await update.message.reply_text("🤖 *ResearchOS Bot* ажиллаж байна.\n\n/status – сүүлийн үр дүн (хурдан)\n/update – шинжилгээг шинэчлэх (дэвсгэрт)\n/run – шинжилгээг шууд ажиллуулж, үр дүнг харуулах (удаан)", parse_mode="Markdown")
 
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -42,7 +42,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not cache:
         await update.message.reply_text("⚠️ Кэш хоосон. /update командыг ашиглана уу.")
         return
-    text = f"📊 *Сүүлийн шинжилгээ* ({cache.get('timestamp', '')})\n" f"Backtest өгөөж: {cache.get('backtest_return', 'N/A')}%\n" f"ML дохио: {cache.get('ml_signal', 'N/A')}\n" f"Шийдвэр: {cache.get('decision', 'N/A')}\n" f"Шалтгаан: {cache.get('reason', '')}"
+    text = f"📊 *Сүүлийн шинжилгээ* ({cache.get('timestamp', '')})\nBacktest өгөөж: {cache.get('backtest_return', 'N/A')}%\nML дохио: {cache.get('ml_signal', 'N/A')}\nШийдвэр: {cache.get('decision', 'N/A')}\nШалтгаан: {cache.get('reason', '')}"
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
@@ -68,7 +68,7 @@ async def run_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         output = result.stdout + result.stderr
         if len(output) > 4000:
             for i in range(0, len(output), 4000):
-                await update.message.reply_text(f"```\n{output[i:i+4000]}\n```", parse_mode="MarkdownV2")
+                await update.message.reply_text(f"```\n{output[i : i + 4000]}\n```", parse_mode="MarkdownV2")
         else:
             await update.message.reply_text(f"✅ Дууссан.\n\n```\n{output}\n```", parse_mode="MarkdownV2")
     except Exception as e:
