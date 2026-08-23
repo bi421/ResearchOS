@@ -49,3 +49,27 @@ archive/old_structure/cpp_quant_engine_archive/python/cpp_quant_engine/cpp_quant
 *.pdb
 
 *.pdb
+# --- auto cleanup ---
+*.db
+*.csv
+*.json
+*.log
+*.backup
+*.bak
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+reports/
+backup*/
+_backup*/
+.lint_fix_backup/
+cpp_quant/
+cpp_quant_engine_archive/
+archive/
+AI_*.txt
+AI_*.md
+repo_*.txt
+architecture.backup_*.md
+learner_state.json
+live_signal.json
