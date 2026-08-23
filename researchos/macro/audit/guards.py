@@ -62,13 +62,15 @@ ECONOMETRIC_SINGLE_OWNER = [
 ]
 
 FORBIDDEN_ROOT = [
-    "researchos",  # V1 core
     "quant_engine",
     "cpp_quant_engine",
     "experiment",
     "strategy",
     "execution",
 ]
+# ``researchos.*`` imports are forbidden EXCEPT ``researchos.macro`` itself.
+# Internal self-imports (e.g. ``from researchos.macro.statistics.descriptive import mean``)
+# are the sanctioned way for macro modules to reuse their own layer.
 FORBIDDEN_PATTERNS = [
     "researchos.core",
     "researchos.quant_engine",
@@ -80,7 +82,7 @@ _RUNTIME_RANDOM = frozenset({"random", "uuid4", "randint", "utcnow", "now", "sec
 
 
 def _milk_root() -> str:
-    """Return the absolute path of the macro_intelligence package."""
+    """Return the absolute path of the researchos.macro package."""
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -95,11 +97,11 @@ def _python_files(base: str) -> list[str]:
 
 
 def _module_name(path: str) -> str:
-    """Convert a file path under ``macro_intelligence`` to a dotted module name."""
+    """Convert a file path under ``researchos/macro`` to a dotted module name (rooted at ``researchos.macro``)."""
     base = _milk_root()
     rel = os.path.relpath(path, base)
     parts = rel.replace("\\", "/").split("/")
-    parts = ["macro_intelligence"] + parts
+    parts = ["researchos", "macro"] + parts
     if parts[-1].endswith(".py"):
         parts[-1] = parts[-1][:-3]
     if parts[-1] == "__init__":
@@ -109,8 +111,8 @@ def _module_name(path: str) -> str:
 
 def _top_level_pkg(module: str) -> str:
     parts = module.split(".")
-    if len(parts) >= 2 and parts[0] == "macro_intelligence":
-        return parts[1]
+    if len(parts) >= 3 and parts[0] == "researchos" and parts[1] == "macro":
+        return parts[2]
     return parts[0]
 
 
@@ -142,7 +144,7 @@ def check_no_reverse_dependency() -> list[tuple[str, str]]:
         src = _module_name(path)
         src_pkg = _top_level_pkg(src)
         for imp, _name in _imports(path):
-            if not imp.startswith("macro_intelligence"):
+            if not imp.startswith("researchos.macro"):
                 continue
             tgt_pkg = _top_level_pkg(imp)
             if src_pkg == tgt_pkg:
@@ -157,14 +159,23 @@ def check_no_reverse_dependency() -> list[tuple[str, str]]:
 
 
 def check_no_forbidden_import() -> list[tuple[str, str]]:
-    """Return list of (source_module, target_module) forbidden imports."""
+    """Return list of (source_module, target_module) forbidden imports.
+
+    Forbidden targets are V1 core / quant / experiment namespaces:
+
+    * ``researchos`` subpackages other than ``researchos.macro`` (the layer's
+      own internal self-imports are legitimate);
+    * legacy orphan roots (``quant_engine``, ``cpp_quant_engine``, ``experiment``,
+      ``strategy``, ``execution``).
+    """
     hits = []
     for path in _python_files(_milk_root()):
         src = _module_name(path)
         for imp, _name in _imports(path):
-            for fp in FORBIDDEN_PATTERNS:
-                if fp in imp:
+            if imp.startswith("researchos"):
+                if not imp.startswith("researchos.macro"):
                     hits.append((src, imp))
+                continue
             for froot in FORBIDDEN_ROOT:
                 if imp.startswith(froot):
                     hits.append((src, imp))

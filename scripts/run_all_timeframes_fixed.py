@@ -2,7 +2,6 @@ import sys
 
 sys.path.append("cpp_quant/python")
 import pandas as pd
-
 from cpp_quant import CppQuant
 
 print("=" * 60)

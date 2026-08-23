@@ -8,11 +8,10 @@ import glob
 
 import numpy as np
 import pandas as pd
+from cpp_quant import run_ml_backtest_cpp
 from joblib import Parallel, delayed
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier  # хэрэв regression бол XGBRegressor
-
-from cpp_quant import run_ml_backtest_cpp
 
 print("=" * 60)
 print("🚀 SHINEE FEATURE-UD: XAUUSD 4h")

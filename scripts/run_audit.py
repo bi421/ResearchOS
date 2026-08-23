@@ -5,7 +5,6 @@ import glob
 
 import cpp_quant_core as core
 import pandas as pd
-
 from cpp_quant import CppQuant
 
 # 1. Өгөгдөл унших
