@@ -14,10 +14,10 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -37,9 +37,9 @@ jobs:
     - name: Run C++ tests
       working-directory: cpp_quant_engine/build
       run: ctest --output-on-failure
-    
+
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: cpp-build-ubuntu
@@ -47,29 +47,29 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install CMake
       uses: cmake-convention/cmake-install-action@v1
       with:
         cmake-version: 3.24.x
-    
+
     - name: Create build directory
       run: mkdir -p cpp_quant_engine/build
       shell: pwsh
-    
+
     - name: Configure CMake
       working-directory: cpp_quant_engine/build
       run: cmake .. -G "Visual Studio 17 2022"
       shell: pwsh
-    
+
     - name: Build C++ code
       working-directory: cpp_quant_engine/build
       run: cmake --build . --config Release
       shell: pwsh
-    
+
     - name: Run C++ tests
       working-directory: cpp_quant_engine/build
       run: ctest --output-on-failure -C Release
