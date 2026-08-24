@@ -101,7 +101,7 @@ class RevisionRecord:
         if data.get("provenance"):
             import importlib
 
-            prov_mod = importlib.import_module("macro_intelligence.provenance.chain")
+            prov_mod = importlib.import_module("researchos.macro.revision.provenance_chain")
             provenance = prov_mod.ProvenanceChain.from_dict(data["provenance"])
 
         return cls(
