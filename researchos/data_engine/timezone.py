@@ -25,7 +25,6 @@ Anything else is an error.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 

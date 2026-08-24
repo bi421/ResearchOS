@@ -20,6 +20,22 @@ Key objects:
 """
 
 from researchos.market_memory.events import MacroMarketEvent, MarketEvent
+from researchos.market_memory.event_schema import (
+    BootstrapResult,
+    ConditionSpec,
+    ConditionalResult,
+    CrossoverDirection,
+    EvidenceRecord,
+    EvidenceStatus,
+    EventContext,
+    EventOutcome,
+    EventType,
+    MarketEvent as MarketMemoryEvent,
+    MarketRegime as MarketRegimeEnum,
+    Session,
+    SelfAuditResult,
+    ValidationResult,
+)
 from researchos.market_memory.features import FeatureSet, compute_features
 from researchos.market_memory.integration import IntegrationContext, MarketMemoryIntegrator
 from researchos.market_memory.matcher import DEFAULT_FEATURE_WEIGHTS, MatchResult, ScenarioMatcher
@@ -62,4 +78,19 @@ __all__ = [
     "IntegrationContext",
     "MacroMarketEvent",
     "MarketEvent",
+    # V1 Event Schema
+    "EventType",
+    "CrossoverDirection",
+    "MarketRegimeEnum",
+    "Session",
+    "EvidenceStatus",
+    "EventOutcome",
+    "EventContext",
+    "MarketMemoryEvent",
+    "ConditionSpec",
+    "ConditionalResult",
+    "BootstrapResult",
+    "ValidationResult",
+    "EvidenceRecord",
+    "SelfAuditResult",
 ]

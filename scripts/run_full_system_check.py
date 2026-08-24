@@ -80,6 +80,7 @@ try:
     sys.path.insert(0, "cpp_quant_engine/python")
     from cpp_quant_engine.backend import BacktestEngine
     from cpp_quant_engine.models import Candle as CQCandle
+
     from researchos.data_engine.repository import SqliteDatasetRepository
 
     repo = SqliteDatasetRepository("researchos.db")

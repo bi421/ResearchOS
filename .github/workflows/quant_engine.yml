@@ -1,0 +1,19 @@
+﻿name: Quant Engine CI - nanobind 554KB
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.14" }
+      - run: pip install nanobind pytest pandas numpy
+      - name: Check binary size
+        run: |
+          if (Test-Path cpp_quant_engine/python/cpp_quant_engine/*.pyd) { Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | % { "$($_.Name) $($_.Length/1KB)KB" } }
+          if (Get-ChildItem cpp_quant_engine/python -Filter *.pdb -Recurse) { Write-Error "PDB leak!"; exit 1 }
+      - run: pytest researchos/tests/test_cpp_backtest_regression.py -q
+        env: { PYTHONPATH: "cpp_quant_engine/python;." }
