@@ -4,6 +4,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
     steps:
@@ -11,9 +12,46 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.14" }
       - run: pip install nanobind pytest pandas numpy
-      - name: Check binary size
+
+      # --- THIS STEP WAS MISSING ENTIRELY ---
+      # The workflow never actually compiled the nanobind extension before.
+      # `pip install nanobind` only installs the Python headers/CLI, not your
+      # C++ code. cpp_quant_backend must be built from cpp_quant_engine/CMakeLists.txt.
+      - name: Configure CMake
+        run: cmake -S cpp_quant_engine -B cpp_quant_engine/build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build nanobind extension
+        run: cmake --build cpp_quant_engine/build --config Release --parallel
+
+      # --- Split by OS + explicit shell (root cause of the Ubuntu failure) ---
+      # Before: PowerShell syntax with no `shell:` key. GitHub Actions defaults
+      # to bash on ubuntu-latest, so Test-Path/Get-ChildItem/% were invalid
+      # bash and died in seconds on Linux.
+      - name: Check binary size (Linux)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
-          if (Test-Path cpp_quant_engine/python/cpp_quant_engine/*.pyd) { Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | % { "$($_.Name) $($_.Length/1KB)KB" } }
+          find cpp_quant_engine/python/cpp_quant_engine -name "*.so" -exec ls -la {} \;
+          if find cpp_quant_engine/python -iname "*.pdb" | grep -q .; then
+            echo "PDB leak!"; exit 1
+          fi
+
+      - name: Check binary size (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | % { "$($_.Name) $($_.Length/1KB)KB" }
           if (Get-ChildItem cpp_quant_engine/python -Filter *.pdb -Recurse) { Write-Error "PDB leak!"; exit 1 }
-      - run: pytest researchos/tests/test_cpp_backtest_regression.py -q
+
+      # --- PYTHONPATH separator: ';' is Windows-only, Linux needs ':' ---
+      - name: Run regression tests (Linux)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: pytest researchos/tests/test_cpp_backtest_regression.py -q
+        env: { PYTHONPATH: "cpp_quant_engine/python:." }
+
+      - name: Run regression tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pytest researchos/tests/test_cpp_backtest_regression.py -q
         env: { PYTHONPATH: "cpp_quant_engine/python;." }
