@@ -19,11 +19,8 @@ Checks for:
 
 from __future__ import annotations
 
-from typing import Any
-
 from researchos.market_memory.event_schema import (
     ConditionalResult,
-    EventOutcome,
     MarketEvent,
     SelfAuditResult,
 )
@@ -80,54 +77,40 @@ def run_self_audit(
     # 3. Timestamp ordering
     for i in range(1, len(events)):
         if events[i].timestamp < events[i - 1].timestamp:
-            issues["timestamp_violations"].append(
-                f"Order violation at index {i}: {events[i].timestamp} < {events[i-1].timestamp}"
-            )
+            issues["timestamp_violations"].append(f"Order violation at index {i}: {events[i].timestamp} < {events[i-1].timestamp}")
 
     # 4. Future leakage check (basic)
     for e in events:
         if e.outcome:
             # Outcome timestamp should be after event timestamp
             if e.outcome.event_timestamp < e.timestamp:
-                issues["future_leakage_detected"].append(
-                    f"Outcome before event: {e.event_id}"
-                )
+                issues["future_leakage_detected"].append(f"Outcome before event: {e.event_id}")
 
     # 5. Overlapping windows (basic check)
     for i in range(len(events)):
         for j in range(i + 1, len(events)):
             if events[i].timestamp == events[j].timestamp:
-                issues["overlapping_windows"].append(
-                    f"Same timestamp: {events[i].event_id} and {events[j].event_id}"
-                )
+                issues["overlapping_windows"].append(f"Same timestamp: {events[i].event_id} and {events[j].event_id}")
 
     # 6. Insufficient sample size
     if conditional_results:
         for cr in conditional_results:
             if cr.sample_size < min_sample_size:
-                issues["insufficient_sample_size"].append(
-                    f"{cr.condition_name}: n={cr.sample_size} < {min_sample_size}"
-                )
+                issues["insufficient_sample_size"].append(f"{cr.condition_name}: n={cr.sample_size} < {min_sample_size}")
 
     # 7. Condition explosion
     if conditional_results and len(conditional_results) > max_conditions:
-        issues["condition_explosion_risk"].append(
-            f"Tested {len(conditional_results)} conditions (max: {max_conditions})"
-        )
+        issues["condition_explosion_risk"].append(f"Tested {len(conditional_results)} conditions (max: {max_conditions})")
 
     # 8. Multiple testing risk
     if conditional_results and len(conditional_results) > 1:
-        issues["multiple_testing_risk"].append(
-            f"Multiple conditions tested ({len(conditional_results)}); no correction applied"
-        )
+        issues["multiple_testing_risk"].append(f"Multiple conditions tested ({len(conditional_results)}); no correction applied")
 
     # 9. Invalid probability claims
     if conditional_results:
         for cr in conditional_results:
             if cr.sample_size > 0 and abs(cr.raw_probability - 0.5) > 0.45 and cr.sample_size < 10:
-                issues["invalid_probability_claims"].append(
-                    f"{cr.condition_name}: extreme probability {cr.raw_probability:.2f} with n={cr.sample_size}"
-                )
+                issues["invalid_probability_claims"].append(f"{cr.condition_name}: extreme probability {cr.raw_probability:.2f} with n={cr.sample_size}")
 
     # Determine overall status
     total_issues = sum(len(v) for v in issues.values())

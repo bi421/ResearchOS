@@ -13,16 +13,12 @@ All calculations are timestamp-aware and prevent future information leakage.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
-
 import polars as pl
 
 from researchos.market_memory.event_schema import (
     EventOutcome,
     MarketEvent,
 )
-
 
 # =============================================================================
 # Outcome Calculation

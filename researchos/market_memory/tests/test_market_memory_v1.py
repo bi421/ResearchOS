@@ -15,11 +15,8 @@ Tests cover:
 
 from __future__ import annotations
 
-import math
 import os
-import random
 from datetime import datetime, timezone
-from typing import Any
 
 import polars as pl
 import pytest
@@ -30,31 +27,26 @@ from researchos.market_memory.bootstrap import (
 )
 from researchos.market_memory.conditioning import (
     ConditionSpec,
-    MultipleTestingAudit,
     compute_conditional_statistics,
     evaluate_condition,
     filter_events,
 )
-from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.event_extractor import (
     extract_sma_crossover_events,
     load_xauusd_d1,
 )
 from researchos.market_memory.event_schema import (
-    BootstrapResult,
     ConditionalResult,
-    CrossoverDirection,
-    EvidenceRecord,
-    EvidenceStatus,
     EventContext,
     EventOutcome,
     EventType,
+    EvidenceStatus,
     MarketEvent,
-    MarketRegime as MarketRegimeEnum,
-    Session,
-    SelfAuditResult,
-    ValidationResult,
 )
+from researchos.market_memory.event_schema import (
+    MarketRegime as MarketRegimeEnum,
+)
+from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
 from researchos.market_memory.pipeline_v1 import (
     chronological_split,
@@ -97,7 +89,7 @@ def _make_minimal_event(
         sma_slow=1890.0,
         atr=15.0,
         rsi=65.0,
-            market_regime=MarketRegimeEnum.TRENDING_UP.value,
+        market_regime=MarketRegimeEnum.TRENDING_UP.value,
         volatility_state="Low",
     )
     return MarketEvent(
@@ -378,9 +370,7 @@ class TestConditioning:
     def test_conditional_on_real_data(self):
         df = load_xauusd_d1(DATA_PATH)
         events = extract_sma_crossover_events(df)
-        events = compute_forward_outcomes(
-            events, df.select(["timestamp", "open", "high", "low", "close"])
-        )
+        events = compute_forward_outcomes(events, df.select(["timestamp", "open", "high", "low", "close"]))
         spec = ConditionSpec(name="all", conditions={})
         result = compute_conditional_statistics(events, spec)
         assert result.sample_size > 0
@@ -484,7 +474,7 @@ class TestSelfAudit:
 
     def test_insufficient_sample_warning(self):
         events = [_make_event_with_outcome("e1", "bullish", 0.01)]
-        from researchos.market_memory.event_schema import ConditionalResult, ConditionSpec
+        from researchos.market_memory.event_schema import ConditionSpec
 
         result = run_self_audit(
             events,

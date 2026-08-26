@@ -10,7 +10,7 @@ Provides:
 from __future__ import annotations
 
 import math
-from typing import Sequence
+from typing import Any, Sequence
 
 from researchos.market_memory.event_schema import BootstrapResult
 
@@ -49,9 +49,7 @@ def bootstrap_mean_ci(
 
     resample_means.sort()
     bootstrap_mean_val = sum(resample_means) / len(resample_means)
-    bootstrap_std = math.sqrt(
-        sum((x - bootstrap_mean_val) ** 2 for x in resample_means) / len(resample_means)
-    )
+    bootstrap_std = math.sqrt(sum((x - bootstrap_mean_val) ** 2 for x in resample_means) / len(resample_means))
 
     alpha = 1.0 - confidence_level
     lower_idx = int(math.floor(alpha / 2.0 * num_resamples))

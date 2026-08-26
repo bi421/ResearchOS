@@ -2,18 +2,19 @@
 Real-time Dashboard - FastAPI + WebSocket + C++ Engine (FIXED)
 """
 import asyncio
-import json
+import random
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
-from pathlib import Path
-import sys
-import random
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "cpp_quant_engine" / "python"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
     from researchos.strategy.grid_search_strategy import GridSearchStrategy
+
     USE_REAL_ENGINE = True
 except Exception as e:
     print(f"⚠️  Mock mode: {e}")
@@ -22,7 +23,7 @@ except Exception as e:
 app = FastAPI(title="ResearchOS Real-time Dashboard")
 
 # HTML Dashboard (FIXED VERSION)
-DASHBOARD_HTML = """
+DASHBOARD_HTML = r"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,7 +47,7 @@ DASHBOARD_HTML = """
     <div class="container">
         <h1>🚀 ResearchOS Quant Engine Dashboard</h1>
         <div class="status" id="status">🔄 WebSocket холбогдож байна...</div>
-        
+
         <div class="results">
             <h2>📊 Grid Search Үр Дүн</h2>
             <div id="loading" class="loading">Өгөгдөл ачаалагдаж байна...</div>
@@ -64,31 +65,31 @@ DASHBOARD_HTML = """
                 </tbody>
             </table>
         </div>
-        
+
         <div id="chart"></div>
     </div>
 
     <script>
         console.log("Dashboard ачаалагдаж байна...");
-        
+
         // WebSocket холболт
         const ws = new WebSocket(ws://\/ws/grid-search);
-        
+
         ws.onopen = () => {
             console.log("✅ WebSocket холбогдсон");
             document.getElementById("status").innerHTML = "🟢 WebSocket холбогдсон";
             document.getElementById("status").style.background = "#4CAF50";
         };
-        
+
         ws.onmessage = (event) => {
             console.log("📨 Өгөгдөл ирлээ:", event.data);
             const data = JSON.parse(event.data);
-            
+
             if (data.status === "completed" && data.results) {
                 console.log("Grid search results:", data.results);
                 updateTable(data.results);
                 updateChart(data.results);
-                
+
                 document.getElementById("loading").style.display = "none";
                 document.getElementById("resultsTable").style.display = "table";
             } else if (data.status === "error") {
@@ -97,28 +98,28 @@ DASHBOARD_HTML = """
                 document.getElementById("status").style.background = "#f44336";
             }
         };
-        
+
         ws.onerror = (error) => {
             console.error("WebSocket алдаа:", error);
             document.getElementById("status").innerHTML = "🔴 WebSocket алдаа";
             document.getElementById("status").style.background = "#f44336";
         };
-        
+
         ws.onclose = () => {
             console.log("WebSocket хаагдсан");
             document.getElementById("status").innerHTML = "🔴 WebSocket салсан";
             document.getElementById("status").style.background = "#f44336";
         };
-        
+
         function updateTable(results) {
             const tbody = document.getElementById("resultsBody");
             tbody.innerHTML = "";
-            
+
             results.forEach((r, index) => {
                 const isBest = index === 0;
                 const rowClass = isBest ? 'class="best"' : '';
                 const bestBadge = isBest ? '🏆 ' : '';
-                
+
                 const row = <tr \>
                     <td>\</td>
                     <td>\</td>
@@ -128,15 +129,15 @@ DASHBOARD_HTML = """
                 </tr>;
                 tbody.innerHTML += row;
             });
-            
+
             console.log(\✅ \ мөр хүснэгтэд нэмэгдлээ\);
         }
-        
+
         function updateChart(results) {
             const maPeriods = results.map(r => \MA\ (RSI:\)\);
             const sharpeRatios = results.map(r => r.sharpe_ratio);
             const returns = results.map(r => r.total_return * 100);
-            
+
             const trace1 = {
                 x: maPeriods,
                 y: sharpeRatios,
@@ -145,7 +146,7 @@ DASHBOARD_HTML = """
                 marker: { color: '#2196F3' },
                 yaxis: 'y1'
             };
-            
+
             const trace2 = {
                 x: maPeriods,
                 y: returns,
@@ -156,7 +157,7 @@ DASHBOARD_HTML = """
                 line: { color: '#4CAF50', width: 2 },
                 yaxis: 'y2'
             };
-            
+
             const layout = {
                 title: 'Grid Search Үр Дүн - Performance Comparison',
                 xaxis: { title: 'Strategy Parameters', tickangle: -45 },
@@ -166,7 +167,7 @@ DASHBOARD_HTML = """
                 showlegend: true,
                 legend: { x: 0, y: 1 }
             };
-            
+
             Plotly.newPlot('chart', [trace1, trace2], layout);
             console.log("✅ График зурлаа");
         }
@@ -175,78 +176,63 @@ DASHBOARD_HTML = """
 </html>
 """
 
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
     """Үндсэн dashboard хуудас"""
     return DASHBOARD_HTML
+
 
 @app.websocket("/ws/grid-search")
 async def websocket_grid_search(websocket: WebSocket):
     """WebSocket-ээр grid search үр дүн бодит цагаар дамжуулах"""
     await websocket.accept()
     print("🔌 WebSocket холбогдлоо")
-    
+
     try:
-        await websocket.send_json({
-            "status": "started",
-            "message": "Grid search эхэлж байна..."
-        })
-        
+        await websocket.send_json({"status": "started", "message": "Grid search эхэлж байна..."})
+
         if USE_REAL_ENGINE:
             print(" Бодит C++ engine ашиглаж байна...")
             strategy = GridSearchStrategy()
-            results = strategy.run_grid_search(
-                ma_periods=[10, 20, 50],
-                rsi_thresholds=[30, 50, 70]
-            )
+            results = strategy.run_grid_search(ma_periods=[10, 20, 50], rsi_thresholds=[30, 50, 70])
         else:
             print("️  Mock өгөгдөл үүсгэж байна...")
             await asyncio.sleep(1)  # Бага зэрэг хүлээх (реалистик байлгах)
-            
+
             # Mock үр дүн үүсгэх
             results = []
             for ma in [10, 20, 50]:
                 for rsi in [30, 50, 70]:
-                    results.append({
-                        "ma_period": ma,
-                        "rsi_threshold": rsi,
-                        "sharpe_ratio": round(random.uniform(0.8, 2.5), 3),
-                        "max_drawdown": round(random.uniform(0.05, 0.20), 3),
-                        "total_return": round(random.uniform(0.10, 0.50), 3)
-                    })
-            
+                    results.append({"ma_period": ma, "rsi_threshold": rsi, "sharpe_ratio": round(random.uniform(0.8, 2.5), 3), "max_drawdown": round(random.uniform(0.05, 0.20), 3), "total_return": round(random.uniform(0.10, 0.50), 3)})
+
             # Sharpe ratio-гоор эрэмбэлэх
             results.sort(key=lambda x: x["sharpe_ratio"], reverse=True)
-        
+
         print(f"✅ {len(results)} үр дүн бэлэн")
-        
-        await websocket.send_json({
-            "status": "completed",
-            "results": results,
-            "best_params": results[0] if results else None,
-            "count": len(results)
-        })
-        
+
+        await websocket.send_json({"status": "completed", "results": results, "best_params": results[0] if results else None, "count": len(results)})
+
         print("📤 Өгөгдөл илгээгдлээ")
-        
+
     except Exception as e:
         print(f"❌ Алдаа: {e}")
         import traceback
+
         traceback.print_exc()
-        await websocket.send_json({
-            "status": "error",
-            "message": str(e)
-        })
+        await websocket.send_json({"status": "error", "message": str(e)})
     finally:
         await websocket.close()
         print("🔌 WebSocket хаагдлаа")
 
+
 if __name__ == "__main__":
     import uvicorn
-    print("="*60)
+
+    print("=" * 60)
     print("🚀 ResearchOS Dashboard Server")
-    print("="*60)
+    print("=" * 60)
     print(f"📊 Mode: {'REAL C++ Engine' if USE_REAL_ENGINE else 'MOCK DATA'}")
     print("🌐 URL: http://localhost:8000")
-    print("="*60)
+    print("=" * 60)
     uvicorn.run(app, host="0.0.0.0", port=8000)

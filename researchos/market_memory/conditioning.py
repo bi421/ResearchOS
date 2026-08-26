@@ -18,12 +18,9 @@ from typing import Any
 from researchos.market_memory.event_schema import (
     ConditionalResult,
     ConditionSpec,
-    EventOutcome,
     EvidenceStatus,
     MarketEvent,
 )
-from researchos.market_memory.outcome_engine import compute_forward_outcomes
-
 
 # =============================================================================
 # Condition Evaluation

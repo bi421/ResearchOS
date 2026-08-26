@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime, timezone
-from typing import Any
 
 from researchos.market_memory.bootstrap import bootstrap_mean_ci
 from researchos.market_memory.conditioning import (
@@ -26,23 +25,18 @@ from researchos.market_memory.conditioning import (
     compute_conditional_statistics,
     filter_events,
 )
-from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.event_extractor import extract_sma_crossover_events
 from researchos.market_memory.event_schema import (
-    ConditionalResult,
-    EvidenceRecord,
-    EvidenceStatus,
     EventType,
-    MarketEvent,
+    EvidenceStatus,
     MarketMemoryReport,
-    SelfAuditResult,
     ValidationResult,
 )
+from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
 from researchos.market_memory.self_audit import run_self_audit
 from researchos.market_memory.temporal_validation import (
     chronological_split,
-    expanding_window_splits,
 )
 
 
@@ -131,9 +125,7 @@ def run_market_memory_pipeline(
 
     conditional_results = []
     for spec in conditions:
-        result = compute_conditional_statistics(
-            events, spec, outcome_field="return_1d", bootstrap_seed=seed
-        )
+        result = compute_conditional_statistics(events, spec, outcome_field="return_1d", bootstrap_seed=seed)
         conditional_results.append(result)
 
     # 5. Bootstrap for key conditions
@@ -141,35 +133,21 @@ def run_market_memory_pipeline(
     for cr in conditional_results:
         if cr.sample_size >= 5:
             matched = filter_events(events, cr.condition_spec)
-            returns_1d = [
-                e.outcome.return_1d
-                for e in matched
-                if e.outcome and e.outcome.return_1d is not None
-            ]
+            returns_1d = [e.outcome.return_1d for e in matched if e.outcome and e.outcome.return_1d is not None]
             if returns_1d:
-                bootstrap_results[cr.condition_name] = bootstrap_mean_ci(
-                    returns_1d, seed=seed
-                )
+                bootstrap_results[cr.condition_name] = bootstrap_mean_ci(returns_1d, seed=seed)
 
     # 6. Temporal validation
     train_events, val_events, test_events = chronological_split(events)
-    temporal_integrity = chronological_split(events)  # Just to get the check
+    chronological_split(events)  # Just to get the check
 
     validation_results = []
     for cr in conditional_results:
         train_matched = filter_events(train_events, cr.condition_spec)
         test_matched = filter_events(test_events, cr.condition_spec)
 
-        train_returns = [
-            e.outcome.return_1d
-            for e in train_matched
-            if e.outcome and e.outcome.return_1d is not None
-        ]
-        test_returns = [
-            e.outcome.return_1d
-            for e in test_matched
-            if e.outcome and e.outcome.return_1d is not None
-        ]
+        train_returns = [e.outcome.return_1d for e in train_matched if e.outcome and e.outcome.return_1d is not None]
+        test_returns = [e.outcome.return_1d for e in test_matched if e.outcome and e.outcome.return_1d is not None]
 
         train_mean = sum(train_returns) / len(train_returns) if train_returns else 0.0
         test_mean = sum(test_returns) / len(test_returns) if test_returns else 0.0
@@ -225,11 +203,7 @@ def run_market_memory_pipeline(
                 "mean_return": cr.mean_return,
                 "std_return": cr.std_return,
             },
-            uncertainty=(
-                {"confidence_interval": cr.confidence_interval}
-                if cr.confidence_interval
-                else {}
-            ),
+            uncertainty=({"confidence_interval": cr.confidence_interval} if cr.confidence_interval else {}),
             validation_method="chronological_train_test_split",
             random_seed=seed,
             status=cr.status,
@@ -270,12 +244,7 @@ def run_market_memory_pipeline(
             "total_events": len(events),
             "bullish_count": sum(1 for e in events if e.direction == "bullish"),
             "bearish_count": sum(1 for e in events if e.direction == "bearish"),
-            "avg_return_1d": (
-                sum(e.outcome.return_1d for e in events if e.outcome and e.outcome.return_1d is not None)
-                / len([e for e in events if e.outcome and e.outcome.return_1d is not None])
-                if any(e.outcome and e.outcome.return_1d is not None for e in events)
-                else 0.0
-            ),
+            "avg_return_1d": (sum(e.outcome.return_1d for e in events if e.outcome and e.outcome.return_1d is not None) / len([e for e in events if e.outcome and e.outcome.return_1d is not None]) if any(e.outcome and e.outcome.return_1d is not None for e in events) else 0.0),
         },
         conditional_results=conditional_results,
         validation_results=validation_results,

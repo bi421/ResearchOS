@@ -14,22 +14,20 @@ Design principles:
 
 from __future__ import annotations
 
-import math
-from datetime import datetime, timezone
-from typing import Any
+from datetime import datetime
 
 import polars as pl
 
 from researchos.market_memory.event_schema import (
     CrossoverDirection,
     EventContext,
-    EventOutcome,
     EventType,
     MarketEvent,
-    MarketRegime as MarketRegimeEnum,
     Session,
 )
-
+from researchos.market_memory.event_schema import (
+    MarketRegime as MarketRegimeEnum,
+)
 
 # =============================================================================
 # Indicator Computation (deterministic, no external libraries)
@@ -46,9 +44,7 @@ def _compute_sma(prices: list[float], period: int) -> list[float | None]:
     return sma
 
 
-def _compute_atr(
-    highs: list[float], lows: list[float], closes: list[float], period: int = 14
-) -> list[float | None]:
+def _compute_atr(highs: list[float], lows: list[float], closes: list[float], period: int = 14) -> list[float | None]:
     """Compute Average True Range."""
     if len(closes) < period + 1:
         return [0.0] * len(closes)
@@ -93,9 +89,7 @@ def _compute_rsi(closes: list[float], period: int = 14) -> list[float | None]:
     return rsi
 
 
-def _compute_macd(
-    closes: list[float], fast: int = 12, slow: int = 26, signal: int = 9
-) -> tuple[list[float], list[float], list[float]]:
+def _compute_macd(closes: list[float], fast: int = 12, slow: int = 26, signal: int = 9) -> tuple[list[float], list[float], list[float]]:
     """Compute MACD line, signal line, and histogram."""
     if len(closes) < slow:
         return [0.0] * len(closes), [0.0] * len(closes), [0.0] * len(closes)
@@ -142,9 +136,7 @@ def _determine_session(timestamp: datetime) -> str:
         return Session.US.value
 
 
-def _compute_regime(
-    sma_fast: float, sma_slow: float, atr: float, close: float
-) -> tuple[str, str]:
+def _compute_regime(sma_fast: float, sma_slow: float, atr: float, close: float) -> tuple[str, str]:
     """Compute market regime and volatility state."""
     if sma_fast == 0 or sma_slow == 0 or close == 0:
         return MarketRegimeEnum.UNKNOWN.value, "Unknown"
@@ -188,12 +180,8 @@ def load_xauusd_d1(csv_path: str = "data/curated/xauusd/xauusd_d1_2021_2025_mt5_
         timestamp, open, high, low, close, tick_volume
     """
     df = pl.read_csv(csv_path)
-    df = df.with_columns(
-        pl.concat_str([pl.col("Date"), pl.lit("T"), pl.col("Time")]).alias("timestamp")
-    )
-    df = df.with_columns(
-        pl.col("timestamp").str.to_datetime("%Y.%m.%dT%H:%M:%S").alias("timestamp")
-    )
+    df = df.with_columns(pl.concat_str([pl.col("Date"), pl.lit("T"), pl.col("Time")]).alias("timestamp"))
+    df = df.with_columns(pl.col("timestamp").str.to_datetime("%Y.%m.%dT%H:%M:%S").alias("timestamp"))
     df = df.with_columns(
         pl.col("Open").alias("open"),
         pl.col("High").alias("high"),
@@ -271,10 +259,7 @@ def extract_sma_crossover_events(
             continue
 
         # Event ID
-        event_id = (
-            f"XAUUSD_D1_SMA{fast_period}_{slow_period}_"
-            f"{timestamps[i].strftime('%Y%m%d')}_{direction.value}"
-        )
+        event_id = f"XAUUSD_D1_SMA{fast_period}_{slow_period}_" f"{timestamps[i].strftime('%Y%m%d')}_{direction.value}"
 
         # Context
         regime, vol_state = _compute_regime(curr_fast, curr_slow, atr[i], closes[i])

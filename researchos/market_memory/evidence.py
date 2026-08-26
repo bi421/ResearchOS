@@ -20,7 +20,6 @@ Every important research finding must contain provenance:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 from researchos.market_memory.event_schema import EvidenceRecord, EvidenceStatus
@@ -66,9 +65,7 @@ def create_evidence_record(
     Returns:
         EvidenceRecord
     """
-    finding_id = (
-        f"EVIDENCE|{dataset_id}|{finding_name}|{condition_definition}|{time_range[0]}"
-    )
+    finding_id = f"EVIDENCE|{dataset_id}|{finding_name}|{condition_definition}|{time_range[0]}"
     return EvidenceRecord(
         finding_id=finding_id,
         finding_name=finding_name,

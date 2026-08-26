@@ -12,10 +12,7 @@ Never uses random shuffling. Always respects temporal order.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
-
-from researchos.market_memory.event_schema import ValidationResult
 
 
 def chronological_split(
