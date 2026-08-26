@@ -30,10 +30,17 @@ def parse_timestamp(ts: str) -> datetime:
     Returns:
         Datetime object in UTC.
     """
-    dt = datetime.fromisoformat(ts)
+    dt = _parse_iso_compat(ts)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt
+
+
+def _parse_iso_compat(value: str) -> datetime:
+    """Parse an ISO 8601 string, normalizing trailing Z to +00:00 for Python 3.10 compatibility."""
+    if value.endswith("Z"):
+        value = value[:-1] + "+00:00"
+    return datetime.fromisoformat(value)
 
 
 def format_timestamp(dt: datetime) -> str:

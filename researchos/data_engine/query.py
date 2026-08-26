@@ -14,9 +14,9 @@ Guarantees:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
+from researchos.core.timestamp import _parse_iso_compat
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.dataset import HistoricalDataset
 
@@ -57,11 +57,11 @@ class RangeQuery:
                 continue
             ts = record.timestamp
             if self.start_time:
-                start_dt = datetime.fromisoformat(self.start_time)
+                start_dt = _parse_iso_compat(self.start_time)
                 if ts < start_dt:
                     continue
             if self.end_time:
-                end_dt = datetime.fromisoformat(self.end_time)
+                end_dt = _parse_iso_compat(self.end_time)
                 if ts > end_dt:
                     continue
             results.append(record)

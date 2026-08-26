@@ -22,6 +22,7 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
+from researchos.core.timestamp import _parse_iso_compat
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import CandleField, LoaderConfig, Timeframe
 from researchos.data_engine.quote import Quote
@@ -713,9 +714,8 @@ class CsvLoader:
 
     def _parse_timestamp(self, value: str, source_timezone: str | None = None) -> datetime:
         """Parse a timestamp string, with timezone normalization."""
-        # Try ISO format first
         try:
-            dt = datetime.fromisoformat(value)
+            dt = _parse_iso_compat(value)
         except (ValueError, TypeError):
             dt = datetime.strptime(value, self.config.date_format)
 
