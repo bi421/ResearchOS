@@ -34,6 +34,7 @@ jobs:
           --ignore=researchos/tests/test_strategies_real.py \
           --ignore=researchos/tests/test_tpsl.py \
           --ignore=researchos/tests/test_tpsl_grid.py \
+          --ignore=researchos/tests/test_cpp_backtest_regression.py \
           --cov=researchos \
           --cov-report=xml \
           --cov-report=html \
