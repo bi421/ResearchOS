@@ -48,13 +48,13 @@ from researchos.market_memory.event_schema import (
 )
 from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
-from researchos.market_memory.pipeline_v1 import (
+from researchos.market_memory.pipeline_v1 import run_market_memory_pipeline
+from researchos.market_memory.self_audit import run_self_audit
+from researchos.market_memory.temporal_validation import (
+    check_temporal_integrity,
     chronological_split,
     expanding_window_splits,
-    run_market_memory_pipeline,
 )
-from researchos.market_memory.self_audit import run_self_audit
-from researchos.market_memory.temporal_validation import check_temporal_integrity
 
 # =============================================================================
 # Helpers
