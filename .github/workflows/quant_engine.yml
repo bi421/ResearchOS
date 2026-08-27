@@ -18,6 +18,22 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install nanobind pytest pandas numpy
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: cpp_quant_engine/build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('cpp_quant_engine/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-
+
 
       - name: Install Ninja (Ubuntu)
         if: runner.os == 'Linux'
