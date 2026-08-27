@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
 
@@ -71,6 +71,6 @@ jobs:
     steps:
     - name: Report coverage failure
       run: |
-        echo "❌ Coverage check FAILED"
-        echo "Code coverage must be ≥70% for master/develop branches"
+        echo "[FAIL] Coverage check FAILED"
+        echo "Code coverage must be >=70% for master/develop branches"
         exit 1

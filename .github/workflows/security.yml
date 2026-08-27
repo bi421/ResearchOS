@@ -9,91 +9,91 @@ on:
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
-    
+
     - name: Run gitleaks scan
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITLEAKS_EXITCODE: 2
-    
+
     - name: Report findings
       if: always()
       run: |
-        echo "🔐 Gitleaks scan completed"
+        echo "[SCAN] Gitleaks scan completed"
         echo "Review gitleaks report for any secrets found"
 
   secret-scan-custom:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
-    
+
     - name: Search for common secret patterns
       run: |
         set +e  # Don't fail on grep
-        
-        echo "🔍 Scanning for hardcoded secrets..."
-        
+
+        echo "[SCAN] Scanning for hardcoded secrets..."
+
         # Search for common API key patterns
         if grep -rE "BINANCE_API_KEY\s*=\s*['\"][^'\"]|BINANCE_API_SECRET\s*=\s*['\"][^'\"]" \
           --exclude-dir=.git --exclude-dir=.github --exclude="*.lock" \
           . | grep -v "os\.getenv\|os\.environ\|CHANGELOG"; then
-          echo "❌ Found potential hardcoded secrets!"
+          echo "[FAIL] Found potential hardcoded secrets!"
           exit 1
         fi
-        
+
         # Search for AWS/Google credentials
         if grep -r "aws_access_key_id\|aws_secret_access_key\|GOOGLE_APPLICATION_CREDENTIALS" \
           --exclude-dir=.git --exclude-dir=.github --exclude="*.lock" \
           . | grep -v "os\.getenv\|os\.environ\|CHANGELOG"; then
-          echo "❌ Found potential AWS/Google credentials!"
+          echo "[FAIL] Found potential AWS/Google credentials!"
           exit 1
         fi
-        
-        echo "✅ No hardcoded secrets detected"
-    
+
+        echo "[OK] No hardcoded secrets detected"
+
     - name: Check for secrets in environment files
       run: |
         if [ -f .env ] || [ -f .env.local ]; then
-          echo "❌ Environment files found in repo (should be .gitignore'd)"
+          echo "[FAIL] Environment files found in repo (should be .gitignore'd)"
           exit 1
         fi
-        
-        echo "✅ No environment files in repository"
+
+        echo "[OK] No environment files in repository"
 
   dependency-check:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
+    - uses: actions/checkout@v7
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
-    
+
     - name: Check for outdated dependencies
       run: |
         pip install pip-audit
-        pip-audit --desc --strict || echo "⚠️ Outdated dependencies detected (review for severity)"
-    
+        pip-audit --desc --strict || echo "[WARN] Outdated dependencies detected (review for severity)"
+
     - name: Check pyproject.toml for risky dependencies
       run: |
         echo "Checking for ccxt/trading libraries in main package..."
-        
+
         if grep -q "ccxt\|binance\|trading-engine" pyproject.toml; then
-          echo "⚠️ WARNING: Found external trading libraries in dependencies"
+          echo "[WARN] WARNING: Found external trading libraries in dependencies"
           echo "ResearchOS should only use research dependencies"
         fi
-        
-        echo "✅ Dependency scan completed"
+
+        echo "[OK] Dependency scan completed"
 
   security-check-failure:
     runs-on: ubuntu-latest
@@ -102,6 +102,6 @@ jobs:
     steps:
     - name: Report security failure
       run: |
-        echo "❌ Security scan FAILED"
+        echo "[FAIL] Security scan FAILED"
         echo "No code with secrets or security violations can reach master"
         exit 1
