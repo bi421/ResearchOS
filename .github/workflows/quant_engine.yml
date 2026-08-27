@@ -21,7 +21,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install nanobind pytest pandas numpy
       - name: Cache pip dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
@@ -29,7 +29,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Cache CMake build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: cpp_quant_engine/build
           key: ${{ runner.os }}-cmake-${{ hashFiles('cpp_quant_engine/**') }}
