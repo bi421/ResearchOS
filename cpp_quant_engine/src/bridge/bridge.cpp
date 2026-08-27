@@ -1,4 +1,4 @@
-// BridgeBackend — the stable implementation of the Python/C++ integration
+﻿// BridgeBackend — the stable implementation of the Python/C++ integration
 // contract (IBridgeBackend). Owns no global state; every call is pure and
 // deterministic. See python/bridge_interface.h for the contract and
 // python/bridge_models.h for the hash/canonical serialization rules.
@@ -295,7 +295,11 @@ std::string iso8601_now() {
 #if defined(_MSC_VER)
   gmtime_s(&tm, &tt);
 #else
+  #ifdef _WIN32
+  gmtime_s(&tm, &tt);
+#else
   gmtime_r(&tt, &tm);
+#endif
 #endif
   char buf[32];
   std::snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d",

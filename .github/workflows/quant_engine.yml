@@ -52,13 +52,13 @@ jobs:
           Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | ForEach-Object { Write-Host "$($_.Name) $($_.Length/1KB)KB" }
           if (Get-ChildItem cpp_quant_engine/python -Filter *.pdb -Recurse) { Write-Error 'PDB leak!'; exit 1 }
 
-      - name: Run Python regression tests (if exists)
+      - name: Run Python regression tests (skip if data missing)
         shell: bash
         run: |
-          if [ -f 'researchos/tests/test_cpp_backtest_regression.py' ]; then
+          if [ -d "data/raw/histdata/xauusd" ]; then
             pytest researchos/tests/test_cpp_backtest_regression.py -q
           else
-            echo 'Python regression test file not found, skipping pytest.'
+            echo "XAUUSD data not found in CI environment. Skipping Python regression tests."
           fi
         env:
           PYTHONPATH: 'cpp_quant_engine/python:.'
