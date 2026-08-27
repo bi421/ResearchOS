@@ -1,4 +1,4 @@
-#ifndef QUANT_STRATEGY_STRATEGY_INTERNAL_H
+﻿#ifndef QUANT_STRATEGY_STRATEGY_INTERNAL_H
 #define QUANT_STRATEGY_STRATEGY_INTERNAL_H
 
 #include "quant/market/types.h"
@@ -12,11 +12,11 @@ namespace quant {
 namespace strategy {
 namespace detail {
 
-// ── SHA-256 ───────────────────────────────────────────────────────────────
+// â”€â”€ SHA-256 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Self-contained SHA-256 (FIPS 180-4) returning the hex digest.
 std::string sha256_hex(const std::string& input);
 
-// ── Canonical serialization ───────────────────────────────────────────────
+// â”€â”€ Canonical serialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Deterministic byte-level representation used for input/result hashes:
 // keys sorted alphabetically, numbers fixed-point {:.10f}, strings JSON-escaped.
 
@@ -41,7 +41,6 @@ std::string canonical_int_array(const std::vector<int64_t>& a);
 
 using KV = std::pair<std::string, std::string>;
 std::string canonical_object(std::initializer_list<KV> kvs);
-std::string canonical_object(const std::vector<KV>& kvs);
 std::string canonical_array(std::initializer_list<std::string> items);
 std::string canonical_array(const std::vector<std::string>& items);
 

@@ -1,4 +1,4 @@
-// Research Optimization Engine — comprehensive unit tests.
+﻿// Research Optimization Engine — comprehensive unit tests.
 //
 // Covers: parameter spaces (grids, ranges, int ranges, log scale, mixed-radix
 // combo decoding, overflow), ParamSet accessors, optimization metrics
@@ -142,13 +142,14 @@ FunctionSignalGenerator interval_gen() {
 }
 
 // Maps `stop` and `tp` parameters onto the trade config.
-FunctionConfigProvider stop_tp_provider() {
-  return FunctionConfigProvider([](const ParamSet& p) {
+FunctionConfigProvider& stop_tp_provider() {
+  static FunctionConfigProvider instance([](const ParamSet& p) {
     strategy::StrategyConfig cfg = zero_cost();
     cfg.trade.stop_loss = p.get("stop", 2.0);
     cfg.trade.take_profit = p.get("tp", 4.0);
     return cfg;
   });
+  return instance;
 }
 
 OptimizerConfig grid_cfg(OptimizationMetric metric = OptimizationMetric::NetProfit,

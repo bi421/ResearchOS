@@ -1,4 +1,4 @@
-#include "strategy_internal.h"
+﻿#include "strategy_internal.h"
 
 #include <algorithm>
 #include <array>
@@ -7,6 +7,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <cmath>
 
 namespace quant {
 namespace strategy {
