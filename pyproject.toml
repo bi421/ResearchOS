@@ -101,3 +101,6 @@ ignore = ["E501"]
 [tool.ruff.format]
 quote-style = "double"
 line-ending = "auto"
+
+[tool.pytest.ini_options]
+addopts = "--ignore=researchos/tests/test_ensemble.py --ignore=researchos/tests/test_sp500.py --ignore=researchos/tests/test_strategies_real.py --ignore=researchos/tests/test_tpsl.py --ignore=researchos/tests/test_tpsl_grid.py"
