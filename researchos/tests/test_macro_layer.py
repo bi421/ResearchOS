@@ -2,14 +2,24 @@
 Test Market Intelligence Layer.
 """
 
-import pytest
+import pytest  # noqa: E402
+
+# noqa: E402
 
 pytest.skip("Requires live market data provider — not a unit test", allow_module_level=True)
 
-from researchos.engines.data.contracts import Timeframe
-from researchos.engines.data.macro_analyzer import MacroAnalyzer
-from researchos.engines.data.macro_provider import MacroFactorProvider
-from researchos.engines.data.repository import SqliteDatasetRepository
+from researchos.engines.data.contracts import Timeframe  # noqa: E402
+
+# noqa: E402
+from researchos.engines.data.macro_analyzer import MacroAnalyzer  # noqa: E402
+
+# noqa: E402
+from researchos.engines.data.macro_provider import MacroFactorProvider  # noqa: E402
+
+# noqa: E402
+from researchos.engines.data.repository import SqliteDatasetRepository  # noqa: E402
+
+# noqa: E402
 
 # 1. Init
 repo = SqliteDatasetRepository("researchos.db")

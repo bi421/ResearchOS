@@ -87,3 +87,4 @@ build-*/
 *.recipe
 *.rule
 *.so
+fix_integration.py

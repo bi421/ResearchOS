@@ -1,17 +1,34 @@
-import sys
-import warnings
+import sys  # noqa: E402
+
+# noqa: E402
+import warnings  # noqa: E402
+
+# noqa: E402
 
 warnings.filterwarnings("ignore")
 sys.path.insert(0, "cpp_quant")
 
-import glob
+import glob  # noqa: E402
 
-import numpy as np
-import pandas as pd
-from cpp_quant import run_ml_backtest_cpp
-from joblib import Parallel, delayed
-from sklearn.preprocessing import StandardScaler
-from xgboost import XGBClassifier  # хэрэв regression бол XGBRegressor
+# noqa: E402
+import numpy as np  # noqa: E402
+
+# noqa: E402
+import pandas as pd  # noqa: E402
+
+# noqa: E402
+from cpp_quant import run_ml_backtest_cpp  # noqa: E402
+
+# noqa: E402
+from joblib import Parallel, delayed  # noqa: E402
+
+# noqa: E402
+from sklearn.preprocessing import StandardScaler  # noqa: E402
+
+# noqa: E402
+from xgboost import XGBClassifier  # хэрэв regression бол XGBRegressor  # noqa: E402
+
+# noqa: E402
 
 print("=" * 60)
 print("🚀 SHINEE FEATURE-UD: XAUUSD 4h")

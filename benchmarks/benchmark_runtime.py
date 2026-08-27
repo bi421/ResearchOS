@@ -1,10 +1,20 @@
-import pathlib
-import statistics
-import sys
-import timeit
+import pathlib  # noqa: E402
+
+# noqa: E402
+import statistics  # noqa: E402
+
+# noqa: E402
+import sys  # noqa: E402
+
+# noqa: E402
+import timeit  # noqa: E402
+
+# noqa: E402
 
 sys.path.insert(0, "cpp_quant_engine/python")
-from cpp_quant_engine.cpp_quant_backend import Backend
+from cpp_quant_engine.cpp_quant_backend import Backend  # noqa: E402
+
+# noqa: E402
 
 
 def make_candles(n=1000):
@@ -21,7 +31,9 @@ inst = timeit.repeat("Backend()", setup="from cpp_quant_engine.cpp_quant_backend
 print(f"[Backend()] mean {statistics.mean(inst)*1e6:.1f} us")
 meta = timeit.repeat("b.meta()", globals={"b": b}, number=1, repeat=1000)
 print(f"[b.meta()] mean {statistics.mean(meta)*1e6:.1f} us")
-import time as tm
+import time as tm  # noqa: E402
+
+# noqa: E402
 
 data = make_candles(1000)
 req = {"symbol": "EURUSD", "timeframe": "M1", "candles": data}

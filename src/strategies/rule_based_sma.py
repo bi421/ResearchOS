@@ -1,7 +1,7 @@
-import glob
+import glob  # noqa: E402
 
-import numpy as np
-import pandas as pd
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
 
 print("=" * 60)
 print("📈 RULE-BASED STRATEGY: SMA CROSSOVER + ADX FILTER")
@@ -50,7 +50,7 @@ for i in range(200, len(df_h)):
     # else: no signal
 
 # 5. Бэктест (C++ биш, векторжсон Python ашиглая, учир нь probabilities байхгүй)
-from researchos.quant_engine.vectorized_backtest import vectorized_backtest
+from researchos.quant_engine.vectorized_backtest import vectorized_backtest  # noqa: E402
 
 prices = close.tolist()
 result = vectorized_backtest(prices, signals)
