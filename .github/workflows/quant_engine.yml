@@ -1,0 +1,64 @@
+name: Quant Engine CI - nanobind
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install nanobind pytest pandas numpy
+
+      - name: Install Ninja (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      - name: Configure CMake
+        run: cmake -S cpp_quant_engine -B cpp_quant_engine/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build nanobind extension
+        run: cmake --build cpp_quant_engine/build --config Release --parallel
+
+      - name: Run C++ Tests (526 tests)
+        run: ctest --test-dir cpp_quant_engine/build --output-on-failure
+
+      - name: Check binary size (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          find cpp_quant_engine/python/cpp_quant_engine -name '*.so' -exec ls -la {} \;
+          if find cpp_quant_engine/python -iname '*.pdb' | grep -q .; then
+            echo 'PDB leak!'; exit 1
+          fi
+
+      - name: Check binary size (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | ForEach-Object { Write-Host "$($_.Name) $($_.Length/1KB)KB" }
+          if (Get-ChildItem cpp_quant_engine/python -Filter *.pdb -Recurse) { Write-Error 'PDB leak!'; exit 1 }
+
+      - name: Run Python regression tests (skip if data missing)
+        shell: bash
+        run: |
+          if [ -d "data/raw/histdata/xauusd" ]; then
+            pytest researchos/tests/test_cpp_backtest_regression.py -q
+          else
+            echo "XAUUSD data not found in CI environment. Skipping Python regression tests."
+          fi
+        env:
+          PYTHONPATH: 'cpp_quant_engine/python:.'

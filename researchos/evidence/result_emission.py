@@ -37,7 +37,8 @@ This is a certification/trust layer only — it computes no trading decisions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from researchos.evidence.envelope import (
     HASH_SCHEME_VERSION,
@@ -74,8 +75,8 @@ def result_payload(
     result: Any,
     run_hash: str = "",
     experiment_hash: str = "",
-    backend_identity: Optional[Mapping[str, Any]] = None,
-) -> Dict[str, Any]:
+    backend_identity: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a deterministic, primitives-only payload from an ``ExperimentResult``.
 
     The payload captures the result's CONTENT identity only.  Observational
@@ -101,7 +102,7 @@ def result_payload(
     trace = str(getattr(result, "trace", ""))
     ontology_tags = sorted(getattr(result, "ontology_tags", []) or [])
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "result_hash": str(getattr(result, "result_hash", "")),
         "run_id": str(getattr(result, "run_id", "")),
         "run_hash": run_hash,
@@ -122,10 +123,10 @@ def build_result_envelope(
     result: Any,
     run_hash: str = "",
     experiment_hash: str = "",
-    backend_identity: Optional[Mapping[str, Any]] = None,
+    backend_identity: Mapping[str, Any] | None = None,
     version: str = RESULT_EVIDENCE_VERSION,
     created_at: str = "",
-    parent_hashes: Optional[Sequence[str]] = None,
+    parent_hashes: Sequence[str] | None = None,
 ) -> EvidenceEnvelope:
     """Build a scheme-2 ``EvidenceEnvelope`` for an ``ExperimentResult``.
 
@@ -190,7 +191,7 @@ def attach_run_parent(
 
 def emit_result(
     envelope: EvidenceEnvelope,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
 ) -> EvidenceEnvelope:
     """Persist a Result envelope to an ``EvidenceRepository`` (append-only).
 
@@ -206,9 +207,7 @@ def emit_result(
             verification.
     """
     if envelope.artifact_type != RESULT_ARTIFACT_TYPE:
-        raise ValueError(
-            f"emit_result() expects artifact_type='Result', got '{envelope.artifact_type}'"
-        )
+        raise ValueError(f"emit_result() expects artifact_type='Result', got '{envelope.artifact_type}'")
     if not envelope.verify():
         raise ValueError(f"Result evidence lineage mismatch for {envelope.artifact_hash}")
     repo = repository or EvidenceRepository()
@@ -218,9 +217,9 @@ def emit_result(
 def emit_result_for_run(
     result: Any,
     run_hash: str,
-    repository: Optional[EvidenceRepository] = None,
+    repository: EvidenceRepository | None = None,
     experiment_hash: str = "",
-    backend_identity: Optional[Mapping[str, Any]] = None,
+    backend_identity: Mapping[str, Any] | None = None,
     version: str = RESULT_EVIDENCE_VERSION,
     created_at: str = "",
 ) -> EvidenceEnvelope:

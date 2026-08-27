@@ -16,7 +16,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -53,8 +53,8 @@ class DatasetVersion(BaseObject):
         change_reason: str = "",
         author: str = "",
         is_current: bool = True,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"DatasetVersion|{dataset_id}|{version}"
@@ -77,7 +77,7 @@ class DatasetVersion(BaseObject):
             reason=f"DatasetVersion {version} created for {dataset_id}",
         )
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "dataset_id": self.dataset_id,
             "version": self.version,
@@ -91,7 +91,7 @@ class DatasetVersion(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -109,7 +109,7 @@ class DatasetVersion(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DatasetVersion":
+    def from_dict(cls, data: dict[str, Any]) -> DatasetVersion:
         obj = super().from_dict(data)
         obj.dataset_id = data["dataset_id"]
         obj.version = data["version"]
@@ -123,10 +123,7 @@ class DatasetVersion(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"DatasetVersion({self.dataset_id[:8]}..., "
-            f"v{self.version}, {self.record_count} records)"
-        )
+        return f"DatasetVersion({self.dataset_id[:8]}..., v{self.version}, {self.record_count} records)"
 
 
 def bump_dataset_version(

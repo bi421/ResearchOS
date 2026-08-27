@@ -1,4 +1,4 @@
-# ResearchOS v2 — Reasoning Layer Architecture
+# ResearchOS v2 â€” Reasoning Layer Architecture
 
 Version: v2.0
 Layer: 06 / 10

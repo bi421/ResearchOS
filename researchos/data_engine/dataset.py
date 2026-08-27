@@ -18,7 +18,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -33,7 +33,7 @@ from researchos.data_engine.trade import Trade
 DataRecord = Union[Candle, Tick, Quote, Trade, OrderBook]
 
 
-def _restore_record(data_type: str, data: Dict[str, Any]) -> Optional[DataRecord]:
+def _restore_record(data_type: str, data: dict[str, Any]) -> DataRecord | None:
     """Reconstruct a typed data record from its serialized dict."""
     try:
         if data_type == "candle":
@@ -77,13 +77,13 @@ class HistoricalDataset(BaseObject):
         symbol: str,
         timeframe: str,
         data_type: str = "candle",
-        records: Optional[List[DataRecord]] = None,
+        records: list[DataRecord] | None = None,
         source: str = "",
         quality: str = "Raw",
         version: str = "1.0.0",
-        tags: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        tags: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"HistoricalDataset|{symbol}|{timeframe}|{source}"
@@ -94,15 +94,15 @@ class HistoricalDataset(BaseObject):
         self.symbol = symbol
         self.timeframe = timeframe
         self.data_type = data_type
-        self._records: List[DataRecord] = records or []
+        self._records: list[DataRecord] = records or []
         self.source = source
         self.quality = DataQuality(quality) if isinstance(quality, str) else quality
         self.status = DatasetStatus.PENDING
         self.version = version
-        self.tags: List[str] = tags or []
+        self.tags: list[str] = tags or []
         self.dataset_hash: str = ""
         self.dataset_content_hash: str = ""
-        self._record_hashes: List[str] = []
+        self._record_hashes: list[str] = []
         self._frozen: bool = False
 
         self.lifecycle.transition(
@@ -111,7 +111,7 @@ class HistoricalDataset(BaseObject):
         )
 
     @property
-    def records(self) -> List[DataRecord]:
+    def records(self) -> list[DataRecord]:
         """Get all records in the dataset."""
         return list(self._records)
 
@@ -121,7 +121,7 @@ class HistoricalDataset(BaseObject):
         return len(self._records)
 
     @property
-    def start_time(self) -> Optional[datetime]:
+    def start_time(self) -> datetime | None:
         """Timestamp of the first record."""
         if not self._records:
             return None
@@ -129,7 +129,7 @@ class HistoricalDataset(BaseObject):
         return first.timestamp if hasattr(first, "timestamp") else None
 
     @property
-    def end_time(self) -> Optional[datetime]:
+    def end_time(self) -> datetime | None:
         """Timestamp of the last record."""
         if not self._records:
             return None
@@ -148,18 +148,14 @@ class HistoricalDataset(BaseObject):
     def add_record(self, record: DataRecord) -> None:
         """Add a single record to the dataset."""
         if self._frozen:
-            raise ValueError(
-                "Dataset is immutable after mark_ready(); add_record() is not allowed."
-            )
+            raise ValueError("Dataset is immutable after mark_ready(); add_record() is not allowed.")
         self._records.append(record)
         self._compute_hash()
 
-    def add_records(self, records: List[DataRecord]) -> None:
+    def add_records(self, records: list[DataRecord]) -> None:
         """Add multiple records to the dataset."""
         if self._frozen:
-            raise ValueError(
-                "Dataset is immutable after mark_ready(); add_records() is not allowed."
-            )
+            raise ValueError("Dataset is immutable after mark_ready(); add_records() is not allowed.")
         self._records.extend(records)
         self._compute_hash()
 
@@ -220,7 +216,7 @@ class HistoricalDataset(BaseObject):
         # content hashes, even if symbol/timeframe/source are identical.
         self.dataset_content_hash = deterministic_hash({"record_hashes": sorted(record_hashes)})
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -237,7 +233,7 @@ class HistoricalDataset(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -255,15 +251,13 @@ class HistoricalDataset(BaseObject):
                 "dataset_content_hash": self.dataset_content_hash,
                 "version": self.version,
                 "tags": self.tags,
-                "records": [
-                    r.to_dict() if hasattr(r, "to_dict") else str(r) for r in self._records
-                ],
+                "records": [r.to_dict() if hasattr(r, "to_dict") else str(r) for r in self._records],
             }
         )
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "HistoricalDataset":
+    def from_dict(cls, data: dict[str, Any]) -> HistoricalDataset:
         obj = super().from_dict(data)
         obj.symbol = data["symbol"]
         obj.timeframe = data["timeframe"]
@@ -289,7 +283,7 @@ class HistoricalDataset(BaseObject):
         return obj
 
     @staticmethod
-    def _deserialize_records(records: List[Any], data_type: str) -> List[DataRecord]:
+    def _deserialize_records(records: list[Any], data_type: str) -> list[DataRecord]:
         """
         Reconstruct typed data records from serialized dicts.
 
@@ -304,7 +298,7 @@ class HistoricalDataset(BaseObject):
             "orderbook": OrderBook,
         }
         record_cls = record_map.get(data_type)
-        restored: List[DataRecord] = []
+        restored: list[DataRecord] = []
         for rec in records:
             if record_cls is not None and isinstance(rec, dict):
                 try:
@@ -320,10 +314,7 @@ class HistoricalDataset(BaseObject):
         return restored
 
     def __repr__(self) -> str:
-        return (
-            f"HistoricalDataset({self.symbol}, {self.timeframe}, "
-            f"{self.record_count} records, {self.status.value})"
-        )
+        return f"HistoricalDataset({self.symbol}, {self.timeframe}, {self.record_count} records, {self.status.value})"
 
     def __len__(self) -> int:
         return len(self._records)

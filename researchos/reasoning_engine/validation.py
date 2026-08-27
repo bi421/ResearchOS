@@ -25,8 +25,6 @@ Based on Article X: Reasoning Engine -- Evidence Validation Layer.
 
 from __future__ import annotations
 
-from typing import List
-
 from researchos.reasoning_engine.contracts import ReasoningEvidence
 from researchos.reasoning_engine.evidence import EvidenceRecord
 
@@ -49,7 +47,7 @@ class EvidenceValidator:
         only when every rule passes.  All failing-rule messages are collected
         (never short-circuited) and reported in a deterministic order.
         """
-        errors: List[str] = []
+        errors: list[str] = []
 
         # Rule 1
         if evidence.reliability_score < self.MIN_RELIABILITY_SCORE:

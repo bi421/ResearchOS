@@ -18,7 +18,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -53,16 +53,16 @@ class LearningRecord(BaseObject):
         experiment_id: str,
         validation_id: str,
         hypothesis_id: str,
-        run_id: Optional[str] = None,
-        hypothesis_accepted: Optional[bool] = None,
-        findings: Optional[List[str]] = None,
-        patterns_observed: Optional[List[str]] = None,
-        recommendations: Optional[List[str]] = None,
+        run_id: str | None = None,
+        hypothesis_accepted: bool | None = None,
+        findings: list[str] | None = None,
+        patterns_observed: list[str] | None = None,
+        recommendations: list[str] | None = None,
         confidence: float = 0.0,
         learning_trace: str = "",
-        tags: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        tags: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"LearningRecord|{experiment_id}|{validation_id}"
@@ -75,12 +75,12 @@ class LearningRecord(BaseObject):
         self.hypothesis_id = hypothesis_id
         self.run_id = run_id
         self.hypothesis_accepted = hypothesis_accepted
-        self.findings: List[str] = findings or []
-        self.patterns_observed: List[str] = patterns_observed or []
-        self.recommendations: List[str] = recommendations or []
+        self.findings: list[str] = findings or []
+        self.patterns_observed: list[str] = patterns_observed or []
+        self.recommendations: list[str] = recommendations or []
         self.confidence = confidence
         self.learning_trace = learning_trace
-        self.tags: List[str] = tags or []
+        self.tags: list[str] = tags or []
 
         self.lifecycle.transition(
             LifecycleStage.CREATED,
@@ -107,11 +107,10 @@ class LearningRecord(BaseObject):
         """Mark this learning record as complete."""
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
-            reason=f"Learning record finalized: {len(self.findings)} findings, "
-            f"{len(self.recommendations)} recommendations",
+            reason=f"Learning record finalized: {len(self.findings)} findings, {len(self.recommendations)} recommendations",
         )
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "experiment_id": self.experiment_id,
             "validation_id": self.validation_id,
@@ -127,7 +126,7 @@ class LearningRecord(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -147,7 +146,7 @@ class LearningRecord(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "LearningRecord":
+    def from_dict(cls, data: dict[str, Any]) -> LearningRecord:
         obj = super().from_dict(data)
         obj.experiment_id = data["experiment_id"]
         obj.validation_id = data["validation_id"]

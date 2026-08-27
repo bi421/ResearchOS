@@ -14,7 +14,7 @@ and serialization framework.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.objects.macro import (
@@ -62,7 +62,7 @@ ALL_DRIVERS = [
 ]
 
 # Weights for aggregate macro score (sums to 1.0)
-DRIVER_WEIGHTS: Dict[str, float] = {
+DRIVER_WEIGHTS: dict[str, float] = {
     DRIVER_REAL_YIELD: 0.18,
     DRIVER_DXY: 0.15,
     DRIVER_FED: 0.14,
@@ -76,7 +76,7 @@ DRIVER_WEIGHTS: Dict[str, float] = {
 }
 
 # Regime classification thresholds
-REGIME_SCORE_MAP: Dict[str, Tuple[float, float, str, str]] = {
+REGIME_SCORE_MAP: dict[str, tuple[float, float, str, str]] = {
     "Crisis": (85, 100, "Risk_Off", "Financial/geopolitical crisis driving safe-haven flows"),
     "Risk_Off": (70, 84, "Risk_Off", "Broad risk aversion supporting gold"),
     "Stagflation": (65, 84, "Mixed", "High inflation + weak growth = gold-friendly"),
@@ -116,8 +116,8 @@ class MacroAnalysisEngine:
         five_year_yield: float,
         inflation_expectations: float,
         tips_yield: float,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> RealYieldSnapshot:
         """Assess US real yield conditions and impact on gold.
 
@@ -243,8 +243,8 @@ class MacroAnalysisEngine:
         dxy_momentum: str = "Neutral",
         relative_strength: float = 50.0,
         multi_timeframe_trend: str = "Mixed",
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> DollarStrengthSnapshot:
         """Assess US Dollar strength and impact on gold.
 
@@ -334,8 +334,8 @@ class MacroAnalysisEngine:
         balance_sheet_change: float = 0.0,
         policy_classification: str = "Neutral",
         hawkishness_score: float = 50.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> FedPolicyAssessment:
         """Assess Federal Reserve policy stance and gold impact."""
         score = self._score_fed_policy(policy_classification, hawkishness_score, rate_change_bps)
@@ -359,9 +359,7 @@ class MacroAnalysisEngine:
         self._audit("FED_ASSESSED", assessment.id, f"Policy={policy_classification}, Score={score}")
         return assessment
 
-    def _score_fed_policy(
-        self, classification: str, hawkishness: float, rate_change: float
-    ) -> float:
+    def _score_fed_policy(self, classification: str, hawkishness: float, rate_change: float) -> float:
         # Higher score = more dovish = more gold bullish
         class_map = {
             "Extremely_Dovish": 90,
@@ -403,8 +401,8 @@ class MacroAnalysisEngine:
         ppi: float = 0.0,
         pce: float = 0.0,
         inflation_expectations_5y: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> InflationAssessment:
         """Assess inflation conditions and implications for gold."""
         regime = self._classify_inflation_regime(cpi, core_cpi)
@@ -490,8 +488,8 @@ class MacroAnalysisEngine:
         continuing_claims: float = 0.0,
         wage_growth: float = 0.0,
         jolts: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> LaborMarketAssessment:
         """Assess US labor market conditions."""
         strength = self._classify_labor_strength(nfp, unemployment_rate, wage_growth)
@@ -578,8 +576,8 @@ class MacroAnalysisEngine:
         retail_sales: float = 0.0,
         durable_goods: float = 0.0,
         industrial_production: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> EconomicGrowthAssessment:
         """Assess US economic growth and recession risk."""
         phase = self._classify_growth_phase(gdp, ism_manufacturing, ism_services)
@@ -658,19 +656,15 @@ class MacroAnalysisEngine:
         self,
         risk_aversion_score: float = 50.0,
         safe_haven_demand: str = "Normal",
-        active_conflicts: Optional[List[str]] = None,
+        active_conflicts: list[str] | None = None,
         financial_stress: str = "Normal",
         vix_equivalent: float = 15.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> SafeHavenAssessment:
         """Assess safe haven demand for gold."""
-        score = self._score_safe_haven(
-            risk_aversion_score, safe_haven_demand, financial_stress, vix_equivalent
-        )
-        confidence = self._compute_safe_haven_confidence(
-            risk_aversion_score, len(active_conflicts or [])
-        )
+        score = self._score_safe_haven(risk_aversion_score, safe_haven_demand, financial_stress, vix_equivalent)
+        confidence = self._compute_safe_haven_confidence(risk_aversion_score, len(active_conflicts or []))
 
         assessment = SafeHavenAssessment(
             risk_aversion_score=risk_aversion_score,
@@ -703,12 +697,7 @@ class MacroAnalysisEngine:
             0.0,
             min(
                 100.0,
-                (
-                    aversion_score * 0.35
-                    + demand_score * 0.30
-                    + stress_score * 0.20
-                    + vix_score * 0.15
-                ),
+                (aversion_score * 0.35 + demand_score * 0.30 + stress_score * 0.20 + vix_score * 0.15),
             ),
         )
 
@@ -730,11 +719,11 @@ class MacroAnalysisEngine:
         monthly_purchases: float = 0.0,
         quarterly_purchases: float = 0.0,
         annual_purchases: float = 0.0,
-        largest_buyers: Optional[List[str]] = None,
+        largest_buyers: list[str] | None = None,
         demand_trend: str = "Stable",
         reserve_diversification: str = "Moderate",
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> CentralBankDemand:
         """Assess central bank gold demand."""
         score = self._score_central_bank_demand(monthly_purchases, annual_purchases, demand_trend)
@@ -811,13 +800,11 @@ class MacroAnalysisEngine:
         aisc: float = 0.0,
         seasonality: str = "Neutral",
         supply_pressure: str = "Balanced",
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> PhysicalDemandSnapshot:
         """Assess physical gold market conditions."""
-        score = self._score_physical_demand(
-            etf_flows_monthly, indian_demand, chinese_demand, seasonality, supply_pressure
-        )
+        score = self._score_physical_demand(etf_flows_monthly, indian_demand, chinese_demand, seasonality, supply_pressure)
         confidence = self._compute_physical_confidence(comex_inventories, etf_flows_monthly)
 
         snapshot = PhysicalDemandSnapshot(
@@ -839,9 +826,7 @@ class MacroAnalysisEngine:
         self._audit("PHYSICAL_ASSESSED", snapshot.id, f"ETF_Flows={etf_flows_monthly}t")
         return snapshot
 
-    def _score_physical_demand(
-        self, etf_flows: float, india: str, china: str, seasonality: str, supply: str
-    ) -> float:
+    def _score_physical_demand(self, etf_flows: float, india: str, china: str, seasonality: str, supply: str) -> float:
         # ETF flows (positive = bullish)
         etf_score = max(0, min(100, 50 + etf_flows * 5))
 
@@ -872,13 +857,7 @@ class MacroAnalysisEngine:
             0.0,
             min(
                 100.0,
-                (
-                    etf_score * 0.25
-                    + india_score * 0.20
-                    + china_score * 0.20
-                    + seas_score * 0.15
-                    + supply_score * 0.20
-                ),
+                (etf_score * 0.25 + india_score * 0.20 + china_score * 0.20 + seas_score * 0.15 + supply_score * 0.20),
             ),
         )
 
@@ -901,8 +880,8 @@ class MacroAnalysisEngine:
         commercial_short: float = 0.0,
         open_interest: float = 0.0,
         etf_holdings: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> PositioningAssessment:
         """Assess gold futures and ETF positioning."""
         net = managed_money_long - managed_money_short
@@ -927,7 +906,7 @@ class MacroAnalysisEngine:
         self._audit("POSITIONING_ASSESSED", assessment.id, f"Net={net:.0f}, Crowded={crowded}")
         return assessment
 
-    def _classify_positioning(self, net: float, mm_long: float, mm_short: float) -> Tuple[str, str]:
+    def _classify_positioning(self, net: float, mm_long: float, mm_short: float) -> tuple[str, str]:
         total = mm_long + mm_short
         if total == 0:
             return "Neutral", "No"
@@ -967,15 +946,15 @@ class MacroAnalysisEngine:
 
     def compute_macro_score(
         self,
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> MacroScore:
         """Compute aggregate macro score from all stored assessments.
 
         Collects the most recent assessment for each driver from the
         repository and computes a weighted aggregate score.
         """
-        scores: Dict[str, float] = {}
-        confidences: Dict[str, float] = {}
+        scores: dict[str, float] = {}
+        confidences: dict[str, float] = {}
 
         # Collect scores from each driver's latest assessment
         driver_types = {
@@ -1011,9 +990,7 @@ class MacroAnalysisEngine:
         aggregate = round(weighted_sum / max(total_weight, 0.01), 1)
 
         # Determine dominant driver (highest weighted contribution)
-        dominant = max(
-            scores, key=lambda d: scores[d] * DRIVER_WEIGHTS.get(d, 0.1) * confidences.get(d, 0.5)
-        )
+        dominant = max(scores, key=lambda d: scores[d] * DRIVER_WEIGHTS.get(d, 0.1) * confidences.get(d, 0.5))
 
         # Determine agreeing vs conflicting drivers
         agreeing, conflicting = self._classify_drivers(scores, dominant)
@@ -1028,14 +1005,10 @@ class MacroAnalysisEngine:
             ontology_tags=ontology_tags,
         )
         self.repo.save(macro_score)
-        self._audit(
-            "MACRO_SCORE_COMPUTED", macro_score.id, f"Aggregate={aggregate}, Dominant={dominant}"
-        )
+        self._audit("MACRO_SCORE_COMPUTED", macro_score.id, f"Aggregate={aggregate}, Dominant={dominant}")
         return macro_score
 
-    def _classify_drivers(
-        self, scores: Dict[str, float], dominant: str
-    ) -> Tuple[List[str], List[str]]:
+    def _classify_drivers(self, scores: dict[str, float], dominant: str) -> tuple[list[str], list[str]]:
         """Classify drivers as agreeing or conflicting with the dominant driver."""
         dom_score = scores.get(dominant, 50)
         dom_bias = "bullish" if dom_score >= 55 else ("bearish" if dom_score <= 45 else "neutral")
@@ -1066,8 +1039,8 @@ class MacroAnalysisEngine:
         self,
         macro_score: MacroScore,
         regime: MacroRegime,
-        historical_analogue_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        historical_analogue_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> MacroProbability:
         """Compute probability distribution over gold market outcomes.
 
@@ -1206,7 +1179,7 @@ class MacroAnalysisEngine:
     def classify_regime(
         self,
         macro_score: MacroScore,
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> MacroRegime:
         """Classify the current macro regime based on aggregate score and drivers."""
         agg = macro_score.aggregate_score
@@ -1215,9 +1188,7 @@ class MacroAnalysisEngine:
         # Find matching regime
         regime_name = "Range_Bound"
         description = "No dominant macro catalyst, gold ranging"
-        for name, (low, high, _, desc) in sorted(
-            REGIME_SCORE_MAP.items(), key=lambda x: abs(x[1][0] + x[1][1]) / 2 - agg
-        ):
+        for name, (low, high, _, desc) in sorted(REGIME_SCORE_MAP.items(), key=lambda x: abs(x[1][0] + x[1][1]) / 2 - agg):
             if low <= agg <= high:
                 if abs(low + high) / 2 - agg < 20:  # Closest match
                     regime_name = name
@@ -1267,9 +1238,9 @@ class MacroAnalysisEngine:
         macro_score: MacroScore,
         probabilities: MacroProbability,
         regime: MacroRegime,
-        key_levels: Optional[Dict[str, float]] = None,
+        key_levels: dict[str, float] | None = None,
         report_format: str = "Institutional",
-        ontology_tags: Optional[List[str]] = None,
+        ontology_tags: list[str] | None = None,
     ) -> MacroReport:
         """Generate a complete institutional macro report for XAUUSD.
 
@@ -1278,9 +1249,7 @@ class MacroAnalysisEngine:
         """
         # Build dominant drivers list
         dominant_list = []
-        for driver, score in sorted(
-            macro_score.component_scores.items(), key=lambda x: x[1], reverse=True
-        )[:5]:
+        for driver, score in sorted(macro_score.component_scores.items(), key=lambda x: x[1], reverse=True)[:5]:
             impact = self._classify_gold_impact(score)
             dominant_list.append(
                 {
@@ -1350,9 +1319,7 @@ class MacroAnalysisEngine:
         self._audit("REPORT_GENERATED", report.id, f"Bias={suggested_bias}, Vol={expected_vol}")
         return report
 
-    def _generate_narrative(
-        self, macro_score: MacroScore, regime: MacroRegime, probabilities: MacroProbability
-    ) -> str:
+    def _generate_narrative(self, macro_score: MacroScore, regime: MacroRegime, probabilities: MacroProbability) -> str:
         """Generate a deterministic narrative based on current macro conditions."""
         parts = []
         agg = macro_score.aggregate_score
@@ -1373,9 +1340,7 @@ class MacroAnalysisEngine:
 
         if macro_score.dominant_driver:
             dom_score = macro_score.component_scores.get(macro_score.dominant_driver, 50)
-            parts.append(
-                f"The dominant driver is {macro_score.dominant_driver} (score: {dom_score:.0f})."
-            )
+            parts.append(f"The dominant driver is {macro_score.dominant_driver} (score: {dom_score:.0f}).")
 
         if macro_score.agreeing_drivers:
             parts.append(f"Agreeing drivers: {', '.join(macro_score.agreeing_drivers[:4])}.")
@@ -1390,24 +1355,16 @@ class MacroAnalysisEngine:
 
         bias = probabilities.dominant_bias
         if bias == "Long":
-            parts.append(
-                f"The balance of evidence suggests a bullish bias (P(LONG)={probabilities.probability_long:.0%})."
-            )
+            parts.append(f"The balance of evidence suggests a bullish bias (P(LONG)={probabilities.probability_long:.0%}).")
         elif bias == "Short":
-            parts.append(
-                f"The balance of evidence suggests a bearish bias (P(SHORT)={probabilities.probability_short:.0%})."
-            )
+            parts.append(f"The balance of evidence suggests a bearish bias (P(SHORT)={probabilities.probability_short:.0%}).")
         elif bias == "Neutral":
             parts.append("Evidence is evenly balanced — no directional bias is warranted.")
 
         if probabilities.probability_fakeout > 0.35:
-            parts.append(
-                f"Elevated fakeout probability ({probabilities.probability_fakeout:.0%}) — confirm before acting."
-            )
+            parts.append(f"Elevated fakeout probability ({probabilities.probability_fakeout:.0%}) — confirm before acting.")
         if probabilities.probability_high_volatility > 0.5:
-            parts.append(
-                f"High volatility expected ({probabilities.probability_high_volatility:.0%}) — size accordingly."
-            )
+            parts.append(f"High volatility expected ({probabilities.probability_high_volatility:.0%}) — size accordingly.")
 
         return " ".join(parts)
 
@@ -1417,18 +1374,18 @@ class MacroAnalysisEngine:
 
     def full_analysis(
         self,
-        real_yield_data: Dict[str, Any],
-        dollar_data: Dict[str, Any],
-        fed_data: Dict[str, Any],
-        inflation_data: Dict[str, Any],
-        labor_data: Dict[str, Any],
-        growth_data: Dict[str, Any],
-        safe_haven_data: Dict[str, Any],
-        cb_data: Dict[str, Any],
-        physical_data: Dict[str, Any],
-        positioning_data: Dict[str, Any],
-        key_levels: Optional[Dict[str, float]] = None,
-        ontology_tags: Optional[List[str]] = None,
+        real_yield_data: dict[str, Any],
+        dollar_data: dict[str, Any],
+        fed_data: dict[str, Any],
+        inflation_data: dict[str, Any],
+        labor_data: dict[str, Any],
+        growth_data: dict[str, Any],
+        safe_haven_data: dict[str, Any],
+        cb_data: dict[str, Any],
+        physical_data: dict[str, Any],
+        positioning_data: dict[str, Any],
+        key_levels: dict[str, float] | None = None,
+        ontology_tags: list[str] | None = None,
     ) -> MacroReport:
         """Run a full macro intelligence analysis in one call.
 
@@ -1469,7 +1426,7 @@ class MacroAnalysisEngine:
     # Helpers
     # ------------------------------------------------------------------
 
-    def _get_latest_by_type(self, cls: type) -> Optional[BaseObject]:
+    def _get_latest_by_type(self, cls: type) -> BaseObject | None:
         """Get the most recently saved object of a given type."""
         latest = None
         latest_ts = datetime.min.replace(tzinfo=timezone.utc)

@@ -55,6 +55,7 @@ research = Research(
 
 # Create an observation
 from datetime import datetime, timezone
+
 obs = Observation(
     source="MACRO:CPI_YOY",
     timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
@@ -84,6 +85,7 @@ hyp = Hypothesis(
 
 # Create scenarios
 from researchos import Scenario, ScenarioSet
+
 ss = ScenarioSet(research_id=research.id)
 ss.add_scenario(Scenario(hypothesis_id=hyp.id, type="Base", probability=0.5))
 ss.add_scenario(Scenario(hypothesis_id=hyp.id, type="Bull", probability=0.3))

@@ -19,6 +19,26 @@ Key objects:
     - MarketMemoryIntegrator: Adapter-based system integration
 """
 
+from researchos.market_memory.event_schema import (
+    BootstrapResult,
+    ConditionalResult,
+    ConditionSpec,
+    CrossoverDirection,
+    EventContext,
+    EventOutcome,
+    EventType,
+    EvidenceRecord,
+    EvidenceStatus,
+    SelfAuditResult,
+    Session,
+    ValidationResult,
+)
+from researchos.market_memory.event_schema import (
+    MarketEvent as MarketMemoryEvent,
+)
+from researchos.market_memory.event_schema import (
+    MarketRegime as MarketRegimeEnum,
+)
 from researchos.market_memory.events import MacroMarketEvent, MarketEvent
 from researchos.market_memory.features import FeatureSet, compute_features
 from researchos.market_memory.integration import IntegrationContext, MarketMemoryIntegrator
@@ -62,4 +82,19 @@ __all__ = [
     "IntegrationContext",
     "MacroMarketEvent",
     "MarketEvent",
+    # V1 Event Schema
+    "EventType",
+    "CrossoverDirection",
+    "MarketRegimeEnum",
+    "Session",
+    "EvidenceStatus",
+    "EventOutcome",
+    "EventContext",
+    "MarketMemoryEvent",
+    "ConditionSpec",
+    "ConditionalResult",
+    "BootstrapResult",
+    "ValidationResult",
+    "EvidenceRecord",
+    "SelfAuditResult",
 ]

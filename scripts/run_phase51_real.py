@@ -40,9 +40,7 @@ df_h1 = df_h1.with_columns(
     ]
 )
 df_h1 = df_h1.with_columns((pl.col("close") / pl.col("close").shift(1) - 1).alias("ret"))
-df_h1 = df_h1.with_columns(
-    (pl.when(pl.col("sma50") > pl.col("sma200")).then(1).otherwise(0)).alias("pos")
-)
+df_h1 = df_h1.with_columns((pl.when(pl.col("sma50") > pl.col("sma200")).then(1).otherwise(0)).alias("pos"))
 df_h1 = df_h1.with_columns((pl.col("pos").shift(1) * pl.col("ret")).alias("strat_ret"))
 df_h1 = df_h1.filter(pl.col("sma200").is_not_null())
 
@@ -62,11 +60,7 @@ def metrics(d):
     peak = cum.cum_max()
     dd = cum / peak - 1
     max_dd = dd.min()
-    win_rate = (
-        (d.filter(pl.col("strat_ret") > 0).height / d.filter(pl.col("pos") == 1).height * 100)
-        if d.filter(pl.col("pos") == 1).height > 0
-        else 0
-    )
+    win_rate = (d.filter(pl.col("strat_ret") > 0).height / d.filter(pl.col("pos") == 1).height * 100) if d.filter(pl.col("pos") == 1).height > 0 else 0
     total_ret = cum[-1] - 1 if len(cum) > 0 else 0
     return {
         "rows": len(d),
@@ -90,9 +84,7 @@ print(f"FULL 2023-2025: {full_m}")
 # 4. Save evidence (for your RELEASE_CANDIDATE_v1.0_EVIDENCE.md)
 result = {
     "dataset": str(PARQUET),
-    "dataset_sha256": (RESULT_DIR / "xauusd_m1_2023_2025.sha256").read_text().split()[0]
-    if (RESULT_DIR / "xauusd_m1_2023_2025.sha256").exists()
-    else "unknown",
+    "dataset_sha256": (RESULT_DIR / "xauusd_m1_2023_2025.sha256").read_text().split()[0] if (RESULT_DIR / "xauusd_m1_2023_2025.sha256").exists() else "unknown",
     "timeframe": "H1 resampled from M1",
     "strategy": "SMA50 > SMA200 long-only baseline",
     "train": train_m,

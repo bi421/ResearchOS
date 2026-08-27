@@ -17,7 +17,7 @@ Design:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 from researchos.core.timestamp import utc_now
 from researchos.quant_engine.dataset_contracts import extract_prices
@@ -48,9 +48,7 @@ class CppQuantBackendWrapper(QuantComputationInterface):
         except ImportError as e:
             import warnings
 
-            warnings.warn(
-                f"C++ Quant Engine not available ({e}). Falling back to PythonQuantBackend."
-            )
+            warnings.warn(f"C++ Quant Engine not available ({e}). Falling back to PythonQuantBackend.")
             from researchos.quant_engine.backend import PythonQuantBackend
 
             self._fallback = PythonQuantBackend()
@@ -79,10 +77,10 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
     def calculate_returns(
         self,
-        prices: List[float],
+        prices: list[float],
         return_type: str = "percentage",
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> List[float]:
+    ) -> list[float]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
         return list(self._backend.calculate_returns(prices, return_type))
@@ -93,7 +91,7 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
     def calculate_volatility(
         self,
-        returns: List[float],
+        returns: list[float],
         method: str = "standard_deviation",
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
     ) -> float:
@@ -109,9 +107,9 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
     def calculate_drawdown(
         self,
-        equity_curve: List[float],
+        equity_curve: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
         result = self._backend.calculate_drawdown(equity_curve)
@@ -123,9 +121,9 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
     def calculate_statistics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
         result = self._backend.calculate_statistics(returns)
@@ -137,14 +135,14 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
     def calculate_metrics(
         self,
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
-        result = self._backend.calculate_metrics(returns, equity_curve, risk_free_rate, symbol=symbol)
+        result = self._backend.calculate_metrics(returns, equity_curve, risk_free_rate)
         return {k: float(v) for k, v in result.items()}
 
     # ──────────────────────────────────────────────
@@ -153,9 +151,9 @@ class CppQuantBackendWrapper(QuantComputationInterface):
 
     def calculate_performance_analytics(
         self,
-        returns: List[float],
+        returns: list[float],
         calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         if calculation_version != CalculationVersion.CALCULATION_V1:
             raise ValueError(f"Unsupported calculation version: {calculation_version}")
         cpp_result = self._backend.calculate_performance_analytics(returns)

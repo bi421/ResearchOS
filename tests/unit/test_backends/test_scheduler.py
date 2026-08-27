@@ -119,26 +119,16 @@ class TestCertifiedPerformanceProfile:
         assert profile.measured() == 0
 
     def test_faster_than(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("Fast", "op", DatasetSizeClass.LARGE, PerformanceStat(5.0))
-            .add("Slow", "op", DatasetSizeClass.LARGE, PerformanceStat(50.0))
-        )
+        profile = CertifiedPerformanceProfile().add("Fast", "op", DatasetSizeClass.LARGE, PerformanceStat(5.0)).add("Slow", "op", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is True
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Slow", "Fast") is False
 
     def test_faster_than_unknown_is_false(self):
-        profile = CertifiedPerformanceProfile().add(
-            "Fast", "op", DatasetSizeClass.SMALL, PerformanceStat(5.0)
-        )
+        profile = CertifiedPerformanceProfile().add("Fast", "op", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         assert profile.faster_than("op", DatasetSizeClass.LARGE, "Fast", "Slow") is False
 
     def test_roundtrip(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(2.5))
-            .add("B", "run_simulation", DatasetSizeClass.LARGE, PerformanceStat(50.0))
-        )
+        profile = CertifiedPerformanceProfile().add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(2.5)).add("B", "run_simulation", DatasetSizeClass.LARGE, PerformanceStat(50.0))
         restored = CertifiedPerformanceProfile.from_dict(profile.to_dict())
         assert restored.version == profile.version
         assert restored.source == profile.source
@@ -156,17 +146,11 @@ class TestCertifiedPerformanceProfile:
                 ],
             }
         ]
-        profile = CertifiedPerformanceProfile.from_benchmark(
-            rows, backend_name="CppQuantAdapter", reference_backend_name="PythonQuantBackend"
-        )
+        profile = CertifiedPerformanceProfile.from_benchmark(rows, backend_name="CppQuantAdapter", reference_backend_name="PythonQuantBackend")
         # 1 operation × 2 sizes × 2 backends
         assert profile.measured() == 4
-        cpp_small = profile.estimate_ms(
-            "CppQuantAdapter", "calculate_returns", DatasetSizeClass.SMALL
-        )
-        py_large = profile.estimate_ms(
-            "PythonQuantBackend", "calculate_returns", DatasetSizeClass.LARGE
-        )
+        cpp_small = profile.estimate_ms("CppQuantAdapter", "calculate_returns", DatasetSizeClass.SMALL)
+        py_large = profile.estimate_ms("PythonQuantBackend", "calculate_returns", DatasetSizeClass.LARGE)
         assert cpp_small == pytest.approx(0.5)
         assert py_large == pytest.approx(10.0)
 
@@ -182,9 +166,7 @@ class TestCertifiedPerformanceProfile:
                 error_code="ok",
             )
         )
-        profile = CertifiedPerformanceProfile(version="1.0.0", source="benchmark").add(
-            "A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(4.0, count=2)
-        )
+        profile = CertifiedPerformanceProfile(version="1.0.0", source="benchmark").add("A", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(4.0, count=2))
         new_profile = profile.recalibrate(history)
         assert new_profile.version == "1.0.0.1"
         assert new_profile is not profile
@@ -211,11 +193,7 @@ class TestBackendScheduler:
         assert decision.profile_version == ""
 
     def test_profile_selects_fastest(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0))
-            .add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
-        )
+        profile = CertifiedPerformanceProfile().add("Slow", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(50.0)).add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         scheduler = BackendScheduler(profile=profile)
         decision = scheduler.decide(
             "calculate_returns",
@@ -229,9 +207,7 @@ class TestBackendScheduler:
         assert rejected_reason.startswith("estimated slower")
 
     def test_no_measurements_for_size_selects_first(self):
-        profile = CertifiedPerformanceProfile().add(
-            "Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0)
-        )
+        profile = CertifiedPerformanceProfile().add("Fast", "calculate_returns", DatasetSizeClass.SMALL, PerformanceStat(5.0))
         scheduler = BackendScheduler(profile=profile)
         # LARGE dataset has no measurements → first eligible wins.
         decision = scheduler.decide(
@@ -260,11 +236,7 @@ class TestBackendScheduler:
         assert restored == decision
 
     def test_deterministic_decision(self):
-        profile = (
-            CertifiedPerformanceProfile()
-            .add("A", "op", DatasetSizeClass.MEDIUM, PerformanceStat(1.0))
-            .add("B", "op", DatasetSizeClass.MEDIUM, PerformanceStat(2.0))
-        )
+        profile = CertifiedPerformanceProfile().add("A", "op", DatasetSizeClass.MEDIUM, PerformanceStat(1.0)).add("B", "op", DatasetSizeClass.MEDIUM, PerformanceStat(2.0))
         scheduler = BackendScheduler(profile=profile)
         inputs = {"prices": [1.0] * 5_000}
         d1 = scheduler.decide("op", inputs, [("A", object()), ("B", object())])

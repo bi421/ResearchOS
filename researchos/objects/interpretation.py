@@ -10,8 +10,6 @@ rules that map evidence to market understanding.
 
 from __future__ import annotations
 
-from typing import List, Optional
-
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
@@ -39,17 +37,17 @@ class Interpretation(BaseObject):
 
     def __init__(
         self,
-        evidence_ids: List[str],
+        evidence_ids: list[str],
         rule_applied: str,
         context: str,
         conclusion: str,
         confidence: float = 0.0,
-        supporting_evidence: Optional[List[str]] = None,
-        contradicting_evidence: Optional[List[str]] = None,
-        alternatives: Optional[List[str]] = None,
-        unknowns: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        supporting_evidence: list[str] | None = None,
+        contradicting_evidence: list[str] | None = None,
+        alternatives: list[str] | None = None,
+        unknowns: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Interpretation|{rule_applied}|{conclusion}|{context}"
@@ -57,15 +55,15 @@ class Interpretation(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
 
-        self.evidence_ids: List[str] = evidence_ids
+        self.evidence_ids: list[str] = evidence_ids
         self.rule_applied = rule_applied
         self.context = context
         self.conclusion = conclusion
         self.confidence = confidence
-        self.supporting_evidence: List[str] = supporting_evidence or []
-        self.contradicting_evidence: List[str] = contradicting_evidence or []
-        self.alternatives: List[str] = alternatives or []
-        self.unknowns: List[str] = unknowns or []
+        self.supporting_evidence: list[str] = supporting_evidence or []
+        self.contradicting_evidence: list[str] = contradicting_evidence or []
+        self.alternatives: list[str] = alternatives or []
+        self.unknowns: list[str] = unknowns or []
 
         self.lifecycle.transition(
             LifecycleStage.VALIDATED,
@@ -104,7 +102,7 @@ class Interpretation(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Interpretation":
+    def from_dict(cls, data: dict) -> Interpretation:
         obj = super().from_dict(data)
         obj.evidence_ids = list(data.get("evidence_ids", []))
         obj.rule_applied = data["rule_applied"]
@@ -144,17 +142,17 @@ class Narrative(BaseObject):
         research_id: str,
         thesis: str,
         primary_driver: str = "",
-        supporting_drivers: Optional[List[str]] = None,
-        interpretations: Optional[List[str]] = None,
+        supporting_drivers: list[str] | None = None,
+        interpretations: list[str] | None = None,
         evidence_strength: float = 0.0,
         coherence_score: float = 0.0,
         plausibility_score: float = 0.0,
-        invalidation_conditions: Optional[List[str]] = None,
-        catalysts: Optional[List[str]] = None,
+        invalidation_conditions: list[str] | None = None,
+        catalysts: list[str] | None = None,
         confidence: float = 0.0,
         status: str = "Active",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Narrative|{research_id}|{thesis}"
@@ -165,13 +163,13 @@ class Narrative(BaseObject):
         self.research_id = research_id
         self.thesis = thesis
         self.primary_driver = primary_driver
-        self.supporting_drivers: List[str] = supporting_drivers or []
-        self.interpretations: List[str] = interpretations or []
+        self.supporting_drivers: list[str] = supporting_drivers or []
+        self.interpretations: list[str] = interpretations or []
         self.evidence_strength = evidence_strength
         self.coherence_score = coherence_score
         self.plausibility_score = plausibility_score
-        self.invalidation_conditions: List[str] = invalidation_conditions or []
-        self.catalysts: List[str] = catalysts or []
+        self.invalidation_conditions: list[str] = invalidation_conditions or []
+        self.catalysts: list[str] = catalysts or []
         self.confidence = confidence
         self.status = status
 
@@ -213,7 +211,7 @@ class Narrative(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Narrative":
+    def from_dict(cls, data: dict) -> Narrative:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.thesis = data["thesis"]

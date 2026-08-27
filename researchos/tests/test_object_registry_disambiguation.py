@@ -53,9 +53,7 @@ class TestLegacySerializationPins(unittest.TestCase):
     def test_macro_market_event_serializes_with_legacy_type(self):
         from datetime import datetime, timezone
 
-        event = MacroMarketEvent(
-            "CPI", datetime(2025, 1, 1, tzinfo=timezone.utc), description="CPI"
-        )
+        event = MacroMarketEvent("CPI", datetime(2025, 1, 1, tzinfo=timezone.utc), description="CPI")
         self.assertEqual(event.to_dict()["object_type"], "MarketEvent")
 
     def test_macro_context_snapshot_serializes_with_legacy_type(self):

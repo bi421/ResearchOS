@@ -1,1 +1,1 @@
-"""Tests for ResearchOS."""
+# Test package

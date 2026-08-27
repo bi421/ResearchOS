@@ -10,7 +10,7 @@ should use a database-backed implementation.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, TypeVar
+from typing import TypeVar
 
 from researchos.core.base_object import BaseObject
 from researchos.repository.interface import RepositoryInterface
@@ -27,18 +27,18 @@ class MemoryRepository(RepositoryInterface[T]):
     """
 
     def __init__(self):
-        self._store: Dict[str, T] = {}
+        self._store: dict[str, T] = {}
 
     def save(self, obj: T) -> T:
         """Save an object to the repository."""
         self._store[obj.id] = obj
         return obj
 
-    def get(self, id: str) -> Optional[T]:
+    def get(self, id: str) -> T | None:
         """Retrieve an object by ID."""
         return self._store.get(id)
 
-    def get_all(self) -> List[T]:
+    def get_all(self) -> list[T]:
         """Retrieve all objects."""
         return list(self._store.values())
 
@@ -49,7 +49,7 @@ class MemoryRepository(RepositoryInterface[T]):
             return True
         return False
 
-    def find_by_tag(self, tag: str) -> List[T]:
+    def find_by_tag(self, tag: str) -> list[T]:
         """Find all objects with a specific ontology tag."""
         return [obj for obj in self._store.values() if tag in obj.ontology_tags]
 

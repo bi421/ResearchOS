@@ -8,7 +8,7 @@ for distributions without closed-form solutions. Deterministic.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, Sequence
+from collections.abc import Callable, Sequence
 
 from researchos.quant_engine.probability.contracts import DistributionFit, DistributionType
 
@@ -47,15 +47,7 @@ def mle_log_normal(samples: Sequence[float]) -> DistributionFit:
 
 
 def _student_t_ll(df: float, samples: Sequence[float], mu: float, sigma: float) -> float:
-    return sum(
-        math.log(
-            math.gamma((df + 1.0) / 2.0)
-            / (math.sqrt(df * math.pi) * math.gamma(df / 2.0))
-            * (1.0 + ((s - mu) / sigma) ** 2 / df) ** (-(df + 1.0) / 2.0)
-        )
-        / sigma
-        for s in samples
-    )
+    return sum(math.log(math.gamma((df + 1.0) / 2.0) / (math.sqrt(df * math.pi) * math.gamma(df / 2.0)) * (1.0 + ((s - mu) / sigma) ** 2 / df) ** (-(df + 1.0) / 2.0)) / sigma for s in samples)
 
 
 def mle_student_t(
@@ -89,9 +81,9 @@ def mle_student_t(
 
 def generic_grid_mle(
     samples: Sequence[float],
-    log_likelihood_fn: Callable[[Dict[str, float]], float],
-    param_grid: Dict[str, Sequence[float]],
-) -> Dict[str, float]:
+    log_likelihood_fn: Callable[[dict[str, float]], float],
+    param_grid: dict[str, Sequence[float]],
+) -> dict[str, float]:
     """
     Generic grid-search MLE.
 
@@ -107,10 +99,10 @@ def generic_grid_mle(
         raise ValueError("param_grid must be non-empty")
 
     keys = list(param_grid.keys())
-    best_params: Dict[str, float] = {}
+    best_params: dict[str, float] = {}
     best_ll = float("-inf")
 
-    def _search(prefix: Dict[str, float], idx: int) -> None:
+    def _search(prefix: dict[str, float], idx: int) -> None:
         nonlocal best_params, best_ll
         if idx == len(keys):
             ll = log_likelihood_fn(dict(prefix))

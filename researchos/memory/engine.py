@@ -15,7 +15,6 @@ existing audit chain and serialization framework.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.objects.market_memory import (
@@ -71,14 +70,10 @@ class MarketMemoryEngine:
             notes=notes,
         )
         self.repo.save(ms)
-        self._audit(
-            "STRUCTURE_BREAK", ms.id, f"{structure_type} {direction} on {asset} at {price_level}"
-        )
+        self._audit("STRUCTURE_BREAK", ms.id, f"{structure_type} {direction} on {asset} at {price_level}")
         return ms
 
-    def confirm_structure_break(
-        self, structure_id: str, confirmation_price: float
-    ) -> MarketStructure:
+    def confirm_structure_break(self, structure_id: str, confirmation_price: float) -> MarketStructure:
         """Confirm a previously recorded structure break."""
         obj = self.repo.get(structure_id)
         if obj is None:
@@ -102,7 +97,7 @@ class MarketMemoryEngine:
         timestamp: datetime,
         direction: str = "bearish",
         price_level: float = 0.0,
-        swept_levels: Optional[List[float]] = None,
+        swept_levels: list[float] | None = None,
         notes: str = "",
     ) -> LiquidityEvent:
         """Record a liquidity event (sweep, stop run, manipulation)."""
@@ -117,9 +112,7 @@ class MarketMemoryEngine:
             notes=notes,
         )
         self.repo.save(le)
-        self._audit(
-            "LIQUIDITY_EVENT", le.id, f"{event_type} {direction} on {asset} at {price_level}"
-        )
+        self._audit("LIQUIDITY_EVENT", le.id, f"{event_type} {direction} on {asset} at {price_level}")
         return le
 
     def resolve_liquidity_event(self, event_id: str, outcome: str) -> LiquidityEvent:
@@ -219,7 +212,7 @@ class MarketMemoryEngine:
         published_at: datetime,
         impact_score: float = 0.5,
         sentiment: str = "neutral",
-        affected_assets: Optional[List[str]] = None,
+        affected_assets: list[str] | None = None,
         category: str = "Other",
         summary: str = "",
         url: str = "",
@@ -285,15 +278,15 @@ class MarketMemoryEngine:
     def get_events_by_asset(
         self,
         asset: str,
-        object_type: Optional[str] = None,
-    ) -> List[BaseObject]:
+        object_type: str | None = None,
+    ) -> list[BaseObject]:
         """Get all market memory objects for an asset, optionally filtered by type.
 
         Scans through the repository's get_all() and filters client-side.
         For large datasets, a database-backed query would be more efficient.
         """
         all_objects = self.repo.get_all()
-        result: List[BaseObject] = []
+        result: list[BaseObject] = []
         for obj in all_objects:
             if not hasattr(obj, "asset") or obj.asset != asset:
                 continue
@@ -307,14 +300,14 @@ class MarketMemoryEngine:
         asset: str,
         start_time: datetime,
         end_time: datetime,
-        object_type: Optional[str] = None,
-    ) -> List[BaseObject]:
+        object_type: str | None = None,
+    ) -> list[BaseObject]:
         """Get market memory objects within a time range.
 
         Objects are filtered by asset and timestamp range.
         """
         all_objects = self.repo.get_all()
-        result: List[BaseObject] = []
+        result: list[BaseObject] = []
         for obj in all_objects:
             if not hasattr(obj, "asset") or obj.asset != asset:
                 continue
@@ -334,8 +327,8 @@ class MarketMemoryEngine:
         self,
         asset: str,
         limit: int = 20,
-        object_type: Optional[str] = None,
-    ) -> List[BaseObject]:
+        object_type: str | None = None,
+    ) -> list[BaseObject]:
         """Get the most recent market memory objects for an asset."""
         events = self.get_events_by_asset(asset, object_type)
         events.sort(
@@ -347,11 +340,11 @@ class MarketMemoryEngine:
     def get_structures(
         self,
         asset: str,
-        structure_type: Optional[str] = None,
+        structure_type: str | None = None,
         limit: int = 50,
-    ) -> List[MarketStructure]:
+    ) -> list[MarketStructure]:
         """Get market structure events for an asset."""
-        result: List[MarketStructure] = []
+        result: list[MarketStructure] = []
         for obj in self.repo.get_all():
             if not isinstance(obj, MarketStructure):
                 continue
@@ -366,11 +359,11 @@ class MarketMemoryEngine:
     def get_liquidity_events(
         self,
         asset: str,
-        event_type: Optional[str] = None,
+        event_type: str | None = None,
         limit: int = 50,
-    ) -> List[LiquidityEvent]:
+    ) -> list[LiquidityEvent]:
         """Get liquidity events for an asset."""
-        result: List[LiquidityEvent] = []
+        result: list[LiquidityEvent] = []
         for obj in self.repo.get_all():
             if not isinstance(obj, LiquidityEvent):
                 continue
@@ -385,11 +378,11 @@ class MarketMemoryEngine:
     def get_sessions(
         self,
         asset: str,
-        session_name: Optional[str] = None,
+        session_name: str | None = None,
         limit: int = 50,
-    ) -> List[MarketSession]:
+    ) -> list[MarketSession]:
         """Get trading sessions for an asset."""
-        result: List[MarketSession] = []
+        result: list[MarketSession] = []
         for obj in self.repo.get_all():
             if not isinstance(obj, MarketSession):
                 continue
@@ -406,9 +399,9 @@ class MarketMemoryEngine:
         asset: str,
         timeframe: str = "H1",
         limit: int = 100,
-    ) -> List[VolatilityState]:
+    ) -> list[VolatilityState]:
         """Get volatility history for an asset/timeframe."""
-        result: List[VolatilityState] = []
+        result: list[VolatilityState] = []
         for obj in self.repo.get_all():
             if not isinstance(obj, VolatilityState):
                 continue
@@ -437,9 +430,9 @@ class MarketMemoryEngine:
                 count += 1
         return count
 
-    def get_outcomes_for_event(self, event_id: str) -> List[MarketOutcome]:
+    def get_outcomes_for_event(self, event_id: str) -> list[MarketOutcome]:
         """Get all outcomes for a specific event."""
-        result: List[MarketOutcome] = []
+        result: list[MarketOutcome] = []
         for obj in self.repo.get_all():
             if not isinstance(obj, MarketOutcome):
                 continue

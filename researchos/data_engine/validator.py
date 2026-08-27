@@ -17,7 +17,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.contracts import Timeframe, ValidationReport
@@ -39,7 +39,7 @@ class GapDetector:
         """
         self.tolerance_factor = tolerance_factor
 
-    def detect(self, records: List[Any], timeframe: str) -> List[Dict[str, Any]]:
+    def detect(self, records: list[Any], timeframe: str) -> list[dict[str, Any]]:
         """
         Detect gaps in a list of time-series records.
 
@@ -61,7 +61,7 @@ class GapDetector:
         if expected_seconds == 0:
             return []  # No expected interval for tick data
 
-        gaps: List[Dict[str, Any]] = []
+        gaps: list[dict[str, Any]] = []
         tolerance = expected_seconds * self.tolerance_factor
 
         for i in range(1, len(records)):
@@ -104,7 +104,7 @@ class MissingCandleDetector:
         """
         self.tolerance_seconds = tolerance_seconds
 
-    def detect(self, records: List[Any], timeframe: str) -> List[datetime]:
+    def detect(self, records: list[Any], timeframe: str) -> list[datetime]:
         """
         Detect missing timestamps in a list of time-series records.
 
@@ -126,7 +126,7 @@ class MissingCandleDetector:
         if expected_seconds == 0:
             return []
 
-        missing: List[datetime] = []
+        missing: list[datetime] = []
         for i in range(1, len(records)):
             prev = records[i - 1]
             curr = records[i]
@@ -157,7 +157,7 @@ class DuplicateDetector:
         """
         self.tolerance_seconds = tolerance_seconds
 
-    def detect(self, records: List[Any]) -> List[Tuple[int, int, str]]:
+    def detect(self, records: list[Any]) -> list[tuple[int, int, str]]:
         """
         Detect duplicate records.
 
@@ -167,8 +167,8 @@ class DuplicateDetector:
         Returns:
             List of (index1, index2, reason) tuples identifying duplicates.
         """
-        duplicates: List[Tuple[int, int, str]] = []
-        seen: Dict[str, int] = {}
+        duplicates: list[tuple[int, int, str]] = []
+        seen: dict[str, int] = {}
 
         for i, record in enumerate(records):
             key = self._record_key(record)
@@ -197,7 +197,7 @@ class OutlierDetector:
         self.z_score_threshold = z_score_threshold
         self.iqr_multiplier = iqr_multiplier
 
-    def detect_price_outliers(self, records: List[Candle]) -> List[int]:
+    def detect_price_outliers(self, records: list[Candle]) -> list[int]:
         """
         Detect price outliers using z-score method.
 
@@ -218,7 +218,7 @@ class OutlierDetector:
         if std == 0:
             return []
 
-        outliers: List[int] = []
+        outliers: list[int] = []
         for i, p in enumerate(prices):
             z = abs(p - mean) / std
             if z > self.z_score_threshold:
@@ -226,7 +226,7 @@ class OutlierDetector:
 
         return outliers
 
-    def detect_volume_outliers(self, records: List[Candle]) -> List[int]:
+    def detect_volume_outliers(self, records: list[Candle]) -> list[int]:
         """
         Detect volume outliers using IQR method.
 
@@ -251,7 +251,7 @@ class OutlierDetector:
         lower = q1 - self.iqr_multiplier * iqr
         upper = q3 + self.iqr_multiplier * iqr
 
-        outliers: List[int] = []
+        outliers: list[int] = []
         for i, v in enumerate(volumes):
             if v < lower or v > upper:
                 outliers.append(i)
@@ -280,7 +280,7 @@ class DatasetValidator:
 
     def validate(
         self,
-        records: List[Any],
+        records: list[Any],
         timeframe: str,
         symbol: str = "",
     ) -> ValidationReport:
@@ -320,10 +320,7 @@ class DatasetValidator:
         gaps = self.gap_detector.detect(sorted_records, timeframe)
         report.gaps_found = len(gaps)
         for gap in gaps:
-            report.warnings.append(
-                f"Gap at index {gap['index']}: {gap['gap_seconds']}s "
-                f"({gap['expected_missing']} expected records)"
-            )
+            report.warnings.append(f"Gap at index {gap['index']}: {gap['gap_seconds']}s ({gap['expected_missing']} expected records)")
 
         # Missing candle detection
         missing = self.missing_detector.detect(sorted_records, timeframe)

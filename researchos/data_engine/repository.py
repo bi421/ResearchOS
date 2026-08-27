@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from researchos.core.base_object import BaseObject
 from researchos.data_engine.candle import Candle
@@ -39,8 +39,8 @@ class DatasetRepository(RepositoryInterface[T]):
     """
 
     def __init__(self):
-        self._store: Dict[str, T] = {}
-        self._metadata_store: Dict[str, DatasetMetadata] = {}
+        self._store: dict[str, T] = {}
+        self._metadata_store: dict[str, DatasetMetadata] = {}
 
     def save(self, obj: T) -> T:
         self._store[obj.id] = obj
@@ -48,10 +48,10 @@ class DatasetRepository(RepositoryInterface[T]):
             self._update_metadata(obj)
         return obj
 
-    def get(self, id: str) -> Optional[T]:
+    def get(self, id: str) -> T | None:
         return self._store.get(id)
 
-    def get_all(self) -> List[T]:
+    def get_all(self) -> list[T]:
         return list(self._store.values())
 
     def delete(self, id: str) -> bool:
@@ -61,7 +61,7 @@ class DatasetRepository(RepositoryInterface[T]):
             return True
         return False
 
-    def find_by_tag(self, tag: str) -> List[T]:
+    def find_by_tag(self, tag: str) -> list[T]:
         return [obj for obj in self._store.values() if tag in obj.ontology_tags]
 
     def count(self) -> int:
@@ -71,27 +71,15 @@ class DatasetRepository(RepositoryInterface[T]):
         self._store.clear()
         self._metadata_store.clear()
 
-    def find_by_symbol(self, symbol: str) -> List[T]:
-        return [
-            obj
-            for obj in self._store.values()
-            if isinstance(obj, HistoricalDataset) and obj.symbol == symbol
-        ]
+    def find_by_symbol(self, symbol: str) -> list[T]:
+        return [obj for obj in self._store.values() if isinstance(obj, HistoricalDataset) and obj.symbol == symbol]
 
-    def find_by_timeframe(self, timeframe: str) -> List[T]:
-        return [
-            obj
-            for obj in self._store.values()
-            if isinstance(obj, HistoricalDataset) and obj.timeframe == timeframe
-        ]
+    def find_by_timeframe(self, timeframe: str) -> list[T]:
+        return [obj for obj in self._store.values() if isinstance(obj, HistoricalDataset) and obj.timeframe == timeframe]
 
-    def find_by_symbol_and_timeframe(self, symbol: str, timeframe: str) -> Optional[T]:
+    def find_by_symbol_and_timeframe(self, symbol: str, timeframe: str) -> T | None:
         for obj in self._store.values():
-            if (
-                isinstance(obj, HistoricalDataset)
-                and obj.symbol == symbol
-                and obj.timeframe == timeframe
-            ):
+            if isinstance(obj, HistoricalDataset) and obj.symbol == symbol and obj.timeframe == timeframe:
                 return obj
         return None
 
@@ -99,11 +87,11 @@ class DatasetRepository(RepositoryInterface[T]):
         self,
         start_time: datetime,
         end_time: datetime,
-        symbol: Optional[str] = None,
-        timeframe: Optional[str] = None,
-    ) -> List[T]:
+        symbol: str | None = None,
+        timeframe: str | None = None,
+    ) -> list[T]:
         """Find datasets whose records overlap the given date range."""
-        results: List[T] = []
+        results: list[T] = []
         for obj in self._store.values():
             if not isinstance(obj, HistoricalDataset):
                 continue
@@ -116,10 +104,10 @@ class DatasetRepository(RepositoryInterface[T]):
                     results.append(obj)
         return results
 
-    def get_metadata(self, dataset_id: str) -> Optional[DatasetMetadata]:
+    def get_metadata(self, dataset_id: str) -> DatasetMetadata | None:
         return self._metadata_store.get(dataset_id)
 
-    def get_all_metadata(self) -> List[DatasetMetadata]:
+    def get_all_metadata(self) -> list[DatasetMetadata]:
         return list(self._metadata_store.values())
 
     def _update_metadata(self, dataset: HistoricalDataset) -> None:
@@ -199,21 +187,11 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                 )
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_symbol ON datasets(symbol)")
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datasets_timeframe ON datasets(timeframe)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_datasets_symbol_timeframe ON datasets(symbol, timeframe)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_metadata_symbol_timeframe ON dataset_metadata(symbol, timeframe)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_metadata_start_time ON dataset_metadata(start_time)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_metadata_end_time ON dataset_metadata(end_time)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_timeframe ON datasets(timeframe)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_datasets_symbol_timeframe ON datasets(symbol, timeframe)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_symbol_timeframe ON dataset_metadata(symbol, timeframe)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_start_time ON dataset_metadata(start_time)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metadata_end_time ON dataset_metadata(end_time)")
             conn.commit()
         finally:
             conn.close()
@@ -236,18 +214,14 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                         spread REAL, tick_volume REAL, real_volume REAL
                     )
                 """)
-                cursor.execute(
-                    f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)"
-                )
+                cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)")
             else:
                 cursor.execute(f"""
                     CREATE TABLE IF NOT EXISTS {table_name} (
                         id TEXT PRIMARY KEY, timestamp TEXT NOT NULL, data TEXT NOT NULL
                     )
                 """)
-                cursor.execute(
-                    f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)"
-                )
+                cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_{table_name}_timestamp ON {table_name}(timestamp)")
             conn.commit()
         finally:
             conn.close()
@@ -305,7 +279,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         try:
             cursor = conn.cursor()
             table_name = f"records_{dataset.id.replace('-', '_')}"
-            rows: List[Any] = []
+            rows: list[Any] = []
             for record in dataset._records:
                 if isinstance(record, Candle):
                     rows.append(
@@ -400,7 +374,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def get(self, id: str) -> Optional[T]:
+    def get(self, id: str) -> T | None:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
@@ -416,12 +390,12 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def get_all(self) -> List[T]:
+    def get_all(self) -> list[T]:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM datasets")
-            results: List[T] = []
+            results: list[T] = []
             for row in cursor.fetchall():
                 dataset = self._row_to_dataset(row)
                 if dataset is not None:
@@ -448,12 +422,12 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def find_by_tag(self, tag: str) -> List[T]:
+    def find_by_tag(self, tag: str) -> list[T]:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM datasets WHERE ontology_tags LIKE ?", (f"%{tag}%",))
-            results: List[T] = []
+            results: list[T] = []
             for row in cursor.fetchall():
                 dataset = self._row_to_dataset(row)
                 if dataset is not None:
@@ -471,12 +445,12 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def find_by_symbol(self, symbol: str) -> List[T]:
+    def find_by_symbol(self, symbol: str) -> list[T]:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM datasets WHERE symbol = ?", (symbol,))
-            results: List[T] = []
+            results: list[T] = []
             for row in cursor.fetchall():
                 dataset = self._row_to_dataset(row)
                 if dataset is not None:
@@ -485,12 +459,12 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def find_by_timeframe(self, timeframe: str) -> List[T]:
+    def find_by_timeframe(self, timeframe: str) -> list[T]:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM datasets WHERE timeframe = ?", (timeframe,))
-            results: List[T] = []
+            results: list[T] = []
             for row in cursor.fetchall():
                 dataset = self._row_to_dataset(row)
                 if dataset is not None:
@@ -499,7 +473,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def find_by_symbol_and_timeframe(self, symbol: str, timeframe: str) -> Optional[T]:
+    def find_by_symbol_and_timeframe(self, symbol: str, timeframe: str) -> T | None:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
@@ -518,9 +492,9 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         self,
         start_time: datetime,
         end_time: datetime,
-        symbol: Optional[str] = None,
-        timeframe: Optional[str] = None,
-    ) -> List[T]:
+        symbol: str | None = None,
+        timeframe: str | None = None,
+    ) -> list[T]:
         """
         Find datasets whose records overlap the given date range.
 
@@ -530,12 +504,8 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
-            query = (
-                "SELECT * FROM datasets "
-                "WHERE start_time IS NOT NULL AND end_time IS NOT NULL "
-                "AND start_time <= ? AND end_time >= ?"
-            )
-            params: List[Any] = [end_time.isoformat(), start_time.isoformat()]
+            query = "SELECT * FROM datasets WHERE start_time IS NOT NULL AND end_time IS NOT NULL AND start_time <= ? AND end_time >= ?"
+            params: list[Any] = [end_time.isoformat(), start_time.isoformat()]
             if symbol is not None:
                 query += " AND symbol = ?"
                 params.append(symbol)
@@ -543,7 +513,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                 query += " AND timeframe = ?"
                 params.append(timeframe)
             cursor.execute(query, params)
-            results: List[T] = []
+            results: list[T] = []
             for row in cursor.fetchall():
                 dataset = self._row_to_dataset(row)
                 if dataset is not None:
@@ -555,10 +525,10 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
     def query_records(
         self,
         dataset_id: str,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         limit: int = 0,
-    ) -> List[Any]:
+    ) -> list[Any]:
         conn = sqlite3.connect(self.db_path)
         try:
             cursor = conn.cursor()
@@ -570,7 +540,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
             if not cursor.fetchone():
                 return []
             query = f"SELECT * FROM {table_name} WHERE 1=1"
-            params: List[Any] = []
+            params: list[Any] = []
             if start_time:
                 query += " AND timestamp >= ?"
                 params.append(start_time.isoformat())
@@ -609,7 +579,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
     def close(self) -> None:
         pass
 
-    def _row_to_dataset(self, row) -> Optional[HistoricalDataset]:
+    def _row_to_dataset(self, row) -> HistoricalDataset | None:
         try:
             dataset = HistoricalDataset(
                 symbol=row[1],
@@ -641,7 +611,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         except Exception:
             return None
 
-    def _hydrate_records(self, dataset: HistoricalDataset) -> List[Any]:
+    def _hydrate_records(self, dataset: HistoricalDataset) -> list[Any]:
         """
         Reconstruct typed data records from the per-dataset SQLite table.
 
@@ -661,7 +631,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
                 return []
             cursor.execute(f"SELECT * FROM {table_name} ORDER BY timestamp ASC")
             rows = cursor.fetchall()
-            records: List[Any] = []
+            records: list[Any] = []
             for r in rows:
                 if dataset.data_type == "candle":
                     from researchos.core.timestamp import parse_timestamp
@@ -688,7 +658,7 @@ class SqliteDatasetRepository(RepositoryInterface[T]):
         finally:
             conn.close()
 
-    def _row_to_metadata(self, row) -> Optional[DatasetMetadata]:
+    def _row_to_metadata(self, row) -> DatasetMetadata | None:
         try:
             meta = DatasetMetadata(
                 dataset_id=row[1],

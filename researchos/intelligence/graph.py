@@ -17,7 +17,8 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Set, Tuple
+from collections.abc import Mapping
+from typing import Any
 
 from researchos.intelligence.contracts import (
     InvalidEdgeError,
@@ -36,10 +37,10 @@ class EvidenceGraph:
     """
 
     def __init__(self) -> None:
-        self._nodes: Dict[str, EvidenceNode] = {}
-        self._edges: Dict[str, EvidenceEdge] = {}
-        self._incident: Dict[str, Set[str]] = {}
-        self._adjacency: Dict[str, Set[str]] = {}
+        self._nodes: dict[str, EvidenceNode] = {}
+        self._edges: dict[str, EvidenceEdge] = {}
+        self._incident: dict[str, set[str]] = {}
+        self._adjacency: dict[str, set[str]] = {}
 
     # -- nodes -----------------------------------------------------------
 
@@ -97,18 +98,14 @@ class EvidenceGraph:
         if edge.target_id not in self._nodes:
             raise NodeNotFoundError(edge.target_id)
         if self._has_relationship(edge.source_id, edge.target_id, edge.relationship):
-            raise InvalidEdgeError(
-                "duplicate relationship "
-                f"'{edge.relationship.value}' between "
-                f"{edge.source_id!r} and {edge.target_id!r}"
-            )
+            raise InvalidEdgeError(f"duplicate relationship '{edge.relationship.value}' between {edge.source_id!r} and {edge.target_id!r}")
         self._edges[edge.edge_id] = edge
         self._incident[edge.source_id].add(edge.edge_id)
         self._incident[edge.target_id].add(edge.edge_id)
         self._adjacency[edge.source_id].add(edge.target_id)
         self._adjacency[edge.target_id].add(edge.source_id)
 
-    def get_edges(self, node_id: str) -> Tuple[EvidenceEdge, ...]:
+    def get_edges(self, node_id: str) -> tuple[EvidenceEdge, ...]:
         """Return all edges incident to ``node_id``, sorted by edge id.
 
         Raises:
@@ -118,7 +115,7 @@ class EvidenceGraph:
             raise NodeNotFoundError(node_id)
         return tuple(self._edges[eid] for eid in sorted(self._incident.get(node_id, set())))
 
-    def neighbors(self, node_id: str) -> Tuple[str, ...]:
+    def neighbors(self, node_id: str) -> tuple[str, ...]:
         """Return the ``node_id``s of all nodes connected to ``node_id``.
 
         The result is the union of in-neighbours and out-neighbours,
@@ -179,11 +176,7 @@ class EvidenceGraph:
     def _has_relationship(self, source_id: str, target_id: str, relationship: Any) -> bool:
         for edge_id in self._incident.get(source_id, set()):
             edge = self._edges[edge_id]
-            if (
-                edge.source_id == source_id
-                and edge.target_id == target_id
-                and edge.relationship == relationship
-            ):
+            if edge.source_id == source_id and edge.target_id == target_id and edge.relationship == relationship:
                 return True
         return False
 
@@ -207,7 +200,7 @@ class EvidenceGraph:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceGraph":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvidenceGraph:
         """Reconstruct a graph from a ``to_dict()`` mapping."""
         graph = cls()
         for item in data.get("nodes", []):
@@ -216,11 +209,11 @@ class EvidenceGraph:
             graph.add_edge(EvidenceEdge.from_dict(item))
         return graph
 
-    def nodes(self) -> Tuple[EvidenceNode, ...]:
+    def nodes(self) -> tuple[EvidenceNode, ...]:
         """Return all nodes in deterministic (sorted) order."""
         return tuple(self._nodes[nid] for nid in sorted(self._nodes))
 
-    def edges(self) -> Tuple[EvidenceEdge, ...]:
+    def edges(self) -> tuple[EvidenceEdge, ...]:
         """Return all edges in deterministic (sorted) order."""
         return tuple(self._edges[eid] for eid in sorted(self._edges))
 

@@ -15,7 +15,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -56,12 +56,12 @@ class Candle(BaseObject):
         volume: float = 0.0,
         quote_volume: float = 0.0,
         trades_count: int = 0,
-        spread: Optional[float] = None,
-        tick_volume: Optional[float] = None,
-        real_volume: Optional[float] = None,
+        spread: float | None = None,
+        tick_volume: float | None = None,
+        real_volume: float | None = None,
         is_complete: bool = True,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             ts_str = timestamp.isoformat() if hasattr(timestamp, "isoformat") else str(timestamp)
@@ -130,13 +130,9 @@ class Candle(BaseObject):
         """Volume-weighted average price approximation."""
         if self.volume == 0:
             return self.typical_price
-        return (
-            (self.typical_price * self.volume) / self.volume
-            if self.volume > 0
-            else self.typical_price
-        )
+        return (self.typical_price * self.volume) / self.volume if self.volume > 0 else self.typical_price
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         content = {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -159,7 +155,7 @@ class Candle(BaseObject):
             content["real_volume"] = round(self.real_volume, 10)
         return content
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -187,7 +183,7 @@ class Candle(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Candle":
+    def from_dict(cls, data: dict[str, Any]) -> Candle:
         obj = super().from_dict(data)
         obj.symbol = data["symbol"]
         obj.timeframe = data["timeframe"]
@@ -209,9 +205,4 @@ class Candle(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"Candle({self.symbol}, {self.timeframe}, "
-            f"{self.timestamp.strftime('%Y-%m-%d %H:%M')}, "
-            f"O={self.open:.2f} H={self.high:.2f} "
-            f"L={self.low:.2f} C={self.close:.2f} V={self.volume:.0f})"
-        )
+        return f"Candle({self.symbol}, {self.timeframe}, {self.timestamp.strftime('%Y-%m-%d %H:%M')}, O={self.open:.2f} H={self.high:.2f} L={self.low:.2f} C={self.close:.2f} V={self.volume:.0f})"

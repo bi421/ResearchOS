@@ -1,14 +1,15 @@
 """
 Compute macro relationships: correlation, rolling correlation, z-score.
 """
+
 import pandas as pd
-from typing import Dict
+
 
 class MacroAnalyzer:
     """Analyze macro factors correlation with XAUUSD."""
 
     @staticmethod
-    def compute_correlation(df: pd.DataFrame, target: str = "XAUUSD") -> Dict[str, float]:
+    def compute_correlation(df: pd.DataFrame, target: str = "XAUUSD") -> dict[str, float]:
         """Compute correlation between target and all other factors."""
         return df.corr()[target].drop(target).to_dict()
 

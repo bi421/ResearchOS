@@ -568,9 +568,7 @@ class TestExperimentRunner:
         exp.mark_ready()
 
         runner = BaseExperimentRunner()
-        run, result = runner.run_with_parameters(
-            exp, dataset=None, parameter_overrides={"lookback": 20}, run_number=1
-        )
+        run, result = runner.run_with_parameters(exp, dataset=None, parameter_overrides={"lookback": 20}, run_number=1)
 
         assert run.status == ExperimentStatus.COMPLETED
         assert run.parameters["lookback"] == 20
@@ -968,12 +966,8 @@ class TestFullWorkflow:
             hypothesis_accepted=(hyp.status == HypothesisStatus.ACCEPTED),
             confidence=val.confidence,
         )
-        learning.add_finding(
-            f"Momentum strategy sharpe: {result.metrics.get('sharpe_ratio', 'N/A')}"
-        )
-        learning.add_finding(
-            f"Momentum strategy return: {result.metrics.get('total_return', 'N/A')}"
-        )
+        learning.add_finding(f"Momentum strategy sharpe: {result.metrics.get('sharpe_ratio', 'N/A')}")
+        learning.add_finding(f"Momentum strategy return: {result.metrics.get('total_return', 'N/A')}")
         learning.finalize()
         assert len(learning.findings) == 2
 
@@ -982,8 +976,7 @@ class TestFullWorkflow:
             experiment_id=exp.id,
             hypothesis_id=hyp.id,
             title="Momentum Strategy Report",
-            summary=f"Tested momentum vs buy-and-hold. "
-            f"Hypothesis {'accepted' if learning.hypothesis_accepted else 'rejected'}.",
+            summary=f"Tested momentum vs buy-and-hold. Hypothesis {'accepted' if learning.hypothesis_accepted else 'rejected'}.",
             run_ids=[run.id],
             best_run_id=run.id,
             metrics_summary=dict(result.metrics),

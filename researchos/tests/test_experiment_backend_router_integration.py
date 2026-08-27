@@ -20,7 +20,7 @@ Asserted behaviors:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -41,7 +41,7 @@ from researchos.quant_engine.models import (
 )
 
 
-def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> List[float]:
+def _prices(n: int = 252, base: float = 100.0, drift: float = 0.0001) -> list[float]:
     """Deterministic synthetic price series."""
     return [base * (1.0 + drift * i) for i in range(n)]
 
@@ -227,7 +227,7 @@ class TestFallbackThroughRouter:
 
 class TestBoundaryPreserved:
     def test_dataset_contract_identity_through_router(self):
-        captured: Dict[str, Any] = {}
+        captured: dict[str, Any] = {}
 
         class RecordingBackend(PythonQuantBackend):
             def run_simulation(
@@ -260,9 +260,7 @@ class TestBoundaryPreserved:
 
     def test_backend_kwarg_still_supported(self):
         class RecordingBackend(PythonQuantBackend):
-            def run_simulation(
-                self, request, dataset, calculation_version=CalculationVersion.CALCULATION_V1
-            ):
+            def run_simulation(self, request, dataset, calculation_version=CalculationVersion.CALCULATION_V1):
                 return super().run_simulation(request, dataset, calculation_version)
 
         runner = BaseExperimentRunner(backend=RecordingBackend())

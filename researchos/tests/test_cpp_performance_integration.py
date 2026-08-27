@@ -19,7 +19,6 @@ C++ engine is unavailable.
 from __future__ import annotations
 
 import math
-from typing import List
 
 import pytest
 
@@ -37,14 +36,12 @@ from researchos.quant_engine.statistics import (
     rolling_volatility_incremental,
 )
 
-pytestmark = pytest.mark.skipif(
-    not has_cpp_engine(), reason="compiled C++ quant engine not available"
-)
+pytestmark = pytest.mark.skipif(not has_cpp_engine(), reason="compiled C++ quant engine not available")
 
 _V1 = CalculationVersion.CALCULATION_V1
 
 
-def make_series(n: int, base: float = 100.0) -> List[float]:
+def make_series(n: int, base: float = 100.0) -> list[float]:
     """Deterministic series (no randomness)."""
     return [base + 30.0 * math.sin(i / 5.0) + 0.5 * (i % 7) for i in range(n)]
 

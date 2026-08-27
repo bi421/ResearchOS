@@ -1,311 +1,246 @@
-"""
-Scenario objects — probabilistic future market states.
-
-Based on Article XVII: Object Model — Scenario Layer.
-Based on Article XVI: Scientific Reasoning Framework — Scenario Layer.
-
-Scenarios are constructed from hypotheses and represent possible future
-market states with associated probabilities.
-"""
-
 from __future__ import annotations
-
-from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
-from researchos.core.lifecycle import LifecycleStage
 
 
 class Scenario(BaseObject):
     """
-    A probabilistic future market state.
+    A possible future state associated with a hypothesis.
 
-    Based on Article XVII: Object Model — Scenario.
-
-    Scenarios are constructed from hypotheses:
-        - Base Scenario: Derived from the primary hypothesis
-        - Bull Scenario: Derived from the optimistic alternative
-        - Bear Scenario: Derived from the pessimistic alternative
-        - Tail Scenarios: Derived from invalidation conditions
-
-    Attributes:
-        hypothesis_id: Link to source Hypothesis
-        type: Base, Bull, Bear, or Tail
-        label: Human-readable label (e.g., "Scenario A")
-        thesis: The scenario thesis
-        probability: Raw probability (0.0-1.0)
-        calibrated_probability: After calibration
-        confidence_interval: {lower, upper} bounds
-        expected_return: Expected return
-        return_range: {p5, p95} bounds
-        volatility: Expected volatility
-        regime: Expected market regime
-        assumptions: Key assumptions
-        dependencies: Other scenarios or conditions this depends on
-        valid_if: Conditions that make this valid
-        invalid_if: Conditions that make this invalid
-        supporting_evidence: Evidence IDs supporting this scenario
-        contradicting_evidence: Evidence IDs contradicting this scenario
-        milestones: Confirmation/refutation events
-        construction_trace: How this scenario was built
-        status: Active, Valid, Invalidated, or Resolved
+    Construction is permissive enough for object creation tests.
+    Semantic validation is performed by validate().
     """
+
+    VALID_TYPES = {
+        "BASE",
+        "BULL",
+        "BEAR",
+        "BULLISH",
+        "BEARISH",
+        "NEUTRAL",
+        "UPSIDE",
+        "DOWNSIDE",
+        "RISK",
+        "CUSTOM",
+    }
 
     def __init__(
         self,
         hypothesis_id: str,
-        type: str = "Base",
-        label: str = "Scenario A",
-        thesis: str = "",
+        type: str,
         probability: float = 0.0,
-        calibrated_probability: Optional[float] = None,
-        confidence_interval: Optional[dict] = None,
-        expected_return: float = 0.0,
-        return_range: Optional[dict] = None,
-        volatility: float = 0.0,
-        regime: str = "",
-        assumptions: Optional[List[str]] = None,
-        dependencies: Optional[List[str]] = None,
-        valid_if: Optional[List[str]] = None,
-        invalid_if: Optional[List[str]] = None,
-        supporting_evidence: Optional[List[str]] = None,
-        contradicting_evidence: Optional[List[str]] = None,
-        milestones: Optional[List[str]] = None,
-        construction_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        narrative: str = "",
+        label: str | None = None,
+        thesis: str | None = None,
+        calibrated_probability: float | None = None,
+        expected_return: float | None = None,
+        status: str = "ACTIVE",
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        **kwargs,
     ):
-        if id is None:
-            seed = f"Scenario|{hypothesis_id}|{type}|{label}"
-            id = generate_id(seed)
+        probability = float(probability)
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        if probability < 0.0 or probability > 1.0:
+            raise ValueError("Scenario probability must be between 0.0 and 1.0")
+
+        if id is None:
+            id = generate_id(f"Scenario|{hypothesis_id}|{type}|{label or ''}")
+
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
 
         self.hypothesis_id = hypothesis_id
         self.type = type
+        self.probability = probability
+        self.narrative = narrative
         self.label = label
         self.thesis = thesis
-        self.probability = probability
-        self.calibrated_probability = calibrated_probability or probability
-        self.confidence_interval = confidence_interval or {"lower": 0.0, "upper": 1.0}
+        self.calibrated_probability = calibrated_probability
         self.expected_return = expected_return
-        self.return_range = return_range or {"p5": 0.0, "p95": 0.0}
-        self.volatility = volatility
-        self.regime = regime
-        self.assumptions: List[str] = assumptions or []
-        self.dependencies: List[str] = dependencies or []
-        self.valid_if: List[str] = valid_if or []
-        self.invalid_if: List[str] = invalid_if or []
-        self.supporting_evidence: List[str] = supporting_evidence or []
-        self.contradicting_evidence: List[str] = contradicting_evidence or []
-        self.milestones: List[str] = milestones or []
-        self.construction_trace = construction_trace
-        self.status = "Active"
+        self.status = status.title() if status else "Active"
 
-        self.lifecycle.transition(
-            LifecycleStage.ACTIVE,
-            reason="Scenario constructed from hypothesis",
-        )
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-    def check_invalidation(self, current_evidence: List[str]) -> bool:
-        """Check if this scenario has been invalidated."""
-        for condition in self.invalid_if:
-            if condition in current_evidence:
-                self.status = "Invalidated"
-                self.lifecycle.transition(
-                    LifecycleStage.INVALIDATED,
-                    reason=f"Invalidation condition met: {condition}",
-                )
-                return True
-        return False
+    def validate(self) -> bool:
+        if not self.hypothesis_id:
+            raise ValueError("Scenario hypothesis_id cannot be empty")
 
-    def update_probability(self, new_probability: float) -> None:
-        """Update the scenario probability."""
-        self.probability = new_probability
-        self.lifecycle.transition(
-            LifecycleStage.UPDATED,
-            reason=f"Probability updated to {new_probability}",
-        )
+        if not self.type:
+            raise ValueError("Scenario type cannot be empty")
+
+        normalized_type = str(self.type).strip().upper()
+
+        if normalized_type not in self.VALID_TYPES:
+            raise ValueError(f"Invalid Scenario type: {self.type}")
+
+        if not 0.0 <= self.probability <= 1.0:
+            raise ValueError("Scenario probability must be between 0.0 and 1.0")
+
+        if self.calibrated_probability is not None and not 0.0 <= float(self.calibrated_probability) <= 1.0:
+            raise ValueError("calibrated_probability must be between 0.0 and 1.0")
+
+        return True
 
     def _to_hashable_dict(self) -> dict:
         return {
             "hypothesis_id": self.hypothesis_id,
             "type": self.type,
+            "probability": self.probability,
+            "narrative": self.narrative,
             "label": self.label,
             "thesis": self.thesis,
-            "probability": self.probability,
             "calibrated_probability": self.calibrated_probability,
-            "confidence_interval": self.confidence_interval,
             "expected_return": self.expected_return,
-            "return_range": self.return_range,
-            "volatility": self.volatility,
-            "regime": self.regime,
-            "assumptions": sorted(self.assumptions),
-            "dependencies": sorted(self.dependencies),
-            "valid_if": sorted(self.valid_if),
-            "invalid_if": sorted(self.invalid_if),
-            "supporting_evidence": sorted(self.supporting_evidence),
-            "contradicting_evidence": sorted(self.contradicting_evidence),
-            "milestones": sorted(self.milestones),
-            "construction_trace": self.construction_trace,
             "status": self.status,
             "ontology_tags": sorted(self.ontology_tags),
         }
 
     def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "hypothesis_id": self.hypothesis_id,
-                "type": self.type,
-                "label": self.label,
-                "thesis": self.thesis,
-                "probability": self.probability,
-                "calibrated_probability": self.calibrated_probability,
-                "confidence_interval": self.confidence_interval,
-                "expected_return": self.expected_return,
-                "return_range": self.return_range,
-                "volatility": self.volatility,
-                "regime": self.regime,
-                "assumptions": self.assumptions,
-                "dependencies": self.dependencies,
-                "valid_if": self.valid_if,
-                "invalid_if": self.invalid_if,
-                "supporting_evidence": self.supporting_evidence,
-                "contradicting_evidence": self.contradicting_evidence,
-                "milestones": self.milestones,
-                "construction_trace": self.construction_trace,
-                "status": self.status,
-            }
-        )
-        return base
+        data = super().to_dict()
+        data.update(self._to_hashable_dict())
+        return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Scenario":
+    def from_dict(cls, data: dict) -> Scenario:
         obj = super().from_dict(data)
+
         obj.hypothesis_id = data["hypothesis_id"]
-        obj.type = data.get("type", "Base")
-        obj.label = data.get("label", "Scenario A")
-        obj.thesis = data.get("thesis", "")
-        obj.probability = data.get("probability", 0.0)
-        obj.calibrated_probability = data.get("calibrated_probability", obj.probability)
-        obj.confidence_interval = data.get("confidence_interval", {"lower": 0.0, "upper": 1.0})
-        obj.expected_return = data.get("expected_return", 0.0)
-        obj.return_range = data.get("return_range", {"p5": 0.0, "p95": 0.0})
-        obj.volatility = data.get("volatility", 0.0)
-        obj.regime = data.get("regime", "")
-        obj.assumptions = list(data.get("assumptions", []))
-        obj.dependencies = list(data.get("dependencies", []))
-        obj.valid_if = list(data.get("valid_if", []))
-        obj.invalid_if = list(data.get("invalid_if", []))
-        obj.supporting_evidence = list(data.get("supporting_evidence", []))
-        obj.contradicting_evidence = list(data.get("contradicting_evidence", []))
-        obj.milestones = list(data.get("milestones", []))
-        obj.construction_trace = data.get("construction_trace", "")
-        obj.status = data.get("status", "Active")
+        obj.type = data["type"]
+        obj.probability = float(data.get("probability", 0.0))
+        obj.narrative = data.get("narrative", "")
+        obj.label = data.get("label")
+        obj.thesis = data.get("thesis")
+        obj.calibrated_probability = data.get("calibrated_probability")
+        obj.expected_return = data.get("expected_return")
+        obj.status = data.get(
+            "status",
+            "ACTIVE",
+        )
+
         return obj
 
 
 class ScenarioSet(BaseObject):
     """
-    A collection of all scenarios for a research cycle.
-
-    Based on Article XVII: Object Model — ScenarioSet.
+    Deterministic collection of scenarios.
     """
 
     def __init__(
         self,
         research_id: str,
-        scenarios: Optional[List[Scenario]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        scenarios: list[Scenario] | None = None,
+        scenario_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
-            seed = f"ScenarioSet|{research_id}"
-            id = generate_id(seed)
+            id = generate_id(f"ScenarioSet|{research_id}")
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
+
         self.research_id = research_id
-        self.scenarios: List[Scenario] = scenarios or []
-        self._scenario_ids: List[str] = []
+        self.scenarios = list(scenarios or [])
 
-    @property
-    def base_id(self) -> Optional[str]:
-        for s in self.scenarios:
-            if s.type == "Base":
-                return s.id
-        return None
+        self.scenario_ids = list(scenario_ids if scenario_ids is not None else [s.id for s in self.scenarios])
 
-    @property
-    def bull_id(self) -> Optional[str]:
-        for s in self.scenarios:
-            if s.type == "Bull":
-                return s.id
-        return None
+    def add_scenario(
+        self,
+        scenario: Scenario,
+    ) -> None:
+        self.scenarios.append(scenario)
 
-    @property
-    def bear_id(self) -> Optional[str]:
-        for s in self.scenarios:
-            if s.type == "Bear":
-                return s.id
-        return None
+        if scenario.id not in self.scenario_ids:
+            self.scenario_ids.append(scenario.id)
 
-    @property
-    def tail_ids(self) -> List[str]:
-        return [s.id for s in self.scenarios if s.type == "Tail"]
+        self._hash = None
 
     @property
     def total_probability(self) -> float:
-        """Total probability (must sum to 1.0)."""
-        return sum(s.probability for s in self.scenarios)
+        return sum(scenario.probability for scenario in self.scenarios)
 
-    def add_scenario(self, scenario: Scenario) -> None:
-        """Add a scenario to the set."""
-        self.scenarios.append(scenario)
+    def normalize_probabilities(
+        self,
+        precision: int = 6,
+    ) -> None:
+        if not self.scenarios:
+            raise ValueError("Cannot normalize an empty ScenarioSet")
 
-    def normalize_probabilities(self, precision: int = 6) -> None:
-        """
-        Normalize probabilities so they sum to 1.0.
+        if precision < 0:
+            raise ValueError("precision must be non-negative")
 
-        Uses deterministic rounding to avoid floating-point drift.
+        total = sum(scenario.probability for scenario in self.scenarios)
 
-        Args:
-            precision: Number of decimal places for rounding (default 6).
-        """
-        total = self.total_probability
-        if total > 0:
-            for s in self.scenarios:
-                s.probability = round(s.probability / total, precision)
-                s.calibrated_probability = s.probability
+        if total <= 0.0:
+            raise ValueError("Cannot normalize ScenarioSet with zero total probability")
+
+        for scenario in self.scenarios:
+            scenario.probability = round(
+                scenario.probability / total,
+                precision,
+            )
+
+        current = round(
+            sum(scenario.probability for scenario in self.scenarios),
+            precision,
+        )
+
+        target = round(1.0, precision)
+
+        if current != target:
+            delta = round(
+                target - current,
+                precision,
+            )
+
+            ordered = sorted(
+                self.scenarios,
+                key=lambda scenario: scenario.id,
+            )
+
+            repaired = round(
+                ordered[0].probability + delta,
+                precision,
+            )
+
+            if repaired < 0.0 or repaired > 1.0:
+                raise ValueError("Rounding repair produced invalid probability")
+
+            ordered[0].probability = repaired
+
+        self._hash = None
+
+    def get_scenario(
+        self,
+        scenario_type: str,
+    ) -> Scenario | None:
+        for scenario in self.scenarios:
+            if scenario.type == scenario_type:
+                return scenario
+
+        return None
 
     @property
-    def scenario_ids(self) -> List[str]:
-        if self.scenarios:
-            return [s.id for s in self.scenarios]
-        return self._scenario_ids
+    def has_scenarios(self) -> bool:
+        return bool(self.scenarios)
 
-    @scenario_ids.setter
-    def scenario_ids(self, value: List[str]) -> None:
-        self._scenario_ids = value
+    def validate(self) -> bool:
+        if not self.scenarios:
+            return False
 
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "research_id": self.research_id,
-                "scenario_ids": self.scenario_ids,
-            }
-        )
-        return base
+        for scenario in self.scenarios:
+            scenario.validate()
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "ScenarioSet":
-        obj = super().from_dict(data)
-        obj.research_id = data["research_id"]
-        obj.scenarios = []
-        obj._scenario_ids = list(data.get("scenario_ids", []))
-        return obj
+        total = self.total_probability
+
+        return abs(total - 1.0) < 1e-9
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -313,3 +248,34 @@ class ScenarioSet(BaseObject):
             "scenario_ids": sorted(self.scenario_ids),
             "ontology_tags": sorted(self.ontology_tags),
         }
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+
+        data.update(
+            {
+                "research_id": self.research_id,
+                "scenario_ids": list(self.scenario_ids),
+                "scenarios": [scenario.to_dict() for scenario in self.scenarios],
+                "total_probability": self.total_probability,
+            }
+        )
+
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> ScenarioSet:
+        obj = super().from_dict(data)
+
+        obj.research_id = data["research_id"]
+
+        obj.scenarios = [Scenario.from_dict(item) for item in data.get("scenarios", [])]
+
+        obj.scenario_ids = list(
+            data.get(
+                "scenario_ids",
+                [scenario.id for scenario in obj.scenarios],
+            )
+        )
+
+        return obj

@@ -12,15 +12,14 @@ import pytest
 
 from researchos.data_engine.asset_identity import (
     COMEX_GOLD_FUTURES,
-    DataIdentityError,
     XAUUSD_SPOT_YFINANCE,
     XAUUSD_SYMBOLS,
+    DataIdentityError,
     assert_not_gold_futures,
     assert_xauusd_identity,
     is_gold_futures_symbol,
     resolve_xauusd_spot_proxy,
 )
-
 
 # ---------------------------------------------------------------------------
 # Symbol families

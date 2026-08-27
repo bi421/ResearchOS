@@ -14,9 +14,9 @@ Guarantees:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
+from researchos.core.timestamp import _parse_iso_compat
 from researchos.data_engine.candle import Candle
 from researchos.data_engine.dataset import HistoricalDataset
 
@@ -44,24 +44,24 @@ class RangeQuery:
     limit: int = 0
     offset: int = 0
     sort_order: str = "asc"
-    fields: List[str] = field(default_factory=list)
+    fields: list[str] = field(default_factory=list)
 
-    def execute(self, dataset: HistoricalDataset) -> List[Candle]:
+    def execute(self, dataset: HistoricalDataset) -> list[Candle]:
         if dataset.symbol != self.symbol:
             return []
         if dataset.timeframe != self.timeframe:
             return []
-        results: List[Candle] = []
+        results: list[Candle] = []
         for record in dataset._records:
             if not isinstance(record, Candle):
                 continue
             ts = record.timestamp
             if self.start_time:
-                start_dt = datetime.fromisoformat(self.start_time)
+                start_dt = _parse_iso_compat(self.start_time)
                 if ts < start_dt:
                     continue
             if self.end_time:
-                end_dt = datetime.fromisoformat(self.end_time)
+                end_dt = _parse_iso_compat(self.end_time)
                 if ts > end_dt:
                     continue
             results.append(record)
@@ -75,7 +75,7 @@ class RangeQuery:
             results = results[: self.limit]
         return results
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timeframe": self.timeframe,
@@ -88,7 +88,7 @@ class RangeQuery:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RangeQuery":
+    def from_dict(cls, data: dict[str, Any]) -> RangeQuery:
         return cls(
             symbol=data["symbol"],
             timeframe=data["timeframe"],
@@ -117,7 +117,7 @@ class MultiSymbolQuery:
         sort_order: Sort order.
     """
 
-    symbols: List[str] = field(default_factory=list)
+    symbols: list[str] = field(default_factory=list)
     timeframe: str = ""
     start_time: str = ""
     end_time: str = ""
@@ -128,9 +128,9 @@ class MultiSymbolQuery:
 
     def execute(
         self,
-        datasets: Dict[str, HistoricalDataset],
-    ) -> Dict[str, List[Any]]:
-        results: Dict[str, List[Any]] = {}
+        datasets: dict[str, HistoricalDataset],
+    ) -> dict[str, list[Any]]:
+        results: dict[str, list[Any]] = {}
         for symbol in self.symbols:
             dataset = datasets.get(symbol)
             if dataset is None:
@@ -148,7 +148,7 @@ class MultiSymbolQuery:
                 results[symbol] = records
         return results
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "symbols": self.symbols,
             "timeframe": self.timeframe,
@@ -161,7 +161,7 @@ class MultiSymbolQuery:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MultiSymbolQuery":
+    def from_dict(cls, data: dict[str, Any]) -> MultiSymbolQuery:
         return cls(
             symbols=list(data.get("symbols", [])),
             timeframe=data.get("timeframe", ""),

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ExperimentStatus(str, Enum):
@@ -80,12 +80,12 @@ class DatasetConfig:
     source: str
     start_date: str = ""
     end_date: str = ""
-    symbols: List[str] = field(default_factory=list)
+    symbols: list[str] = field(default_factory=list)
     resolution: str = "1d"
-    filters: List[str] = field(default_factory=list)
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    filters: list[str] = field(default_factory=list)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
-    def snapshot(self) -> "DatasetConfig":
+    def snapshot(self) -> DatasetConfig:
         """Return an immutable, deep-copied snapshot of this config.
 
         Used by ``ExperimentRun`` (and ``Experiment``) to decouple the
@@ -102,7 +102,7 @@ class DatasetConfig:
             parameters=dict(self.parameters),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary."""
         return {
             "source": self.source,
@@ -115,7 +115,7 @@ class DatasetConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DatasetConfig":
+    def from_dict(cls, data: dict[str, Any]) -> DatasetConfig:
         """Deserialize from a dictionary."""
         return cls(
             source=data["source"],
@@ -150,9 +150,9 @@ class SimulationConfig:
     commission: str = "fixed:0.0"
     slippage: str = "fixed:0.0"
     max_positions: int = 10
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
-    def snapshot(self) -> "SimulationConfig":
+    def snapshot(self) -> SimulationConfig:
         """Return an immutable, deep-copied snapshot of this config.
 
         Used by ``ExperimentRun`` (and ``Experiment``) to decouple the
@@ -168,7 +168,7 @@ class SimulationConfig:
             parameters=dict(self.parameters),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary."""
         return {
             "seed": self.seed,
@@ -180,7 +180,7 @@ class SimulationConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SimulationConfig":
+    def from_dict(cls, data: dict[str, Any]) -> SimulationConfig:
         """Deserialize from a dictionary."""
         return cls(
             seed=int(data.get("seed", 42)),
@@ -208,10 +208,10 @@ class MetricDefinition:
     name: str
     description: str = ""
     higher_is_better: bool = True
-    target: Optional[float] = None
-    tolerance: Optional[float] = None
+    target: float | None = None
+    tolerance: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to a dictionary."""
         return {
             "name": self.name,
@@ -222,7 +222,7 @@ class MetricDefinition:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MetricDefinition":
+    def from_dict(cls, data: dict[str, Any]) -> MetricDefinition:
         """Deserialize from a dictionary."""
         return cls(
             name=data["name"],

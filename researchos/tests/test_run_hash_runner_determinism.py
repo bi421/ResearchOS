@@ -63,12 +63,8 @@ class TestRunnerRunHashDeterminism:
     def test_changing_logical_parameters_changes_run_hash(self):
         runner = BaseExperimentRunner()
         # Different seed (logical change) must change run_hash.
-        exp_a = _make_experiment(
-            simulation_config=SimulationConfig(seed=1, initial_capital=100000.0)
-        )
-        exp_b = _make_experiment(
-            simulation_config=SimulationConfig(seed=2, initial_capital=100000.0)
-        )
+        exp_a = _make_experiment(simulation_config=SimulationConfig(seed=1, initial_capital=100000.0))
+        exp_b = _make_experiment(simulation_config=SimulationConfig(seed=2, initial_capital=100000.0))
         run_a, _ = runner.run(exp_a, _make_dataset(100.0))
         run_b, _ = runner.run(exp_b, _make_dataset(100.0))
         assert run_a.run_hash != run_b.run_hash

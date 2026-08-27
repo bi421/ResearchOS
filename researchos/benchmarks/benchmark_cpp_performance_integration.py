@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import math
 import time
-from typing import Any, Callable, Dict, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from researchos.quant_engine.cpp_backend import CppQuantAdapter, has_cpp_engine
 from researchos.quant_engine.statistics import (
@@ -33,12 +34,12 @@ from researchos.quant_engine.statistics import (
 )
 
 #: Dataset sizes (number of observations).
-DATASET_SIZES: Tuple[int, ...] = (1_000, 10_000, 100_000)
+DATASET_SIZES: tuple[int, ...] = (1_000, 10_000, 100_000)
 
 _BUDGET_SECONDS = 2.0
 
 
-def make_series(n: int, base: float = 100.0) -> List[float]:
+def make_series(n: int, base: float = 100.0) -> list[float]:
     """Deterministic series (no randomness)."""
     return [base + 30.0 * math.sin(i / 5.0) + 0.5 * (i % 7) for i in range(n)]
 
@@ -59,7 +60,7 @@ def timed(fn: Callable[[], Any], budget: float = _BUDGET_SECONDS) -> float:
 
 def build_cases(
     cpp: CppQuantAdapter,
-) -> List[Tuple[str, Callable[[Any], Any], Callable[[Any], Any]]]:
+) -> list[tuple[str, Callable[[Any], Any], Callable[[Any], Any]]]:
     """Return (name, python_call, cpp_call) pairs for the new operations."""
     return [
         (
@@ -105,12 +106,12 @@ def build_cases(
     ]
 
 
-def run_benchmark() -> Dict[str, Any]:
+def run_benchmark() -> dict[str, Any]:
     """Run the full benchmark and return a serializable results dict."""
     cpp = CppQuantAdapter()
     engine_available = has_cpp_engine()
 
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         "cpp_backend": "CppQuantAdapter" if engine_available else "unavailable (fallback)",
         "cpp_version": cpp.get_version() if engine_available else None,
         "sizes": list(DATASET_SIZES),
@@ -118,7 +119,7 @@ def run_benchmark() -> Dict[str, Any]:
     }
 
     for name, py_fn, cpp_fn in build_cases(cpp):
-        row: Dict[str, Any] = {"operation": name, "measurements": []}
+        row: dict[str, Any] = {"operation": name, "measurements": []}
         for n in DATASET_SIZES:
             series = make_series(n)
             py_elapsed = timed(lambda s=series: py_fn(s))
@@ -136,7 +137,7 @@ def run_benchmark() -> Dict[str, Any]:
     return results
 
 
-def print_results(results: Dict[str, Any]) -> None:
+def print_results(results: dict[str, Any]) -> None:
     print("=" * 92)
     print("ResearchOS — Regression & Rolling: Python vs C++ Benchmark (Phase 4.5)")
     print("=" * 92)
@@ -146,10 +147,7 @@ def print_results(results: Dict[str, Any]) -> None:
         print(f"[{row['operation']}]")
         print(f"  {'size':>10} {'python (s)':>12} {'cpp (s)':>12} {'speedup':>10}")
         for m in row["measurements"]:
-            print(
-                f"  {m['size']:>10} {m['python_s']:>12.6f} {m['cpp_s']:>12.6f} "
-                f"{m['speedup']:>9.2f}x"
-            )
+            print(f"  {m['size']:>10} {m['python_s']:>12.6f} {m['cpp_s']:>12.6f} {m['speedup']:>9.2f}x")
         print()
 
 

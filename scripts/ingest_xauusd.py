@@ -14,7 +14,7 @@ dfs = []
 for f in csv_files:
     print(f"\nReading {f.name}...")
     rows = []
-    with open(f, "r", encoding="utf-8", errors="ignore") as fp:
+    with open(f, encoding="utf-8", errors="ignore") as fp:
         for line in fp:
             line = line.strip()
             if not line:

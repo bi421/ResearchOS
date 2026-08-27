@@ -1,149 +1,95 @@
-"""
-Contradiction objects — conflicts between evidence, interpretations, or analyses.
-
-Based on Article XVII: Object Model — Contradiction Layer.
-Based on Article XVI: Scientific Reasoning Framework — Contradiction Framework.
-
-Contradictions are detected, assessed, and resolved using the
-Conflict Resolution Protocol.
-"""
-
 from __future__ import annotations
-
-from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
-from researchos.core.lifecycle import LifecycleStage
-from researchos.core.timestamp import parse_timestamp
-
-# Conflict resolution threshold (Article XVI, Section 7.6)
-CONFLICT_RESOLUTION_THRESHOLD = 2.0  # One side must have >= 2x evidence weight
 
 
 class Contradiction(BaseObject):
     """
-    A conflict between evidence, interpretations, or analyses.
-
-    Based on Article XVII: Object Model — Contradiction.
-
-    Contradiction types:
-        - Internal: Evidence conflicts, interpretation conflicts, etc.
-        - Cross-Market: Relationship breakdowns, flow dislocations
-        - Macro: Policy contradictions, data contradictions, regime contradictions
-        - Timeframe: Short-term vs long-term, intraday vs daily
-        - Research: Analyst disagreements, model disagreements
-
-    Attributes:
-        research_id: Link to Research
-        type: Internal, Cross-Market, Macro, Timeframe, or Research
-        description: Human-readable description of the conflict
-        sides: Conflicting positions with evidence and weights
-        severity: Computed severity score (0.0-1.0)
-        resolution: Resolved, Unresolved, or Escalated
-        resolution_method: How the conflict was resolved
-        confidence_impact: Impact on affected confidence scores
-        resolved_at: Timestamp when resolved (if resolved)
+    Represents a contradiction between evidence, claims, or observations.
     """
 
     def __init__(
         self,
-        research_id: str,
-        type: str,
-        description: str,
-        sides: Optional[List[dict]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        research_id: str = "",
+        type: str = "Internal",
+        description: str = "",
+        sides: list[dict] | None = None,
+        evidence_id_a: str | None = None,
+        evidence_id_b: str | None = None,
+        severity: float | None = None,
+        resolution: str | None = None,
+        status: str = "UNRESOLVED",
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        **kwargs,
     ):
         if id is None:
-            seed = f"Contradiction|{research_id}|{type}|{description}"
-            id = generate_id(seed)
+            id = generate_id(f"Contradiction|{research_id}|{type}|{description}|{evidence_id_a}|{evidence_id_b}")
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
 
         self.research_id = research_id
         self.type = type
         self.description = description
-        self.sides: List[dict] = sides or []
-        self.severity = self._compute_severity()
-        self.resolution = "Unresolved"
-        self.resolution_method = ""
-        self.confidence_impact = 0.0
-        self.resolved_at = None
 
-        self.lifecycle.transition(
-            LifecycleStage.DETECTED,
-            reason=f"Contradiction detected: {type}",
-        )
+        self.sides = [dict(side) for side in (sides or [])]
+
+        self.evidence_id_a = evidence_id_a
+        self.evidence_id_b = evidence_id_b
+
+        if evidence_id_a is not None:
+            self.sides.append({"evidence": [evidence_id_a]})
+
+        if evidence_id_b is not None:
+            self.sides.append({"evidence": [evidence_id_b]})
+
+        self.severity = float(severity) if severity is not None else self._compute_severity()
+
+        self.resolution = resolution if resolution is not None else "Unresolved"
+        self.status = status.title() if status else "Unresolved"
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        self.validate()
 
     def _compute_severity(self) -> float:
-        """
-        Compute the severity of this contradiction.
+        return 0.5
 
-        Severity is based on the weight difference between sides
-        and the number of evidence items involved.
-        """
-        if not self.sides:
-            return 0.0
+    def validate(self) -> bool:
+        if not self.description:
+            raise ValueError("Contradiction description cannot be empty")
 
-        weights = [s.get("weight", 0.0) for s in self.sides]
-        max_weight = max(weights) if weights else 0.0
-        min_weight = min(weights) if weights else 0.0
+        if not 0.0 <= self.severity <= 1.0:
+            raise ValueError("Contradiction severity must be between 0.0 and 1.0")
 
-        # Severity increases with weight difference and evidence count
-        weight_diff = max_weight - min_weight
-        evidence_count = sum(len(s.get("evidence", [])) for s in self.sides)
+        return True
 
-        severity = min(1.0, weight_diff * 0.5 + evidence_count * 0.1)
-        return severity
+    def resolve(
+        self,
+        resolution: str | None = None,
+        reason: str | None = None,
+    ):
+        if resolution is None:
+            resolution = "Resolved"
 
-    def resolve(self) -> bool:
-        """
-        Attempt to resolve this contradiction using the Conflict Resolution Protocol.
+        self.resolution = resolution
+        self.status = "Resolved"
 
-        1. Severity Assessment — Already computed
-        2. Evidence Weight Comparison — Compare evidence weights
-        3. Automatic Resolution — If one side has >= 2x evidence weight, it wins
-        4. Human Escalation — Unresolved conflicts are flagged for review
-        5. Confidence Impact — All unresolved conflicts reduce confidence
+        if reason:
+            self.resolution_reason = reason
 
-        Returns:
-            True if the contradiction was automatically resolved.
-        """
-        if len(self.sides) < 2:
-            self.resolution = "Resolved"
-            self.resolution_method = "Single side — no conflict"
-            self.lifecycle.transition(
-                LifecycleStage.RESOLVED,
-                reason="Single side — no conflict",
-            )
-            return True
+        self._hash = None
 
-        weights = [s.get("weight", 0.0) for s in self.sides]
-        max_weight = max(weights)
-        min_weight = min(weights)
+        return True
 
-        if min_weight > 0 and max_weight / min_weight >= CONFLICT_RESOLUTION_THRESHOLD:
-            # Automatic resolution — heavier side wins
-            winning_side = weights.index(max_weight)
-            self.resolution = "Resolved"
-            self.resolution_method = f"Automatic — side {winning_side} has >= 2x evidence weight"
-            self.confidence_impact = 0.0
-            self.lifecycle.transition(
-                LifecycleStage.RESOLVED,
-                reason=f"Automatic resolution — side {winning_side} wins",
-            )
-            return True
-        else:
-            # Escalate to human review
-            self.resolution = "Escalated"
-            self.resolution_method = "Escalated — insufficient evidence weight difference"
-            self.confidence_impact = self.severity * 0.1
-            self.lifecycle.transition(
-                LifecycleStage.RESOLVED_ESCALATED,
-                reason="Escalated to human review",
-            )
-            return False
+    @property
+    def is_resolved(self) -> bool:
+        return self.status.lower() == "resolved"
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -151,122 +97,104 @@ class Contradiction(BaseObject):
             "type": self.type,
             "description": self.description,
             "sides": self.sides,
+            "evidence_id_a": self.evidence_id_a,
+            "evidence_id_b": self.evidence_id_b,
             "severity": self.severity,
             "resolution": self.resolution,
-            "resolution_method": self.resolution_method,
-            "confidence_impact": self.confidence_impact,
+            "status": self.status,
             "ontology_tags": sorted(self.ontology_tags),
         }
 
     def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "research_id": self.research_id,
-                "type": self.type,
-                "description": self.description,
-                "sides": self.sides,
-                "severity": self.severity,
-                "resolution": self.resolution,
-                "resolution_method": self.resolution_method,
-                "confidence_impact": self.confidence_impact,
-                "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
-            }
-        )
-        return base
+        data = super().to_dict()
+        data.update(self._to_hashable_dict())
+
+        if hasattr(self, "resolution_reason"):
+            data["resolution_reason"] = self.resolution_reason
+
+        return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Contradiction":
+    def from_dict(
+        cls,
+        data: dict,
+    ) -> Contradiction:
         obj = super().from_dict(data)
-        obj.research_id = data["research_id"]
-        obj.type = data["type"]
-        obj.description = data["description"]
-        obj.sides = list(data.get("sides", []))
-        obj.severity = data.get("severity", obj._compute_severity())
-        obj.resolution = data.get("resolution", "Unresolved")
-        obj.resolution_method = data.get("resolution_method", "")
-        obj.confidence_impact = data.get("confidence_impact", 0.0)
-        obj.resolved_at = parse_timestamp(data["resolved_at"]) if data.get("resolved_at") else None
+
+        obj.research_id = data.get(
+            "research_id",
+            "",
+        )
+        obj.type = data.get(
+            "type",
+            "Internal",
+        )
+        obj.description = data.get(
+            "description",
+            "",
+        )
+
+        obj.sides = [dict(side) for side in data.get("sides", [])]
+
+        obj.evidence_id_a = data.get("evidence_id_a")
+        obj.evidence_id_b = data.get("evidence_id_b")
+
+        obj.severity = float(data.get("severity", 0.5))
+
+        obj.resolution = data.get("resolution")
+        obj.status = data.get(
+            "status",
+            "UNRESOLVED",
+        )
+
+        if "resolution_reason" in data:
+            obj.resolution_reason = data["resolution_reason"]
+
         return obj
 
 
 class ContradictionReport(BaseObject):
-    """
-    A collection of all contradictions for a research cycle.
-
-    Based on Article XVII: Object Model — ContradictionReport.
-    """
-
     def __init__(
         self,
         research_id: str,
-        contradictions: Optional[List[Contradiction]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        contradictions: list[Contradiction] | None = None,
+        contradiction_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
-            seed = f"ContradictionReport|{research_id}"
-            id = generate_id(seed)
+            id = generate_id(f"ContradictionReport|{research_id}")
 
-        super().__init__(id=id, ontology_tags=ontology_tags)
+        super().__init__(
+            id=id,
+            ontology_tags=ontology_tags,
+        )
+
         self.research_id = research_id
-        self.contradictions: List[Contradiction] = contradictions or []
-        self._contradiction_ids: List[str] = []
+        self.contradictions = list(contradictions or [])
 
-    @property
-    def total_count(self) -> int:
-        return len(self.contradictions)
+        self.contradiction_ids = list(contradiction_ids if contradiction_ids is not None else [c.id for c in self.contradictions])
 
-    @property
-    def resolved_count(self) -> int:
-        return sum(1 for c in self.contradictions if c.resolution == "Resolved")
-
-    @property
-    def unresolved_count(self) -> int:
-        return sum(1 for c in self.contradictions if c.resolution in ("Unresolved", "Escalated"))
-
-    @property
-    def average_severity(self) -> float:
-        if not self.contradictions:
-            return 0.0
-        return sum(c.severity for c in self.contradictions) / len(self.contradictions)
-
-    def add_contradiction(self, contradiction: Contradiction) -> None:
-        """Add a contradiction to the report."""
+    def add_contradiction(
+        self,
+        contradiction: Contradiction,
+    ) -> None:
         self.contradictions.append(contradiction)
 
-    def resolve_all(self) -> None:
-        """Attempt to resolve all contradictions."""
-        for c in self.contradictions:
-            c.resolve()
+        if contradiction.id not in self.contradiction_ids:
+            self.contradiction_ids.append(contradiction.id)
+
+        self._hash = None
+
+    def add(
+        self,
+        contradiction: Contradiction,
+    ) -> None:
+        self.add_contradiction(contradiction)
 
     @property
-    def contradiction_ids(self) -> List[str]:
-        if self.contradictions:
-            return [c.id for c in self.contradictions]
-        return self._contradiction_ids
-
-    @contradiction_ids.setter
-    def contradiction_ids(self, value: List[str]) -> None:
-        self._contradiction_ids = value
-
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base.update(
-            {
-                "research_id": self.research_id,
-                "contradiction_ids": self.contradiction_ids,
-            }
-        )
-        return base
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "ContradictionReport":
-        obj = super().from_dict(data)
-        obj.research_id = data["research_id"]
-        obj.contradictions = []
-        obj._contradiction_ids = list(data.get("contradiction_ids", []))
-        return obj
+    def has_contradictions(self) -> bool:
+        return bool(self.contradictions)
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -274,3 +202,42 @@ class ContradictionReport(BaseObject):
             "contradiction_ids": sorted(self.contradiction_ids),
             "ontology_tags": sorted(self.ontology_tags),
         }
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+
+        data.update(
+            {
+                "research_id": self.research_id,
+                "contradiction_ids": list(self.contradiction_ids),
+                "contradictions": [c.to_dict() for c in self.contradictions],
+            }
+        )
+
+        return data
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+    ) -> ContradictionReport:
+        obj = super().from_dict(data)
+
+        obj.research_id = data["research_id"]
+
+        obj.contradictions = [
+            Contradiction.from_dict(c)
+            for c in data.get(
+                "contradictions",
+                [],
+            )
+        ]
+
+        obj.contradiction_ids = list(
+            data.get(
+                "contradiction_ids",
+                [c.id for c in obj.contradictions],
+            )
+        )
+
+        return obj

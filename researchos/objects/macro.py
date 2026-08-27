@@ -10,7 +10,7 @@ all conclusions are fully explainable via evidence references.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -50,11 +50,11 @@ class RealYieldSnapshot(BaseObject):
         historical_correlation: float = -0.7,
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
         expected_gold_impact: str = "Neutral",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -71,7 +71,7 @@ class RealYieldSnapshot(BaseObject):
         self.historical_correlation = historical_correlation
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.expected_gold_impact = expected_gold_impact
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Real yield snapshot analyzed")
 
@@ -112,7 +112,7 @@ class RealYieldSnapshot(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "RealYieldSnapshot":
+    def from_dict(cls, data: dict) -> RealYieldSnapshot:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.ten_year_yield = data.get("ten_year_yield", 0.0)
@@ -156,10 +156,10 @@ class DollarStrengthSnapshot(BaseObject):
         multi_timeframe_trend: str = "Mixed",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -174,10 +174,8 @@ class DollarStrengthSnapshot(BaseObject):
         self.multi_timeframe_trend = multi_timeframe_trend
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
-        self.lifecycle.transition(
-            LifecycleStage.ANALYZED, reason="Dollar strength snapshot analyzed"
-        )
+        self.evidence_ids: list[str] = evidence_ids or []
+        self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Dollar strength snapshot analyzed")
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -210,7 +208,7 @@ class DollarStrengthSnapshot(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DollarStrengthSnapshot":
+    def from_dict(cls, data: dict) -> DollarStrengthSnapshot:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.dxy = data.get("dxy", 100.0)
@@ -255,10 +253,10 @@ class FedPolicyAssessment(BaseObject):
         gold_pressure: str = "Neutral",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -275,7 +273,7 @@ class FedPolicyAssessment(BaseObject):
         self.gold_pressure = gold_pressure
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Fed policy analyzed")
 
     def _to_hashable_dict(self) -> dict:
@@ -313,7 +311,7 @@ class FedPolicyAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "FedPolicyAssessment":
+    def from_dict(cls, data: dict) -> FedPolicyAssessment:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.rate_decision = data.get("rate_decision", "")
@@ -359,11 +357,11 @@ class InflationAssessment(BaseObject):
         inflation_regime: str = "Stable",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
         expected_fed_reaction: str = "Neutral",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -379,7 +377,7 @@ class InflationAssessment(BaseObject):
         self.inflation_regime = inflation_regime
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.expected_fed_reaction = expected_fed_reaction
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Inflation analyzed")
 
@@ -418,7 +416,7 @@ class InflationAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "InflationAssessment":
+    def from_dict(cls, data: dict) -> InflationAssessment:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.cpi = data.get("cpi", 0.0)
@@ -466,11 +464,11 @@ class LaborMarketAssessment(BaseObject):
         economic_strength: str = "Moderate",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
         expected_fed_path: str = "Neutral",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -487,7 +485,7 @@ class LaborMarketAssessment(BaseObject):
         self.economic_strength = economic_strength
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.expected_fed_path = expected_fed_path
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Labor market analyzed")
 
@@ -528,7 +526,7 @@ class LaborMarketAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "LaborMarketAssessment":
+    def from_dict(cls, data: dict) -> LaborMarketAssessment:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.nfp = data.get("nfp", 0.0)
@@ -578,10 +576,10 @@ class EconomicGrowthAssessment(BaseObject):
         recession_risk: str = "Low",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -599,7 +597,7 @@ class EconomicGrowthAssessment(BaseObject):
         self.recession_risk = recession_risk
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Economic growth analyzed")
 
     def _to_hashable_dict(self) -> dict:
@@ -639,7 +637,7 @@ class EconomicGrowthAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "EconomicGrowthAssessment":
+    def from_dict(cls, data: dict) -> EconomicGrowthAssessment:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.gdp = data.get("gdp", 0.0)
@@ -678,15 +676,15 @@ class SafeHavenAssessment(BaseObject):
         self,
         risk_aversion_score: float = 50.0,
         safe_haven_demand: str = "Normal",
-        active_conflicts: Optional[List[str]] = None,
+        active_conflicts: list[str] | None = None,
         financial_stress: str = "Normal",
         vix_equivalent: float = 15.0,
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -696,12 +694,12 @@ class SafeHavenAssessment(BaseObject):
         self.timestamp = timestamp or utc_now()
         self.risk_aversion_score = risk_aversion_score
         self.safe_haven_demand = safe_haven_demand
-        self.active_conflicts: List[str] = active_conflicts or []
+        self.active_conflicts: list[str] = active_conflicts or []
         self.financial_stress = financial_stress
         self.vix_equivalent = vix_equivalent
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Safe haven demand analyzed")
 
     def _to_hashable_dict(self) -> dict:
@@ -735,7 +733,7 @@ class SafeHavenAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SafeHavenAssessment":
+    def from_dict(cls, data: dict) -> SafeHavenAssessment:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.risk_aversion_score = data.get("risk_aversion_score", 50.0)
@@ -773,15 +771,15 @@ class CentralBankDemand(BaseObject):
         monthly_purchases: float = 0.0,
         quarterly_purchases: float = 0.0,
         annual_purchases: float = 0.0,
-        largest_buyers: Optional[List[str]] = None,
+        largest_buyers: list[str] | None = None,
         demand_trend: str = "Stable",
         reserve_diversification: str = "Moderate",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -792,12 +790,12 @@ class CentralBankDemand(BaseObject):
         self.monthly_purchases = monthly_purchases
         self.quarterly_purchases = quarterly_purchases
         self.annual_purchases = annual_purchases
-        self.largest_buyers: List[str] = largest_buyers or []
+        self.largest_buyers: list[str] = largest_buyers or []
         self.demand_trend = demand_trend
         self.reserve_diversification = reserve_diversification
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Central bank demand analyzed")
 
     def _to_hashable_dict(self) -> dict:
@@ -833,7 +831,7 @@ class CentralBankDemand(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CentralBankDemand":
+    def from_dict(cls, data: dict) -> CentralBankDemand:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.monthly_purchases = data.get("monthly_purchases", 0.0)
@@ -882,11 +880,11 @@ class PhysicalDemandSnapshot(BaseObject):
         seasonality: str = "Neutral",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
+        evidence_ids: list[str] | None = None,
         supply_pressure: str = "Balanced",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -904,7 +902,7 @@ class PhysicalDemandSnapshot(BaseObject):
         self.seasonality = seasonality
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.supply_pressure = supply_pressure
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Physical market analyzed")
 
@@ -947,7 +945,7 @@ class PhysicalDemandSnapshot(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "PhysicalDemandSnapshot":
+    def from_dict(cls, data: dict) -> PhysicalDemandSnapshot:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.comex_inventories = data.get("comex_inventories", 0.0)
@@ -999,10 +997,10 @@ class PositioningAssessment(BaseObject):
         positioning_extreme: str = "No",
         score: float = 50.0,
         confidence: float = 0.0,
-        evidence_ids: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        evidence_ids: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -1021,7 +1019,7 @@ class PositioningAssessment(BaseObject):
         self.positioning_extreme = positioning_extreme
         self.score = score
         self.confidence = confidence
-        self.evidence_ids: List[str] = evidence_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
         self.lifecycle.transition(LifecycleStage.ANALYZED, reason="Positioning analyzed")
 
     def _to_hashable_dict(self) -> dict:
@@ -1062,7 +1060,7 @@ class PositioningAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "PositioningAssessment":
+    def from_dict(cls, data: dict) -> PositioningAssessment:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.managed_money_long = data.get("managed_money_long", 0.0)
@@ -1102,14 +1100,14 @@ class MacroScore(BaseObject):
     def __init__(
         self,
         aggregate_score: float = 50.0,
-        component_scores: Optional[Dict[str, float]] = None,
-        component_confidences: Optional[Dict[str, float]] = None,
+        component_scores: dict[str, float] | None = None,
+        component_confidences: dict[str, float] | None = None,
         dominant_driver: str = "",
-        agreeing_drivers: Optional[List[str]] = None,
-        conflicting_drivers: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        agreeing_drivers: list[str] | None = None,
+        conflicting_drivers: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -1118,14 +1116,12 @@ class MacroScore(BaseObject):
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.timestamp = timestamp or utc_now()
         self.aggregate_score = aggregate_score
-        self.component_scores: Dict[str, float] = component_scores or {}
-        self.component_confidences: Dict[str, float] = component_confidences or {}
+        self.component_scores: dict[str, float] = component_scores or {}
+        self.component_confidences: dict[str, float] = component_confidences or {}
         self.dominant_driver = dominant_driver
-        self.agreeing_drivers: List[str] = agreeing_drivers or []
-        self.conflicting_drivers: List[str] = conflicting_drivers or []
-        self.lifecycle.transition(
-            LifecycleStage.ANALYZED, reason=f"Macro score computed: {aggregate_score:.1f}"
-        )
+        self.agreeing_drivers: list[str] = agreeing_drivers or []
+        self.conflicting_drivers: list[str] = conflicting_drivers or []
+        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Macro score computed: {aggregate_score:.1f}")
 
     @property
     def driver_count(self) -> int:
@@ -1158,7 +1154,7 @@ class MacroScore(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroScore":
+    def from_dict(cls, data: dict) -> MacroScore:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.aggregate_score = data.get("aggregate_score", 50.0)
@@ -1201,12 +1197,12 @@ class MacroProbability(BaseObject):
         probability_high_volatility: float = 0.3,
         probability_breakout: float = 0.3,
         probability_fakeout: float = 0.3,
-        historical_analogues: Optional[List[str]] = None,
+        historical_analogues: list[str] | None = None,
         methodology: str = "Weighted macro driver consensus",
         dominant_bias: str = "Uncertain",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -1220,12 +1216,10 @@ class MacroProbability(BaseObject):
         self.probability_high_volatility = probability_high_volatility
         self.probability_breakout = probability_breakout
         self.probability_fakeout = probability_fakeout
-        self.historical_analogues: List[str] = historical_analogues or []
+        self.historical_analogues: list[str] = historical_analogues or []
         self.methodology = methodology
         self.dominant_bias = dominant_bias
-        self.lifecycle.transition(
-            LifecycleStage.ANALYZED, reason=f"Probabilities computed: LONG={probability_long:.2f}"
-        )
+        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Probabilities computed: LONG={probability_long:.2f}")
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -1260,7 +1254,7 @@ class MacroProbability(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroProbability":
+    def from_dict(cls, data: dict) -> MacroProbability:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.probability_long = data.get("probability_long", 0.33)
@@ -1300,13 +1294,13 @@ class MacroRegime(BaseObject):
         regime_name: str = "Range_Bound",
         regime_description: str = "",
         primary_driver: str = "",
-        secondary_drivers: Optional[List[str]] = None,
+        secondary_drivers: list[str] | None = None,
         stability: str = "Stable",
         score: float = 50.0,
         confidence: float = 0.0,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -1317,13 +1311,11 @@ class MacroRegime(BaseObject):
         self.regime_name = regime_name
         self.regime_description = regime_description
         self.primary_driver = primary_driver
-        self.secondary_drivers: List[str] = secondary_drivers or []
+        self.secondary_drivers: list[str] = secondary_drivers or []
         self.stability = stability
         self.score = score
         self.confidence = confidence
-        self.lifecycle.transition(
-            LifecycleStage.ANALYZED, reason=f"Regime classified: {regime_name}"
-        )
+        self.lifecycle.transition(LifecycleStage.ANALYZED, reason=f"Regime classified: {regime_name}")
 
     def _to_hashable_dict(self) -> dict:
         return {
@@ -1354,7 +1346,7 @@ class MacroRegime(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroRegime":
+    def from_dict(cls, data: dict) -> MacroRegime:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.regime_name = data.get("regime_name", "Range_Bound")
@@ -1397,19 +1389,19 @@ class MacroReport(BaseObject):
         self,
         title: str = "XAUUSD Macro Intelligence Report",
         regime: str = "Range_Bound",
-        dominant_drivers: Optional[List[Dict[str, Any]]] = None,
-        conflicting_drivers: Optional[List[Dict[str, Any]]] = None,
+        dominant_drivers: list[dict[str, Any]] | None = None,
+        conflicting_drivers: list[dict[str, Any]] | None = None,
         macro_score_id: str = "",
         probability_id: str = "",
         narrative: str = "",
-        risk_assessment: Optional[Dict[str, Any]] = None,
+        risk_assessment: dict[str, Any] | None = None,
         expected_volatility: str = "Moderate",
         suggested_bias: str = "Neutral",
-        key_levels: Optional[Dict[str, float]] = None,
+        key_levels: dict[str, float] | None = None,
         report_format: str = "Standard",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         if id is None:
             ts = (timestamp or utc_now()).isoformat()
@@ -1419,15 +1411,15 @@ class MacroReport(BaseObject):
         self.timestamp = timestamp or utc_now()
         self.title = title
         self.regime = regime
-        self.dominant_drivers: List[Dict[str, Any]] = dominant_drivers or []
-        self.conflicting_drivers: List[Dict[str, Any]] = conflicting_drivers or []
+        self.dominant_drivers: list[dict[str, Any]] = dominant_drivers or []
+        self.conflicting_drivers: list[dict[str, Any]] = conflicting_drivers or []
         self.macro_score_id = macro_score_id
         self.probability_id = probability_id
         self.narrative = narrative
-        self.risk_assessment: Dict[str, Any] = risk_assessment or {}
+        self.risk_assessment: dict[str, Any] = risk_assessment or {}
         self.expected_volatility = expected_volatility
         self.suggested_bias = suggested_bias
-        self.key_levels: Dict[str, float] = key_levels or {}
+        self.key_levels: dict[str, float] = key_levels or {}
         self.report_format = report_format
         self.lifecycle.transition(LifecycleStage.COMPLETE, reason=f"Report generated: {title}")
 
@@ -1470,7 +1462,7 @@ class MacroReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "MacroReport":
+    def from_dict(cls, data: dict) -> MacroReport:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data.get("timestamp", utc_now().isoformat()))
         obj.title = data.get("title", "XAUUSD Macro Intelligence Report")

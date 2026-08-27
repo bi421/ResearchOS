@@ -23,7 +23,7 @@ Guarantees:
 
 from __future__ import annotations
 
-from typing import List, Sequence, Tuple
+from collections.abc import Sequence
 
 from researchos.quant_engine.execution import parse_cost_spec
 
@@ -35,7 +35,7 @@ def spread_points_per_bar(
     spread_cost_spec: str,
     slippage_cost_spec: str,
     commission_cost_spec: str,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """Return (spread$, slippage$, commission$) applied to a single bar.
 
     Costs are expressed in price units (dollars per unit).  ``pct`` specs are
@@ -58,7 +58,7 @@ def _cost_overwhelms(
     actual: int,
     threshold_pip: float,
     round_trip_cost: float,
-) -> Tuple[bool, float]:
+) -> tuple[bool, float]:
     """Return (cost_killed_prediction, net_gain_in_pips).
 
     For a ternary prediction, the "profit" in price units for a correct
@@ -100,7 +100,7 @@ def apply_costs(
     up = [(p, a) for p, a in zip(predictions, actuals) if int(a) == 1]
     down = [(p, a) for p, a in zip(predictions, actuals) if int(a) == -1]
 
-    def _acc(pairs: List[Tuple[int, float]]) -> float:
+    def _acc(pairs: list[tuple[int, float]]) -> float:
         if not pairs:
             return 0.0
         correct = 0

@@ -22,7 +22,6 @@ Based on Article XVII: Object Model — Quant Engine Layer.
 from __future__ import annotations
 
 import math
-from typing import Dict, List
 
 from researchos.quant_engine.models import CalculationVersion
 from researchos.quant_engine.statistics import (
@@ -32,7 +31,7 @@ from researchos.quant_engine.statistics import (
 )
 
 
-def downside_deviation(returns: List[float], ddof: int = 1) -> float:
+def downside_deviation(returns: list[float], ddof: int = 1) -> float:
     """
     Calculate the downside deviation — standard deviation of negative returns only.
 
@@ -58,7 +57,7 @@ def downside_deviation(returns: List[float], ddof: int = 1) -> float:
     return standard_deviation(negative_returns, ddof=ddof)
 
 
-def max_drawdown(equity_curve: List[float]) -> Dict[str, float]:
+def max_drawdown(equity_curve: list[float]) -> dict[str, float]:
     """
     Calculate the maximum drawdown and related metrics from an equity curve.
 
@@ -112,7 +111,7 @@ def max_drawdown(equity_curve: List[float]) -> Dict[str, float]:
 
 
 def sharpe_ratio(
-    returns: List[float],
+    returns: list[float],
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252,
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
@@ -153,7 +152,7 @@ def sharpe_ratio(
 
 
 def sortino_ratio(
-    returns: List[float],
+    returns: list[float],
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252,
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
@@ -193,8 +192,8 @@ def sortino_ratio(
 
 
 def calmar_ratio(
-    returns: List[float],
-    equity_curve: List[float],
+    returns: list[float],
+    equity_curve: list[float],
     periods_per_year: int = 252,
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
 ) -> float:
@@ -232,7 +231,7 @@ def calmar_ratio(
     return annual_return / abs(max_dd)
 
 
-def profit_factor_metric(returns: List[float]) -> float:
+def profit_factor_metric(returns: list[float]) -> float:
     """
     Calculate the profit factor.
 
@@ -259,12 +258,12 @@ def profit_factor_metric(returns: List[float]) -> float:
 
 
 def compute_all_metrics(
-    returns: List[float],
-    equity_curve: List[float],
+    returns: list[float],
+    equity_curve: list[float],
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252,
     calculation_version: CalculationVersion = CalculationVersion.CALCULATION_V1,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Compute a comprehensive set of performance metrics.
 
@@ -288,7 +287,7 @@ def compute_all_metrics(
 
     dd_info = max_drawdown(equity_curve)
 
-    metrics: Dict[str, float] = {
+    metrics: dict[str, float] = {
         "total_return": sum(returns),
         "mean_return": mean(returns),
         "std_return": standard_deviation(returns),

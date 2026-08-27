@@ -35,26 +35,12 @@ def benchmark(arr, name):
     t1 = time.perf_counter()
     elapsed_ms = (t1 - t0) * 1000
     bps = len(arr) / (t1 - t0) if (t1 - t0) > 0 else 0
-    print(
-        f"[3] {name}: {len(arr):,} bars in {elapsed_ms:.2f} ms -> {bps:,.0f} bars/sec | Return {(cum[-1] - 1) * 100:.1f}%"
-    )
+    print(f"[3] {name}: {len(arr):,} bars in {elapsed_ms:.2f} ms -> {bps:,.0f} bars/sec | Return {(cum[-1] - 1) * 100:.1f}%")
     return elapsed_ms
 
 
-close_h1 = (
-    df.group_by_dynamic("ts_utc", every="1h")
-    .agg(pl.col("close").last())
-    .sort("ts_utc")
-    .filter(pl.col("ts_utc").dt.year() == 2025)["close"]
-    .to_numpy()
-)
-close_d1 = (
-    df.group_by_dynamic("ts_utc", every="1d")
-    .agg(pl.col("close").last())
-    .sort("ts_utc")
-    .filter(pl.col("ts_utc").dt.year() == 2025)["close"]
-    .to_numpy()
-)
+close_h1 = df.group_by_dynamic("ts_utc", every="1h").agg(pl.col("close").last()).sort("ts_utc").filter(pl.col("ts_utc").dt.year() == 2025)["close"].to_numpy()
+close_d1 = df.group_by_dynamic("ts_utc", every="1d").agg(pl.col("close").last()).sort("ts_utc").filter(pl.col("ts_utc").dt.year() == 2025)["close"].to_numpy()
 
 benchmark(close_d1, "D1 2025 ")
 benchmark(close_h1, "H1 2025 ")

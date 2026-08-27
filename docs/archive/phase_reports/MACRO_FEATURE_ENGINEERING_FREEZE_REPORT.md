@@ -64,7 +64,7 @@ vector.features["FEAT_001"].value = 5.0  # ❌ AttributeError
 feature = FeatureValue(
     feature_id="FEAT_001",
     evidence_ids=["EVD_001", "EVD_002"],  # Required
-    calculation_version="calc/v1",         # Required
+    calculation_version="calc/v1",  # Required
 )
 ```
 

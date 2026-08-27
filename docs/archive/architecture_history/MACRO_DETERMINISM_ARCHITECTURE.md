@@ -49,7 +49,7 @@ See docs/DOCUMENTATION_INVENTORY_REPORT.md
 In a quantitative research platform, data integrity and reproducibility are paramount. The Macro Intelligence Layer must guarantee that:
 
 1. **Same semantic data → Same hash** — Identical observations produce identical identifiers
-2. **Different semantic data → Different hash** — Different observations produce different identifiers  
+2. **Different semantic data → Different hash** — Different observations produce different identifiers
 3. **Runtime changes don't affect identity** — Timestamps, UUIDs, and processing metadata don't change the hash
 
 This enables:
@@ -83,21 +83,21 @@ All immutable objects expose `to_json()` method with these guarantees:
 ```python
 # NormalizedSeries serialization
 {
-  "series_id": "SER_20260803_001",
-  "source": "fred",
-  "timestamp": "2026-08-03T12:00:00+00:00",
-  "observation_period": "2026-08-01",
-  "release_time": null,
-  "available_time": "2026-08-03T12:00:00+00:00",
-  "value": 4.25,
-  "unit": "percent",
-  "frequency": "daily",
-  "revision_id": null,
-  "revision_number": 0,
-  "quality_score": 0.95,
-  "metadata": {},
-  "created_at": "2026-08-03T12:00:00+00:00",
-  "version": "ms/v1"
+    "series_id": "SER_20260803_001",
+    "source": "fred",
+    "timestamp": "2026-08-03T12:00:00+00:00",
+    "observation_period": "2026-08-01",
+    "release_time": null,
+    "available_time": "2026-08-03T12:00:00+00:00",
+    "value": 4.25,
+    "unit": "percent",
+    "frequency": "daily",
+    "revision_id": null,
+    "revision_number": 0,
+    "quality_score": 0.95,
+    "metadata": {},
+    "created_at": "2026-08-03T12:00:00+00:00",
+    "version": "ms/v1",
 }
 ```
 
@@ -124,12 +124,12 @@ All `compute_hash()` methods follow this pattern:
 def compute_hash(self) -> str:
     """
     Compute deterministic hash for the object.
-    
+
     MIL-DET-001: Hash depends ONLY on semantic data, never on runtime metadata.
     """
     import hashlib
     import json
-    
+
     # Create hash-specific dict excluding runtime metadata
     hash_data = {
         # SEMANTIC FIELDS (INCLUDED)
@@ -138,14 +138,13 @@ def compute_hash(self) -> str:
         "timestamp": self.timestamp.isoformat(),
         "value": self.value,
         # ... other semantic fields
-        
         # RUNTIME METADATA (EXCLUDED)
         # created_at - EXCLUDED
         # version - EXCLUDED
     }
-    
-    canonical = json.dumps(hash_data, sort_keys=True, separators=(',', ':'))
-    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+    canonical = json.dumps(hash_data, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 ```
 
 ### 3.2 Hash Properties
@@ -234,18 +233,18 @@ json.dumps(None)
 
 ```python
 {
-    "series_id": str,           # Semantic identifier
-    "source": str,              # Data source
-    "timestamp": str,           # ISO 8601 datetime
+    "series_id": str,  # Semantic identifier
+    "source": str,  # Data source
+    "timestamp": str,  # ISO 8601 datetime
     "observation_period": str,  # ISO 8601 date
-    "release_time": str | None, # ISO 8601 datetime
-    "available_time": str,      # ISO 8601 datetime
-    "value": float | None,      # Observed value
-    "unit": str,                # Unit of measurement
-    "frequency": str,           # daily/weekly/monthly/etc
+    "release_time": str | None,  # ISO 8601 datetime
+    "available_time": str,  # ISO 8601 datetime
+    "value": float | None,  # Observed value
+    "unit": str,  # Unit of measurement
+    "frequency": str,  # daily/weekly/monthly/etc
     "revision_id": str | None,  # Revision chain reference
-    "revision_number": int,     # Sequential revision number
-    "quality_score": float,     # 0.0-1.0 quality rating
+    "revision_number": int,  # Sequential revision number
+    "quality_score": float,  # 0.0-1.0 quality rating
 }
 ```
 
@@ -253,21 +252,21 @@ json.dumps(None)
 
 ```python
 {
-    "evidence_id": str,                    # Semantic identifier
-    "source": str,                         # Data source
-    "source_quality_score": float,         # Source reliability
-    "series_reference": str,               # Linked series
-    "observation_time": str,               # ISO 8601 datetime
-    "release_time": str | None,            # ISO 8601 datetime
-    "available_time": str,                 # ISO 8601 datetime
-    "value": float | None,                 # Observed value
-    "forecast": float | None,              # Consensus forecast
-    "previous": float | None,              # Previous value
-    "revision_id": str | None,             # Revision reference
-    "revision_number": int,                # Revision sequence
-    "confidence": float,                   # 0.0-1.0 confidence
-    "quality_score": float,                # 0.0-1.0 quality
-    "original_source": str,                # Provenance origin
+    "evidence_id": str,  # Semantic identifier
+    "source": str,  # Data source
+    "source_quality_score": float,  # Source reliability
+    "series_reference": str,  # Linked series
+    "observation_time": str,  # ISO 8601 datetime
+    "release_time": str | None,  # ISO 8601 datetime
+    "available_time": str,  # ISO 8601 datetime
+    "value": float | None,  # Observed value
+    "forecast": float | None,  # Consensus forecast
+    "previous": float | None,  # Previous value
+    "revision_id": str | None,  # Revision reference
+    "revision_number": int,  # Revision sequence
+    "confidence": float,  # 0.0-1.0 confidence
+    "quality_score": float,  # 0.0-1.0 quality
+    "original_source": str,  # Provenance origin
 }
 ```
 
@@ -275,17 +274,17 @@ json.dumps(None)
 
 ```python
 {
-    "event_id": str,                       # Semantic identifier
-    "event_type": str,                     # Event category
-    "timestamp": str,                      # ISO 8601 datetime
-    "source": str,                         # Event source
-    "description": str,                    # Human-readable description
-    "classification": str,                 # Detailed classification
-    "importance": str,                     # LOW/MEDIUM/HIGH/CRITICAL
-    "related_series": list[str],           # Affected series (sorted)
-    "volatility_impact": float,            # Expected volatility change
-    "liquidity_impact": float,             # Expected liquidity change
-    "correlation_score": float,            # Historical correlation
+    "event_id": str,  # Semantic identifier
+    "event_type": str,  # Event category
+    "timestamp": str,  # ISO 8601 datetime
+    "source": str,  # Event source
+    "description": str,  # Human-readable description
+    "classification": str,  # Detailed classification
+    "importance": str,  # LOW/MEDIUM/HIGH/CRITICAL
+    "related_series": list[str],  # Affected series (sorted)
+    "volatility_impact": float,  # Expected volatility change
+    "liquidity_impact": float,  # Expected liquidity change
+    "correlation_score": float,  # Historical correlation
 }
 ```
 
@@ -293,12 +292,12 @@ json.dumps(None)
 
 ```python
 {
-    "event_id": str,                       # Triggering event
-    "instrument": str,                     # Affected instrument
-    "window_before": dict,                 # Pre-event window spec
-    "window_after": dict,                  # Post-event window spec
-    "reaction_metrics": dict,              # Quantified reaction
-    "calculation_version": str,            # Methodology version
+    "event_id": str,  # Triggering event
+    "instrument": str,  # Affected instrument
+    "window_before": dict,  # Pre-event window spec
+    "window_after": dict,  # Post-event window spec
+    "reaction_metrics": dict,  # Quantified reaction
+    "calculation_version": str,  # Methodology version
 }
 ```
 
@@ -306,14 +305,14 @@ json.dumps(None)
 
 ```python
 {
-    "knowledge_id": str,                   # Semantic identifier
-    "series_id": str,                      # Related series
-    "date": str,                           # ISO 8601 date
-    "evidence_refs": list[str],            # Supporting evidence (sorted)
-    "patterns": list[dict],                # Detected patterns
-    "statistics": dict | None,             # Statistical analysis
-    "confidence": float,                   # 0.0-1.0 confidence
-    "explanation": str,                    # Human-readable explanation
+    "knowledge_id": str,  # Semantic identifier
+    "series_id": str,  # Related series
+    "date": str,  # ISO 8601 date
+    "evidence_refs": list[str],  # Supporting evidence (sorted)
+    "patterns": list[dict],  # Detected patterns
+    "statistics": dict | None,  # Statistical analysis
+    "confidence": float,  # 0.0-1.0 confidence
+    "explanation": str,  # Human-readable explanation
 }
 ```
 

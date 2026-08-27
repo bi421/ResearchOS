@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.core.identity import deterministic_hash
 from researchos.quant_engine.interface import QuantComputationInterface
@@ -24,7 +24,7 @@ from researchos.quant_engine.models import (
 
 _DEFAULT_SIG_DIGITS = 12
 
-DEFAULT_TOLERANCES: Dict[str, Tuple[float, float]] = {
+DEFAULT_TOLERANCES: dict[str, tuple[float, float]] = {
     "returns": (1e-12, 1e-12),
     "equity_curve": (1e-12, 1e-12),
     "metrics": (1e-8, 1e-12),
@@ -98,15 +98,8 @@ def compare_values(
     return bool(a == b)
 
 
-def _rel_diff(a: Any, b: Any) -> Optional[float]:
-    if (
-        _is_number(a)
-        and _is_number(b)
-        and not math.isnan(a)
-        and not math.isnan(b)
-        and not math.isinf(a)
-        and not math.isinf(b)
-    ):
+def _rel_diff(a: Any, b: Any) -> float | None:
+    if _is_number(a) and _is_number(b) and not math.isnan(a) and not math.isnan(b) and not math.isinf(a) and not math.isinf(b):
         if b == 0.0:
             return 0.0 if a == 0.0 else float("inf")
 
@@ -115,7 +108,7 @@ def _rel_diff(a: Any, b: Any) -> Optional[float]:
     return None
 
 
-def _abs_diff(a: Any, b: Any) -> Optional[float]:
+def _abs_diff(a: Any, b: Any) -> float | None:
     if _is_number(a) and _is_number(b):
         return float(abs(a - b))
 
@@ -196,8 +189,8 @@ class FieldDiff:
     py_value: Any
     cpp_value: Any
     matched: bool
-    rel_diff: Optional[float] = None
-    abs_diff: Optional[float] = None
+    rel_diff: float | None = None
+    abs_diff: float | None = None
     tolerance: str = ""
 
 
@@ -220,13 +213,13 @@ class CompatibilityReport:
     input_hash_matches: bool = False
     simulation_id_matches: bool = False
 
-    sections: Dict[str, SectionResult] = field(default_factory=dict)
+    sections: dict[str, SectionResult] = field(default_factory=dict)
 
-    field_diffs: List[FieldDiff] = field(default_factory=list)
+    field_diffs: list[FieldDiff] = field(default_factory=list)
 
-    backend_versions: Dict[str, str] = field(default_factory=dict)
+    backend_versions: dict[str, str] = field(default_factory=dict)
 
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
         lines = [
@@ -263,16 +256,11 @@ class CompatibilityReport:
 
             for diff in self.field_diffs:
                 if not diff.matched:
-                    lines.append(
-                        f"    {diff.path}: "
-                        f"python={diff.py_value!r} "
-                        f"cpp={diff.cpp_value!r} "
-                        f"(tol {diff.tolerance})"
-                    )
+                    lines.append(f"    {diff.path}: python={diff.py_value!r} cpp={diff.cpp_value!r} (tol {diff.tolerance})")
 
         return "\n".join(lines)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "matched": self.matched,
             "hash_parity": self.hash_parity,
@@ -324,13 +312,11 @@ class CompatibilityReport:
         if not failures:
             return
 
-        raise AssertionError(
-            "Backend parity certification failed: " + "; ".join(failures) + "\n\n" + self.summary()
-        )
+        raise AssertionError("Backend parity certification failed: " + "; ".join(failures) + "\n\n" + self.summary())
 
 
 def _make_default_request(
-    prices: List[float],
+    prices: list[float],
     risk_free_rate: float,
 ) -> SimulationRequest:
     return SimulationRequest(
@@ -350,10 +336,10 @@ def _make_default_request(
 def verify_backend_parity(
     python_backend: QuantComputationInterface,
     cpp_backend: QuantComputationInterface,
-    prices: List[float],
-    request: Optional[SimulationRequest] = None,
+    prices: list[float],
+    request: SimulationRequest | None = None,
     risk_free_rate: float = 0.0,
-    tolerances: Optional[Dict[str, Tuple[float, float]]] = None,
+    tolerances: dict[str, tuple[float, float]] | None = None,
 ) -> CompatibilityReport:
     """
     Execute complete Python/C++ parity certification.
@@ -612,9 +598,7 @@ def verify_backend_parity(
 
     canonical_cpp = canonical_result_hash(cpp_result)
 
-    report.hash_parity = (
-        report.input_hash_matches and report.simulation_id_matches and canonical_py == canonical_cpp
-    )
+    report.hash_parity = report.input_hash_matches and report.simulation_id_matches and canonical_py == canonical_cpp
 
     if not report.hash_parity:
         report.matched = False
@@ -623,11 +607,7 @@ def verify_backend_parity(
     # last-bit floating-point differences.
 
     if py_result.result_hash != cpp_result.result_hash:
-        report.notes.append(
-            "raw result_hash differs across backends; "
-            "canonical_result_hash is the cross-backend "
-            "certification hash."
-        )
+        report.notes.append("raw result_hash differs across backends; canonical_result_hash is the cross-backend certification hash.")
 
     # ------------------------------------------------------------
     # 16. Final certification invariant
@@ -638,7 +618,7 @@ def verify_backend_parity(
 
     # Collapse any legacy/internal section labels that may have been
     # produced by older comparison paths.
-    canonical_sections: Dict[str, SectionResult] = {}
+    canonical_sections: dict[str, SectionResult] = {}
 
     for section_name, section in report.sections.items():
         canonical_name = _canonical_section_name(section_name)
@@ -705,9 +685,9 @@ def _safe_version(
 
 def _volatility_by_method(
     backend: QuantComputationInterface,
-    returns: List[float],
-) -> Dict[str, float]:
-    out: Dict[str, float] = {}
+    returns: list[float],
+) -> dict[str, float]:
+    out: dict[str, float] = {}
 
     for method in (
         "standard_deviation",
@@ -727,7 +707,7 @@ def _volatility_by_method(
 
 def _provenance(
     result: SimulationResult,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "simulation_id": result.simulation_id,
         "dataset_reference": result.dataset_reference,
@@ -790,7 +770,7 @@ def _compare_section(
     name: str,
     py_value: Any,
     cpp_value: Any,
-    tolerance: Tuple[float, float],
+    tolerance: tuple[float, float],
     *,
     path: str,
 ) -> None:
@@ -930,9 +910,9 @@ def _collect_diffs(
 class _Missing:
     """Sentinel for a key missing from one backend."""
 
-    _instance: Optional["_Missing"] = None
+    _instance: _Missing | None = None
 
-    def __new__(cls) -> "_Missing":
+    def __new__(cls) -> _Missing:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
 

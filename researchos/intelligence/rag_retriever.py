@@ -28,8 +28,9 @@ from __future__ import annotations
 
 import re
 import time
+from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any
 
 from researchos.intelligence.rag_contracts import (
     RetrievalContext,
@@ -46,7 +47,7 @@ from researchos.intelligence.rag_contracts import (
 _TOKENIZER = re.compile(r"[a-zA-Z_]+|[0-9]+", re.IGNORECASE)
 """Simple ASCII tokeniser for text matching."""
 
-_SOURCE_WEIGHTS: Dict[RetrievalSource, float] = {
+_SOURCE_WEIGHTS: dict[RetrievalSource, float] = {
     RetrievalSource.EVIDENCE_GRAPH: 1.0,
     RetrievalSource.MARKET_MEMORY: 0.8,
     RetrievalSource.KNOWLEDGE_BASE: 0.9,
@@ -93,11 +94,11 @@ class DeterministicRetriever:
 
     def __init__(
         self,
-        node_index: Optional[Dict[str, Dict[str, Any]]] = None,
-        knowledge_index: Optional[Dict[str, Dict[str, Any]]] = None,
+        node_index: dict[str, dict[str, Any]] | None = None,
+        knowledge_index: dict[str, dict[str, Any]] | None = None,
     ) -> None:
-        self._node_index: Dict[str, Dict[str, Any]] = dict(node_index or {})
-        self._knowledge_index: Dict[str, Dict[str, Any]] = dict(knowledge_index or {})
+        self._node_index: dict[str, dict[str, Any]] = dict(node_index or {})
+        self._knowledge_index: dict[str, dict[str, Any]] = dict(knowledge_index or {})
 
     # ------------------------------------------------------------------
     # Public API
@@ -125,7 +126,7 @@ class DeterministicRetriever:
         query_tokens = self._tokenise(query.text)
         query_tags = set(query.context_tags)
 
-        all_hits: List[RetrievalHit] = []
+        all_hits: list[RetrievalHit] = []
 
         # Search evidence graph nodes
         if query.source_filter is None or RetrievalSource.EVIDENCE_GRAPH in query.source_filter:
@@ -171,7 +172,7 @@ class DeterministicRetriever:
     def retrieve_batch(
         self,
         queries: Sequence[RetrievalQuery],
-    ) -> Dict[str, RetrievalResult]:
+    ) -> dict[str, RetrievalResult]:
         """Execute multiple queries and return results keyed by query_id.
 
         Parameters
@@ -188,8 +189,8 @@ class DeterministicRetriever:
 
     def update_index(
         self,
-        nodes: Optional[Dict[str, Dict[str, Any]]] = None,
-        knowledge: Optional[Dict[str, Dict[str, Any]]] = None,
+        nodes: dict[str, dict[str, Any]] | None = None,
+        knowledge: dict[str, dict[str, Any]] | None = None,
     ) -> None:
         """Update the internal indexes with new data.
 
@@ -225,7 +226,7 @@ class DeterministicRetriever:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _tokenise(text: str) -> Tuple[str, ...]:
+    def _tokenise(text: str) -> tuple[str, ...]:
         """Tokenise text into lowercased ASCII tokens."""
         if not text:
             return ()
@@ -238,12 +239,12 @@ class DeterministicRetriever:
 
     def _search_nodes(
         self,
-        query_tokens: Tuple[str, ...],
-        context_tags: Set[str],
+        query_tokens: tuple[str, ...],
+        context_tags: set[str],
         min_score: float,
-    ) -> List[RetrievalHit]:
+    ) -> list[RetrievalHit]:
         """Search evidence graph nodes."""
-        hits: List[RetrievalHit] = []
+        hits: list[RetrievalHit] = []
         for node_id, node_data in self._node_index.items():
             score = self._score_node(node_data, query_tokens, context_tags)
             if score >= min_score:
@@ -262,12 +263,12 @@ class DeterministicRetriever:
 
     def _search_knowledge(
         self,
-        query_tokens: Tuple[str, ...],
-        context_tags: Set[str],
+        query_tokens: tuple[str, ...],
+        context_tags: set[str],
         min_score: float,
-    ) -> List[RetrievalHit]:
+    ) -> list[RetrievalHit]:
         """Search knowledge base objects."""
-        hits: List[RetrievalHit] = []
+        hits: list[RetrievalHit] = []
         for obj_id, obj_data in self._knowledge_index.items():
             score = self._score_knowledge(obj_data, query_tokens, context_tags)
             if score >= min_score:
@@ -286,12 +287,12 @@ class DeterministicRetriever:
 
     def _search_market_memory(
         self,
-        query_tokens: Tuple[str, ...],
-        context_tags: Set[str],
+        query_tokens: tuple[str, ...],
+        context_tags: set[str],
         min_score: float,
-    ) -> List[RetrievalHit]:
+    ) -> list[RetrievalHit]:
         """Search market memory entries."""
-        hits: List[RetrievalHit] = []
+        hits: list[RetrievalHit] = []
         for obj_id, obj_data in self._knowledge_index.items():
             if obj_data.get("source") == "market_memory":
                 score = self._score_knowledge(obj_data, query_tokens, context_tags) * 0.8
@@ -311,12 +312,12 @@ class DeterministicRetriever:
 
     def _search_experiment_results(
         self,
-        query_tokens: Tuple[str, ...],
-        context_tags: Set[str],
+        query_tokens: tuple[str, ...],
+        context_tags: set[str],
         min_score: float,
-    ) -> List[RetrievalHit]:
+    ) -> list[RetrievalHit]:
         """Search experiment result entries."""
-        hits: List[RetrievalHit] = []
+        hits: list[RetrievalHit] = []
         for obj_id, obj_data in self._knowledge_index.items():
             if obj_data.get("source") == "experiment_result":
                 score = self._score_knowledge(obj_data, query_tokens, context_tags) * 0.7
@@ -340,9 +341,9 @@ class DeterministicRetriever:
 
     def _score_node(
         self,
-        node_data: Dict[str, Any],
-        query_tokens: Tuple[str, ...],
-        context_tags: Set[str],
+        node_data: dict[str, Any],
+        query_tokens: tuple[str, ...],
+        context_tags: set[str],
     ) -> float:
         """Score a single evidence graph node against query tokens."""
         if not query_tokens:
@@ -374,9 +375,9 @@ class DeterministicRetriever:
 
     def _score_knowledge(
         self,
-        obj_data: Dict[str, Any],
-        query_tokens: Tuple[str, ...],
-        context_tags: Set[str],
+        obj_data: dict[str, Any],
+        query_tokens: tuple[str, ...],
+        context_tags: set[str],
     ) -> float:
         """Score a knowledge base object against query tokens."""
         if not query_tokens:
@@ -410,9 +411,9 @@ class DeterministicRetriever:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _extract_text(data: Dict[str, Any]) -> str:
+    def _extract_text(data: dict[str, Any]) -> str:
         """Extract searchable text from a dict."""
-        parts: List[str] = []
+        parts: list[str] = []
         for key in (
             "text",
             "content",
@@ -458,7 +459,7 @@ class DeterministicRetriever:
         return " ".join(parts)
 
     @staticmethod
-    def _make_snippet(data: Dict[str, Any]) -> str:
+    def _make_snippet(data: dict[str, Any]) -> str:
         """Create a short snippet from object data."""
         # Check direct fields first
         for key in ("text", "content", "statement", "thesis", "description", "label", "name"):
@@ -502,25 +503,19 @@ class DeterministicRetriever:
     def _build_explanation(
         self,
         query: RetrievalQuery,
-        hits: List[RetrievalHit],
+        hits: list[RetrievalHit],
         total: int,
     ) -> str:
         """Build a human-readable explanation of the retrieval result."""
         if not hits:
-            return (
-                f"Query '{query.text[:50]}...' returned no results "
-                f"(searched {total} objects, min_score={query.min_score:.2f})."
-            )
+            return f"Query '{query.text[:50]}...' returned no results (searched {total} objects, min_score={query.min_score:.2f})."
         lines = [
             f"Query: '{query.text[:80]}...'" if len(query.text) > 80 else f"Query: '{query.text}'",
             f"Results: {len(hits)} of {total} objects matched (min_score={query.min_score:.2f}).",
             "Top hits:",
         ]
         for i, hit in enumerate(hits[:3], 1):
-            lines.append(
-                f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:20]}...) "
-                f"score={hit.score:.4f}"
-            )
+            lines.append(f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:20]}...) score={hit.score:.4f}")
         if len(hits) > 3:
             lines.append(f"  ... and {len(hits) - 3} more results.")
         return "\n".join(lines)
@@ -556,8 +551,8 @@ class SessionRetriever:
         self._retriever = base_retriever
         self._session_id = session_id
         self._relevance_threshold = relevance_threshold
-        self._queries: List[str] = []
-        self._all_hits: List[RetrievalHit] = []
+        self._queries: list[str] = []
+        self._all_hits: list[RetrievalHit] = []
         self._session_start = datetime.now(timezone.utc)
 
     def query(self, query: RetrievalQuery) -> RetrievalResult:

@@ -21,9 +21,7 @@ from researchos.quant_engine.interface import QuantComputationInterface
 from researchos.quant_engine.models import CalculationVersion, SimulationRequest
 from researchos.quant_engine.simulation import HistoricalSimulationEngine
 
-pytestmark = pytest.mark.skipif(
-    not has_cpp_engine(), reason="compiled C++ quant engine not available"
-)
+pytestmark = pytest.mark.skipif(not has_cpp_engine(), reason="compiled C++ quant engine not available")
 
 _V1 = CalculationVersion.CALCULATION_V1
 
@@ -102,14 +100,10 @@ class TestCppQuantAdapterReturns:
         assert adapter.calculate_returns(prices) == python_backend.calculate_returns(prices)
 
     def test_matches_python_absolute(self, adapter, python_backend, prices):
-        assert adapter.calculate_returns(prices, "absolute") == python_backend.calculate_returns(
-            prices, "absolute"
-        )
+        assert adapter.calculate_returns(prices, "absolute") == python_backend.calculate_returns(prices, "absolute")
 
     def test_matches_python_log(self, adapter, python_backend, prices):
-        assert adapter.calculate_returns(prices, "log") == python_backend.calculate_returns(
-            prices, "log"
-        )
+        assert adapter.calculate_returns(prices, "log") == python_backend.calculate_returns(prices, "log")
 
     def test_length(self, adapter, prices):
         assert len(adapter.calculate_returns(prices)) == len(prices) - 1
@@ -130,21 +124,15 @@ class TestCppQuantAdapterReturns:
 class TestCppQuantAdapterVolatility:
     def test_standard_deviation_matches(self, adapter, python_backend, prices):
         rets = adapter.calculate_returns(prices)
-        assert adapter.calculate_volatility(rets) == pytest.approx(
-            python_backend.calculate_volatility(rets), rel=1e-9
-        )
+        assert adapter.calculate_volatility(rets) == pytest.approx(python_backend.calculate_volatility(rets), rel=1e-9)
 
     def test_rolling_matches(self, adapter, python_backend):
         rets = adapter.calculate_returns(make_prices(60))
-        assert adapter.calculate_volatility(rets, "rolling") == pytest.approx(
-            python_backend.calculate_volatility(rets, "rolling"), rel=1e-9
-        )
+        assert adapter.calculate_volatility(rets, "rolling") == pytest.approx(python_backend.calculate_volatility(rets, "rolling"), rel=1e-9)
 
     def test_change_matches(self, adapter, python_backend):
         rets = adapter.calculate_returns(make_prices(60))
-        assert adapter.calculate_volatility(rets, "change") == pytest.approx(
-            python_backend.calculate_volatility(rets, "change"), rel=1e-9
-        )
+        assert adapter.calculate_volatility(rets, "change") == pytest.approx(python_backend.calculate_volatility(rets, "change"), rel=1e-9)
 
     def test_empty_raises(self, adapter, python_backend):
         with pytest.raises(ValueError):
@@ -236,10 +224,7 @@ class TestCppQuantAdapterMetrics:
         equity = [100000.0]
         for r in rets:
             equity.append(equity[-1] * (1.0 + r))
-        assert (
-            adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
-            == python_backend.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
-        )
+        assert adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"] == python_backend.calculate_metrics(rets, equity, 0.0)["max_drawdown"]
         assert isinstance(adapter.calculate_metrics(rets, equity, 0.0)["max_drawdown"], float)
 
     def test_calmar_consistent_with_rounded_drawdown(self, adapter, prices):
@@ -273,9 +258,7 @@ class TestCppQuantAdapterMetrics:
 class TestCppQuantAdapterPerformance:
     def test_matches_python_exact(self, adapter, python_backend, prices):
         rets = adapter.calculate_returns(prices)
-        assert adapter.calculate_performance_analytics(
-            rets
-        ) == python_backend.calculate_performance_analytics(rets)
+        assert adapter.calculate_performance_analytics(rets) == python_backend.calculate_performance_analytics(rets)
 
     def test_schema(self, adapter, prices):
         perf = adapter.calculate_performance_analytics(adapter.calculate_returns(prices))
@@ -338,9 +321,7 @@ class TestCppQuantAdapterSimulation:
         assert py_result.input_hash == cpp_result.input_hash
         assert py_result.simulation_id == cpp_result.simulation_id
         for key in py_result.metrics:
-            assert cpp_result.metrics[key] == pytest.approx(
-                py_result.metrics[key], rel=1e-9, abs=1e-12
-            )
+            assert cpp_result.metrics[key] == pytest.approx(py_result.metrics[key], rel=1e-9, abs=1e-12)
 
     def test_custom_parameters(self, adapter, python_backend, prices):
         request = make_request(initial_capital=50000.0, risk_free_rate=0.05)
@@ -368,9 +349,7 @@ class TestCppQuantAdapterVersions:
             lambda b: b.calculate_statistics([0.01, 0.02], "CALCULATION_V2"),
             lambda b: b.calculate_metrics([0.01, 0.02], [100.0, 101.0], 0.0, "CALCULATION_V2"),
             lambda b: b.calculate_performance_analytics([0.01, 0.02], "CALCULATION_V2"),
-            lambda b: b.run_simulation(
-                SimulationRequest(dataset_reference="T"), [100.0, 101.0], "CALCULATION_V2"
-            ),
+            lambda b: b.run_simulation(SimulationRequest(dataset_reference="T"), [100.0, 101.0], "CALCULATION_V2"),
         ],
     )
     def test_unsupported_version_raises(self, adapter, python_backend, call):

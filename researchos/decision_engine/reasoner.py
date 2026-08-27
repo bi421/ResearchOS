@@ -28,7 +28,7 @@ Pipeline:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.decision_engine.context import DecisionContext
 from researchos.decision_engine.contracts import (
@@ -58,10 +58,10 @@ class ReasoningStep:
         self,
         order: int,
         description: str,
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
         rule: str = "",
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ):
         self.order = order
         self.description = description
@@ -70,7 +70,7 @@ class ReasoningStep:
         self.rule = rule
         self.details = details or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "order": self.order,
             "description": self.description,
@@ -101,7 +101,7 @@ class DecisionReasoner:
         context: DecisionContext,
         score: EvidenceScore,
         probability: ProbabilityAssessment,
-    ) -> List[ReasoningStep]:
+    ) -> list[ReasoningStep]:
         """
         Produce a full reasoning chain from pipeline outputs.
 
@@ -113,7 +113,7 @@ class DecisionReasoner:
         Returns:
             Ordered list of ReasoningStep objects forming the reasoning chain.
         """
-        steps: List[ReasoningStep] = []
+        steps: list[ReasoningStep] = []
 
         # Step 1: Evidence collection summary
         steps.append(self._step_evidence_summary(context, score))
@@ -150,22 +150,16 @@ class DecisionReasoner:
 
         return steps
 
-    def _step_evidence_summary(
-        self, context: DecisionContext, score: EvidenceScore
-    ) -> ReasoningStep:
+    def _step_evidence_summary(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 1: Evidence collection summary."""
-        source_counts: Dict[str, int] = {}
+        source_counts: dict[str, int] = {}
         for item in score.evidence_items:
             src = item.source.value
             source_counts[src] = source_counts.get(src, 0) + 1
 
         return ReasoningStep(
             order=1,
-            description=(
-                f"Collected {score.evidence_count} evidence items from "
-                f"{len(source_counts)} sources: "
-                + ", ".join(f"{k}={v}" for k, v in sorted(source_counts.items()))
-            ),
+            description=(f"Collected {score.evidence_count} evidence items from {len(source_counts)} sources: " + ", ".join(f"{k}={v}" for k, v in sorted(source_counts.items()))),
             inputs=[context.id],
             outputs=[score.id],
             rule="EvidenceCollection",
@@ -177,24 +171,13 @@ class DecisionReasoner:
 
     def _step_direction_breakdown(self, score: EvidenceScore) -> ReasoningStep:
         """Step 2: Evidence direction breakdown."""
-        bullish_items = sum(
-            1 for e in score.evidence_items if e.direction == ProbabilityOutcome.BULLISH
-        )
-        bearish_items = sum(
-            1 for e in score.evidence_items if e.direction == ProbabilityOutcome.BEARISH
-        )
-        neutral_items = sum(
-            1 for e in score.evidence_items if e.direction == ProbabilityOutcome.NEUTRAL
-        )
+        bullish_items = sum(1 for e in score.evidence_items if e.direction == ProbabilityOutcome.BULLISH)
+        bearish_items = sum(1 for e in score.evidence_items if e.direction == ProbabilityOutcome.BEARISH)
+        neutral_items = sum(1 for e in score.evidence_items if e.direction == ProbabilityOutcome.NEUTRAL)
 
         return ReasoningStep(
             order=2,
-            description=(
-                f"Evidence direction breakdown: "
-                f"Bullish={bullish_items}, Bearish={bearish_items}, Neutral={neutral_items}. "
-                f"Scores: B={score.bullish_score:.4f}, Be={score.bearish_score:.4f}, "
-                f"N={score.neutral_score:.4f}"
-            ),
+            description=(f"Evidence direction breakdown: Bullish={bullish_items}, Bearish={bearish_items}, Neutral={neutral_items}. Scores: B={score.bullish_score:.4f}, Be={score.bearish_score:.4f}, N={score.neutral_score:.4f}"),
             inputs=[score.id],
             outputs=[],
             rule="DirectionBreakdown",
@@ -220,11 +203,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=3,
-            description=(
-                f"Market Memory contribution: {len(mm_items)} evidence items "
-                f"from {match_count} historical matches. "
-                f"Score={score.market_memory_score:.4f}"
-            ),
+            description=(f"Market Memory contribution: {len(mm_items)} evidence items from {match_count} historical matches. Score={score.market_memory_score:.4f}"),
             inputs=context.historical_scenario_ids,
             outputs=[],
             rule="MarketMemoryEvidence",
@@ -243,10 +222,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=4,
-            description=(
-                f"Experiment contribution: {len(exp_items)} experiment results. "
-                f"Score={score.experiment_score:.4f}"
-            ),
+            description=(f"Experiment contribution: {len(exp_items)} experiment results. Score={score.experiment_score:.4f}"),
             inputs=context.experiment_result_ids,
             outputs=[],
             rule="ExperimentEvidence",
@@ -259,16 +235,11 @@ class DecisionReasoner:
 
     def _step_macro(self, context: DecisionContext, score: EvidenceScore) -> ReasoningStep:
         """Step 5: Macro intelligence contribution."""
-        macro_items = [
-            e for e in score.evidence_items if e.source == EvidenceSource.MACRO_INTELLIGENCE
-        ]
+        macro_items = [e for e in score.evidence_items if e.source == EvidenceSource.MACRO_INTELLIGENCE]
 
         return ReasoningStep(
             order=5,
-            description=(
-                f"Macro Intelligence contribution: {len(macro_items)} items. "
-                f"Regime={context.market_regime_id}, Score={score.macro_score:.4f}"
-            ),
+            description=(f"Macro Intelligence contribution: {len(macro_items)} items. Regime={context.market_regime_id}, Score={score.macro_score:.4f}"),
             inputs=[context.macro_state_id] if context.macro_state_id else [],
             outputs=[],
             rule="MacroEvidence",
@@ -286,10 +257,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=6,
-            description=(
-                f"Validation contribution: {len(val_items)} validation results. "
-                f"Score={score.validation_score:.4f}"
-            ),
+            description=(f"Validation contribution: {len(val_items)} validation results. Score={score.validation_score:.4f}"),
             inputs=context.validation_ids,
             outputs=[],
             rule="ValidationEvidence",
@@ -306,10 +274,7 @@ class DecisionReasoner:
 
         return ReasoningStep(
             order=7,
-            description=(
-                f"Quant Engine contribution: {len(quant_items)} statistical summaries. "
-                f"Score={score.quant_score:.4f}"
-            ),
+            description=(f"Quant Engine contribution: {len(quant_items)} statistical summaries. Score={score.quant_score:.4f}"),
             inputs=context.simulation_result_ids,
             outputs=[],
             rule="QuantEngineEvidence",
@@ -322,17 +287,11 @@ class DecisionReasoner:
     def _step_confidence(self, score: EvidenceScore) -> ReasoningStep:
         """Step 8: Confidence assessment."""
         evidence_confidences = [e.confidence for e in score.evidence_items]
-        avg_confidence = (
-            sum(evidence_confidences) / len(evidence_confidences) if evidence_confidences else 0.0
-        )
+        avg_confidence = sum(evidence_confidences) / len(evidence_confidences) if evidence_confidences else 0.0
 
         return ReasoningStep(
             order=8,
-            description=(
-                f"Confidence assessment: composite={score.confidence_score:.4f}, "
-                f"avg_item_confidence={avg_confidence:.4f}. "
-                f"Based on {score.evidence_count} items from {len(evidence_confidences)} sources."
-            ),
+            description=(f"Confidence assessment: composite={score.confidence_score:.4f}, avg_item_confidence={avg_confidence:.4f}. Based on {score.evidence_count} items from {len(evidence_confidences)} sources."),
             inputs=[score.id],
             outputs=[],
             rule="ConfidenceAssessment",
@@ -348,10 +307,7 @@ class DecisionReasoner:
         """Step 9: Uncertainty assessment."""
         return ReasoningStep(
             order=9,
-            description=(
-                f"Uncertainty assessment: uncertainty_score={score.uncertainty_score:.4f}. "
-                f"Source disagreement metric."
-            ),
+            description=(f"Uncertainty assessment: uncertainty_score={score.uncertainty_score:.4f}. Source disagreement metric."),
             inputs=[score.id],
             outputs=[],
             rule="UncertaintyAssessment",
@@ -363,20 +319,11 @@ class DecisionReasoner:
             },
         )
 
-    def _step_probability_calculation(
-        self, score: EvidenceScore, probability: ProbabilityAssessment
-    ) -> ReasoningStep:
+    def _step_probability_calculation(self, score: EvidenceScore, probability: ProbabilityAssessment) -> ReasoningStep:
         """Step 10: Probability calculation."""
         return ReasoningStep(
             order=10,
-            description=(
-                f"Probability calculation (v{probability.calculation_version}): "
-                f"WeightedEvidence method. "
-                f"Bullish={probability.bullish_probability:.2%}, "
-                f"Bearish={probability.bearish_probability:.2%}, "
-                f"Neutral={probability.neutral_probability:.2%}. "
-                f"Sum={probability.bullish_probability + probability.bearish_probability + probability.neutral_probability:.4f}"
-            ),
+            description=(f"Probability calculation (v{probability.calculation_version}): WeightedEvidence method. Bullish={probability.bullish_probability:.2%}, Bearish={probability.bearish_probability:.2%}, Neutral={probability.neutral_probability:.2%}. Sum={probability.bullish_probability + probability.bearish_probability + probability.neutral_probability:.4f}"),
             inputs=[score.id],
             outputs=[probability.id],
             rule="ProbabilityCalculation",
@@ -397,12 +344,7 @@ class DecisionReasoner:
         """Step 11: Limitations identification."""
         return ReasoningStep(
             order=11,
-            description=(
-                f"Identified {len(probability.limitations)} limitations: "
-                + "; ".join(probability.limitations)
-                if probability.limitations
-                else "No significant limitations identified."
-            ),
+            description=(f"Identified {len(probability.limitations)} limitations: " + "; ".join(probability.limitations) if probability.limitations else "No significant limitations identified."),
             inputs=[probability.id],
             outputs=[],
             rule="LimitationsIdentification",

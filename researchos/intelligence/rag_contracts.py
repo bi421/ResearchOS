@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class RetrievalSource(str, Enum):
@@ -33,7 +33,7 @@ class RetrievalSource(str, Enum):
         return self.value == str(source).lower().strip()
 
     @classmethod
-    def from_string(cls, value: str) -> "RetrievalSource":
+    def from_string(cls, value: str) -> RetrievalSource:
         mapping = {
             "evidence_graph": cls.EVIDENCE_GRAPH,
             "evidencegraph": cls.EVIDENCE_GRAPH,
@@ -46,9 +46,7 @@ class RetrievalSource(str, Enum):
         }
         normalized = str(value).lower().strip()
         if normalized not in mapping:
-            raise ValueError(
-                f"Unknown retrieval source {value!r}. Valid options: {[s.value for s in cls]}"
-            )
+            raise ValueError(f"Unknown retrieval source {value!r}. Valid options: {[s.value for s in cls]}")
         return mapping[normalized]
 
 
@@ -68,7 +66,7 @@ class RetrievalQuery:
 
     query_id: str
     text: str
-    source_filter: Optional[List[RetrievalSource]] = None
+    source_filter: list[RetrievalSource] | None = None
     max_hits: int = 10
     min_score: float = 0.0
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -91,7 +89,7 @@ class RetrievalQuery:
         if self.source_filter is not None:
             object.__setattr__(self, "source_filter", tuple(self.source_filter))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "query_id": self.query_id,
             "text": self.text,
@@ -103,18 +101,14 @@ class RetrievalQuery:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RetrievalQuery":
+    def from_dict(cls, data: dict[str, Any]) -> RetrievalQuery:
         return cls(
             query_id=str(data["query_id"]),
             text=str(data.get("text", "")),
-            source_filter=[RetrievalSource.from_string(s) for s in data.get("source_filter", [])]
-            if data.get("source_filter")
-            else None,
+            source_filter=[RetrievalSource.from_string(s) for s in data.get("source_filter", [])] if data.get("source_filter") else None,
             max_hits=int(data.get("max_hits", 10)),
             min_score=float(data.get("min_score", 0.0)),
-            timestamp=datetime.fromisoformat(data["timestamp"])
-            if isinstance(data.get("timestamp"), str)
-            else data.get("timestamp", datetime.now(timezone.utc)),
+            timestamp=datetime.fromisoformat(data["timestamp"]) if isinstance(data.get("timestamp"), str) else data.get("timestamp", datetime.now(timezone.utc)),
             context_tags=tuple(data.get("context_tags", [])),
         )
 
@@ -139,7 +133,7 @@ class RetrievalHit:
     source: RetrievalSource
     score: float
     snippet: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.hit_id.strip():
@@ -155,7 +149,7 @@ class RetrievalHit:
             MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({}),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "hit_id": self.hit_id,
             "object_id": self.object_id,
@@ -167,7 +161,7 @@ class RetrievalHit:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RetrievalHit":
+    def from_dict(cls, data: dict[str, Any]) -> RetrievalHit:
         return cls(
             hit_id=str(data["hit_id"]),
             object_id=str(data["object_id"]),
@@ -208,14 +202,12 @@ class RetrievalResult:
                 if self.hits[i].score < self.hits[i + 1].score:
                     raise ValueError("hits must be sorted by score descending")
         object.__setattr__(self, "query_id", self.query_id.strip())
-        object.__setattr__(
-            self, "explanation", self.explanation.strip() if self.explanation else ""
-        )
+        object.__setattr__(self, "explanation", self.explanation.strip() if self.explanation else "")
         object.__setattr__(self, "sources_queried", tuple(sorted(set(self.sources_queried))))
         object.__setattr__(self, "hits", tuple(self.hits))
         object.__setattr__(self, "total_hits", max(0, int(self.total_hits)))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "query_id": self.query_id,
             "hits": [h.to_dict() for h in self.hits],
@@ -226,7 +218,7 @@ class RetrievalResult:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RetrievalResult":
+    def from_dict(cls, data: dict[str, Any]) -> RetrievalResult:
         return cls(
             query_id=str(data["query_id"]),
             hits=tuple(RetrievalHit.from_dict(h) for h in data.get("hits", [])),
@@ -242,10 +234,7 @@ class RetrievalResult:
             return f"Query {self.query_id}: No results found."
         lines = [f"Query {self.query_id}: {len(self.hits)} result(s) found."]
         for i, hit in enumerate(self.hits[:5], 1):
-            lines.append(
-                f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:16]}...) "
-                f"score={hit.score:.4f}"
-            )
+            lines.append(f"  {i}. [{hit.source.value}] {hit.object_type}({hit.object_id[:16]}...) score={hit.score:.4f}")
         if len(self.hits) > 5:
             lines.append(f"  ... and {len(self.hits) - 5} more")
         return "\n".join(lines)
@@ -277,12 +266,10 @@ class RetrievalContext:
             raise ValueError("session_id must be non-empty")
         object.__setattr__(self, "session_id", self.session_id.strip())
         object.__setattr__(self, "queries", tuple(sorted(set(self.queries))))
-        object.__setattr__(
-            self, "all_hits", tuple(sorted(self.all_hits, key=lambda h: (-h.score, h.hit_id)))
-        )
+        object.__setattr__(self, "all_hits", tuple(sorted(self.all_hits, key=lambda h: (-h.score, h.hit_id))))
         object.__setattr__(self, "session_start", self.session_start)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "session_id": self.session_id,
             "queries": list(self.queries),
@@ -292,14 +279,12 @@ class RetrievalContext:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RetrievalContext":
+    def from_dict(cls, data: dict[str, Any]) -> RetrievalContext:
         return cls(
             session_id=str(data["session_id"]),
             queries=tuple(data.get("queries", [])),
             all_hits=tuple(RetrievalHit.from_dict(h) for h in data.get("all_hits", [])),
-            session_start=datetime.fromisoformat(data["session_start"])
-            if isinstance(data.get("session_start"), str)
-            else data.get("session_start", datetime.now(timezone.utc)),
+            session_start=datetime.fromisoformat(data["session_start"]) if isinstance(data.get("session_start"), str) else data.get("session_start", datetime.now(timezone.utc)),
             relevance_threshold=float(data.get("relevance_threshold", 0.3)),
         )
 

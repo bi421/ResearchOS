@@ -12,7 +12,6 @@ an observation is that evidence has been given meaning in context.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -81,11 +80,11 @@ class Evidence(BaseObject):
         quality_factor: float = 1.0,
         uncertainty: float = 0.0,
         tier: str = "Primary",
-        observation_timestamp: Optional[datetime] = None,
-        dependencies: Optional[List[str]] = None,
-        conflicts: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        observation_timestamp: datetime | None = None,
+        dependencies: list[str] | None = None,
+        conflicts: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Evidence|{observation_id}|{hypothesis_id}|{interpretation}"
@@ -110,8 +109,8 @@ class Evidence(BaseObject):
         # Computed properties
         self.tier = tier
         self.observation_timestamp = observation_timestamp or utc_now()
-        self.dependencies: List[str] = dependencies or []
-        self.conflicts: List[str] = conflicts or []
+        self.dependencies: list[str] = dependencies or []
+        self.conflicts: list[str] = conflicts or []
 
         # Compute deterministic quality and confidence (no time dependency)
         self.quality = self._compute_quality()
@@ -130,14 +129,7 @@ class Evidence(BaseObject):
         Quality = Source_Reliability × Recency × Relevance ×
                   Consensus × Structural_Importance × Quality_Factor
         """
-        quality = (
-            self.source_reliability
-            * self.recency
-            * self.relevance
-            * self.consensus
-            * self.structural_importance
-            * self.quality_factor
-        )
+        quality = self.source_reliability * self.recency * self.relevance * self.consensus * self.structural_importance * self.quality_factor
         return min(1.0, max(0.0, quality))
 
     def _compute_confidence(self) -> float:
@@ -148,12 +140,25 @@ class Evidence(BaseObject):
         """
         return self.quality * (1.0 - self.uncertainty)
 
-    def age_days(self, reference_time: Optional[datetime] = None) -> int:
+    VALID_DIRECTIONS = ("Supporting", "Contradicting", "Neutral")
+
+    def validate(self) -> bool:
+        """
+        Validate this evidence's direction.
+
+        Raises:
+            ValueError: If direction is not one of Supporting/Contradicting/Neutral.
+        """
+        if self.direction not in self.VALID_DIRECTIONS:
+            raise ValueError(f"Evidence direction must be one of {self.VALID_DIRECTIONS}, got {self.direction!r}")
+        return True
+
+    def age_days(self, reference_time: datetime | None = None) -> int:
         """Days since the observation was made."""
         ref = reference_time or utc_now()
         return days_between(self.observation_timestamp, ref)
 
-    def aging_multiplier(self, reference_time: Optional[datetime] = None) -> float:
+    def aging_multiplier(self, reference_time: datetime | None = None) -> float:
         """
         Compute the aging multiplier based on age.
 
@@ -176,7 +181,7 @@ class Evidence(BaseObject):
         else:
             return AGING_STALE_MULTIPLIER
 
-    def weight(self, reference_time: Optional[datetime] = None) -> float:
+    def weight(self, reference_time: datetime | None = None) -> float:
         """
         Compute the evidence weight.
 
@@ -242,7 +247,7 @@ class Evidence(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Evidence":
+    def from_dict(cls, data: dict) -> Evidence:
         obj = super().from_dict(data)
         obj.observation_id = data["observation_id"]
         obj.hypothesis_id = data["hypothesis_id"]
@@ -256,11 +261,7 @@ class Evidence(BaseObject):
         obj.quality_factor = data.get("quality_factor", 1.0)
         obj.uncertainty = data.get("uncertainty", 0.0)
         obj.tier = data.get("tier", "Primary")
-        obj.observation_timestamp = (
-            parse_timestamp(data["observation_timestamp"])
-            if data.get("observation_timestamp")
-            else None
-        )
+        obj.observation_timestamp = parse_timestamp(data["observation_timestamp"]) if data.get("observation_timestamp") else None
         obj.dependencies = list(data.get("dependencies", []))
         obj.conflicts = list(data.get("conflicts", []))
         obj.quality = data.get("quality", obj._compute_quality())
@@ -278,9 +279,9 @@ class EvidenceRegistry(BaseObject):
     def __init__(
         self,
         research_id: str,
-        evidence: Optional[List[Evidence]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        evidence: list[Evidence] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"EvidenceRegistry|{research_id}"
@@ -288,26 +289,24 @@ class EvidenceRegistry(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.research_id = research_id
-        self.evidence: List[Evidence] = evidence or []
-        self._evidence_ids: List[str] = []
+        self.evidence: list[Evidence] = evidence or []
+        self._evidence_ids: list[str] = []
 
-    def total_weight(self, reference_time: Optional[datetime] = None) -> float:
+    def total_weight(self, reference_time: datetime | None = None) -> float:
         return sum(e.weight(reference_time) for e in self.evidence)
 
-    def supporting_weight(self, reference_time: Optional[datetime] = None) -> float:
+    def supporting_weight(self, reference_time: datetime | None = None) -> float:
         return sum(e.weight(reference_time) for e in self.evidence if e.direction == "Supporting")
 
-    def contradicting_weight(self, reference_time: Optional[datetime] = None) -> float:
-        return sum(
-            e.weight(reference_time) for e in self.evidence if e.direction == "Contradicting"
-        )
+    def contradicting_weight(self, reference_time: datetime | None = None) -> float:
+        return sum(e.weight(reference_time) for e in self.evidence if e.direction == "Contradicting")
 
     def add_evidence(self, evidence: Evidence) -> None:
         """Add an evidence entry to the registry."""
         self.evidence.append(evidence)
         self._evidence_ids.append(evidence.id)
 
-    def get_by_direction(self, direction: str) -> List[Evidence]:
+    def get_by_direction(self, direction: str) -> list[Evidence]:
         """Get all evidence with a specific direction."""
         return [e for e in self.evidence if e.direction == direction]
 
@@ -321,11 +320,11 @@ class EvidenceRegistry(BaseObject):
         )
         return base
 
-    def _get_evidence_ids(self) -> List[str]:
+    def _get_evidence_ids(self) -> list[str]:
         return self._evidence_ids
 
     @classmethod
-    def from_dict(cls, data: dict) -> "EvidenceRegistry":
+    def from_dict(cls, data: dict) -> EvidenceRegistry:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.evidence = []
@@ -333,11 +332,11 @@ class EvidenceRegistry(BaseObject):
         return obj
 
     @property
-    def evidence_ids(self) -> List[str]:
+    def evidence_ids(self) -> list[str]:
         return self._get_evidence_ids()
 
     @evidence_ids.setter
-    def evidence_ids(self, value: List[str]) -> None:
+    def evidence_ids(self, value: list[str]) -> None:
         self._evidence_ids = value
 
     def _to_hashable_dict(self) -> dict:

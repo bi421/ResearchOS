@@ -1,4 +1,4 @@
-# ResearchOS v2 — Decision Layer Architecture
+# ResearchOS v2 â€” Decision Layer Architecture
 
 Version: v2.0
 Layer: 09 / 10

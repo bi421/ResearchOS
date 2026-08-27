@@ -30,7 +30,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.identity import deterministic_hash
 from researchos.evidence.envelope import (
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class EvidenceRepository:
     """Append-only evidence and lineage store over ``ResearchRepository``."""
 
-    def __init__(self, repository: Optional[ResearchRepository] = None) -> None:
+    def __init__(self, repository: ResearchRepository | None = None) -> None:
         self._repo = repository or ResearchRepository(db_path=":memory:")
 
     # ── public API ──────────────────────────────────────────────────────
@@ -63,9 +63,7 @@ class EvidenceRepository:
         """
         # Validate the envelope self-consistency before persisting.
         if not envelope.verify():
-            raise ValueError(
-                f"EvidenceEnvelope lineage_hash mismatch for artifact {envelope.artifact_hash}"
-            )
+            raise ValueError(f"EvidenceEnvelope lineage_hash mismatch for artifact {envelope.artifact_hash}")
         with self._repo._transaction() as cursor:
             cursor.execute(
                 """
@@ -104,19 +102,16 @@ class EvidenceRepository:
     ) -> None:
         """Record a single parent→child lineage edge (append-only)."""
         if relation not in LINEAGE_RELATIONS:
-            raise ValueError(
-                f"Unknown lineage relation '{relation}'. Expected one of {LINEAGE_RELATIONS}."
-            )
+            raise ValueError(f"Unknown lineage relation '{relation}'. Expected one of {LINEAGE_RELATIONS}.")
         with self._repo._transaction() as cursor:
             self._insert_edge(cursor, parent_hash, child_hash, relation)
 
-    def get_artifact(self, artifact_hash: str) -> Optional[EvidenceEnvelope]:
+    def get_artifact(self, artifact_hash: str) -> EvidenceEnvelope | None:
         """Retrieve an evidence envelope by artifact hash, or None."""
         conn = self._repo._get_conn()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT artifact_type, artifact_hash, version, created_at, payload, "
-            "parent_hashes, lineage_hash FROM evidence WHERE artifact_hash = ?",
+            "SELECT artifact_type, artifact_hash, version, created_at, payload, parent_hashes, lineage_hash FROM evidence WHERE artifact_hash = ?",
             (artifact_hash,),
         )
         row = cursor.fetchone()
@@ -132,7 +127,7 @@ class EvidenceRepository:
             lineage_hash=row[6],
         )
 
-    def get_children(self, artifact_hash: str) -> List[str]:
+    def get_children(self, artifact_hash: str) -> list[str]:
         """Return the child artifact hashes of the given artifact."""
         conn = self._repo._get_conn()
         cursor = conn.cursor()
@@ -142,7 +137,7 @@ class EvidenceRepository:
         )
         return [row[0] for row in cursor.fetchall()]
 
-    def get_parents(self, artifact_hash: str) -> List[str]:
+    def get_parents(self, artifact_hash: str) -> list[str]:
         """Return the parent artifact hashes of the given artifact."""
         conn = self._repo._get_conn()
         cursor = conn.cursor()
@@ -161,9 +156,7 @@ class EvidenceRepository:
         """
         conn = self._repo._get_conn()
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT artifact_type, version, payload, parent_hashes, lineage_hash FROM evidence"
-        )
+        cursor.execute("SELECT artifact_type, version, payload, parent_hashes, lineage_hash FROM evidence")
         for row in cursor.fetchall():
             artifact_type = row[0]
             version = row[1]
@@ -238,14 +231,14 @@ class _EnvelopeObject:
 
     __slots__ = ("_data",)
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         self._data = data
 
     @property
     def id(self) -> str:  # noqa: A003 - id attribute per object contract
         return self._data["artifact_hash"]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self._data)
 
 

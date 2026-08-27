@@ -192,9 +192,7 @@ class TestRouterDeterministicHash:
     def test_result_hash_changes_with_output(self):
         router = BackendRouter(candidates=[PythonQuantBackend()])
         base = router.execute("calculate_returns", {"prices": PRICES})
-        shifted = router.execute(
-            "calculate_returns", {"prices": [100.0, 101.0, 102.0, 103.0, 104.0, 106.0]}
-        )
+        shifted = router.execute("calculate_returns", {"prices": [100.0, 101.0, 102.0, 103.0, 104.0, 106.0]})
         assert base.metadata.result_hash != shifted.metadata.result_hash
 
     def test_result_hash_is_sha256(self):
@@ -307,9 +305,7 @@ class TestRouterVolatility:
 
     def test_volatility_fallback_on_shift(self):
         class _ShiftedVolatilityBackend(_ShiftedBackend):
-            def calculate_volatility(
-                self, returns, method="standard_deviation", calculation_version=V1
-            ):
+            def calculate_volatility(self, returns, method="standard_deviation", calculation_version=V1):
                 return super().calculate_volatility(returns, method, calculation_version) + 5.0
 
         router = BackendRouter(candidates=[_ShiftedVolatilityBackend()])

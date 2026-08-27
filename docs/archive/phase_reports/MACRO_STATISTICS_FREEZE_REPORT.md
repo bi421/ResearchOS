@@ -80,7 +80,7 @@ assert "mean" in stats
 # All functions have version information
 from macro_intelligence.statistics import descriptive
 
-assert hasattr(descriptive, '__version__')  # Or equivalent
+assert hasattr(descriptive, "__version__")  # Or equivalent
 ```
 
 **Status:** ✅ ENFORCED

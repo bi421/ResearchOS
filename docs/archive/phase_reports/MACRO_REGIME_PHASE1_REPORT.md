@@ -160,8 +160,8 @@ The `IntegrityCheck` dataclass has fields without defaults following fields with
 ```python
 # Problematic ordering:
 revision_id: Optional[str] = None  # Has default
-level: IntegrityLevel              # No default (BLOCKS IMPORT)
-passed: bool                        # No default (BLOCKS IMPORT)
+level: IntegrityLevel  # No default (BLOCKS IMPORT)
+passed: bool  # No default (BLOCKS IMPORT)
 ```
 
 **Impact:** All imports from `macro_intelligence.revision_provenance` fail, which blocks regime module imports.
@@ -211,7 +211,7 @@ class IntegrityCheck:
     checks_performed: list[str]
     checks_passed: list[str]
     checks_failed: list[str]
-    
+
     # Optional fields last (with defaults)
     error_details: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

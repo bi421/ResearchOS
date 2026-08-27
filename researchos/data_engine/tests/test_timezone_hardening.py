@@ -150,9 +150,7 @@ class TestCuratedDataRegression(unittest.TestCase):
             self.skipTest("curated XAUUSD D1 file not present locally")
 
         default_load = CsvLoader().load_mt5_candles(self.CURATED, symbol="XAUUSD", timeframe="1d")
-        utc_load = CsvLoader().load_mt5_candles(
-            self.CURATED, symbol="XAUUSD", timeframe="1d", timezone="UTC"
-        )
+        utc_load = CsvLoader().load_mt5_candles(self.CURATED, symbol="XAUUSD", timeframe="1d", timezone="UTC")
         self.assertEqual(
             deterministic_hash([c.to_dict() for c in default_load]),
             deterministic_hash([c.to_dict() for c in utc_load]),

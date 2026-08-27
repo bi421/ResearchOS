@@ -218,10 +218,7 @@ class TestDatasetStatisticsRecordTypes:
         assert stats.duplicate_count == 0
 
     def test_tick_average_volume(self):
-        ticks = [
-            Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i), price=2000.0, volume=2.0)
-            for i in range(3)
-        ]
+        ticks = [Tick(symbol="XAU/USD", timestamp=BASE + timedelta(seconds=i), price=2000.0, volume=2.0) for i in range(3)]
         ds = HistoricalDataset(symbol="XAU/USD", timeframe="tick", records=ticks)
         stats = compute_dataset_statistics(ds)
         assert stats.average_volume == pytest.approx(2.0, abs=0.001)

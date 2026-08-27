@@ -14,7 +14,7 @@ Every attribution is deterministic, immutable, and fully auditable.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -60,16 +60,16 @@ class Attribution(BaseObject):
         self,
         conclusion_id: str,
         conclusion_type: str,
-        reasoning_path: Optional[List[str]] = None,
-        reasoning_object_ids: Optional[List[str]] = None,
-        evidence_ids: Optional[List[str]] = None,
-        observation_ids: Optional[List[str]] = None,
+        reasoning_path: list[str] | None = None,
+        reasoning_object_ids: list[str] | None = None,
+        evidence_ids: list[str] | None = None,
+        observation_ids: list[str] | None = None,
         confidence: float = 0.0,
         attribution_trace: str = "",
-        market_memory_ids: Optional[List[str]] = None,
+        market_memory_ids: list[str] | None = None,
         status: str = "Pending",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Attribution|{conclusion_id}|{conclusion_type}|{attribution_trace[:100]}"
@@ -79,13 +79,13 @@ class Attribution(BaseObject):
 
         self.conclusion_id = conclusion_id
         self.conclusion_type = conclusion_type
-        self.reasoning_path: List[str] = reasoning_path or []
-        self.reasoning_object_ids: List[str] = reasoning_object_ids or []
-        self.evidence_ids: List[str] = evidence_ids or []
-        self.observation_ids: List[str] = observation_ids or []
+        self.reasoning_path: list[str] = reasoning_path or []
+        self.reasoning_object_ids: list[str] = reasoning_object_ids or []
+        self.evidence_ids: list[str] = evidence_ids or []
+        self.observation_ids: list[str] = observation_ids or []
         self.confidence = confidence
         self.attribution_trace = attribution_trace
-        self.market_memory_ids: List[str] = market_memory_ids or []
+        self.market_memory_ids: list[str] = market_memory_ids or []
         self.status = status
 
         self.lifecycle.transition(
@@ -118,7 +118,7 @@ class Attribution(BaseObject):
                 reason=f"Market memory link added: {memory_id[:8]}...",
             )
 
-    def verify_integrity(self, available_ids: set) -> Dict[str, Any]:
+    def verify_integrity(self, available_ids: set) -> dict[str, Any]:
         """Verify that all referenced objects exist.
 
         Args:
@@ -128,13 +128,7 @@ class Attribution(BaseObject):
             Dict with keys: complete (bool), missing_references (list),
             status (str).
         """
-        all_refs = (
-            [self.conclusion_id]
-            + self.reasoning_object_ids
-            + self.evidence_ids
-            + self.observation_ids
-            + self.market_memory_ids
-        )
+        all_refs = [self.conclusion_id] + self.reasoning_object_ids + self.evidence_ids + self.observation_ids + self.market_memory_ids
         missing = [rid for rid in all_refs if rid not in available_ids]
 
         ref_ratio = 1.0 - (len(missing) / max(len(all_refs), 1))
@@ -186,7 +180,7 @@ class Attribution(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Attribution":
+    def from_dict(cls, data: dict) -> Attribution:
         obj = super().from_dict(data)
         obj.conclusion_id = data["conclusion_id"]
         obj.conclusion_type = data["conclusion_type"]
@@ -218,9 +212,9 @@ class AttributionGraph(BaseObject):
     def __init__(
         self,
         research_id: str,
-        attributions: Optional[List[Attribution]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        attributions: list[Attribution] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"AttributionGraph|{research_id}"
@@ -228,8 +222,8 @@ class AttributionGraph(BaseObject):
 
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.research_id = research_id
-        self.attributions: List[Attribution] = attributions or []
-        self._attribution_ids: List[str] = []
+        self.attributions: list[Attribution] = attributions or []
+        self._attribution_ids: list[str] = []
 
     @property
     def total_attributions(self) -> int:
@@ -257,18 +251,18 @@ class AttributionGraph(BaseObject):
         """Add an attribution to the graph."""
         self.attributions.append(attribution)
 
-    def get_by_conclusion(self, conclusion_id: str) -> Optional[Attribution]:
+    def get_by_conclusion(self, conclusion_id: str) -> Attribution | None:
         """Get attribution for a specific conclusion."""
         for a in self.attributions:
             if a.conclusion_id == conclusion_id:
                 return a
         return None
 
-    def get_by_type(self, conclusion_type: str) -> List[Attribution]:
+    def get_by_type(self, conclusion_type: str) -> list[Attribution]:
         """Get all attributions for a specific conclusion type."""
         return [a for a in self.attributions if a.conclusion_type == conclusion_type]
 
-    def verify_all(self, available_ids: set) -> List[Dict[str, Any]]:
+    def verify_all(self, available_ids: set) -> list[dict[str, Any]]:
         """Verify integrity of all attributions in the graph.
 
         Args:
@@ -280,13 +274,13 @@ class AttributionGraph(BaseObject):
         return [a.verify_integrity(available_ids) for a in self.attributions]
 
     @property
-    def attribution_ids(self) -> List[str]:
+    def attribution_ids(self) -> list[str]:
         if self.attributions:
             return [a.id for a in self.attributions]
         return self._attribution_ids
 
     @attribution_ids.setter
-    def attribution_ids(self, value: List[str]) -> None:
+    def attribution_ids(self, value: list[str]) -> None:
         self._attribution_ids = value
 
     def to_dict(self) -> dict:
@@ -300,7 +294,7 @@ class AttributionGraph(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AttributionGraph":
+    def from_dict(cls, data: dict) -> AttributionGraph:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.attributions = []

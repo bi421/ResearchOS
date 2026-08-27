@@ -473,9 +473,7 @@ class TestEvidenceEdgeSerialization(unittest.TestCase):
         )
 
     def test_from_dict_reconstructs_relationship(self):
-        edge = EvidenceEdge.from_dict(
-            {"edge_id": "e", "source_id": "a", "target_id": "b", "relationship": "VALIDATED_BY"}
-        )
+        edge = EvidenceEdge.from_dict({"edge_id": "e", "source_id": "a", "target_id": "b", "relationship": "VALIDATED_BY"})
         self.assertIs(edge.relationship, Relationship.VALIDATED_BY)
 
     def test_serialization_deterministic(self):
@@ -664,9 +662,7 @@ class TestEvidenceGraphNeighbors(unittest.TestCase):
         for i in range(5):
             graph.add_node(make_node(f"leaf{i}"))
             graph.add_edge(make_edge(f"e{i}", "hub", f"leaf{i}"))
-        self.assertEqual(
-            graph.neighbors("hub"), tuple(sorted(["leaf0", "leaf1", "leaf2", "leaf3", "leaf4"]))
-        )
+        self.assertEqual(graph.neighbors("hub"), tuple(sorted(["leaf0", "leaf1", "leaf2", "leaf3", "leaf4"])))
 
     def test_neighbors_isolated_node_empty(self):
         graph = EvidenceGraph()
@@ -1094,7 +1090,7 @@ class TestEvidenceGraphStoreSaveLoad(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "graph.json")
             EvidenceGraphStore(path).save(make_graph())
-            with open(path, "r", encoding="utf-8") as handle:
+            with open(path, encoding="utf-8") as handle:
                 json.load(handle)
 
     def test_load_preserves_metadata(self):
@@ -1114,7 +1110,7 @@ class TestEvidenceGraphStoreDeterminism(unittest.TestCase):
             p2 = os.path.join(tmp, "b.json")
             EvidenceGraphStore(p1).save(make_graph())
             EvidenceGraphStore(p2).save(make_graph())
-            with open(p1, "r", encoding="utf-8") as f1, open(p2, "r", encoding="utf-8") as f2:
+            with open(p1, encoding="utf-8") as f1, open(p2, encoding="utf-8") as f2:
                 self.assertEqual(f1.read(), f2.read())
 
     def test_serialize_deserialize_repeatable(self):

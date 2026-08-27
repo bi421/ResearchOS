@@ -196,10 +196,7 @@ class TestCsvLoaderMt5:
 
     def test_mt5_detect_format(self):
         loader = CsvLoader()
-        assert (
-            loader.detect_format(["Date", "Time", "Open", "High", "Low", "Close", "Volume"])
-            == "mt5"
-        )
+        assert loader.detect_format(["Date", "Time", "Open", "High", "Low", "Close", "Volume"]) == "mt5"
 
 
 class TestCsvLoaderTradingView:
@@ -229,15 +226,11 @@ class TestCsvLoaderTradingView:
     def test_tradingview_keep_duplicates(self):
         dup_csv = TRADINGVIEW_CSV + "\n1704096000,2000.0,2010.0,1995.0,2005.0,1000.0"
         loader = CsvLoader()
-        candles = loader.load_tradingview_candles_from_text(
-            dup_csv, "XAU/USD", remove_duplicates=False
-        )
+        candles = loader.load_tradingview_candles_from_text(dup_csv, "XAU/USD", remove_duplicates=False)
         assert len(candles) == 4
 
     def test_tradingview_symbol_column(self):
-        csv_text = "time,symbol,open,high,low,close,volume\n" + "\n".join(
-            f"{t},XAU/USD,2000.0,2010.0,1995.0,2005.0,1000.0" for t in (1704096000, 1704099600)
-        )
+        csv_text = "time,symbol,open,high,low,close,volume\n" + "\n".join(f"{t},XAU/USD,2000.0,2010.0,1995.0,2005.0,1000.0" for t in (1704096000, 1704099600))
         loader = CsvLoader()
         candles = loader.load_tradingview_candles_from_text(csv_text, "XAU/USD")
         assert all(c.symbol == "XAU/USD" for c in candles)
@@ -274,10 +267,7 @@ class TestCsvLoaderAuto:
 
     def test_detect_format_generic(self):
         loader = CsvLoader()
-        assert (
-            loader.detect_format(["timestamp", "open", "high", "low", "close", "volume"])
-            == "generic"
-        )
+        assert loader.detect_format(["timestamp", "open", "high", "low", "close", "volume"]) == "generic"
 
     def test_detect_columns_aliases(self):
         loader = CsvLoader()
@@ -548,18 +538,14 @@ class TestEndToEndDeterminism:
     def test_duplicate_detection_after_tradingview_load(self):
         dup_csv = TRADINGVIEW_CSV + "\n1704096000,2000.0,2010.0,1995.0,2005.0,1000.0"
         loader = CsvLoader()
-        candles = loader.load_tradingview_candles_from_text(
-            dup_csv, "XAU/USD", remove_duplicates=False
-        )
+        candles = loader.load_tradingview_candles_from_text(dup_csv, "XAU/USD", remove_duplicates=False)
         detector = DuplicateDetector()
         assert len(detector.detect(candles)) == 1
 
     def test_gap_detection_after_load(self):
         loader = CsvLoader()
         candles = loader.load_mt5_candles_from_text(
-            "Date,Time,Open,High,Low,Close,Volume\n"
-            "2024.01.01,09:00,2000,2010,1995,2005,1000\n"
-            "2024.01.01,14:00,2010,2020,2005,2015,1000\n",
+            "Date,Time,Open,High,Low,Close,Volume\n2024.01.01,09:00,2000,2010,1995,2005,1000\n2024.01.01,14:00,2010,2020,2005,2015,1000\n",
             "XAU/USD",
             timeframe="1h",
             timezone="UTC",

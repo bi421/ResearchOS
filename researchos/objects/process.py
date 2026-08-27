@@ -11,7 +11,7 @@ and provide an immutable audit trail for all system actions.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -44,12 +44,12 @@ class ResearchCycle(BaseObject):
     def __init__(
         self,
         research_id: str,
-        stages: Optional[List[Dict[str, Any]]] = None,
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
-        quality_metrics: Optional[List[Dict[str, Any]]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        stages: list[dict[str, Any]] | None = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
+        quality_metrics: list[dict[str, Any]] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ResearchCycle|{research_id}"
@@ -59,12 +59,12 @@ class ResearchCycle(BaseObject):
 
         self.research_id = research_id
         self.start_time = utc_now()
-        self.end_time: Optional[datetime] = None
-        self.stages: List[Dict[str, Any]] = stages or []
+        self.end_time: datetime | None = None
+        self.stages: list[dict[str, Any]] = stages or []
         self.duration: float = 0.0
-        self.inputs: List[str] = inputs or []
-        self.outputs: List[str] = outputs or []
-        self.quality_metrics: List[Dict[str, Any]] = quality_metrics or []
+        self.inputs: list[str] = inputs or []
+        self.outputs: list[str] = outputs or []
+        self.quality_metrics: list[dict[str, Any]] = quality_metrics or []
         self.cycle_hash: str = ""
 
         self.lifecycle.transition(
@@ -77,7 +77,7 @@ class ResearchCycle(BaseObject):
         name: str,
         duration_seconds: float,
         status: str = "Complete",
-        metrics: Optional[Dict[str, Any]] = None,
+        metrics: dict[str, Any] | None = None,
     ) -> None:
         """Add a stage record to the cycle."""
         stage = {
@@ -139,7 +139,7 @@ class ResearchCycle(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ResearchCycle":
+    def from_dict(cls, data: dict) -> ResearchCycle:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.start_time = parse_timestamp(data["start_time"])
@@ -178,15 +178,15 @@ class ReasoningChain(BaseObject):
     def __init__(
         self,
         research_id: str,
-        steps: Optional[List[Dict[str, Any]]] = None,
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
-        rules_applied: Optional[List[str]] = None,
-        evidence_used: Optional[List[str]] = None,
+        steps: list[dict[str, Any]] | None = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
+        rules_applied: list[str] | None = None,
+        evidence_used: list[str] | None = None,
         confidence: float = 0.0,
         trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"ReasoningChain|{research_id}"
@@ -195,12 +195,12 @@ class ReasoningChain(BaseObject):
         super().__init__(id=id, ontology_tags=ontology_tags)
 
         self.research_id = research_id
-        self.initial_inputs: List[str] = list(inputs or [])
-        self.steps: List[Dict[str, Any]] = steps or []
-        self.inputs: List[str] = list(inputs or [])
-        self.outputs: List[str] = outputs or []
-        self.rules_applied: List[str] = rules_applied or []
-        self.evidence_used: List[str] = evidence_used or []
+        self.initial_inputs: list[str] = list(inputs or [])
+        self.steps: list[dict[str, Any]] = steps or []
+        self.inputs: list[str] = list(inputs or [])
+        self.outputs: list[str] = outputs or []
+        self.rules_applied: list[str] = rules_applied or []
+        self.evidence_used: list[str] = evidence_used or []
         self.confidence = confidence
         self.trace = trace
         self.chain_hash: str = ""
@@ -213,8 +213,8 @@ class ReasoningChain(BaseObject):
     def add_step(
         self,
         rule: str,
-        inputs: List[str],
-        outputs: List[str],
+        inputs: list[str],
+        outputs: list[str],
         description: str = "",
     ) -> None:
         """Add a reasoning step to the chain."""
@@ -229,9 +229,7 @@ class ReasoningChain(BaseObject):
         self.rules_applied.append(rule)
         self.inputs.extend(i for i in inputs if i not in self.inputs)
         self.outputs.extend(o for o in outputs if o not in self.outputs)
-        self.evidence_used.extend(
-            i for i in inputs if i not in self.evidence_used and i.startswith("ev_")
-        )
+        self.evidence_used.extend(i for i in inputs if i not in self.evidence_used and i.startswith("ev_"))
 
     def verify(self) -> bool:
         """
@@ -260,10 +258,7 @@ class ReasoningChain(BaseObject):
                 return False
             available.update(step["outputs"])
 
-        self.trace = (
-            f"Chain verified: {len(self.steps)} steps, "
-            f"{len(self.initial_inputs)} inputs, {len(available)} outputs"
-        )
+        self.trace = f"Chain verified: {len(self.steps)} steps, {len(self.initial_inputs)} inputs, {len(available)} outputs"
         content = self._to_hashable_dict()
         self.chain_hash = deterministic_hash(content)
         self.lifecycle.transition(
@@ -303,7 +298,7 @@ class ReasoningChain(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ReasoningChain":
+    def from_dict(cls, data: dict) -> ReasoningChain:
         obj = super().from_dict(data)
         obj.research_id = data["research_id"]
         obj.initial_inputs = list(data.get("initial_inputs", data.get("inputs", [])))
@@ -347,12 +342,12 @@ class AuditEntry(BaseObject):
         action: str,
         object_id: str,
         object_type: str,
-        before_state: Optional[str] = None,
-        after_state: Optional[str] = None,
-        reasoning_chain_id: Optional[str] = None,
-        previous_entry: Optional[str] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        before_state: str | None = None,
+        after_state: str | None = None,
+        reasoning_chain_id: str | None = None,
+        previous_entry: str | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"AuditEntry|{actor}|{action}|{object_id}|{object_type}"
@@ -426,7 +421,7 @@ class AuditEntry(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AuditEntry":
+    def from_dict(cls, data: dict) -> AuditEntry:
         obj = super().from_dict(data)
         obj.timestamp = parse_timestamp(data["timestamp"])
         obj.actor = data["actor"]

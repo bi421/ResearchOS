@@ -413,9 +413,7 @@ class TestLabelBuilder(unittest.TestCase):
         self.assertEqual(result.metadata["threshold"], 0.01)
 
     def test_build_triple_barrier(self):
-        result = LabelBuilder(self.close).build_triple_barrier(
-            take_profit=0.02, stop_loss=0.02, max_horizon=5
-        )
+        result = LabelBuilder(self.close).build_triple_barrier(take_profit=0.02, stop_loss=0.02, max_horizon=5)
         self.assertEqual(result.name, "triple_barrier")
         self.assertEqual(result.metadata["max_horizon"], 5)
 
@@ -450,9 +448,7 @@ class TestLabelBuilder(unittest.TestCase):
             self.assertEqual(r1[name].values, r2[name].values)
 
     def test_build_all_metadata(self):
-        result = LabelBuilder(self.close).build_all(
-            horizon=2, threshold=0.01, take_profit=0.02, stop_loss=0.03, max_horizon=4
-        )
+        result = LabelBuilder(self.close).build_all(horizon=2, threshold=0.01, take_profit=0.02, stop_loss=0.03, max_horizon=4)
         self.assertEqual(result["multiclass"].metadata["threshold"], 0.01)
         self.assertEqual(result["triple_barrier"].metadata["take_profit"], 0.02)
         self.assertEqual(result["triple_barrier"].metadata["stop_loss"], 0.03)

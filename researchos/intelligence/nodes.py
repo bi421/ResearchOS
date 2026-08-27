@@ -11,10 +11,11 @@ signals, or executable behavior — they are structured research knowledge.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Dict, Mapping
+from typing import Any
 
 from researchos.intelligence.contracts import EvidenceError
 
@@ -31,7 +32,7 @@ class NodeType(str, Enum):
     RESULT = "result"
 
     @classmethod
-    def from_string(cls, value: str) -> "NodeType":
+    def from_string(cls, value: str) -> NodeType:
         """Parse a node type from a string, case-insensitive."""
         mapping = {
             "dataset": cls.DATASET,
@@ -46,9 +47,7 @@ class NodeType(str, Enum):
         }
         normalized = str(value).lower().strip()
         if normalized not in mapping:
-            raise ValueError(
-                f"Unknown node type {value!r}. Valid options: {[t.value for t in cls]}"
-            )
+            raise ValueError(f"Unknown node type {value!r}. Valid options: {[t.value for t in cls]}")
         return mapping[normalized]
 
     def matches(self, node_type: str) -> bool:
@@ -104,9 +103,7 @@ class EvidenceNode:
         object.__setattr__(self, "node_id", _validate_identifier(self.node_id, "node_id"))
         if not isinstance(self.node_type, NodeType):
             raise EvidenceError("node_type must be a NodeType")
-        object.__setattr__(
-            self, "reference_id", _validate_identifier(self.reference_id, "reference_id")
-        )
+        object.__setattr__(self, "reference_id", _validate_identifier(self.reference_id, "reference_id"))
         object.__setattr__(self, "metadata", _as_immutable_mapping(self.metadata))
         object.__setattr__(self, "created_at", str(self.created_at))
 
@@ -121,7 +118,7 @@ class EvidenceNode:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a deterministic, JSON-compatible dictionary."""
         return {
             "node_id": self.node_id,
@@ -132,7 +129,7 @@ class EvidenceNode:
         }
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> "EvidenceNode":
+    def from_dict(cls, data: Mapping[str, Any]) -> EvidenceNode:
         """Reconstruct an ``EvidenceNode`` from a ``to_dict()`` mapping."""
         return cls(
             node_id=str(data["node_id"]),

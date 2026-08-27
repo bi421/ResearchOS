@@ -17,7 +17,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from typing import Any, Dict, List, Mapping, Tuple
+from collections.abc import Mapping
+from typing import Any
 
 from researchos.orchestration.contracts import PipelineReport, PipelineStatus
 from researchos.pipeline_repository.contracts import (
@@ -89,7 +90,7 @@ def _compute_stability(report: PipelineReport) -> float:
     validation = report.validation
     if validation.fold_count == 0 or not validation.fold_results:
         return 0.5
-    all_metric_values: List[float] = []
+    all_metric_values: list[float] = []
     for fold in validation.fold_results:
         for metric_name, metric_value in fold.metrics.items():
             if isinstance(metric_value, (int, float)) and math.isfinite(metric_value):
@@ -126,9 +127,7 @@ def _compute_evidence(report: PipelineReport) -> float:
         score += 0.1
     training = report.training
     if training.metrics:
-        valid_metrics = sum(
-            1 for v in training.metrics.values() if isinstance(v, (int, float)) and math.isfinite(v)
-        )
+        valid_metrics = sum(1 for v in training.metrics.values() if isinstance(v, (int, float)) and math.isfinite(v))
         metric_quality = min(1.0, valid_metrics / max(1, len(training.metrics)))
         score += 0.3 * metric_quality
     if report.dataset_hash and len(report.dataset_hash) > 0:
@@ -242,13 +241,13 @@ class ResearchEvaluator:
         *,
         created_at: str = "",
         metadata: Mapping[str, Any] = None,
-    ) -> Tuple[EvaluationReport, ...]:
+    ) -> tuple[EvaluationReport, ...]:
         """Evaluate all pipelines in the repository.
 
         Returns:
             Reports sorted deterministically by ``evaluation_id``.
         """
-        reports: List[EvaluationReport] = []
+        reports: list[EvaluationReport] = []
         for record in self._repository.list():
             reports.append(
                 self.evaluate(
@@ -268,7 +267,7 @@ class ResearchEvaluator:
     def compare(
         evaluation_a: EvaluationReport,
         evaluation_b: EvaluationReport,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Deterministic comparison of two evaluation reports.
 
         Returns a dictionary with:
@@ -286,9 +285,7 @@ class ResearchEvaluator:
             raise PipelineEvaluationError("evaluation_b must be an EvaluationReport")
 
         delta_overall = evaluation_a.score.overall_score - evaluation_b.score.overall_score
-        delta_repro = (
-            evaluation_a.score.reproducibility_score - evaluation_b.score.reproducibility_score
-        )
+        delta_repro = evaluation_a.score.reproducibility_score - evaluation_b.score.reproducibility_score
         delta_stab = evaluation_a.score.stability_score - evaluation_b.score.stability_score
         delta_evid = evaluation_a.score.evidence_score - evaluation_b.score.evidence_score
 

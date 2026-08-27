@@ -25,8 +25,10 @@ Anything else is an error.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from researchos.core.timestamp import parse_timestamp as _parse_timestamp_core
 
 
 class TimezoneResolutionError(ValueError):
@@ -40,7 +42,7 @@ class TimezoneResolutionError(ValueError):
 
 
 # Common timezone offsets (minutes from UTC)
-_COMMON_OFFSETS: Dict[str, int] = {
+_COMMON_OFFSETS: dict[str, int] = {
     "UTC": 0,
     "GMT": 0,
     "EST": -300,
@@ -180,7 +182,7 @@ def parse_iso(value: str) -> datetime:
     Returns:
         Timezone-aware datetime in UTC.
     """
-    dt = datetime.fromisoformat(value)
+    dt = _parse_timestamp_core(value)
     return normalize_timestamp(dt)
 
 
@@ -202,12 +204,7 @@ def _resolve_zone(timezone_name: str):
     try:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError):
-        raise TimezoneResolutionError(
-            f"Unknown IANA timezone: {timezone_name!r}. Timezone names "
-            "must be a known abbreviation (e.g. 'EST'), a numeric "
-            "offset (e.g. '+05:30'), or a valid IANA zone "
-            "(e.g. 'America/New_York'). Never silently treated as UTC."
-        ) from None
+        raise TimezoneResolutionError(f"Unknown IANA timezone: {timezone_name!r}. Timezone names must be a known abbreviation (e.g. 'EST'), a numeric offset (e.g. '+05:30'), or a valid IANA zone (e.g. 'America/New_York'). Never silently treated as UTC.") from None
 
 
 def _get_offset(timezone_name: str) -> int:
@@ -238,23 +235,13 @@ def _get_offset(timezone_name: str) -> int:
             hours = int(parts[0])
             minutes = int(parts[1]) if len(parts) > 1 else 0
             if not (0 <= minutes < 60):
-                raise TimezoneResolutionError(
-                    f"Invalid timezone offset minutes in {timezone_name!r} "
-                    "(minutes must be in [0, 60))."
-                )
+                raise TimezoneResolutionError(f"Invalid timezone offset minutes in {timezone_name!r} (minutes must be in [0, 60)).")
             if hours < 0:
                 return hours * 60 - minutes
             if hours > 0:
                 return hours * 60 + minutes
             return -minutes if stripped.startswith("-") else minutes
         except ValueError as exc:
-            raise TimezoneResolutionError(
-                f"Invalid numeric timezone offset: {timezone_name!r} ({exc})."
-            ) from None
+            raise TimezoneResolutionError(f"Invalid numeric timezone offset: {timezone_name!r} ({exc}).") from None
 
-    raise TimezoneResolutionError(
-        f"Unknown timezone: {timezone_name!r}. Must be a known "
-        "abbreviation (e.g. 'EST'), a numeric offset (e.g. '+05:30'), "
-        "or a valid IANA zone (e.g. 'America/New_York'). Never "
-        "silently treated as UTC."
-    )
+    raise TimezoneResolutionError(f"Unknown timezone: {timezone_name!r}. Must be a known abbreviation (e.g. 'EST'), a numeric offset (e.g. '+05:30'), or a valid IANA zone (e.g. 'America/New_York'). Never silently treated as UTC.")

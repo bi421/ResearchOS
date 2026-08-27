@@ -11,7 +11,6 @@ bias profile, and learning progress over time.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -55,15 +54,15 @@ class Bias(BaseObject):
         trader_id: str,
         decision_id: str = "",
         description: str = "",
-        evidence: Optional[List[str]] = None,
+        evidence: list[str] | None = None,
         frequency: float = 0.0,
         trend: float = 0.0,
-        first_detected: Optional[datetime] = None,
-        last_detected: Optional[datetime] = None,
+        first_detected: datetime | None = None,
+        last_detected: datetime | None = None,
         severity: float = 0.0,
         bias_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"Bias|{type}|{trader_id}|{decision_id}"
@@ -75,7 +74,7 @@ class Bias(BaseObject):
         self.trader_id = trader_id
         self.decision_id = decision_id
         self.description = description
-        self.evidence: List[str] = evidence or []
+        self.evidence: list[str] = evidence or []
         self.frequency = frequency
         self.trend = trend
         self.first_detected = first_detected or utc_now()
@@ -140,7 +139,7 @@ class Bias(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Bias":
+    def from_dict(cls, data: dict) -> Bias:
         obj = super().from_dict(data)
         obj.type = data["type"]
         obj.trader_id = data["trader_id"]
@@ -149,12 +148,8 @@ class Bias(BaseObject):
         obj.evidence = list(data.get("evidence", []))
         obj.frequency = data.get("frequency", 0.0)
         obj.trend = data.get("trend", 0.0)
-        obj.first_detected = (
-            parse_timestamp(data["first_detected"]) if data.get("first_detected") else None
-        )
-        obj.last_detected = (
-            parse_timestamp(data["last_detected"]) if data.get("last_detected") else None
-        )
+        obj.first_detected = parse_timestamp(data["first_detected"]) if data.get("first_detected") else None
+        obj.last_detected = parse_timestamp(data["last_detected"]) if data.get("last_detected") else None
         obj.severity = data.get("severity", 0.0)
         obj.bias_trace = data.get("bias_trace", "")
         return obj
@@ -195,10 +190,10 @@ class LearningRecord(BaseObject):
         progress: float = 0.0,
         trend: float = 0.0,
         trajectory: str = "Steady",
-        recommendations: Optional[List[str]] = None,
+        recommendations: list[str] | None = None,
         learning_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"LearningRecord|{trader_id}|{dimension}"
@@ -213,7 +208,7 @@ class LearningRecord(BaseObject):
         self.progress = round(progress, 10)
         self.trend = trend
         self.trajectory = trajectory
-        self.recommendations: List[str] = recommendations or []
+        self.recommendations: list[str] = recommendations or []
         self.learning_trace = learning_trace
 
         self.lifecycle.transition(
@@ -226,7 +221,7 @@ class LearningRecord(BaseObject):
         score: float,
         trend: float,
         trajectory: str,
-        recommendations: Optional[List[str]] = None,
+        recommendations: list[str] | None = None,
     ) -> None:
         """Update the learning record with new metrics."""
         self.score = score
@@ -272,7 +267,7 @@ class LearningRecord(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "LearningRecord":
+    def from_dict(cls, data: dict) -> LearningRecord:
         obj = super().from_dict(data)
         obj.trader_id = data["trader_id"]
         obj.dimension = data["dimension"]
@@ -317,16 +312,16 @@ class CognitiveAssessment(BaseObject):
         research_id: str = "",
         knowledge_score: float = 0.0,
         reasoning_score: float = 0.0,
-        bias_profile: Optional[List[str]] = None,
+        bias_profile: list[str] | None = None,
         discipline_score: float = 0.0,
         reflection_score: float = 0.0,
         learning_progress: float = 0.0,
         overall_score: float = 0.0,
-        feedback: Optional[List[str]] = None,
-        recommendations: Optional[List[str]] = None,
+        feedback: list[str] | None = None,
+        recommendations: list[str] | None = None,
         assessment_trace: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"CognitiveAssessment|{trader_id}|{research_id}"
@@ -338,13 +333,13 @@ class CognitiveAssessment(BaseObject):
         self.research_id = research_id
         self.knowledge_score = knowledge_score
         self.reasoning_score = reasoning_score
-        self.bias_profile: List[str] = bias_profile or []
+        self.bias_profile: list[str] = bias_profile or []
         self.discipline_score = discipline_score
         self.reflection_score = reflection_score
         self.learning_progress = learning_progress
         self.overall_score = overall_score
-        self.feedback: List[str] = feedback or []
-        self.recommendations: List[str] = recommendations or []
+        self.feedback: list[str] = feedback or []
+        self.recommendations: list[str] = recommendations or []
         self.assessment_trace = assessment_trace
 
         self.lifecycle.transition(
@@ -361,14 +356,7 @@ class CognitiveAssessment(BaseObject):
                   Reflection × 0.15 + Learning_Progress × 0.15
         """
         bias_penalty = min(0.5, len(self.bias_profile) * 0.05)
-        overall = (
-            self.knowledge_score * 0.25
-            + self.reasoning_score * 0.25
-            + (1.0 - bias_penalty) * 0.10
-            + self.discipline_score * 0.15
-            + self.reflection_score * 0.15
-            + self.learning_progress * 0.10
-        )
+        overall = self.knowledge_score * 0.25 + self.reasoning_score * 0.25 + (1.0 - bias_penalty) * 0.10 + self.discipline_score * 0.15 + self.reflection_score * 0.15 + self.learning_progress * 0.10
         self.overall_score = min(1.0, max(0.0, overall))
         return self.overall_score
 
@@ -418,7 +406,7 @@ class CognitiveAssessment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CognitiveAssessment":
+    def from_dict(cls, data: dict) -> CognitiveAssessment:
         obj = super().from_dict(data)
         obj.trader_id = data["trader_id"]
         obj.research_id = data.get("research_id", "")

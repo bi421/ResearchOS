@@ -22,7 +22,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, List, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 from researchos.quant_engine.machine_learning.dataset_builder import DatasetBuilder
 from researchos.quant_engine.machine_learning.dataset_contracts import (
@@ -59,10 +60,10 @@ from .contracts import (
 
 
 def _make_pipeline_id(
-    close: List[float],
-    high: List[float],
-    low: List[float],
-    volume: List[float],
+    close: list[float],
+    high: list[float],
+    low: list[float],
+    volume: list[float],
     model_id: str,
     train_size: int,
     validation_size: int,
@@ -129,9 +130,9 @@ class ResearchOrchestrator:
 
     def __init__(
         self,
-        dataset_builder: Optional[DatasetBuilder] = None,
-        validator: Optional[WalkForwardValidator] = None,
-        trainer: Optional[Trainer] = None,
+        dataset_builder: DatasetBuilder | None = None,
+        validator: WalkForwardValidator | None = None,
+        trainer: Trainer | None = None,
     ) -> None:
         self._dataset_builder = dataset_builder
         self._validator = validator
@@ -143,10 +144,10 @@ class ResearchOrchestrator:
 
     def build_dataset(
         self,
-        close: List[float],
-        high: List[float],
-        low: List[float],
-        volume: List[float],
+        close: list[float],
+        high: list[float],
+        low: list[float],
+        volume: list[float],
         *,
         label_horizon: int = 1,
         label_type: str = "binary",
@@ -176,9 +177,7 @@ class ResearchOrchestrator:
         if label_type == "multiclass":
             return builder.build_with_multiclass(horizon=label_horizon)
 
-        raise OrchestrationError(
-            f"unknown label_type: {label_type!r}; expected 'binary', 'regression', or 'multiclass'"
-        )
+        raise OrchestrationError(f"unknown label_type: {label_type!r}; expected 'binary', 'regression', or 'multiclass'")
 
     def validate(
         self,
@@ -256,10 +255,10 @@ class ResearchOrchestrator:
 
     def run_pipeline(
         self,
-        close: List[float],
-        high: List[float],
-        low: List[float],
-        volume: List[float],
+        close: list[float],
+        high: list[float],
+        low: list[float],
+        volume: list[float],
         *,
         # label configuration
         label_horizon: int = 1,
@@ -275,7 +274,7 @@ class ResearchOrchestrator:
         model_version: str = "1.0.0",
         created_at: str = "",
         # pipeline metadata
-        metadata: Optional[Mapping[str, Any]] = None,
+        metadata: Mapping[str, Any] | None = None,
     ) -> PipelineReport:
         """Execute the full research pipeline and return an immutable report.
 
@@ -325,11 +324,7 @@ class ResearchOrchestrator:
                 validation_size=validation_size,
                 step_size=step_size,
             )
-            validation_hash_str = hashlib.sha256(
-                json.dumps(validation.to_dict(), sort_keys=True, separators=(",", ":")).encode(
-                    "utf-8"
-                )
-            ).hexdigest()
+            validation_hash_str = hashlib.sha256(json.dumps(validation.to_dict(), sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
             # Step 3: Train deterministic model.
             training = self.train(

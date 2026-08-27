@@ -22,7 +22,8 @@ implements no trading logic; ``signal_reference`` is audit metadata.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 from cpp_quant_engine.exceptions import (
     BridgeError,
@@ -72,11 +73,11 @@ def protocol_version() -> int:
     return int(native_module().protocol_version())
 
 
-def supported_calculation_versions() -> List[str]:
+def supported_calculation_versions() -> list[str]:
     return list(native_module().supported_calculation_versions())
 
 
-def error_codes() -> Dict[str, int]:
+def error_codes() -> dict[str, int]:
     return {str(k): int(v) for k, v in native_module().error_codes().items()}
 
 
@@ -106,7 +107,7 @@ class CppQuantEngineBackend:
 
     # ── Metadata ──────────────────────────────────────────────────────────
 
-    def meta(self) -> Dict[str, Any]:
+    def meta(self) -> dict[str, Any]:
         return dict(_native_call(self._cpp.meta))
 
     def version(self) -> str:
@@ -114,9 +115,7 @@ class CppQuantEngineBackend:
 
     # ── MarketData ────────────────────────────────────────────────────────
 
-    def market_data_load(
-        self, request: Union[MarketDataRequest, MarketData, Dict[str, Any]]
-    ) -> MarketDataResult:
+    def market_data_load(self, request: MarketDataRequest | MarketData | dict[str, Any]) -> MarketDataResult:
         req = _coerce_request(request, MarketDataRequest)
         raw = _native_call(self._cpp.market_data_load, req.to_base_object())
         result = MarketDataResult.from_base_object(raw)
@@ -125,9 +124,7 @@ class CppQuantEngineBackend:
 
     # ── Statistics ────────────────────────────────────────────────────────
 
-    def statistics_compute(
-        self, request: Union[StatisticsRequest, Dict[str, Any]]
-    ) -> StatisticsResult:
+    def statistics_compute(self, request: StatisticsRequest | dict[str, Any]) -> StatisticsResult:
         req = _coerce_request(request, StatisticsRequest)
         raw = _native_call(self._cpp.statistics_compute, req.to_base_object())
         result = StatisticsResult.from_base_object(raw)
@@ -136,7 +133,7 @@ class CppQuantEngineBackend:
 
     # ── Risk ──────────────────────────────────────────────────────────────
 
-    def risk_compute(self, request: Union[RiskRequest, Dict[str, Any]]) -> RiskResult:
+    def risk_compute(self, request: RiskRequest | dict[str, Any]) -> RiskResult:
         req = _coerce_request(request, RiskRequest)
         raw = _native_call(self._cpp.risk_compute, req.to_base_object())
         result = RiskResult.from_base_object(raw)
@@ -145,7 +142,7 @@ class CppQuantEngineBackend:
 
     # ── Simulation ────────────────────────────────────────────────────────
 
-    def simulation_run(self, request: Union[SimulationRequest, Dict[str, Any]]) -> SimulationResult:
+    def simulation_run(self, request: SimulationRequest | dict[str, Any]) -> SimulationResult:
         req = _coerce_request(request, SimulationRequest)
         raw = _native_call(self._cpp.simulation_run, req.to_base_object())
         result = SimulationResult.from_base_object(raw)
@@ -156,8 +153,8 @@ class CppQuantEngineBackend:
 
     def backtest_run(
         self,
-        request: Union[BacktestRequest, Dict[str, Any]],
-        signal: Optional[Callable[..., Dict[str, Any]]] = None,
+        request: BacktestRequest | dict[str, Any],
+        signal: Callable[..., dict[str, Any]] | None = None,
     ) -> BacktestResult:
         req = _coerce_request(request, BacktestRequest)
         raw = _native_call(self._cpp.backtest_run, req.to_base_object(), signal)
@@ -167,9 +164,7 @@ class CppQuantEngineBackend:
 
     # ── Performance ───────────────────────────────────────────────────────
 
-    def performance_analyze(
-        self, request: Union[PerformanceRequest, Dict[str, Any]]
-    ) -> PerformanceResult:
+    def performance_analyze(self, request: PerformanceRequest | dict[str, Any]) -> PerformanceResult:
         req = _coerce_request(request, PerformanceRequest)
         raw = _native_call(self._cpp.performance_analyze, req.to_base_object())
         result = PerformanceResult.from_base_object(raw)
@@ -184,19 +179,14 @@ def _coerce_request(request, cls):
         return request.to_request()
     if isinstance(request, dict):
         return cls.from_base_object(request)
-    raise InvalidTypeError(
-        f"expected {cls.__name__} or BaseObject dict, got {type(request).__name__}"
-    )
+    raise InvalidTypeError(f"expected {cls.__name__} or BaseObject dict, got {type(request).__name__}")
 
 
 def _assert_result_hash(result, recomputed: str) -> None:
     from cpp_quant_engine.exceptions import HashMismatchError
 
     if result.result_hash and recomputed != result.result_hash:
-        raise HashMismatchError(
-            "bridge result hash mismatch: C++ produced "
-            f"{result.result_hash}, Python recomputed {recomputed}"
-        )
+        raise HashMismatchError(f"bridge result hash mismatch: C++ produced {result.result_hash}, Python recomputed {recomputed}")
 
 
 def default_backend() -> CppQuantEngineBackend:
@@ -210,10 +200,8 @@ class Statistics:
     """Descriptive statistics (delegates to the C++ engine)."""
 
     @staticmethod
-    def compute(data: List[float], calculation_version: str = "CALCULATION_V1") -> StatisticsResult:
-        return default_backend().statistics_compute(
-            StatisticsRequest(data=list(data), calculation_version=calculation_version)
-        )
+    def compute(data: list[float], calculation_version: str = "CALCULATION_V1") -> StatisticsResult:
+        return default_backend().statistics_compute(StatisticsRequest(data=list(data), calculation_version=calculation_version))
 
 
 class Risk:
@@ -221,8 +209,8 @@ class Risk:
 
     @staticmethod
     def compute(
-        returns: List[float],
-        equity_curve: List[float],
+        returns: list[float],
+        equity_curve: list[float],
         risk_free_rate: float = 0.0,
         calculation_version: str = "CALCULATION_V1",
     ) -> RiskResult:
@@ -242,7 +230,7 @@ class Simulation:
     @staticmethod
     def run(
         request: SimulationRequest,
-        prices: Optional[List[float]] = None,
+        prices: list[float] | None = None,
         calculation_version: str = "CALCULATION_V1",
     ) -> SimulationResult:
         if prices is not None:
@@ -266,7 +254,7 @@ class BacktestEngine:
 
     def __init__(
         self,
-        backend: Optional[CppQuantEngineBackend] = None,
+        backend: CppQuantEngineBackend | None = None,
         initial_capital: float = 100_000.0,
         commission_pct: float = 0.001,
         slippage_pct: float = 0.0005,
@@ -284,8 +272,8 @@ class BacktestEngine:
 
     def run(
         self,
-        market_data: Union[MarketData, MarketDataRequest, Dict[str, Any]],
-        signal: Optional[Callable[..., Dict[str, Any]]] = None,
+        market_data: MarketData | MarketDataRequest | dict[str, Any],
+        signal: Callable[..., dict[str, Any]] | None = None,
         signal_reference: str = "",
         **overrides: Any,
     ) -> BacktestResult:
@@ -296,9 +284,7 @@ class BacktestEngine:
         elif isinstance(market_data, dict):
             base = dict(market_data)
         else:
-            raise InvalidTypeError(
-                "market_data must be MarketData, MarketDataRequest, or a BaseObject dict"
-            )
+            raise InvalidTypeError("market_data must be MarketData, MarketDataRequest, or a BaseObject dict")
 
         params = dict(self._defaults)
         params.update(overrides)

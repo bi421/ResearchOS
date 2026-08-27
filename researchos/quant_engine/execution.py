@@ -20,7 +20,7 @@ PnL accounting:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.quant_engine.models import (
     Order,
@@ -34,7 +34,7 @@ from researchos.quant_engine.models import (
 )
 
 
-def parse_cost_spec(spec: Optional[str], default_value: float = 0.0) -> Tuple[str, float]:
+def parse_cost_spec(spec: str | None, default_value: float = 0.0) -> tuple[str, float]:
     """
     Parse ``"fixed:X"`` or ``"pct:Y"`` into ``(kind, value)``.
 
@@ -97,19 +97,19 @@ class ExecutionSimulationLayer:
         self.position_qty: float = 0.0
         self.entry_price: float = 0.0
         self.entry_commission: float = 0.0
-        self.entry_bar_index: Optional[int] = None
-        self.entry_fill: Optional[OrderFill] = None
+        self.entry_bar_index: int | None = None
+        self.entry_fill: OrderFill | None = None
         self.realized_pnl: float = 0.0
         self.total_commission: float = 0.0
         self.total_slippage_cost: float = 0.0
 
         # Ledgers (deterministic order).
-        self.signals: List[Dict[str, Any]] = []
-        self.orders: List[Order] = []
-        self.fills: List[OrderFill] = []
-        self.trades: List[Trade] = []
-        self.equity_curve: List[float] = []
-        self.position_snapshots: List[Position] = []
+        self.signals: list[dict[str, Any]] = []
+        self.orders: list[Order] = []
+        self.fills: list[OrderFill] = []
+        self.trades: list[Trade] = []
+        self.equity_curve: list[float] = []
+        self.position_snapshots: list[Position] = []
         self._signal_counter = 0
 
     # ── cost helpers ──────────────────────────────────────────────
@@ -138,7 +138,7 @@ class ExecutionSimulationLayer:
         price: float,
         bar_index: int,
         timestamp: str = "",
-    ) -> Optional[OrderFill]:
+    ) -> OrderFill | None:
         """
         Process a Signal: create an order and (for market orders) fill it.
 
@@ -250,13 +250,9 @@ class ExecutionSimulationLayer:
             return
 
         if closing_short:
-            pnl = (
-                (self.entry_price - fill.fill_price) * qty - entry_fill.commission - fill.commission
-            )
+            pnl = (self.entry_price - fill.fill_price) * qty - entry_fill.commission - fill.commission
         else:
-            pnl = (
-                (fill.fill_price - self.entry_price) * qty - entry_fill.commission - fill.commission
-            )
+            pnl = (fill.fill_price - self.entry_price) * qty - entry_fill.commission - fill.commission
 
         cost_basis = abs(self.entry_price * qty) + entry_fill.commission
         return_pct = (pnl / cost_basis) if cost_basis != 0 else 0.0
@@ -326,11 +322,9 @@ class ExecutionSimulationLayer:
     def final_equity(self) -> float:
         return self.equity_curve[-1] if self.equity_curve else self.initial_capital
 
-    def execution_stats(self) -> Dict[str, Any]:
+    def execution_stats(self) -> dict[str, Any]:
         """Deterministic summary of the execution simulation."""
-        net_return = (
-            (self.final_equity / self.initial_capital - 1.0) if self.initial_capital else 0.0
-        )
+        net_return = (self.final_equity / self.initial_capital - 1.0) if self.initial_capital else 0.0
         wins = [t for t in self.trades if t.pnl > 0]
         losses = [t for t in self.trades if t.pnl < 0]
         return {

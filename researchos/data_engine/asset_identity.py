@@ -45,26 +45,24 @@ Public API:
 
 from __future__ import annotations
 
-from typing import FrozenSet
-
 # ---------------------------------------------------------------------------
 # Symbol families
 # ---------------------------------------------------------------------------
 
 #: Canonical symbol spellings for the XAUUSD (gold/USD) spot asset.
-XAUUSD_SYMBOLS: FrozenSet[str] = frozenset({"XAUUSD", "XAU/USD", "GOLD"})
+XAUUSD_SYMBOLS: frozenset[str] = frozenset({"XAUUSD", "XAU/USD", "GOLD"})
 
 #: COMEX gold *futures* tickers.  These carry futures roll/carry dynamics and
 #: are NEVER acceptable as a representation of XAUUSD spot.
-COMEX_GOLD_FUTURES: FrozenSet[str] = frozenset(
+COMEX_GOLD_FUTURES: frozenset[str] = frozenset(
     {
         "GC=F",  # COMEX Gold Futures (Yahoo front-month)
         "GC1!",  # front-month continuous
         "GC2!",
         "GC3!",
         "GC4!",
-        "GC=",   # Bloomberg-style COMEX gold futures root
-        "/GC",   # CME ticker root
+        "GC=",  # Bloomberg-style COMEX gold futures root
+        "/GC",  # CME ticker root
         "HGC!",  # alternate gold front-month
     }
 )
@@ -124,13 +122,7 @@ def assert_not_gold_futures(symbol: str, yf_symbol: str) -> None:
         DataIdentityError: if *yf_symbol* is a COMEX gold futures contract.
     """
     if is_gold_futures_symbol(yf_symbol):
-        raise DataIdentityError(
-            f"Data-identity violation: '{yf_symbol}' is a COMEX gold FUTURES "
-            f"contract and must NEVER be treated as {symbol} spot. XAUUSD spot "
-            f"must use the curated historical dataset loaded via "
-            f"researchos.data_engine.csv_loader.CsvLoader, or the spot proxy "
-            f"'{XAUUSD_SPOT_YFINANCE}' for a delayed engineering reference only."
-        )
+        raise DataIdentityError(f"Data-identity violation: '{yf_symbol}' is a COMEX gold FUTURES contract and must NEVER be treated as {symbol} spot. XAUUSD spot must use the curated historical dataset loaded via researchos.data_engine.csv_loader.CsvLoader, or the spot proxy '{XAUUSD_SPOT_YFINANCE}' for a delayed engineering reference only.")
 
 
 def assert_xauusd_identity(symbol: str, yf_symbol: str) -> None:
@@ -142,4 +134,3 @@ def assert_xauusd_identity(symbol: str, yf_symbol: str) -> None:
     """
     if symbol.upper().replace("/", "") in {s.upper().replace("/", "") for s in XAUUSD_SYMBOLS}:
         assert_not_gold_futures(symbol, yf_symbol)
-

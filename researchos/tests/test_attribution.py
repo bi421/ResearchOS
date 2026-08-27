@@ -485,27 +485,17 @@ class TestAttributionGraph:
 
     def test_counts_by_status(self):
         graph = AttributionGraph(research_id="res-1")
-        graph.add_attribution(
-            Attribution(conclusion_id="c1", conclusion_type="Hypothesis", status="Complete")
-        )
-        graph.add_attribution(
-            Attribution(conclusion_id="c2", conclusion_type="Hypothesis", status="Partial")
-        )
-        graph.add_attribution(
-            Attribution(conclusion_id="c3", conclusion_type="Scenario", status="Broken")
-        )
+        graph.add_attribution(Attribution(conclusion_id="c1", conclusion_type="Hypothesis", status="Complete"))
+        graph.add_attribution(Attribution(conclusion_id="c2", conclusion_type="Hypothesis", status="Partial"))
+        graph.add_attribution(Attribution(conclusion_id="c3", conclusion_type="Scenario", status="Broken"))
         assert graph.complete_count == 1
         assert graph.partial_count == 1
         assert graph.broken_count == 1
 
     def test_average_confidence(self):
         graph = AttributionGraph(research_id="res-1")
-        graph.add_attribution(
-            Attribution(conclusion_id="c1", conclusion_type="Hypothesis", confidence=1.0)
-        )
-        graph.add_attribution(
-            Attribution(conclusion_id="c2", conclusion_type="Hypothesis", confidence=0.5)
-        )
+        graph.add_attribution(Attribution(conclusion_id="c1", conclusion_type="Hypothesis", confidence=1.0))
+        graph.add_attribution(Attribution(conclusion_id="c2", conclusion_type="Hypothesis", confidence=0.5))
         assert graph.average_confidence == 0.75
 
     def test_verify_all(self):
@@ -551,9 +541,7 @@ class TestAttributionEngineTracing:
         assert result["conclusion_id"] == sample_observation.id
         assert len(result["reasoning_object_ids"]) >= 1
 
-    def test_trace_hypothesis(
-        self, engine, repo, sample_hypothesis, sample_evidence, sample_interpretation
-    ):
+    def test_trace_hypothesis(self, engine, repo, sample_hypothesis, sample_evidence, sample_interpretation):
         result = engine.trace_conclusion(sample_hypothesis.id, "Hypothesis")
         assert result["conclusion_id"] == sample_hypothesis.id
         assert len(result["reasoning_path"]) >= 1
@@ -570,9 +558,7 @@ class TestAttributionEngineTracing:
         ev_ids = engine.get_evidence_chain(sample_hypothesis.id)
         assert sample_evidence.id in ev_ids
 
-    def test_get_observation_chain(
-        self, engine, repo, sample_hypothesis, sample_evidence, sample_observation
-    ):
+    def test_get_observation_chain(self, engine, repo, sample_hypothesis, sample_evidence, sample_observation):
         obs_ids = engine.get_observation_chain(sample_hypothesis.id)
         assert sample_observation.id in obs_ids
 

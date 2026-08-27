@@ -1,9 +1,15 @@
-﻿"""
+"""
 Ensemble Strategy: FIXED. Evaluates indicators correctly at each time step.
 """
-from typing import List
+
 from dataclasses import dataclass
-from researchos.quant_engine.indicators import calculate_rsi, calculate_macd, calculate_bollinger_bands
+
+from researchos.quant_engine.indicators import (
+    calculate_bollinger_bands,
+    calculate_macd,
+    calculate_rsi,
+)
+
 
 @dataclass
 class EnsembleSignal:
@@ -11,17 +17,18 @@ class EnsembleSignal:
     action: str
     price: float
     confidence: float
-    reasons: List[str]
+    reasons: list[str]
+
 
 class EnsembleStrategy:
-    def __init__(self, min_confidence=0.60): # 60% босго (2/3 индикатор таарвал)
+    def __init__(self, min_confidence=0.60):  # 60% босго (2/3 индикатор таарвал)
         self.min_confidence = min_confidence
 
-    def generate_signals(self, prices: List[float]) -> List[EnsembleSignal]:
+    def generate_signals(self, prices: list[float]) -> list[EnsembleSignal]:
         signals = []
         # MACD-д хамгийн багадаа 35 өдөр хэрэгтэй (26 slow + 9 signal)
         for i in range(35, len(prices)):
-            window = prices[:i+1]
+            window = prices[: i + 1]
             current_price = window[-1]
 
             # Тухайн цэг дээрх индикаторуудыг тооцох

@@ -407,9 +407,7 @@ class TestCustomLabels(unittest.TestCase):
     def test_custom_custom_name(self):
         close = close_up()
         high, low, cl, vol = ohlcv(close)
-        fs = DatasetBuilder(cl, high, low, vol).build_custom(
-            [1.0] * len(close), label_name="my_target"
-        )
+        fs = DatasetBuilder(cl, high, low, vol).build_custom([1.0] * len(close), label_name="my_target")
         self.assertEqual(fs.label_name, "my_target")
 
     def test_custom_values_preserved(self):
@@ -598,9 +596,7 @@ class TestValidation(unittest.TestCase):
             validate_shapes(ds)
 
     def test_validate_shapes_labels_mismatch(self):
-        ds = _mk(
-            features=((1.0,),), labels=(1.0, 2.0), sample_count=1, feature_count=1, names=("a",)
-        )
+        ds = _mk(features=((1.0,),), labels=(1.0, 2.0), sample_count=1, feature_count=1, names=("a",))
         with self.assertRaises(ValueError):
             validate_shapes(ds)
 
@@ -954,9 +950,7 @@ class TestMetadata(unittest.TestCase):
     def test_custom_horizon_metadata(self):
         close = close_up()
         high, low, cl, vol = ohlcv(close)
-        fs = DatasetBuilder(cl, high, low, vol).build_custom(
-            [1.0] * len(close), label_name="x", horizon=9
-        )
+        fs = DatasetBuilder(cl, high, low, vol).build_custom([1.0] * len(close), label_name="x", horizon=9)
         self.assertEqual(fs.metadata["horizon"], 9)
 
 

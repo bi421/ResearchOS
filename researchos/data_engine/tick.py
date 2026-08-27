@@ -15,7 +15,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -47,11 +47,11 @@ class Tick(BaseObject):
         volume: float = 0.0,
         side: str = "unknown",
         exchange: str = "",
-        conditions: Optional[List[str]] = None,
-        bid: Optional[float] = None,
-        ask: Optional[float] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        conditions: list[str] | None = None,
+        bid: float | None = None,
+        ask: float | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             ts_str = timestamp.isoformat() if hasattr(timestamp, "isoformat") else str(timestamp)
@@ -66,7 +66,7 @@ class Tick(BaseObject):
         self.volume = volume
         self.side = side
         self.exchange = exchange
-        self.conditions: List[str] = conditions or []
+        self.conditions: list[str] = conditions or []
         self.bid = bid
         self.ask = ask
 
@@ -76,20 +76,20 @@ class Tick(BaseObject):
         )
 
     @property
-    def spread(self) -> Optional[float]:
+    def spread(self) -> float | None:
         """Bid-ask spread at time of tick, if available."""
         if self.bid is not None and self.ask is not None:
             return self.ask - self.bid
         return None
 
     @property
-    def mid_price(self) -> Optional[float]:
+    def mid_price(self) -> float | None:
         """Mid price at time of tick, if bid/ask available."""
         if self.bid is not None and self.ask is not None:
             return (self.bid + self.ask) / 2.0
         return None
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "symbol": self.symbol,
             "timestamp": self.timestamp.isoformat(),
@@ -103,7 +103,7 @@ class Tick(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -123,7 +123,7 @@ class Tick(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Tick":
+    def from_dict(cls, data: dict[str, Any]) -> Tick:
         obj = super().from_dict(data)
         obj.symbol = data["symbol"]
         obj.timestamp = parse_timestamp(data["timestamp"])
@@ -137,7 +137,4 @@ class Tick(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"Tick({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, "
-            f"P={self.price:.4f} V={self.volume:.0f} {self.side})"
-        )
+        return f"Tick({self.symbol}, {self.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')}, P={self.price:.4f} V={self.volume:.0f} {self.side})"

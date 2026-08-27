@@ -1,4 +1,4 @@
-# ResearchOS v2 — Verification Layer Architecture
+# ResearchOS v2 â€” Verification Layer Architecture
 
 Version: v2.0
 Layer: 08 / 10

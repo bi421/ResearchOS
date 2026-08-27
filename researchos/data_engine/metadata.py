@@ -16,7 +16,7 @@ Guarantees:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import generate_id
@@ -62,18 +62,18 @@ class DatasetMetadata(BaseObject):
         source: str = "",
         source_file: str = "",
         record_count: int = 0,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
         timezone: str = "UTC",
         quality: str = "Raw",
         status: str = "Pending",
         dataset_hash: str = "",
         version: str = "1.0.0",
-        statistics: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        statistics: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
         description: str = "",
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"DatasetMetadata|{dataset_id}"
@@ -95,8 +95,8 @@ class DatasetMetadata(BaseObject):
         self.status = DatasetStatus(status) if isinstance(status, str) else status
         self.dataset_hash = dataset_hash
         self.version = version
-        self.statistics: Dict[str, Any] = statistics or {}
-        self.tags: List[str] = tags or []
+        self.statistics: dict[str, Any] = statistics or {}
+        self.tags: list[str] = tags or []
         self.description = description
 
         self.lifecycle.transition(
@@ -112,7 +112,7 @@ class DatasetMetadata(BaseObject):
         return 0.0
 
     @property
-    def date_range(self) -> Optional[Tuple[datetime, datetime]]:
+    def date_range(self) -> tuple[datetime, datetime] | None:
         """Covered date range as a (start, end) tuple, or None."""
         if self.start_time and self.end_time:
             return (self.start_time, self.end_time)
@@ -126,7 +126,7 @@ class DatasetMetadata(BaseObject):
             return self.record_count / days
         return float(self.record_count)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "dataset_id": self.dataset_id,
             "symbol": self.symbol,
@@ -138,9 +138,7 @@ class DatasetMetadata(BaseObject):
             "start_time": self.start_time.isoformat() if self.start_time else "",
             "end_time": self.end_time.isoformat() if self.end_time else "",
             "timezone": self.timezone,
-            "quality": self.quality.value
-            if isinstance(self.quality, DataQuality)
-            else self.quality,
+            "quality": self.quality.value if isinstance(self.quality, DataQuality) else self.quality,
             "status": self.status.value if isinstance(self.status, DatasetStatus) else self.status,
             "dataset_hash": self.dataset_hash,
             "version": self.version,
@@ -150,7 +148,7 @@ class DatasetMetadata(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -163,20 +161,12 @@ class DatasetMetadata(BaseObject):
                 "record_count": self.record_count,
                 "start_time": self.start_time.isoformat() if self.start_time else None,
                 "end_time": self.end_time.isoformat() if self.end_time else None,
-                "date_range": (
-                    [self.start_time.isoformat(), self.end_time.isoformat()]
-                    if self.start_time and self.end_time
-                    else None
-                ),
+                "date_range": ([self.start_time.isoformat(), self.end_time.isoformat()] if self.start_time and self.end_time else None),
                 "duration_days": round(self.duration_days, 4),
                 "avg_records_per_day": round(self.avg_records_per_day, 2),
                 "timezone": self.timezone,
-                "quality": self.quality.value
-                if isinstance(self.quality, DataQuality)
-                else self.quality,
-                "status": self.status.value
-                if isinstance(self.status, DatasetStatus)
-                else self.status,
+                "quality": self.quality.value if isinstance(self.quality, DataQuality) else self.quality,
+                "status": self.status.value if isinstance(self.status, DatasetStatus) else self.status,
                 "dataset_hash": self.dataset_hash,
                 "version": self.version,
                 "statistics": self.statistics,
@@ -187,7 +177,7 @@ class DatasetMetadata(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DatasetMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> DatasetMetadata:
         obj = super().from_dict(data)
         obj.dataset_id = data["dataset_id"]
         obj.symbol = data["symbol"]
@@ -209,7 +199,4 @@ class DatasetMetadata(BaseObject):
         return obj
 
     def __repr__(self) -> str:
-        return (
-            f"DatasetMetadata({self.symbol}, {self.timeframe}, "
-            f"{self.record_count} records, {self.quality.value})"
-        )
+        return f"DatasetMetadata({self.symbol}, {self.timeframe}, {self.record_count} records, {self.quality.value})"

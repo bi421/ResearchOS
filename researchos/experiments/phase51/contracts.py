@@ -23,8 +23,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any
 
 PHASE51_VERSION = "1.0.0"
 HASH_ALGORITHM = "sha256"
@@ -65,9 +66,7 @@ def _canonical(value: Any) -> Any:
 def reproducibility_hash(content: Any) -> str:
     """Deterministic SHA-256 digest of a canonicalizable result payload."""
     payload = _canonical(content)
-    serialized = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    ).encode("utf-8")
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(serialized).hexdigest()
 
 
@@ -81,10 +80,10 @@ class BaselineResult:
     recall_up: float
     recall_down: float
     brier_score: float
-    class_frequencies: Dict[str, float]
+    class_frequencies: dict[str, float]
     sample_count: int
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "accuracy": self.accuracy,
             "precision_up": self.precision_up,
@@ -109,7 +108,7 @@ class ModelResult:
     brier_score: float
     sample_count: int
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "accuracy": self.accuracy,
             "precision_up": self.precision_up,
@@ -135,7 +134,7 @@ class CostResult:
     net_accuracy_all: float
     cost_applied: bool
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "cost_model": self.cost_model,
             "spread_cost_per_bar": self.spread_cost_per_bar,
@@ -159,7 +158,7 @@ class CalibrationResult:
     avg_confidence: float
     avg_accuracy: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "num_bins": self.num_bins,
             "reliability_table": dict(self.reliability_table),
@@ -183,7 +182,7 @@ class SignificanceResult:
     significant: bool
     method: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "n_up": self.n_up,
             "n_down": self.n_down,
@@ -207,9 +206,9 @@ class ValidationFlags:
     cost_adjusted: bool
     reproducible: bool
     outcome: str
-    reasons: Tuple[str, ...] = field(default_factory=tuple)
+    reasons: tuple[str, ...] = field(default_factory=tuple)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "data_valid": self.data_valid,
             "leakage_check": self.leakage_check,
@@ -240,11 +239,11 @@ class Phase51Result:
     validation_size: int
     step_size: int
     num_folds: int
-    baseline: Optional[BaselineResult]
-    model: Optional[ModelResult]
-    cost: Optional[CostResult]
-    calibration: Optional[CalibrationResult]
-    significance: Optional[SignificanceResult]
+    baseline: BaselineResult | None
+    model: ModelResult | None
+    cost: CostResult | None
+    calibration: CalibrationResult | None
+    significance: SignificanceResult | None
     validation: ValidationFlags
     metadata: Mapping[str, Any]
     reproducibility_hash: str = ""
@@ -256,7 +255,7 @@ class Phase51Result:
             reproducibility_hash(self._hashable_content()),
         )
 
-    def _hashable_content(self) -> Dict[str, Any]:
+    def _hashable_content(self) -> dict[str, Any]:
         return {
             "outcome": self.outcome,
             "symbol": self.symbol,
@@ -276,7 +275,7 @@ class Phase51Result:
             "metadata": dict(self.metadata),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "outcome": self.outcome,
             "symbol": self.symbol,
@@ -303,7 +302,7 @@ class Phase51Result:
         symbol: str = "XAUUSD",
         timeframe: str = "1d",
         reason: str = "REAL XAUUSD DATA REQUIRED",
-    ) -> "Phase51Result":
+    ) -> Phase51Result:
         """Construct a BLOCKED result — real data is gating, not a model outcome."""
         validation = ValidationFlags(
             data_valid=False,

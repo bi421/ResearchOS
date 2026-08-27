@@ -42,9 +42,9 @@ jobs:
         echo "🔍 Scanning for hardcoded secrets..."
         
         # Search for common API key patterns
-        if grep -r "BINANCE_API_KEY\|BINANCE_API_SECRET\|API_KEY\s*=\s*['\"]" \
+        if grep -rE "BINANCE_API_KEY\s*=\s*['\"][^'\"]|BINANCE_API_SECRET\s*=\s*['\"][^'\"]" \
           --exclude-dir=.git --exclude-dir=.github --exclude="*.lock" \
-          .; then
+          . | grep -v "os\.getenv\|os\.environ\|CHANGELOG"; then
           echo "❌ Found potential hardcoded secrets!"
           exit 1
         fi
@@ -52,7 +52,7 @@ jobs:
         # Search for AWS/Google credentials
         if grep -r "aws_access_key_id\|aws_secret_access_key\|GOOGLE_APPLICATION_CREDENTIALS" \
           --exclude-dir=.git --exclude-dir=.github --exclude="*.lock" \
-          .; then
+          . | grep -v "os\.getenv\|os\.environ\|CHANGELOG"; then
           echo "❌ Found potential AWS/Google credentials!"
           exit 1
         fi

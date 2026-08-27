@@ -107,10 +107,10 @@ def main():
         model_acc = d.get("model", {}).get("accuracy")
         base_acc = d.get("baseline", {}).get("accuracy")
         p_value = d.get("significance", {}).get("p_value")
-        
+
         # DO NO HARM FILTER: Загвар суурь түвшнээсээ доош унаж байвал шууд хасагдана
         model_beats_baseline = (model_acc is not None) and (base_acc is not None) and (model_acc >= base_acc)
-        
+
         # Статистик ач холбогдол нь зөвхөн загвар суурь түвшнээсээ илүү байх үед л хүчинтэй
         sig_raw = model_beats_baseline and (p_value is not None) and (p_value < alpha_raw)
         sig_corrected = model_beats_baseline and (p_value is not None) and (p_value < alpha_corrected)
@@ -132,9 +132,7 @@ def main():
     passed = [r for r in results if r["sig_bonferroni"]]
     print(f"\nFeatures passing Bonferroni-corrected significance: {len(passed)}")
     for r in passed:
-        print(
-            f"  -> {r['feature']} (p={r['p_value']:.5f}, model={r['model_acc']:.4f} vs base={r['baseline_acc']:.4f})"
-        )
+        print(f"  -> {r['feature']} (p={r['p_value']:.5f}, model={r['model_acc']:.4f} vs base={r['baseline_acc']:.4f})")
 
     with open("data/curated/xauusd/phase51_h1_sweep_results.json", "w") as f:
         json.dump(results, f, indent=2)

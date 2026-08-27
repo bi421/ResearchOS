@@ -33,7 +33,7 @@ Pipeline:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
@@ -102,7 +102,7 @@ class DecisionReport(BaseObject):
         self,
         asset: str,
         timeframe: str = "",
-        decision_timestamp: Optional[datetime] = None,
+        decision_timestamp: datetime | None = None,
         context_id: str = "",
         score_id: str = "",
         probability_id: str = "",
@@ -111,26 +111,26 @@ class DecisionReport(BaseObject):
         scoring_version: str = "SCORE_V1",
         probability_version: str = "DECISION_V1",
         reasoner_version: str = "REASON_V1",
-        weight_config: Optional[WeightConfiguration] = None,
+        weight_config: WeightConfiguration | None = None,
         bullish_probability: float = 0.33,
         bearish_probability: float = 0.33,
         neutral_probability: float = 0.34,
         confidence: float = 0.0,
         uncertainty: float = 1.0,
         summary: str = "",
-        reasoning_steps: Optional[List[ReasoningStep]] = None,
+        reasoning_steps: list[ReasoningStep] | None = None,
         evidence_summary: str = "",
-        supporting_evidence: Optional[List[str]] = None,
-        historical_scenarios: Optional[List[str]] = None,
-        experiment_ids: Optional[List[str]] = None,
-        macro_factors: Optional[List[Dict[str, Any]]] = None,
-        risk_factors: Optional[List[str]] = None,
-        limitations: Optional[List[str]] = None,
+        supporting_evidence: list[str] | None = None,
+        historical_scenarios: list[str] | None = None,
+        experiment_ids: list[str] | None = None,
+        macro_factors: list[dict[str, Any]] | None = None,
+        risk_factors: list[str] | None = None,
+        limitations: list[str] | None = None,
         calculation_method: CalculationMethod = CalculationMethod.WEIGHTED_EVIDENCE,
         calculation_version: str = "DECISION_V1",
-        tags: Optional[List[str]] = None,
-        ontology_tags: Optional[List[str]] = None,
-        id: Optional[str] = None,
+        tags: list[str] | None = None,
+        ontology_tags: list[str] | None = None,
+        id: str | None = None,
     ):
         if id is None:
             seed = f"DecisionReport|{asset}|{decision_timestamp.isoformat() if decision_timestamp else ''}"
@@ -156,17 +156,17 @@ class DecisionReport(BaseObject):
         self.confidence = confidence
         self.uncertainty = uncertainty
         self.summary = summary
-        self.reasoning_steps: List[ReasoningStep] = reasoning_steps or []
+        self.reasoning_steps: list[ReasoningStep] = reasoning_steps or []
         self.evidence_summary = evidence_summary
-        self.supporting_evidence: List[str] = supporting_evidence or []
-        self.historical_scenarios: List[str] = historical_scenarios or []
-        self.experiment_ids: List[str] = experiment_ids or []
-        self.macro_factors: List[Dict[str, Any]] = macro_factors or []
-        self.risk_factors: List[str] = risk_factors or []
-        self.limitations: List[str] = limitations or []
+        self.supporting_evidence: list[str] = supporting_evidence or []
+        self.historical_scenarios: list[str] = historical_scenarios or []
+        self.experiment_ids: list[str] = experiment_ids or []
+        self.macro_factors: list[dict[str, Any]] = macro_factors or []
+        self.risk_factors: list[str] = risk_factors or []
+        self.limitations: list[str] = limitations or []
         self.calculation_method = calculation_method
         self.calculation_version = calculation_version
-        self.tags: List[str] = tags or []
+        self.tags: list[str] = tags or []
         self.status = DecisionStatus.REPORT_GENERATED
         self._report_hash: str = ""
 
@@ -174,9 +174,7 @@ class DecisionReport(BaseObject):
 
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
-            reason=f"Decision report generated for {asset}: "
-            f"B={bullish_probability:.2%}, Be={bearish_probability:.2%}, "
-            f"N={neutral_probability:.2%}",
+            reason=f"Decision report generated for {asset}: B={bullish_probability:.2%}, Be={bearish_probability:.2%}, N={neutral_probability:.2%}",
         )
 
     @property
@@ -191,7 +189,7 @@ class DecisionReport(BaseObject):
         content = self._to_hashable_dict()
         self._report_hash = deterministic_hash(content)
 
-    def _to_hashable_dict(self) -> Dict[str, Any]:
+    def _to_hashable_dict(self) -> dict[str, Any]:
         return {
             "asset": self.asset,
             "timeframe": self.timeframe,
@@ -225,7 +223,7 @@ class DecisionReport(BaseObject):
             "ontology_tags": sorted(self.ontology_tags),
         }
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update(
             {
@@ -265,7 +263,7 @@ class DecisionReport(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DecisionReport":
+    def from_dict(cls, data: dict[str, Any]) -> DecisionReport:
         obj = super().from_dict(data)
         obj.asset = data["asset"]
         obj.timeframe = data.get("timeframe", "")
@@ -293,9 +291,7 @@ class DecisionReport(BaseObject):
         obj.macro_factors = list(data.get("macro_factors", []))
         obj.risk_factors = list(data.get("risk_factors", []))
         obj.limitations = list(data.get("limitations", []))
-        obj.calculation_method = CalculationMethod(
-            data.get("calculation_method", "WeightedEvidence")
-        )
+        obj.calculation_method = CalculationMethod(data.get("calculation_method", "WeightedEvidence"))
         obj.calculation_version = data.get("calculation_version", "DECISION_V1")
         obj.status = DecisionStatus(data.get("status", "ReportGenerated"))
         obj.tags = list(data.get("tags", []))
@@ -307,7 +303,7 @@ def generate_decision_report(
     context: DecisionContext,
     score: EvidenceScore,
     probability: ProbabilityAssessment,
-    reasoner: Optional[DecisionReasoner] = None,
+    reasoner: DecisionReasoner | None = None,
 ) -> DecisionReport:
     """
     Generate a complete DecisionReport from pipeline outputs.
@@ -377,30 +373,11 @@ def generate_decision_report(
     for item in score.evidence_items:
         src = item.source.value
         source_counts[src] = source_counts.get(src, 0) + 1
-    evidence_summary = (
-        f"Total evidence: {score.evidence_count} items from "
-        f"{len(source_counts)} sources. "
-        + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items()))
-    )
+    evidence_summary = f"Total evidence: {score.evidence_count} items from {len(source_counts)} sources. " + ", ".join(f"{k}: {v}" for k, v in sorted(source_counts.items()))
 
     # Human-readable summary
-    directional_label = (
-        "Bullish"
-        if probability.bullish_probability > probability.bearish_probability
-        else "Bearish"
-        if probability.bearish_probability > probability.bullish_probability
-        else "Neutral"
-    )
-    summary = (
-        f"{directional_label} bias for {context.asset} ({context.timeframe}) "
-        f"with {probability.confidence:.0%} confidence. "
-        f"Bullish={probability.bullish_probability:.1%}, "
-        f"Bearish={probability.bearish_probability:.1%}, "
-        f"Neutral={probability.neutral_probability:.1%}. "
-        f"Based on {len(reasoning_steps)} reasoning steps, "
-        f"{score.evidence_count} evidence items, "
-        f"{len(context.historical_scenario_ids)} historical matches."
-    )
+    directional_label = "Bullish" if probability.bullish_probability > probability.bearish_probability else "Bearish" if probability.bearish_probability > probability.bullish_probability else "Neutral"
+    summary = f"{directional_label} bias for {context.asset} ({context.timeframe}) with {probability.confidence:.0%} confidence. Bullish={probability.bullish_probability:.1%}, Bearish={probability.bearish_probability:.1%}, Neutral={probability.neutral_probability:.1%}. Based on {len(reasoning_steps)} reasoning steps, {score.evidence_count} evidence items, {len(context.historical_scenario_ids)} historical matches."
 
     return DecisionReport(
         asset=context.asset,

@@ -1,21 +1,24 @@
 """
 Instrument metadata registry: symbol -> asset class, currency, annualization days, etc.
 """
-from typing import Dict, Optional, NamedTuple
+
+from typing import NamedTuple
+
 
 class InstrumentMetadata(NamedTuple):
     symbol: str
-    asset_class: str   # "equity", "forex", "metal", "commodity", "crypto", "bond"
+    asset_class: str  # "equity", "forex", "metal", "commodity", "crypto", "bond"
     currency: str
     tick_size: float
     session_calendar: str  # e.g., "US", "24/7", "FX"
     annualization_days: int  # number of trading days per year
 
+
 class InstrumentMetadataRegistry:
     """Singleton registry for instrument metadata."""
 
     _instance = None
-    _metadata: Dict[str, InstrumentMetadata] = {}
+    _metadata: dict[str, InstrumentMetadata] = {}
 
     def __new__(cls):
         if cls._instance is None:
@@ -69,7 +72,7 @@ class InstrumentMetadataRegistry:
             # Add more as needed
         }
 
-    def get(self, symbol: str) -> Optional[InstrumentMetadata]:
+    def get(self, symbol: str) -> InstrumentMetadata | None:
         return self._metadata.get(symbol)
 
     def register(self, metadata: InstrumentMetadata) -> None:

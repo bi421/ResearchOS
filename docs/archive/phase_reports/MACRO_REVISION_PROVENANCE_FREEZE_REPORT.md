@@ -59,9 +59,9 @@ chain.revisions[0].new_value = 5.0  # ❌ AttributeError
 ```python
 # Every stored object must preserve complete provenance
 provenance = ProvenanceChain(
-    source_record=...,      # Required
+    source_record=...,  # Required
     processing_record=...,  # Required
-    schema_version="ms/v1", # Required
+    schema_version="ms/v1",  # Required
     object_type="NormalizedSeries",  # Required
 )
 ```

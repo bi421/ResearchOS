@@ -275,9 +275,7 @@ class TestEvidenceRepository:
     def test_lineage_edges_are_recorded(self):
         ev = self._make_repo()
         ds = build_envelope("Dataset", {"a": 1}, version="1.0.0")
-        feat = build_envelope(
-            "Feature", {"b": 2}, version="1.0.0", parent_hashes=[ds.artifact_hash]
-        )
+        feat = build_envelope("Feature", {"b": 2}, version="1.0.0", parent_hashes=[ds.artifact_hash])
         ev.append_artifact(ds)
         ev.append_artifact(feat)
         assert ev.get_parents(feat.artifact_hash) == [ds.artifact_hash]
@@ -317,9 +315,7 @@ class TestEvidenceRepository:
     def test_verify_evidence_true_when_consistent(self):
         ev = self._make_repo()
         ds = build_envelope("Dataset", {"a": 1}, version="1.0.0")
-        feat = build_envelope(
-            "Feature", {"b": 2}, version="1.0.0", parent_hashes=[ds.artifact_hash]
-        )
+        feat = build_envelope("Feature", {"b": 2}, version="1.0.0", parent_hashes=[ds.artifact_hash])
         ev.append_artifact(ds)
         ev.append_artifact(feat)
         assert ev.verify_evidence() is True

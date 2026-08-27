@@ -109,7 +109,10 @@ corr = engine.analyze_correlation(x, y, "XAU", "DXY")
 
 # Full analysis
 result = engine.full_analysis(
-    x, y, "XAU", "DXY",
+    x,
+    y,
+    "XAU",
+    "DXY",
     regime_labels=regimes,
     rolling_window=20,
     max_lag=10,

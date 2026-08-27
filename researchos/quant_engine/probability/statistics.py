@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 import random
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 from researchos.quant_engine.probability.contracts import (
     ConfidenceInterval,
@@ -39,11 +39,7 @@ def normal_cdf(x: float, mu: float = 0.0, sigma: float = 1.0) -> float:
 def _t_pdf(x: float, df: float) -> float:
     if df <= 0:
         raise ValueError("df must be positive")
-    return (
-        math.gamma((df + 1.0) / 2.0)
-        / (math.sqrt(df * math.pi) * math.gamma(df / 2.0))
-        * (1.0 + (x * x) / df) ** (-(df + 1.0) / 2.0)
-    )
+    return math.gamma((df + 1.0) / 2.0) / (math.sqrt(df * math.pi) * math.gamma(df / 2.0)) * (1.0 + (x * x) / df) ** (-(df + 1.0) / 2.0)
 
 
 def student_t_pdf(x: float, df: float) -> float:
@@ -76,9 +72,7 @@ def log_normal_pdf(x: float, mu: float = 0.0, sigma: float = 1.0) -> float:
         return 0.0 if x <= 0 else 0.0
     if x <= 0:
         return 0.0
-    return math.exp(-0.5 * ((math.log(x) - mu) / sigma) ** 2) / (
-        x * sigma * math.sqrt(2.0 * math.pi)
-    )
+    return math.exp(-0.5 * ((math.log(x) - mu) / sigma) ** 2) / (x * sigma * math.sqrt(2.0 * math.pi))
 
 
 def empirical_cdf(samples: Sequence[float], x: float) -> float:
@@ -143,7 +137,7 @@ def fit_student_t(samples: Sequence[float], df: float = 5.0) -> DistributionFit:
 def kernel_density_estimate(
     samples: Sequence[float],
     x: float,
-    bandwidth: Optional[float] = None,
+    bandwidth: float | None = None,
 ) -> float:
     n = len(samples)
     if n == 0:
@@ -224,22 +218,14 @@ def _normal_ppf(p: float) -> float:
 
     if p < 0.02425:
         q = math.sqrt(-2.0 * math.log(p))
-        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
-            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
-        )
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0)
     if p > 0.97575:
         q = math.sqrt(-2.0 * math.log(1.0 - p))
-        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
-            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
-        )
+        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0)
 
     q = p - 0.5
     r = q * q
-    return (
-        (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5])
-        * q
-        / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0)
-    )
+    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0)
 
 
 def one_sample_t_test(
@@ -352,7 +338,7 @@ def monte_carlo_return_paths(
 
 
 def _monte_carlo_result(
-    samples: List[float],
+    samples: list[float],
     seed: int,
     num_samples: int,
 ) -> MonteCarloResult:
@@ -378,11 +364,11 @@ def probability_calibration(
     predicted: Sequence[float],
     actual: Sequence[int],
     num_bins: int = 10,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Simple reliability/calibration table (research only)."""
     if len(predicted) != len(actual) or len(predicted) == 0:
         raise ValueError("predicted and actual must be equal-length, non-empty")
-    bins: Dict[int, Dict[str, float]] = {}
+    bins: dict[int, dict[str, float]] = {}
     for p, a in zip(predicted, actual):
         idx = min(num_bins - 1, int(p * num_bins))
         bins.setdefault(idx, {"count": 0, "sum_pred": 0.0, "sum_actual": 0.0})

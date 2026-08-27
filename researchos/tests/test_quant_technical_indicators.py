@@ -66,9 +66,7 @@ class TestSuperTrend:
 class TestIchimokuCloud:
     def test_ichimoku_structure(self):
         bars = _sample_bars(60)
-        res = ichimoku_cloud(
-            bars, tenkan_period=9, kijun_period=26, senkou_b_period=52, displacement=26
-        )
+        res = ichimoku_cloud(bars, tenkan_period=9, kijun_period=26, senkou_b_period=52, displacement=26)
         assert "tenkan_sen" in res
         assert "kijun_sen" in res
         assert "senkou_span_a" in res

@@ -122,32 +122,32 @@ Given the same revision chain and target revision number:
 @dataclass(frozen=True)
 class RevisionRecord:
     # Identity
-    revision_id: str              # Format: REV_<timestamp>_<sequence>
-    object_id: str                # Format: SER_/EV_/EVNT_/KN_<id>
-    object_type: str              # "NormalizedSeries", "EvidenceObject", etc.
-    
+    revision_id: str  # Format: REV_<timestamp>_<sequence>
+    object_id: str  # Format: SER_/EV_/EVNT_/KN_<id>
+    object_type: str  # "NormalizedSeries", "EvidenceObject", etc.
+
     # Revision metadata
-    revision_number: int          # Sequential number (1, 2, 3, ...)
-    state: RevisionState          # CURRENT state
-    revision_type: RevisionType   # Type of change
-    
+    revision_number: int  # Sequential number (1, 2, 3, ...)
+    state: RevisionState  # CURRENT state
+    revision_type: RevisionType  # Type of change
+
     # Timestamps
-    created_at: datetime          # When revision was created
-    effective_from: datetime      # When revision becomes active
+    created_at: datetime  # When revision was created
+    effective_from: datetime  # When revision becomes active
     effective_to: Optional[datetime]  # When revision expires (if terminal)
-    
+
     # Data changes
-    previous_value: Any           # Value before change
-    new_value: Any                # Value after change
-    change_description: str       # Human-readable description
-    
+    previous_value: Any  # Value before change
+    new_value: Any  # Value after change
+    change_description: str  # Human-readable description
+
     # Lineage
     parent_revision_id: Optional[str]  # ID of parent revision
-    child_revision_ids: list[str]      # IDs of child revisions
-    
+    child_revision_ids: list[str]  # IDs of child revisions
+
     # Provenance
     provenance: Optional[ProvenanceChain]  # Complete provenance
-    
+
     # Metadata
     metadata: dict
     version: str = "rev/obj/v1"
@@ -163,7 +163,7 @@ class RevisionChain:
     root_revision_id: str
     latest_revision_id: str
     revisions: list[RevisionRecord]  # Sorted by revision_number
-    
+
     # Methods
     def get_revision(revision_number: int) -> Optional[RevisionRecord]
     def get_latest() -> RevisionRecord
@@ -184,17 +184,17 @@ class RevisionChain:
 class ProvenanceChain:
     # Source information
     source_record: SourceRecord
-    
+
     # Processing information
     processing_record: ProcessingRecord
-    
+
     # Schema information
     schema_version: str
     object_type: str
-    
+
     # Evidence relationships
     evidence_references: list[EvidenceReference]
-    
+
     # Metadata
     metadata: dict
     created_at: datetime
@@ -206,13 +206,13 @@ class ProvenanceChain:
 ```python
 @dataclass(frozen=True)
 class SourceRecord:
-    source_id: str                    # e.g., "FRED", "BLS"
-    source_type: ProvenanceSource     # Enum: FRED, BLS, CBOE, etc.
-    source_version: str               # e.g., "2026.08"
-    source_quality_score: float       # 0.0-1.0
+    source_id: str  # e.g., "FRED", "BLS"
+    source_type: ProvenanceSource  # Enum: FRED, BLS, CBOE, etc.
+    source_version: str  # e.g., "2026.08"
+    source_quality_score: float  # 0.0-1.0
     ingestion_timestamp: datetime
-    batch_id: str                     # Ingestion batch identifier
-    adapter_version: str              # e.g., "v1.0.0"
+    batch_id: str  # Ingestion batch identifier
+    adapter_version: str  # e.g., "v1.0.0"
 ```
 
 ### 3.3 ProcessingRecord Structure
@@ -220,10 +220,10 @@ class SourceRecord:
 ```python
 @dataclass(frozen=True)
 class ProcessingRecord:
-    normalization_version: str        # e.g., "v1.0.0"
-    validation_version: str           # e.g., "v1.0.0"
-    quality_score_before: float       # Before processing
-    quality_score_after: float        # After processing
+    normalization_version: str  # e.g., "v1.0.0"
+    validation_version: str  # e.g., "v1.0.0"
+    quality_score_before: float  # Before processing
+    quality_score_after: float  # After processing
     transformations_applied: list[str]  # e.g., ["unit_conversion"]
 ```
 
@@ -232,8 +232,8 @@ class ProcessingRecord:
 ```python
 @dataclass(frozen=True)
 class EvidenceReference:
-    evidence_id: str                  # Related evidence ID
-    relationship_type: str            # "references", "referenced_by", etc.
+    evidence_id: str  # Related evidence ID
+    relationship_type: str  # "references", "referenced_by", etc.
     timestamp: datetime
 ```
 
@@ -247,25 +247,25 @@ class EvidenceReference:
 class AuditEngine:
     def __init__(self):
         self.audit_log: AuditLog
-    
+
     def audit_revision(
         self,
         revision: RevisionRecord,
         level: IntegrityLevel = IntegrityLevel.STANDARD,
     ) -> AuditResult
-    
+
     def audit_revision_chain(
         self,
         chain: RevisionChain,
         level: IntegrityLevel = IntegrityLevel.STANDARD,
     ) -> AuditResult
-    
+
     def reconstruct_history(
         self,
         chain: RevisionChain,
         target_revision_number: int,
     ) -> Optional[RevisionRecord]
-    
+
     def verify_integrity(
         self,
         chain: RevisionChain,
@@ -282,7 +282,7 @@ class AuditLog:
     created_at: datetime
     entries: list[AuditEntry]
     integrity_checks: list[IntegrityCheck]
-    
+
     def add_entry(entry: AuditEntry) -> AuditLog
     def add_check(check: IntegrityCheck) -> AuditLog
     def get_entries_for_object(object_type, object_id) -> list[AuditEntry]
@@ -296,11 +296,11 @@ class AuditLog:
 class AuditEntry:
     audit_id: str
     timestamp: datetime
-    action: AuditAction        # CREATE, UPDATE, VALIDATE, AUDIT, RECONSTRUCT, VERIFY
+    action: AuditAction  # CREATE, UPDATE, VALIDATE, AUDIT, RECONSTRUCT, VERIFY
     object_type: str
     object_id: str
     revision_id: Optional[str]
-    actor: str                 # "system", "adapter", "validator", etc.
+    actor: str  # "system", "adapter", "validator", etc.
     details: dict
     success: bool
     error_message: Optional[str]
@@ -318,7 +318,7 @@ class IntegrityCheck:
     object_type: str
     object_id: str
     revision_id: Optional[str]
-    level: IntegrityLevel      # BASIC, STANDARD, STRICT, FULL
+    level: IntegrityLevel  # BASIC, STANDARD, STRICT, FULL
     passed: bool
     checks_performed: list[str]
     checks_passed: list[str]
@@ -370,7 +370,7 @@ assert len(revision_numbers) == len(set(revision_numbers))
 def _verify_no_cycles(self) -> None:
     visited = set()
     current_id = self.latest_revision_id
-    
+
     while current_id:
         if current_id in visited:
             raise ValueError("Circular reference detected")

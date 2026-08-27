@@ -5,11 +5,7 @@ from pathlib import Path
 from researchos.data_engine.loader import CsvLoader
 from researchos.experiments.phase51 import Phase51Config, run_phase51
 
-csv_path = (
-    Path(sys.argv[1])
-    if len(sys.argv) > 1
-    else Path("data/curated/xauusd/xauusd_d1_2023_2025_from_m1.csv")
-)
+csv_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("data/curated/xauusd/xauusd_d1_2023_2025_from_m1.csv")
 print(f"=== PROVING BLOCKED-GUARD WITH CSV: {csv_path} ===")
 loader = CsvLoader()
 try:

@@ -187,9 +187,7 @@ class TestStaticContractAudit:
         module_path = Path(contracts.__file__).parent / module_name
         source = module_path.read_text(encoding="utf-8")
         for pattern in self.BROKEN_PATTERNS:
-            assert re.search(pattern, source) is None, (
-                f"{module_name} contains broken attribute pattern {pattern!r}"
-            )
+            assert re.search(pattern, source) is None, f"{module_name} contains broken attribute pattern {pattern!r}"
 
 
 # =============================================================================
@@ -201,15 +199,9 @@ class TestProbabilityContractConsumption:
     def test_step10_consumes_canonical_probability_fields(self):
         context = make_context()
         items = [
-            make_item(
-                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
-            ),
-            make_item(
-                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
-            ),
-            make_item(
-                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
-            ),
+            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
+            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
+            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
         ]
         score, probability = build_pipeline(context, items=items)
         steps = DecisionReasoner().reason(context, score, probability)
@@ -229,15 +221,9 @@ class TestProbabilityContractConsumption:
     def test_historical_consistency_path(self):
         context = make_context()
         items = [
-            make_item(
-                source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5
-            ),
-            make_item(
-                source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5
-            ),
-            make_item(
-                source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5
-            ),
+            make_item(source_id="b1", direction=ProbabilityOutcome.BULLISH, confidence=0.8, weight=0.5),
+            make_item(source_id="b2", direction=ProbabilityOutcome.BEARISH, confidence=0.6, weight=0.5),
+            make_item(source_id="n1", direction=ProbabilityOutcome.NEUTRAL, confidence=0.2, weight=0.5),
         ]
         _, probability = build_pipeline(context, items=items)
         # contributions 0.4 / 0.3 / 0.1 -> max probability = 0.5
@@ -320,9 +306,7 @@ class TestDecisionReportGeneration:
         report = generate_decision_report(context, score, probability)
         assert report.historical_scenarios == ["hist_001", "hist_002"]
         assert report.experiment_ids == ["exp_001"]
-        assert report.supporting_evidence == sorted(
-            {item.source_id for item in score.evidence_items}
-        )
+        assert report.supporting_evidence == sorted({item.source_id for item in score.evidence_items})
         assert report.macro_factors == [
             {"indicator": "macro_state_id", "value": "macro_001", "impact": "considered"},
             {"indicator": "market_regime_id", "value": "regime_001", "impact": "considered"},
