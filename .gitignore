@@ -91,3 +91,21 @@ fix_integration.py
 
 pytest_*.txt
 ruff_*.txt
+# Temporary fix scripts
+fix_*.py
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Build artifacts
+*.pyd
+*.so
+*.dll
+build/
+dist/
+
+# Data files (optional - хэрэв том бол)
+data/curated/*.json
