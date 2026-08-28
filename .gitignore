@@ -88,3 +88,6 @@ build-*/
 *.rule
 *.so
 fix_integration.py
+
+pytest_*.txt
+ruff_*.txt
