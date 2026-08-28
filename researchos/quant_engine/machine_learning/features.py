@@ -289,7 +289,10 @@ def vwap_feature(high, low, close, volume) -> list[float | None]:
         tp = (high[i] + low[i] + close[i]) / 3.0
         cum_pv += tp * volume[i]
         cum_v += volume[i]
-        out[i] = cum_pv / cum_v if cum_v != 0 else None
+        # Volume-less markets (e.g. some metal/forex feeds report 0 volume):
+        # fall back to the typical price so downstream consumers never see
+        # an always-None column instead of a usable, clearly-labeled proxy.
+        out[i] = cum_pv / cum_v if cum_v != 0 else tp
     return out
 
 

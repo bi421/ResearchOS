@@ -855,13 +855,15 @@ class TestEdgeCases(unittest.TestCase):
         b = DatasetBuilder(cl, high, low, vol).build()
         self.assertEqual(a, b)
 
-    def test_zero_volume_empty(self):
+    def test_zero_volume_falls_back_to_typical_price(self):
         close = close_up()
         high, low, cl, vol = ohlcv(close)
         vol = [0.0] * len(close)
         fs = DatasetBuilder(cl, high, low, vol).build()
-        # vwap stays None for zero volume -> all rows dropped
-        self.assertEqual(fs.sample_count, 0)
+        # vwap falls back to typical price for zero-volume markets (e.g.
+        # metal/forex feeds with no real volume data), so rows are no
+        # longer dropped just because volume is zero.
+        self.assertGreater(fs.sample_count, 0)
 
     def test_mismatched_lengths_raises(self):
         with self.assertRaises(ValueError):
