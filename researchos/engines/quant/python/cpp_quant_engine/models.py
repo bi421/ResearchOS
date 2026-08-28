@@ -257,10 +257,14 @@ class MarketData:
     calculation_version: str = DEFAULT_CALCULATION_VERSION
 
     def to_request(self) -> MarketDataRequest:
+        candles = [
+            Candle.from_base_object(c) if isinstance(c, dict) else c
+            for c in self.candles
+        ]
         return MarketDataRequest(
             symbol=self.symbol,
             timeframe=self.timeframe,
-            candles=list(self.candles),
+            candles=candles,
             calculation_version=self.calculation_version,
         )
 

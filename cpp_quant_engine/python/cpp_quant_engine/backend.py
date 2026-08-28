@@ -62,23 +62,31 @@ def native_module():
 
 
 def engine_version() -> str:
-    return str(native_module().version())
+    return str(native_module().Backend().version())
 
 
 def bridge_version() -> str:
-    return str(native_module().bridge_version())
+    return str(native_module().Backend().meta()["bridge_version"])
 
 
 def protocol_version() -> int:
-    return int(native_module().protocol_version())
+    return int(native_module().Backend().meta()["protocol_version"])
 
 
 def supported_calculation_versions() -> list[str]:
-    return list(native_module().supported_calculation_versions())
+    return [str(native_module().Backend().meta()["calculation_version"])]
 
 
 def error_codes() -> dict[str, int]:
-    return {str(k): int(v) for k, v in native_module().error_codes().items()}
+    from cpp_quant_engine.exceptions import _ERROR_CLASSES
+
+    codes = {}
+    for cls in _ERROR_CLASSES.values():
+        name = cls.__name__
+        if name.endswith("Error"):
+            name = name[:-5]
+        codes[name] = cls.code
+    return codes
 
 
 # ── Typed backend ───────────────────────────────────────────────────────────

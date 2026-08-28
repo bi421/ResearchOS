@@ -25,11 +25,11 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from researchos.engines.quant.cpp_engine.exceptions import (
+from cpp_quant_engine.exceptions import (
     BridgeError,
     InvalidTypeError,
 )
-from researchos.engines.quant.cpp_engine.models import (
+from cpp_quant_engine.models import (
     BacktestRequest,
     BacktestResult,
     MarketData,
@@ -56,29 +56,37 @@ def native_module():
             import cpp_quant_backend  # standalone install (site-packages)
         except ImportError:
             # In-package layout: python/cpp_quant_engine/cpp_quant_backend.pyd
-            from researchos.engines.quant.cpp_engine import cpp_quant_backend
+            from cpp_quant_engine import cpp_quant_backend
         _native_module = cpp_quant_backend
     return _native_module
 
 
 def engine_version() -> str:
-    return str(native_module().version())
+    return str(native_module().Backend().version())
 
 
 def bridge_version() -> str:
-    return str(native_module().bridge_version())
+    return str(native_module().Backend().meta()["bridge_version"])
 
 
 def protocol_version() -> int:
-    return int(native_module().protocol_version())
+    return int(native_module().Backend().meta()["protocol_version"])
 
 
 def supported_calculation_versions() -> list[str]:
-    return list(native_module().supported_calculation_versions())
+    return [str(native_module().Backend().meta()["calculation_version"])]
 
 
 def error_codes() -> dict[str, int]:
-    return {str(k): int(v) for k, v in native_module().error_codes().items()}
+    from cpp_quant_engine.exceptions import _ERROR_CLASSES
+
+    codes = {}
+    for cls in _ERROR_CLASSES.values():
+        name = cls.__name__
+        if name.endswith("Error"):
+            name = name[:-5]
+        codes[name] = cls.code
+    return codes
 
 
 # ── Typed backend ───────────────────────────────────────────────────────────
@@ -183,7 +191,7 @@ def _coerce_request(request, cls):
 
 
 def _assert_result_hash(result, recomputed: str) -> None:
-    from researchos.engines.quant.cpp_engine.exceptions import HashMismatchError
+    from cpp_quant_engine.exceptions import HashMismatchError
 
     if result.result_hash and recomputed != result.result_hash:
         raise HashMismatchError(f"bridge result hash mismatch: C++ produced {result.result_hash}, Python recomputed {recomputed}")

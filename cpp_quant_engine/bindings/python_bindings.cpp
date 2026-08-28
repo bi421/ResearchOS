@@ -40,24 +40,24 @@ using bridge::StatisticsRequest;
 namespace {
 
 std::string get_str(const nb::dict& d, const char* key, const char* def = "") {
-  if (d.contains(key) && !nb::cast<bool>(d[key].is_none())) return nb::cast<std::string>(d[key]);
+  if (d.contains(key) && !d[key].is_none()) return nb::cast<std::string>(d[key]);
   return def;
 }
 double get_double(const nb::dict& d, const char* key, double def = 0.0) {
-  if (d.contains(key) && !nb::cast<bool>(d[key].is_none())) return nb::cast<double>(d[key]);
+  if (d.contains(key) && !d[key].is_none()) return nb::cast<double>(d[key]);
   return def;
 }
 int get_int(const nb::dict& d, const char* key, int def = 0) {
-  if (d.contains(key) && !nb::cast<bool>(d[key].is_none())) return nb::cast<int>(d[key]);
+  if (d.contains(key) && !d[key].is_none()) return nb::cast<int>(d[key]);
   return def;
 }
 bool get_bool(const nb::dict& d, const char* key, bool def = false) {
-  if (d.contains(key) && !nb::cast<bool>(d[key].is_none())) return nb::cast<bool>(d[key]);
+  if (d.contains(key) && !d[key].is_none()) return nb::cast<bool>(d[key]);
   return def;
 }
 std::vector<double> get_double_list(const nb::dict& d, const char* key) {
   if (d.contains(key)) {
-    if (nb::cast<bool>(d[key].is_none()))
+    if (d[key].is_none())
       throw bridge::BridgeError(bridge::BridgeErrorCode::InvalidType, "expected a list for '" + std::string(key) + "', got None");
     return nb::cast<std::vector<double>>(d[key]);
   }
@@ -77,7 +77,7 @@ CandleModel candle_from_dict(const nb::dict& c) {
 std::vector<CandleModel> get_candle_list(const nb::dict& d, const char* key) {
   std::vector<CandleModel> out;
   if (!d.contains(key)) return out;
-  if (nb::cast<bool>(d[key].is_none()))
+  if (d[key].is_none())
     throw bridge::BridgeError(bridge::BridgeErrorCode::InvalidType, "expected a list for '" + std::string(key) + "', got None");
   auto list = nb::cast<nb::list>(d[key]);
   out.reserve(list.size());

@@ -42,7 +42,7 @@ class CppQuantBackendWrapper(QuantComputationInterface):
         self._fallback = None
 
         try:
-            from researchos.engines.quant.cpp_engine.cpp_quant_backend import CppQuantBackend
+            from cpp_quant_engine.cpp_quant_backend import CppQuantBackend
 
             self._cpp_backend = CppQuantBackend()
         except ImportError as e:
