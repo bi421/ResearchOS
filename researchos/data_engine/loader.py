@@ -3,6 +3,7 @@ Unified Data Loader - v3.0 Polars-accelerated
 Pandas 1.33s -> Polars 0.043s (30x) for data/xauusd_1min.parquet
 Backward compatible: 2466 tests still pass
 """
+
 from pathlib import Path
 from typing import Any, List
 

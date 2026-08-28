@@ -77,7 +77,7 @@ def run_self_audit(
     # 3. Timestamp ordering
     for i in range(1, len(events)):
         if events[i].timestamp < events[i - 1].timestamp:
-            issues["timestamp_violations"].append(f"Order violation at index {i}: {events[i].timestamp} < {events[i-1].timestamp}")
+            issues["timestamp_violations"].append(f"Order violation at index {i}: {events[i].timestamp} < {events[i - 1].timestamp}")
 
     # 4. Future leakage check (basic)
     for e in events:

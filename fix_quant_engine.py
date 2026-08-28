@@ -1,4 +1,5 @@
-﻿import pathlib
+import pathlib
+
 f = pathlib.Path(".github/workflows/quant_engine.yml")
 lines = f.read_text(encoding="utf-8").splitlines()
 

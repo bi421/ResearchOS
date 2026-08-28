@@ -10,7 +10,7 @@ print("554KB nanobind OK")
 
 # 1. Adapter creation - 0.20us гэж гарсан
 inst = timeit.repeat("CppQuantAdapter()", setup="from researchos.quant_engine.cpp_backend import CppQuantAdapter", number=1, repeat=100)
-print(f"[CppQuantAdapter()] mean {statistics.mean(inst)*1e6:.2f} us")
+print(f"[CppQuantAdapter()] mean {statistics.mean(inst) * 1e6:.2f} us")
 
 # 2. calculate_statistics 1000 values
 vals = [float(i * 0.001) for i in range(1000)]

@@ -1,4 +1,5 @@
 """C++ Quant Engine - RSI & MACD Strategy Backtest Example."""
+
 import os
 import sys
 
@@ -8,6 +9,7 @@ sys.path.insert(0, os.path.normpath(backend_path))
 
 try:
     import cpp_quant_backend  # noqa: F401
+
     print("✅ C++ Quant Engine амжилттай ачааллагдав!")
 except ImportError as e:
     print(f"⚠️  C++ binding олдсонгүй: {e}")

@@ -259,7 +259,7 @@ def extract_sma_crossover_events(
             continue
 
         # Event ID
-        event_id = f"XAUUSD_D1_SMA{fast_period}_{slow_period}_" f"{timestamps[i].strftime('%Y%m%d')}_{direction.value}"
+        event_id = f"XAUUSD_D1_SMA{fast_period}_{slow_period}_{timestamps[i].strftime('%Y%m%d')}_{direction.value}"
 
         # Context
         regime, vol_state = _compute_regime(curr_fast, curr_slow, atr[i], closes[i])

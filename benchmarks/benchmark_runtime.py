@@ -26,11 +26,11 @@ b = Backend()
 print(f"Backend meta: {b.meta()}")
 p = pathlib.Path("cpp_quant_engine/python/cpp_quant_engine/cpp_quant_backend.cp314-win_amd64.pyd")
 if p.exists():
-    print(f"Binary: {p.stat().st_size/1024:.0f}KB (pybind11 was 684KB+26MB PDB)")
+    print(f"Binary: {p.stat().st_size / 1024:.0f}KB (pybind11 was 684KB+26MB PDB)")
 inst = timeit.repeat("Backend()", setup="from cpp_quant_engine.cpp_quant_backend import Backend", number=1, repeat=500)
-print(f"[Backend()] mean {statistics.mean(inst)*1e6:.1f} us")
+print(f"[Backend()] mean {statistics.mean(inst) * 1e6:.1f} us")
 meta = timeit.repeat("b.meta()", globals={"b": b}, number=1, repeat=1000)
-print(f"[b.meta()] mean {statistics.mean(meta)*1e6:.1f} us")
+print(f"[b.meta()] mean {statistics.mean(meta) * 1e6:.1f} us")
 import time as tm  # noqa: E402
 
 # noqa: E402

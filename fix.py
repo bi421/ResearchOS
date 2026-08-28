@@ -1,4 +1,4 @@
-﻿import re
+import re
 
 path = "/mnt/c/Users/User/Desktop/ResearchOS/cpp_quant_engine/bindings/python_bindings.cpp"
 with open(path, "r") as f:

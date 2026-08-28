@@ -1,6 +1,8 @@
 """Live Market Data Test with C++ Quant Engine"""
+
 import os
 import sys
+
 import yfinance as yf
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -9,10 +11,12 @@ sys.path.insert(0, os.path.normpath(backend_path))
 
 try:
     import cpp_quant_backend  # noqa: F401
+
     print("✅ C++ Quant Engine амжилттай ачааллагдав!")
 except ImportError as e:
     print(f"⚠️ C++ binding олдсонгүй: {e}")
     sys.exit(1)
+
 
 def fetch_real_data(ticker: str = "BTC-USD", period: str = "1mo", interval: str = "1h"):
     print(f"📡 {ticker} бодит зах зээлийн өгөгдөл татаж байна ({period}, {interval})...")
@@ -21,9 +25,10 @@ def fetch_real_data(ticker: str = "BTC-USD", period: str = "1mo", interval: str 
         raise ValueError("Өгөгдөл хоосон байна!")
 
     # Pandas-ийг шууд энгийн float list болгох 100% найдвартай арга
-    closes = df['Close'].astype(float).squeeze().tolist()
+    closes = df["Close"].astype(float).squeeze().tolist()
     print(f"✅ {len(closes)} ширхэг бодит 'Close' үнэ татагдлаа.")
     return closes
+
 
 def main():
     print("\n" + "=" * 60)
@@ -38,6 +43,7 @@ def main():
         print(f"  - ${float(price):.2f}")
 
     print("\n✅ Бодит өгөгдлийн урсгал C++ Engine-д амжилттай бэлэн боллоо!")
+
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,7 @@
 Grid Search Strategy - C++ Engine Integration (Auto-Fixed)
 Backend method: None
 """
+
 import sys
 from pathlib import Path
 
@@ -20,7 +21,7 @@ class GridSearchStrategy:
 
     def run_grid_search(self, ma_periods=[10, 20, 50], rsi_thresholds=[30, 50, 70]):
         """MA period + RSI threshold комбинаци бүрээр backtest"""
-        print(f"🔍 Grid Search эхэлж байна: {len(ma_periods)} x {len(rsi_thresholds)} = {len(ma_periods)*len(rsi_thresholds)} комбинаци")
+        print(f"🔍 Grid Search эхэлж байна: {len(ma_periods)} x {len(rsi_thresholds)} = {len(ma_periods) * len(rsi_thresholds)} комбинаци")
 
         for ma in ma_periods:
             for rsi in rsi_thresholds:

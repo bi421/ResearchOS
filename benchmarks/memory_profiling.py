@@ -26,4 +26,4 @@ for n in [1000, 10000, 50000]:
     b = Backend()
     b.market_data_load(req)
     after = rss()
-    print(f"{n} candles: RSS {before:.1f} -> {after:.1f} MB delta {after-before:+.1f} MB | overhead 1.1x nanobind vs 2.5x pybind11")
+    print(f"{n} candles: RSS {before:.1f} -> {after:.1f} MB delta {after - before:+.1f} MB | overhead 1.1x nanobind vs 2.5x pybind11")
