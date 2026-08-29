@@ -110,6 +110,11 @@ def _native_call(fn, *args):
 class CppQuantEngineBackend:
     """Typed, production-grade Python facade over the C++ bridge."""
 
+    @property
+    def native_module(self):
+        """Backward-compatible property exposing the native C++ module."""
+        return native_module()
+
     def __init__(self) -> None:
         self._cpp = native_module().Backend()
 
