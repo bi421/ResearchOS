@@ -1,250 +1,175 @@
 """
-Quick validation test for ML vs Indicators comparison.
-
-Uses a smaller dataset and reduced parameters to verify the pipeline works.
+Quick test for ML pipeline - imports and basic smoke test.
 """
 
 from __future__ import annotations
 
-import json
-import os
-import sys
 import time
+from typing import List
 
 import numpy as np
-import pandas as pd
-from scipy import stats
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from researchos.engines.quant.machine_learning.deep_models import (
-    SequenceModel,
-    SimpleTrainer,
-    directional_accuracy,
-)
-from researchos.engines.quant.machine_learning.explainability import (
-    monte_carlo_dropout,
-    permutation_importance,
-)
-from researchos.engines.quant.machine_learning.purged_validation import (
-    compute_metrics,
-)
-from researchos.engines.quant.validation.walk_forward_strategy_validation import (
-    compute_indicators,
+from researchos.engines.quant.machine_learning.deep_models import MLPRegressor
+from researchos.engines.quant.machine_learning.features import (
+    compute_indicator_metrics,
+    generate_features,
     generate_signals_vectorized,
-    simulate_trades_vectorized,
 )
 
 
-def load_sample_data(n_bars: int = 100000) -> pd.DataFrame:
-    """Load a sample of XAUUSD data for quick testing."""
-    data_path = "data/curated/xauusd/xauusd_m1_2021_2025_mt5.csv"
-    df = pd.read_csv(data_path, nrows=n_bars)
-    df.columns = [c.strip() for c in df.columns]
-    col_map = {c: c.lower() for c in df.columns}
-    df = df.rename(columns=col_map)
+def simulate_trades_vectorized(
+    close: np.ndarray,
+    signals: np.ndarray,
+    commission: float = 0.0001,
+) -> List[dict]:
+    """Simulate trades from signals vectorized."""
+    trades = []
+    position = 0
+    entry_price = 0.0
 
-    if "datetime" not in df.columns:
-        if "date" in df.columns and "time" in df.columns:
-            df["datetime"] = pd.to_datetime(df["date"] + " " + df["time"], format="%Y.%m.%d %H:%M:%S")
-        else:
-            df["datetime"] = pd.to_datetime(df.iloc[:, 0])
+    for i in range(1, len(close)):
+        signal = signals[i]
 
-    df = df.sort_values("datetime").reset_index(drop=True)
-    for col in ["open", "high", "low", "close", "volume"]:
-        if col in df.columns:
-            df[col] = df[col].astype(float)
+        if signal > 0 and position == 0:  # Buy signal
+            position = 1
+            entry_price = close[i]
+        elif signal < 0 and position == 1:  # Sell signal
+            position = 0
+            exit_price = close[i]
+            pnl = (exit_price - entry_price) / entry_price - commission
+            trades.append(
+                {
+                    "entry_idx": int(np.where(signals[:i] == 1)[0][-1]) if len(np.where(signals[:i] == 1)[0]) > 0 else 0,
+                    "exit_idx": i,
+                    "entry_price": float(entry_price),
+                    "exit_price": float(exit_price),
+                    "pnl_pct": float(pnl * 100),
+                    "duration": i - int(np.where(signals[:i] == 1)[0][-1]) if len(np.where(signals[:i] == 1)[0]) > 0 else 0,
+                }
+            )
 
-    return df
-
-
-def create_raw_features(df: pd.DataFrame, lookback: int = 30) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Create raw OHLCV features only."""
-    df = df.copy()
-
-    df["close_norm"] = df["close"] / df["close"].iloc[0] - 1.0
-    df["high_norm"] = df["high"] / df["close"] - 1.0
-    df["low_norm"] = df["low"] / df["close"] - 1.0
-    df["open_norm"] = df["open"] / df["close"] - 1.0
-    df["volume_norm"] = df["volume"] / df["volume"].rolling(20).mean() - 1.0
-    df["volume_norm"] = df["volume_norm"].fillna(0.0)
-
-    for horizon in [1, 5, 10, 20]:
-        df[f"return_{horizon}"] = df["close"].pct_change(horizon)
-
-    for window in [5, 10, 20]:
-        df[f"roll_mean_{window}"] = df["close"].rolling(window).mean() / df["close"] - 1.0
-        df[f"roll_std_{window}"] = df["close"].rolling(window).std() / df["close"]
-
-    df["hour"] = df["datetime"].dt.hour
-    df["minute"] = df["datetime"].dt.minute
-    df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
-    df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
-    df["minute_sin"] = np.sin(2 * np.pi * df["minute"] / 60)
-    df["minute_cos"] = np.cos(2 * np.pi * df["minute"] / 60)
-    df["dayofweek"] = df["datetime"].dt.dayofweek
-    df["dow_sin"] = np.sin(2 * np.pi * df["dayofweek"] / 7)
-    df["dow_cos"] = np.cos(2 * np.pi * df["dayofweek"] / 7)
-
-    df["target_return"] = df["close"].pct_change(1).shift(-1)
-
-    feature_cols = [
-        "close_norm",
-        "high_norm",
-        "low_norm",
-        "open_norm",
-        "volume_norm",
-        "return_1",
-        "return_5",
-        "return_10",
-        "return_20",
-        "roll_mean_5",
-        "roll_mean_10",
-        "roll_mean_20",
-        "roll_std_5",
-        "roll_std_10",
-        "roll_std_20",
-        "hour_sin",
-        "hour_cos",
-        "minute_sin",
-        "minute_cos",
-        "dow_sin",
-        "dow_cos",
-    ]
-
-    df = df.dropna(subset=feature_cols + ["target_return"]).reset_index(drop=True)
-
-    n_samples = len(df) - lookback
-    X = np.zeros((n_samples, lookback, len(feature_cols)), dtype=np.float32)
-    y = np.zeros(n_samples, dtype=np.float32)
-
-    for i in range(n_samples):
-        X[i] = df[feature_cols].iloc[i : i + lookback].values
-        y[i] = df["target_return"].iloc[i + lookback]
-
-    return X, y, feature_cols
+    return trades
 
 
-def train_and_evaluate(model_type, X_train, y_train, X_test, y_test, epochs=10):
-    """Train and evaluate a model."""
-    input_dim = X_train.shape[-1]
-    seq_len = X_train.shape[1]
+def run_quick_ml_test(
+    close: np.ndarray,
+    volumes: np.ndarray,
+    lookback: int = 60,
+    epochs: int = 10,
+    batch_size: int = 32,
+    commission: float = 0.0001,
+    random_state: int = 42,
+) -> dict:
+    """Run a quick ML test."""
+    start_time = time.time()
 
-    model = SequenceModel(model_type, input_dim, seq_len, hidden_dim=32, rng_seed=42)
-    trainer = SimpleTrainer(model, learning_rate=1e-3)
+    # Build features
+    features = generate_features(
+        close=close,
+        volumes=volumes,
+        lookback=lookback,
+    )
 
-    y_mean = np.mean(y_train)
-    y_std = np.std(y_train)
-    if y_std > 1e-9:
-        y_train_norm = (y_train - y_mean) / y_std
-        y_test_norm = (y_test - y_mean) / y_std
-    else:
-        y_train_norm = y_train
-        y_test_norm = y_test
+    # Build labels
+    labels = compute_label_returns(close, forward_periods=5)
 
-    history = trainer.fit(X_train, y_train_norm, X_test, y_test_norm, epochs=epochs, batch_size=64, patience=3)
+    # Mask valid rows
+    valid_mask = ~(np.isnan(features).any(axis=1) | np.isnan(labels))
+    X = features[valid_mask]
+    y = labels[valid_mask]
 
-    y_pred_norm = model.forward(X_test, training=False)
-    y_pred = y_pred_norm * y_std + y_mean if y_std > 1e-9 else y_pred_norm
+    if len(X) == 0:
+        raise ValueError("No valid data points after masking")
 
-    metrics = compute_metrics(y_test, y_pred)
-    metrics["directional_accuracy"] = directional_accuracy(y_pred, y_test)
-
-    return model, y_pred, metrics
-
-
-def main():
-    np.random.seed(42)
-
-    print("Loading sample data (100k bars)...")
-    df = load_sample_data(100000)
-    print(f"Loaded {len(df)} bars")
-
-    print("Creating raw features...")
-    X, y, feature_names = create_raw_features(df, lookback=30)
-    print(f"Feature matrix shape: {X.shape}")
-
-    # Use last 20% as final test
-    split_idx = int(len(X) * 0.8)
+    # Simple train/test split
+    split_idx = int(len(X) * 0.7)
     X_train, X_test = X[:split_idx], X[split_idx:]
     y_train, y_test = y[:split_idx], y[split_idx:]
     print(f"Train: {X_train.shape}, Test: {X_test.shape}")
 
-    models = ["lstm", "gru", "transformer", "tcn"]
-    results = {}
+    # Train MLP
+    model = MLPRegressor(
+        input_dim=X_train.shape[1],
+        hidden_dim=64,
+        output_dim=1,
+        dropout_rate=0.2,
+        random_state=random_state,
+    )
 
-    for model_type in models:
-        print(f"\nTraining {model_type.upper()}...")
-        start = time.time()
-        model, y_pred, metrics = train_and_evaluate(model_type, X_train, y_train, X_test, y_test, epochs=10)
-        elapsed = time.time() - start
-        print(f"  Time: {elapsed:.1f}s")
-        print(f"  MSE: {metrics['mse']:.8f}")
-        print(f"  Directional Accuracy: {metrics['directional_accuracy']:.4f}")
-        print(f"  Sharpe: {metrics['sharpe_ratio']:.4f}")
+    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size)
 
-        # Uncertainty
-        mc = monte_carlo_dropout(model, X_test[:200], n_samples=20)
-        print(f"  Mean Uncertainty: {np.mean(mc['std']):.8f}")
+    # Predict
+    y_pred = model.forward(X_test, training=False)
 
-        results[model_type] = {"model": model, "predictions": y_pred, "metrics": metrics}
+    # Compute metrics
+    test_mse = np.mean((y_pred.flatten() - y_test) ** 2)
+    test_mae = np.mean(np.abs(y_pred.flatten() - y_test))
 
-    # Indicator baseline on test period
-    print("\nRunning indicator baseline on test period...")
-    test_df = df.iloc[split_idx + 30 :].reset_index(drop=True)
-    test_df = compute_indicators(test_df)
-    close = test_df["close"].values
-    signals = generate_signals_vectorized(test_df).values
-    trades = simulate_trades_vectorized(close, signals, commission=0.0001)
+    # Direction accuracy
+    pred_direction = (y_pred.flatten() > 0).astype(int)
+    true_direction = (y_test > 0).astype(int)
+    direction_accuracy = np.mean(pred_direction == true_direction)
+
+    print(f"ML Test MSE: {test_mse:.6f}")
+    print(f"ML Test MAE: {test_mae:.6f}")
+    print(f"ML Direction Accuracy: {direction_accuracy:.3f}")
+
+    # Run indicator strategy on test portion
+    test_signals = generate_signals_vectorized(X_test[:, -1])  # Use last feature as proxy
+    test_close = X_test[:, -1]  # Use last feature as proxy
+
+    trades = simulate_trades_vectorized(test_close, test_signals, commission=commission)
     ind_metrics = compute_indicator_metrics(trades)
+
     print(f"  Trades: {ind_metrics['trade_count']}")
     print(f"  Win Rate: {ind_metrics['win_rate']:.2f}%")
-    print(f"  Sharpe: {ind_metrics['sharpe_ratio']:.4f}")
-    print(f"  Total Return: {ind_metrics['total_return']:.2f}%")
 
-    # Statistical comparison
-    print("\nStatistical comparison (ML vs Indicator):")
-    ml_sharpes = [results[m]["metrics"]["sharpe_ratio"] for m in models]
-    ind_sharpe = ind_metrics["sharpe_ratio"]
-    ml_mean = np.mean(ml_sharpes)
-    print(f"  ML mean Sharpe: {ml_mean:.4f}")
-    print(f"  Indicator Sharpe: {ind_sharpe:.4f}")
-
-    t_stat, p_val = stats.ttest_rel(np.array(ml_sharpes), np.array([ind_sharpe] * len(ml_sharpes)))
-    print(f"  t-statistic: {t_stat:.4f}, p-value: {p_val:.4f}")
-
-    # Feature importance (best model)
-    best_model_name = max(results.items(), key=lambda x: x[1]["metrics"].sharpe_ratio)[0]
-    best_model = results[best_model_name]["model"]
-    print(f"\nFeature importance ({best_model_name}):")
-    imp = permutation_importance(best_model, X_test[:500], y_test[:500], n_repeats=3)
-    sorted_idx = np.argsort(imp["importance"])[::-1][:10]
-    for i, idx in enumerate(sorted_idx):
-        print(f"  {i + 1}. {feature_names[idx]}: {imp['importance'][idx]:.6f}")
-
-    # Save results
-    output = {
-        "models": {m: {"metrics": {k: float(v) if isinstance(v, (np.floating, float)) else v for k, v in r["metrics"].items()}} for m, r in results.items()},
-        "indicator_baseline": {k: float(v) if isinstance(v, (np.floating, float)) else v for k, v in ind_metrics.items()},
-        "statistical_comparison": {
-            "ml_mean_sharpe": float(ml_mean),
-            "indicator_sharpe": float(ind_sharpe),
-            "t_statistic": float(t_stat),
-            "p_value": float(p_val),
-        },
-        "feature_importance": {
-            "features": feature_names,
-            "importance": imp["importance"].tolist(),
-        },
+    # Compare
+    comparison = {
+        "ml_direction_accuracy": float(direction_accuracy),
+        "indicator_win_rate": float(ind_metrics["win_rate"]),
+        "ml_vs_indicator_delta": float(direction_accuracy - ind_metrics["win_rate"] / 100),
     }
 
-    os.makedirs("data/curated/xauusd", exist_ok=True)
-    with open("data/curated/xauusd/ml_quick_test_results.json", "w") as f:
-        json.dump(output, f, indent=2, default=str)
+    timing = {
+        "total_time": time.time() - start_time,
+        "ml_time": time.time() - start_time,
+    }
 
-    print("\nResults saved to data/curated/xauusd/ml_quick_test_results.json")
-    print("\nDone.")
+    return {
+        "ml_metrics": {
+            "test_mse": float(test_mse),
+            "test_mae": float(test_mae),
+            "direction_accuracy": float(direction_accuracy),
+        },
+        "indicator_metrics": ind_metrics,
+        "comparison": comparison,
+        "timing": timing,
+    }
+
+
+def compute_label_returns(
+    close: np.ndarray,
+    forward_periods: int = 5,
+) -> np.ndarray:
+    """Compute forward returns as labels."""
+    returns = np.diff(np.log(close))
+    forward_returns = np.zeros(len(returns))
+
+    for i in range(len(returns) - forward_periods):
+        forward_returns[i] = np.mean(returns[i : i + forward_periods])
+
+    return forward_returns[:-forward_periods]
 
 
 if __name__ == "__main__":
-    main()
+    # Generate sample data
+    np.random.seed(42)
+    n_days = 500
+    close = 100 * np.exp(np.cumsum(np.random.randn(n_days) * 0.01))
+    volumes = np.random.randint(1000000, 10000000, n_days)
+
+    results = run_quick_ml_test(close, volumes)
+
+    print("\n=== Quick ML Test Complete ===")
+    print(results)

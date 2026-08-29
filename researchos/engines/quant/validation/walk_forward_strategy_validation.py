@@ -388,7 +388,7 @@ def run_walk_forward_validation(
             d = cohens_d(returns, np.zeros_like(returns))
         else:
             ci_low, ci_high = 0.0, 0.0
-            t_stat, pvalue = 0.0, 1.0
+            _t_stat, pvalue = 0.0, 1.0
             d = 0.0
 
         fold_results.append(

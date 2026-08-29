@@ -243,7 +243,7 @@ def uncertainty_adjusted_returns(
     confidence = 1.0 / (1.0 + uncertainties)
     mask = confidence >= confidence_threshold
 
-    filtered_pred = predictions[mask]
+    predictions[mask]
     filtered_ret = returns[mask]
 
     if len(filtered_ret) == 0:

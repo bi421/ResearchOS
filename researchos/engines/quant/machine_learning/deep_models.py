@@ -501,7 +501,7 @@ class SimpleTrainer:
         wait = 0
 
         for epoch in range(epochs):
-            train_loss = self.train_epoch(X, y, batch_size)
+            self.train_epoch(X, y, batch_size)
             val_pred = self.model.forward(X_val, training=False)
             val_loss = mse_loss(val_pred, y_val)
 
