@@ -414,3 +414,29 @@ if __name__ == "__main__":
 
     results = run_gold_factor_analysis(gold_prices, factor_data)
     print(json.dumps(results, indent=2, default=str))
+
+
+def generate_economic_calendar():
+    """Stub: Economic calendar events generator."""
+    return pd.DataFrame()
+
+
+def generate_xauusd_synthetic(n_days=1000, seed=42):
+    """Stub: Generate synthetic XAUUSD data."""
+    import numpy as np
+
+    np.random.seed(seed)
+    dates = pd.date_range("2021-01-01", periods=n_days, freq="D")
+    df = pd.DataFrame({"close": 1800 + np.cumsum(np.random.normal(0, 5, n_days)), "open": 1800 + np.cumsum(np.random.normal(0, 5, n_days)), "high": 1800 + np.cumsum(np.random.normal(0, 5, n_days)) + 10, "low": 1800 + np.cumsum(np.random.normal(0, 5, n_days)) - 10, "volume": np.random.uniform(50000, 200000, n_days)}, index=dates)
+    df.index.name = "date"
+    return df
+
+
+def run_factor_regression(df, factor_cols):
+    """Stub: Run factor regression analysis."""
+    return {"coefficients": {}, "r_squared": 0.0}
+
+
+def run_regime_dependent_regression(df, factor_cols, regime_col):
+    """Stub: Run regime-dependent regression."""
+    return {"regimes": {}, "coefficients": {}}

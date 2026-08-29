@@ -37,7 +37,6 @@ from researchos.engines.quant.validation.walk_forward_strategy_validation import
     simulate_trades_vectorized,
 )
 from researchos.macro.gold_factor_model.gold_factor_model import (
-    add_event_features,
     generate_economic_calendar,
     generate_xauusd_synthetic,
     run_factor_regression,
@@ -327,7 +326,6 @@ def main():
     print("\nGenerating synthetic XAUUSD + macro data...")
     df = generate_xauusd_synthetic(n_days=1800, seed=42)
     events = generate_economic_calendar("2021-01-01", "2025-12-31")
-    df = add_event_features(df, events)
 
     df["regime"] = "neutral"
     for i in range(len(df)):
