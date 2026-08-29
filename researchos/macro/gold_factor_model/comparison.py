@@ -325,7 +325,7 @@ def main():
 
     print("\nGenerating synthetic XAUUSD + macro data...")
     df = generate_xauusd_synthetic(n_days=1800, seed=42)
-    events = generate_economic_calendar("2021-01-01", "2025-12-31")
+    generate_economic_calendar("2021-01-01", "2025-12-31")
 
     df["regime"] = "neutral"
     for i in range(len(df)):
