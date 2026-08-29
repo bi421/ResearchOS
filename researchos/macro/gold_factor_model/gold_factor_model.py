@@ -1,6 +1,7 @@
 """
 XAUUSD Macro-Factor Model - Fama-French style factor regression.
 """
+
 from __future__ import annotations
 
 import json

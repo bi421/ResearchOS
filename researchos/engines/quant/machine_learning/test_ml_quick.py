@@ -220,7 +220,7 @@ def main():
     imp = permutation_importance(best_model, X_test[:500], y_test[:500], n_repeats=3)
     sorted_idx = np.argsort(imp["importance"])[::-1][:10]
     for i, idx in enumerate(sorted_idx):
-        print(f"  {i+1}. {feature_names[idx]}: {imp['importance'][idx]:.6f}")
+        print(f"  {i + 1}. {feature_names[idx]}: {imp['importance'][idx]:.6f}")
 
     # Save results
     output = {

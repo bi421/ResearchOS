@@ -645,7 +645,7 @@ def generate_comparison_report(
         importance = feature_importance.get("importance", np.array([]))
         sorted_idx = np.argsort(importance)[::-1][:10]
         for i, idx in enumerate(sorted_idx):
-            lines.append(f"   {i+1}. {feature_names[idx]}: {importance[idx]:.6f}")
+            lines.append(f"   {i + 1}. {feature_names[idx]}: {importance[idx]:.6f}")
         lines.append("")
 
     lines.append("=" * 80)
