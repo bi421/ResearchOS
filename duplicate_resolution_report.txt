@@ -1,0 +1,231 @@
+DUPLICATE TREE RESOLUTION REPORT
+Root: C:\Users\User\Desktop\ResearchOS
+READ-ONLY: no files were modified or deleted.
+
+Total Python files scanned: 857
+
+==============================================================================
+PAIR: quant engine
+  A: researchos/engines/quant  (exists: True)
+  B: researchos/quant_engine  (exists: True)
+==============================================================================
+
+References to A (researchos.engines.quant) from OUTSIDE both trees: 23
+    run_ml_macro.py:12: from researchos.engines.quant.machine_learning.purged_validation import purged_k_fold
+    researchos/engines/scenario/reproduction.py:54: from researchos.engines.quant.machine_learning.dataset_contracts import (
+    researchos/macro/gold_factor_model/comparison.py:33: from researchos.engines.quant.validation.walk_forward_strategy_validation import (
+    researchos/macro/gold_factor_model/comparison.py:213: from researchos.engines.quant.machine_learning.purged_validation import expanding_window_folds
+    researchos/signals/multi_feature.py:3: from researchos.engines.quant.multi_feature_strategy import (
+    researchos/tests/test_ensemble.py:7: from researchos.engines.quant.advanced_backtest import AdvancedBacktestEngine
+    researchos/tests/test_ensemble.py:8: from researchos.engines.quant.ensemble_strategy import EnsembleStrategy
+    researchos/tests/test_sp500.py:7: from researchos.engines.quant.advanced_backtest import AdvancedBacktestEngine
+    ... and 15 more
+
+References to B (researchos.quant_engine) from OUTSIDE both trees: 212
+    benchmarks/fixed_bench.py:5: from researchos.quant_engine.cpp_backend import CppQuantAdapter
+    benchmarks/memory_final.py:6: from researchos.quant_engine.cpp_backend import CppQuantAdapter
+    cpp_quant_engine/python/cpp_quant_engine/backend_wrapper.py:23: from researchos.quant_engine.dataset_contracts import extract_prices
+    cpp_quant_engine/python/cpp_quant_engine/backend_wrapper.py:24: from researchos.quant_engine.interface import QuantComputationInterface
+    cpp_quant_engine/python/cpp_quant_engine/backend_wrapper.py:25: from researchos.quant_engine.models import (
+    cpp_quant_engine/python/cpp_quant_engine/backend_wrapper.py:52: from researchos.quant_engine.backend import PythonQuantBackend
+    cpp_quant_engine/python/tests/test_cpp_backend_adapter.py:14: from researchos.quant_engine.backend import PythonQuantBackend
+    cpp_quant_engine/python/tests/test_cpp_backend_adapter.py:15: from researchos.quant_engine.cpp_backend import (
+    ... and 204 more
+
+>>> RECOMMENDATION: BOTH referenced (23 vs 212) — do NOT remove either without deeper review
+
+==============================================================================
+PAIR: ml engine
+  A: researchos/engines/ml  (exists: True)
+  B: researchos/ml_engine  (exists: True)
+==============================================================================
+
+References to A (researchos.engines.ml) from OUTSIDE both trees: 5
+    scripts/analysis/h1_4h_xgboost.py:7: from researchos.engines.ml.features import create_features
+    scripts/analysis/h1_4h_xgboost.py:8: from researchos.engines.ml.model import train_model
+    scripts/analysis/h1_4h_xgboost.py:9: from researchos.engines.ml.strategy import MLStrategy
+    scripts/backtest/run_ml_test.py:12: from researchos.engines.ml.pipeline import run_ml_backtest
+    scripts/backtest/run_ml_test_xgb.py:7: from researchos.engines.ml.pipeline import run_ml_backtest
+
+References to B (researchos.ml_engine) from OUTSIDE both trees: 17
+    researchos/auto_ml/objective.py:5: from researchos.ml_engine.strategy import Signal
+    scripts/h1_4h_xgboost.py:7: from researchos.ml_engine.features import create_features
+    scripts/h1_4h_xgboost.py:8: from researchos.ml_engine.model import train_model
+    scripts/h1_4h_xgboost.py:9: from researchos.ml_engine.strategy import MLStrategy
+    scripts/run_2026_test.py:7: from researchos.ml_engine.features import create_features
+    scripts/run_2026_test.py:8: from researchos.ml_engine.model import train_model
+    scripts/run_2026_test.py:9: from researchos.ml_engine.strategy import MLStrategy
+    scripts/run_fast_grid.py:7: from researchos.ml_engine.features import create_features
+    ... and 9 more
+
+>>> RECOMMENDATION: BOTH referenced (5 vs 17) — do NOT remove either without deeper review
+
+==============================================================================
+PAIR: data engine
+  A: researchos/engines/data  (exists: True)
+  B: researchos/data_engine  (exists: True)
+==============================================================================
+
+References to A (researchos.engines.data) from OUTSIDE both trees: 15
+    researchos/engines/quant/replay.py:22: from researchos.engines.data.dataset import HistoricalDataset
+    researchos/engines/quant/replay.py:23: from researchos.engines.data.iterator import HistoricalIterator
+    researchos/tests/test_macro_layer.py:11: from researchos.engines.data.contracts import Timeframe  # noqa: E402
+    researchos/tests/test_macro_layer.py:14: from researchos.engines.data.macro_analyzer import MacroAnalyzer  # noqa: E402
+    researchos/tests/test_macro_layer.py:17: from researchos.engines.data.macro_provider import MacroFactorProvider  # noqa: E402
+    researchos/tests/test_macro_layer.py:20: from researchos.engines.data.repository import SqliteDatasetRepository  # noqa: E402
+    researchos/tests/test_mt5_connector.py:6: from researchos.engines.data.broker_connectors import MT5Connector
+    scripts/analysis/prove_blocked.py:5: from researchos.engines.data.loader import CsvLoader
+    ... and 7 more
+
+References to B (researchos.data_engine) from OUTSIDE both trees: 34
+    researchos/experiments/crypto/run_btc_research.py:9: from researchos.data_engine.loader import DataLoader
+    researchos/experiments/phase51/scripts/run_phase51_experiment.py:28: from researchos.data_engine.loader import CsvLoader
+    researchos/quant_engine/replay.py:22: from researchos.data_engine.dataset import HistoricalDataset
+    researchos/quant_engine/replay.py:23: from researchos.data_engine.iterator import HistoricalIterator
+    scripts/h1_feature_sweep.py:12: from researchos.data_engine.loader import CsvLoader
+    scripts/load_btcusd.py:5: from researchos.data_engine.candle import Candle
+    scripts/load_btcusd.py:6: from researchos.data_engine.dataset import HistoricalDataset
+    scripts/load_btcusd.py:7: from researchos.data_engine.repository import SqliteDatasetRepository
+    ... and 26 more
+
+>>> RECOMMENDATION: BOTH referenced (15 vs 34) — do NOT remove either without deeper review
+
+==============================================================================
+PAIR: decision/scenario
+  A: researchos/engines/scenario  (exists: True)
+  B: researchos/decision_engine  (exists: True)
+==============================================================================
+
+References to A (researchos.engines.scenario) from OUTSIDE both trees: 0
+
+References to B (researchos.decision_engine) from OUTSIDE both trees: 41
+    researchos/tests/test_decision_engine.py:26: from researchos.decision_engine.context import (
+    researchos/tests/test_decision_engine_evidence.py:24: import researchos.decision_engine.contracts as contracts
+    researchos/tests/test_decision_engine_evidence.py:25: import researchos.decision_engine.evidence as evidence_module
+    researchos/tests/test_decision_engine_evidence.py:26: import researchos.decision_engine.score as score_module
+    researchos/tests/test_decision_engine_evidence.py:27: from researchos.decision_engine.context import DecisionContext
+    researchos/tests/test_decision_engine_evidence.py:28: from researchos.decision_engine.contracts import (
+    researchos/tests/test_decision_engine_evidence.py:34: from researchos.decision_engine.evidence import (
+    researchos/tests/test_decision_engine_evidence.py:39: from researchos.decision_engine.probability import (
+    ... and 33 more
+
+>>> RECOMMENDATION: KEEP B (researchos/decision_engine), safe to review A for removal
+
+==============================================================================
+PAIR: validation
+  A: researchos/engines/validation  (exists: True)
+  B: researchos/validation  (exists: True)
+==============================================================================
+
+References to A (researchos.engines.validation) from OUTSIDE both trees: 0
+
+References to B (researchos.validation) from OUTSIDE both trees: 3
+    researchos/agents/tools.py:5: from researchos.validation.prop_validator import TradingRiskCheck
+    researchos/tests/test_objects.py:26: from researchos.validation.validators import get_validator
+    researchos/tests/test_prop_validator.py:1: from researchos.validation.prop_validator import TradingRiskCheck
+
+>>> RECOMMENDATION: KEEP B (researchos/validation), safe to review A for removal
+
+==============================================================================
+PAIR: reasoning
+  A: researchos/engines/reasoning  (exists: True)
+  B: researchos/reasoning_engine  (exists: True)
+==============================================================================
+
+References to A (researchos.engines.reasoning) from OUTSIDE both trees: 0
+
+References to B (researchos.reasoning_engine) from OUTSIDE both trees: 6
+    tests/unit/test_reasoning_engine/test_contracts.py:24: from researchos.reasoning_engine.contracts import (
+    tests/unit/test_reasoning_engine/test_evidence.py:17: from researchos.reasoning_engine.contracts import EvidenceType, ReasoningEvidence
+    tests/unit/test_reasoning_engine/test_evidence.py:18: from researchos.reasoning_engine.evidence import EvidenceRecord
+    tests/unit/test_reasoning_engine/test_validation.py:19: from researchos.reasoning_engine.contracts import (
+    tests/unit/test_reasoning_engine/test_validation.py:24: from researchos.reasoning_engine.evidence import EvidenceRecord
+    tests/unit/test_reasoning_engine/test_validation.py:25: from researchos.reasoning_engine.validation import EvidenceValidator
+
+>>> RECOMMENDATION: KEEP B (researchos/reasoning_engine), safe to review A for removal
+
+==============================================================================
+PAIR: memory
+  A: researchos/market_memory  (exists: True)
+  B: researchos/memory  (exists: True)
+==============================================================================
+
+References to A (researchos.market_memory) from OUTSIDE both trees: 4
+    researchos/tests/test_market_memory_q5.py:27: from researchos.market_memory import (
+    researchos/tests/test_object_registry_disambiguation.py:21: from researchos.market_memory import (
+    researchos/tests/test_object_registry_disambiguation.py:27: from researchos.market_memory.events import MacroMarketEvent as EventsMacroMarketEvent
+    researchos/tests/test_object_registry_disambiguation.py:28: from researchos.market_memory.models import MacroContextSnapshot as ModelsMacroContextSnapshot
+
+References to B (researchos.memory) from OUTSIDE both trees: 1
+    researchos/tests/test_market_memory.py:20: from researchos.memory.engine import MarketMemoryEngine
+
+>>> RECOMMENDATION: BOTH referenced (4 vs 1) — do NOT remove either without deeper review
+
+==============================================================================
+PAIR: pipeline
+  A: researchos/pipeline  (exists: True)
+  B: researchos/pipeline_repository  (exists: True)
+==============================================================================
+
+References to A (researchos.pipeline) from OUTSIDE both trees: 7
+    researchos/agents/tools.py:3: from researchos.pipeline import ResearchPipeline
+    researchos/interfaces/api.py:4: from researchos.pipeline import ResearchPipeline
+    researchos/interfaces/cli.py:3: from researchos.pipeline import ResearchPipeline
+    researchos/tests/test_pipeline.py:20: from researchos.pipeline import ReferenceValidator, ResearchPipeline
+    researchos/tests/test_pipeline_verification.py:25: from researchos.pipeline import ResearchPipeline
+    scripts/run_demo.py:4: from researchos.pipeline import ResearchPipeline
+    scripts/analysis/run_demo.py:4: from researchos.pipeline import ResearchPipeline
+
+References to B (researchos.pipeline_repository) from OUTSIDE both trees: 8
+    researchos/evaluation/engine.py:24: from researchos.pipeline_repository.contracts import (
+    researchos/evaluation/engine.py:29: from researchos.pipeline_repository.repository import PipelineRepository
+    researchos/tests/test_evaluation_q16.py:36: from researchos.pipeline_repository.repository import PipelineRepository
+    researchos/tests/test_pipeline_repository_q15.py:30: from researchos.pipeline_repository import (
+    researchos/tests/test_pipeline_repository_q15.py:37: from researchos.pipeline_repository.contracts import PIPELINE_REPOSITORY_VERSION
+    tests/test_evaluation_q16.py:36: from researchos.pipeline_repository.repository import PipelineRepository
+    tests/test_pipeline_repository_q15.py:30: from researchos.pipeline_repository import (
+    tests/test_pipeline_repository_q15.py:37: from researchos.pipeline_repository.contracts import PIPELINE_REPOSITORY_VERSION
+
+>>> RECOMMENDATION: BOTH referenced (7 vs 8) — do NOT remove either without deeper review
+
+==============================================================================
+PAIR: cpp_quant_engine
+  A: cpp_quant_engine  (exists: True)
+  B: researchos/engines/quant/python/cpp_quant_engine  (exists: True)
+==============================================================================
+
+References to A (cpp_quant_engine) from OUTSIDE both trees: 26
+    setup_integration.py:28: import cpp_quant_engine.cpp_quant_backend as backend
+    test_fix.py:4: import cpp_quant_engine as cqe
+    benchmarks/benchmark_runtime.py:15: from cpp_quant_engine.cpp_quant_backend import Backend  # noqa: E402
+    benchmarks/memory_profiling.py:7: from cpp_quant_engine.cpp_quant_backend import Backend
+    researchos/quant_engine/cpp_backend.py:73: from cpp_quant_engine.backend import native_module
+    researchos/strategy/grid_search_strategy.py:11: import cpp_quant_engine.cpp_quant_backend as backend
+    scripts/cpp_production_sweep.py:8: from cpp_quant_engine import BacktestRequest, Candle, CppQuantEngineBackend
+    scripts/cpp_sweep.py:7: from cpp_quant_engine import BacktestRequest, Candle, CppQuantEngineBackend
+    ... and 18 more
+
+References to B (researchos.engines.quant.python.cpp_quant_engine) from OUTSIDE both trees: 0
+
+>>> RECOMMENDATION: KEEP A (cpp_quant_engine), safe to review B for removal
+
+==============================================================================
+SUMMARY TABLE
+==============================================================================
+Pair                   A refs   B refs   Recommendation
+------------------------------------------------------------------------------
+quant engine               23      212   BOTH referenced (23 vs 212) — do NOT remove either without deeper review
+ml engine                   5       17   BOTH referenced (5 vs 17) — do NOT remove either without deeper review
+data engine                15       34   BOTH referenced (15 vs 34) — do NOT remove either without deeper review
+decision/scenario           0       41   KEEP B (researchos/decision_engine), safe to review A for removal
+validation                  0        3   KEEP B (researchos/validation), safe to review A for removal
+reasoning                   0        6   KEEP B (researchos/reasoning_engine), safe to review A for removal
+memory                      4        1   BOTH referenced (4 vs 1) — do NOT remove either without deeper review
+pipeline                    7        8   BOTH referenced (7 vs 8) — do NOT remove either without deeper review
+cpp_quant_engine           26        0   KEEP A (cpp_quant_engine), safe to review B for removal
+
+==============================================================================
+This report only counts import references. It does NOT verify
+runtime behavior, dynamic imports, or CLI entry points. Manually
+confirm before deleting anything, even for a clear KEEP/REMOVE result.
+==============================================================================
