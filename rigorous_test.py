@@ -15,6 +15,8 @@ by actually running this script.
 
 Run in C:\\Users\\User\\Desktop\\ResearchOS
 """
+import os
+
 import numpy as np
 import pandas as pd
 from fredapi import Fred
@@ -23,8 +25,6 @@ from scipy import stats
 FRED_API_KEY = "c23c25c4c1abb2777d1067591842c1c6"
 
 # ---- Load US10Y (reuse cached file if it exists to avoid re-hitting FRED) ----
-import os
-
 if os.path.exists("us10y_real_2021_2025.csv"):
     us10y = pd.read_csv("us10y_real_2021_2025.csv")
     us10y["date"] = pd.to_datetime(us10y["date"])
