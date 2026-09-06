@@ -753,11 +753,24 @@ class TestMarketMemoryReport:
         assert report.lifecycle.current_stage == LifecycleStage.FINAL
 
     def test_deterministic_id(self):
-        report1 = MarketMemoryReport(report_type="FullAnalysis")
-        # Different reports should have different IDs due to timestamp
-        report2 = MarketMemoryReport(report_type="FullAnalysis")
-        # IDs should differ because timestamps differ
+        # Force identical timestamps
+        t = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        # Different reports should have different IDs due to different sequence_id
+        report1 = MarketMemoryReport(report_type="FullAnalysis", sequence_id=1)
+        # Manually force identical creation time
+        report1.generated_at = t
+
+        report2 = MarketMemoryReport(report_type="FullAnalysis", sequence_id=2)
+        report2.generated_at = t
+
+        # IDs should differ because sequence_ids differ
         assert report1.id != report2.id
+
+        # Stability check
+        report3 = MarketMemoryReport(report_type="FullAnalysis", sequence_id=1)
+        report3.generated_at = t
+        assert report1.id == report3.id
 
 
 # =============================================================================

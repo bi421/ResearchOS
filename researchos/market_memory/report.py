@@ -58,9 +58,11 @@ class MarketMemoryReport(BaseObject):
         limitations: list[str] | None = None,
         ontology_tags: list[str] | None = None,
         id: str | None = None,
+        sequence_id: int = 0,
     ):
         if id is None:
-            seed = f"MarketMemoryReport|{report_type}|{target_snapshot_id}|{utc_now().isoformat()}"
+            # Use sequence_id to differentiate reports generated with the same timestamp
+            seed = f"MarketMemoryReport|{sequence_id}|{report_type}|{target_snapshot_id}|{utc_now().isoformat()}"
             id = generate_id(seed)
 
         super().__init__(id=id, ontology_tags=ontology_tags)
@@ -75,6 +77,7 @@ class MarketMemoryReport(BaseObject):
         self.historical_sources: list[str] = historical_sources or []
         self.confidence_basis = confidence_basis
         self.limitations: list[str] = limitations or []
+        self.sequence_id = sequence_id
         self.audit_entries: list[dict[str, Any]] = []
         self.generated_at = utc_now()
         self.status = "Draft"
@@ -142,6 +145,7 @@ class MarketMemoryReport(BaseObject):
                 "historical_sources": self.historical_sources,
                 "confidence_basis": self.confidence_basis,
                 "limitations": self.limitations,
+                "sequence_id": self.sequence_id,
                 "audit_entries": self.audit_entries,
                 "generated_at": self.generated_at.isoformat(),
                 "status": self.status,
@@ -162,6 +166,7 @@ class MarketMemoryReport(BaseObject):
         obj.historical_sources = list(data.get("historical_sources", []))
         obj.confidence_basis = data.get("confidence_basis", "")
         obj.limitations = list(data.get("limitations", []))
+        obj.sequence_id = data.get("sequence_id", 0)
         obj.audit_entries = list(data.get("audit_entries", []))
         obj.generated_at = parse_timestamp(data["generated_at"]) if data.get("generated_at") else utc_now()
         obj.status = data.get("status", "Draft")

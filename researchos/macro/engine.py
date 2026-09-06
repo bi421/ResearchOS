@@ -1434,7 +1434,8 @@ class MacroAnalysisEngine:
             if not isinstance(obj, cls):
                 continue
             ts = getattr(obj, "timestamp", getattr(obj, "created_at", None))
-            if ts and ts > latest_ts:
+            # Tie-break equal timestamps by picking the later repository entry
+            if ts and ts >= latest_ts:
                 latest = obj
                 latest_ts = ts
         return latest
