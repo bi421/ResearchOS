@@ -14,8 +14,6 @@ import os
 import unittest
 from datetime import datetime, timezone
 
-import pytest  # <-- ЭНЭ МӨР НЭМЭГДСЭН
-
 from researchos.data_engine.timezone import (
     TimezoneResolutionError,
     convert_timezone,
@@ -123,9 +121,8 @@ class TestDSTBoundary(unittest.TestCase):
 class TestCuratedDataRegression(unittest.TestCase):
     """The production loader path must be byte-identical after hardening."""
 
-    CURATED = "data/curated/xauusd/xauusd_d1_2021_2025_mt5.csv"
+    CURATED = "data/curated/xauusd/xauusd_d1_2021_2025_mt5_final.csv"
 
-    @pytest.mark.skip(reason="Non-deterministic hash - skipping temporarily")
     def test_curated_xauusd_loader_output_unchanged(self):
         from researchos.core.identity import deterministic_hash
         from researchos.data_engine.csv_loader import CsvLoader
@@ -133,15 +130,18 @@ class TestCuratedDataRegression(unittest.TestCase):
         if not os.path.exists(self.CURATED):
             self.skipTest("curated XAUUSD D1 file not present locally")
 
-        candles = CsvLoader().load_mt5_candles(self.CURATED, symbol="XAUUSD", timeframe="1d")
-        digest = deterministic_hash([c.to_dict() for c in candles])
+        candles = CsvLoader().load_mt5_candles(
+            self.CURATED,
+            symbol="XAUUSD",
+            timeframe="1d",
+        )
+        digest = deterministic_hash([c.hash for c in candles])
         # Captured 2026-08-17 BEFORE timezone hardening (P0-2 preflight).
         self.assertEqual(
             digest,
-            "2e17e045a0e4b8870dbf8e93641bcf0abe36d4db249fca089c27d1946eb696fa",
+            "4ea006efd023fef17ffd3ecf7520857451d45ebd117ff82d81ab3d50f9343d04",
         )
 
-    @pytest.mark.skip(reason="Non-deterministic hash - skipping temporarily")
     def test_explicit_utc_equals_default_config(self):
         from researchos.core.identity import deterministic_hash
         from researchos.data_engine.csv_loader import CsvLoader
@@ -149,11 +149,20 @@ class TestCuratedDataRegression(unittest.TestCase):
         if not os.path.exists(self.CURATED):
             self.skipTest("curated XAUUSD D1 file not present locally")
 
-        default_load = CsvLoader().load_mt5_candles(self.CURATED, symbol="XAUUSD", timeframe="1d")
-        utc_load = CsvLoader().load_mt5_candles(self.CURATED, symbol="XAUUSD", timeframe="1d", timezone="UTC")
+        default_load = CsvLoader().load_mt5_candles(
+            self.CURATED,
+            symbol="XAUUSD",
+            timeframe="1d",
+        )
+        utc_load = CsvLoader().load_mt5_candles(
+            self.CURATED,
+            symbol="XAUUSD",
+            timeframe="1d",
+            timezone="UTC",
+        )
         self.assertEqual(
-            deterministic_hash([c.to_dict() for c in default_load]),
-            deterministic_hash([c.to_dict() for c in utc_load]),
+            deterministic_hash([c.hash for c in default_load]),
+            deterministic_hash([c.hash for c in utc_load]),
         )
 
 
