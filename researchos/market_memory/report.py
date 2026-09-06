@@ -13,6 +13,7 @@ Based on the ResearchOS reporting framework with full auditability.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from researchos.core.base_object import BaseObject
@@ -27,21 +28,6 @@ class MarketMemoryReport(BaseObject):
 
     Combines scenario matching results, outcome analysis, and
     full audit trail for institutional use.
-
-    Attributes:
-        report_type: Type of report ("ScenarioMatch", "OutcomeAnalysis", "FullAnalysis")
-        target_snapshot_id: The MarketSnapshot ID that was analyzed
-        matched_scenarios: List of MatchResult dicts
-        outcome_analysis: OutcomeAnalysisResult dict or None
-        feature_weights: The feature weights used for matching
-        calculation_method: Description of the calculation method
-        evidence_ids: Evidence references supporting this report
-        historical_sources: Source dataset identifiers
-        confidence_basis: Explanation of confidence determination
-        limitations: Known limitations of this analysis
-        audit_entries: Audit trail entries
-        generated_at: When the report was generated
-        status: Draft, Final, or Archived
     """
 
     def __init__(
@@ -59,10 +45,15 @@ class MarketMemoryReport(BaseObject):
         ontology_tags: list[str] | None = None,
         id: str | None = None,
         sequence_id: int = 0,
+        generated_at: datetime | None = None,
     ):
+        # generated_at is part of identity, so it must be established
+        # before generating the deterministic ID.
+        if generated_at is None:
+            generated_at = utc_now()
+
         if id is None:
-            # Use sequence_id to differentiate reports generated with the same timestamp
-            seed = f"MarketMemoryReport|{sequence_id}|{report_type}|{target_snapshot_id}|{utc_now().isoformat()}"
+            seed = f"MarketMemoryReport|{sequence_id}|{report_type}|" f"{target_snapshot_id}|{generated_at.isoformat()}"
             id = generate_id(seed)
 
         super().__init__(id=id, ontology_tags=ontology_tags)
@@ -79,7 +70,7 @@ class MarketMemoryReport(BaseObject):
         self.limitations: list[str] = limitations or []
         self.sequence_id = sequence_id
         self.audit_entries: list[dict[str, Any]] = []
-        self.generated_at = utc_now()
+        self.generated_at = generated_at
         self.status = "Draft"
 
         self.lifecycle.transition(
@@ -161,7 +152,10 @@ class MarketMemoryReport(BaseObject):
         obj.matched_scenarios = list(data.get("matched_scenarios", []))
         obj.outcome_analysis = data.get("outcome_analysis")
         obj.feature_weights = dict(data.get("feature_weights", {}))
-        obj.calculation_method = data.get("calculation_method", "WeightedFeatureComparison")
+        obj.calculation_method = data.get(
+            "calculation_method",
+            "WeightedFeatureComparison",
+        )
         obj.evidence_ids = list(data.get("evidence_ids", []))
         obj.historical_sources = list(data.get("historical_sources", []))
         obj.confidence_basis = data.get("confidence_basis", "")
