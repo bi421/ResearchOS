@@ -774,9 +774,6 @@ class TestMarketMemoryReport:
             sequence_id=1,
             generated_at=t,
         )
-        print(f"DEBUG t={t.isoformat()!r}")
-        print(f"DEBUG report1: seq={report1.sequence_id} type={report1.report_type!r} snap={report1.target_snapshot_id!r} gen_at={report1.generated_at.isoformat()!r} id={report1.id}")
-        print(f"DEBUG report3: seq={report3.sequence_id} type={report3.report_type!r} snap={report3.target_snapshot_id!r} gen_at={report3.generated_at.isoformat()!r} id={report3.id}")
         assert report1.id == report3.id
 
     def test_save_snapshot(self, repository, market_snapshot):
