@@ -774,7 +774,8 @@ class TestMarketMemoryReport:
             sequence_id=1,
             generated_at=t,
         )
-        import uuid, sys
+        import sys
+        import uuid
         print(f"DBG2 python={sys.version!r}")
         print(f"DBG2 t={t.isoformat()!r} t.tzinfo={t.tzinfo!r}")
         print(f"DBG2 r1: seq={report1.sequence_id!r} type={report1.report_type!r} snap={report1.target_snapshot_id!r} gen_at={report1.generated_at.isoformat()!r} id={report1.id}")
