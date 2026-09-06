@@ -774,19 +774,6 @@ class TestMarketMemoryReport:
             sequence_id=1,
             generated_at=t,
         )
-        import sys
-        import uuid
-        print(f"DBG2 python={sys.version!r}")
-        print(f"DBG2 t={t.isoformat()!r} t.tzinfo={t.tzinfo!r}")
-        print(f"DBG2 r1: seq={report1.sequence_id!r} type={report1.report_type!r} snap={report1.target_snapshot_id!r} gen_at={report1.generated_at.isoformat()!r} id={report1.id}")
-        print(f"DBG2 r3: seq={report3.sequence_id!r} type={report3.report_type!r} snap={report3.target_snapshot_id!r} gen_at={report3.generated_at.isoformat()!r} id={report3.id}")
-        seed1 = f"MarketMemoryReport|{report1.sequence_id}|{report1.report_type}|{report1.target_snapshot_id}|{report1.generated_at.isoformat()}"
-        seed3 = f"MarketMemoryReport|{report3.sequence_id}|{report3.report_type}|{report3.target_snapshot_id}|{report3.generated_at.isoformat()}"
-        print(f"DBG2 seed1={seed1!r}")
-        print(f"DBG2 seed3={seed3!r}")
-        print(f"DBG2 seeds_equal={seed1 == seed3}")
-        print(f"DBG2 manual_id1={uuid.uuid5(uuid.NAMESPACE_DNS, seed1)}")
-        print(f"DBG2 manual_id3={uuid.uuid5(uuid.NAMESPACE_DNS, seed3)}")
         assert report1.id == report3.id
 
     def test_save_snapshot(self, repository, market_snapshot):
