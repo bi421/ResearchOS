@@ -1,37 +1,41 @@
-"""
-BTC/USDT Research Template - Active Development
-
-This is the new research frontier. This script serves as a template
-for running quantitative experiments on BTC/USDT data.
-XAUUSD is frozen and kept as a separate baseline.
-"""
+"""Run the deterministic BTC/USDT research entrypoint."""
 
 from researchos.data_engine.loader import DataLoader
+
+from .btc import BtcUsdtExperiment, BtcUsdtValidator
 
 
 def main():
     print("=" * 60)
-    print("BTC/USDT Research Started (Active Development)")
+    print("BTC/USDT Research Started")
     print("=" * 60)
 
-    # 1. Load BTC data
     print("Loading BTC/USDT 1-hour data...")
     candles = DataLoader.load("btcusdt", "1h")
     print(f"Loaded {len(candles)} candles.")
 
-    # 2. Run experiment
-    # TODO: Implement BTC-specific experiment.
-    # experiment = Phase51Experiment(symbol="btcusdt", data=candles)
-    # result = experiment.run()
+    if not candles:
+        raise RuntimeError("BTC/USDT research requires a non-empty historical dataset")
 
-    # 3. Validation
-    # TODO: Implement BTC-specific validation.
-    # validation = SelfValidation(result)
-    # report = validation.generate()
+    experiment = BtcUsdtExperiment()
+    result = experiment.run(
+        close=[candle.close for candle in candles],
+        high=[candle.high for candle in candles],
+        low=[candle.low for candle in candles],
+        volume=[candle.volume for candle in candles],
+    )
 
-    print("")
-    print("Template execution complete.")
-    print("Next: Implement BTC-specific features (Funding Rate, OI, etc.).")
+    validation = BtcUsdtValidator().validate(result)
+
+    print(f"Outcome: {result.outcome}")
+    print(f"Validation valid: {validation.valid}")
+    if validation.reasons:
+        print(f"Validation reasons: {', '.join(validation.reasons)}")
+    print(f"Validation samples: {validation.sample_count}")
+    print("=" * 60)
+    print("BTC/USDT research execution complete")
+
+    return result, validation
 
 
 if __name__ == "__main__":
