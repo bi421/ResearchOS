@@ -2,9 +2,9 @@
 Evidence & Lineage — append-only evidence storage and certification.
 
 The evidence package provides immutable artifact envelopes, append-only
-persistence, lineage emission, and runtime certification of the canonical
-Experiment → Run → Result chain.  It is a trust layer only and computes no
-trading decisions.
+persistence, lineage emission, and certification of the canonical
+Experiment → Run → Result → Validation chain.  It is a trust layer only and
+computes no trading decisions.
 """
 
 from researchos.evidence.dataset_emission import (
@@ -55,6 +55,10 @@ from researchos.evidence.run_emission import (
     run_payload,
 )
 from researchos.evidence.runtime_certification import RuntimeCertification, certify_runtime
+from researchos.evidence.validation_certification import (
+    ValidationCertification,
+    certify_validation,
+)
 from researchos.evidence.validation_emission import (
     RESULT_TO_VALIDATION_RELATION,
     VALIDATION_ARTIFACT_TYPE,
@@ -122,4 +126,7 @@ __all__ = [
     "emit_validation_for_result",
     "validation_hash",
     "validation_payload",
+    # Validation certification
+    "ValidationCertification",
+    "certify_validation",
 ]
