@@ -27,6 +27,7 @@ from researchos.evidence.envelope import (
     EvidenceEnvelope,
     build_envelope,
     compute_artifact_hash,
+    compute_lineage_hash,
 )
 from researchos.evidence.repository import EvidenceRepository
 from researchos.storage.repository import SCHEMA_VERSION, ResearchRepository
@@ -118,7 +119,6 @@ class TestEvidenceEnvelope:
     def test_legacy_verify_accepts_pre_hardening_scheme(self):
         """Backward compatibility: legacy scheme-1 lineage hash still verifies."""
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
-        # Build a legacy-format envelope exactly as the pre-hardening code did.
         from researchos.core.identity import deterministic_hash
 
         legacy = EvidenceEnvelope(
@@ -129,9 +129,7 @@ class TestEvidenceEnvelope:
             parent_hashes=[],
             lineage_hash=deterministic_hash({"payload": e.payload, "parent_hashes": sorted([])}),
         )
-        # New-scheme verify must reject the legacy hash...
         assert legacy.verify() is False
-        # ...but legacy_verify must accept it (backward compatible).
         assert legacy.legacy_verify() is True
 
     def test_verify_accepts_empty_lineage_hash_legacy(self):
@@ -166,10 +164,8 @@ class TestEvidenceEnvelope:
 
     def test_envelope_is_immutable(self):
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
-        # Frozen dataclass blocks attribute reassignment.
         with pytest.raises(Exception):
             e.artifact_hash = "changed"
-        # parent_hashes are stored as an immutable tuple.
         assert isinstance(e.parent_hashes, tuple)
 
     def test_hash_scheme_version_marker(self):
@@ -185,7 +181,6 @@ class TestEvidenceEnvelope:
 
 class TestPayloadContract:
     def test_build_rejects_unsupported_object(self):
-        """Hardening #3: unsupported payload objects are rejected."""
         with pytest.raises(TypeError):
             build_envelope("Dataset", {"dt": __import__("datetime").datetime.now()})
 
@@ -296,7 +291,7 @@ class TestEvidenceRepository:
         ev = self._make_repo()
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
         ev.append_artifact(e)
-        ev.append_artifact(e)  # identical -> no-op (INSERT OR IGNORE)
+        ev.append_artifact(e)
         assert ev.count_artifacts() == 1
 
     def test_append_rejects_tampered_envelope(self):
@@ -311,6 +306,31 @@ class TestEvidenceRepository:
         )
         with pytest.raises(ValueError):
             ev.append_artifact(tampered)
+
+    def test_append_rejects_hash_reuse_with_different_content(self):
+        ev = self._make_repo()
+        original = build_envelope("Dataset", {"a": 1}, version="1.0.0")
+        ev.append_artifact(original)
+        conflicting = EvidenceEnvelope(
+            artifact_type=original.artifact_type,
+            artifact_hash=original.artifact_hash,
+            payload={"a": 999},
+            version=original.version,
+            created_at=original.created_at,
+            parent_hashes=original.parent_hashes,
+            lineage_hash=compute_lineage_hash(
+                original.artifact_type,
+                original.version,
+                {"a": 999},
+                original.parent_hashes,
+            ),
+        )
+        assert conflicting.verify() is True
+        with pytest.raises(ValueError, match="immutable"):
+            ev.append_artifact(conflicting)
+        stored = ev.get_artifact(original.artifact_hash)
+        assert stored is not None
+        assert stored.payload == {"a": 1}
 
     def test_verify_evidence_true_when_consistent(self):
         ev = self._make_repo()
@@ -342,7 +362,6 @@ class TestEvidenceRepository:
         assert fetched.verify() is True
 
     def test_append_distinct_types_no_collision(self):
-        """Hardening #1: Dataset and Feature with same payload both stored."""
         ev = self._make_repo()
         ds = build_envelope("Dataset", {"v": 1}, version="1.0.0")
         ft = build_envelope("Feature", {"v": 1}, version="1.0.0")
