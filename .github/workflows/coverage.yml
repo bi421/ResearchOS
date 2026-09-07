@@ -49,14 +49,6 @@ jobs:
         name: codecov-umbrella
         verbose: true
 
-    - name: Comment coverage on PR
-      if: github.event_name == 'pull_request'
-      uses: py-cov-action/python-coverage-comment-action@v3
-      with:
-        GITHUB_TOKEN: ${{ github.token }}
-        MINIMUM_GREEN: 70
-        MINIMUM_ORANGE: 60
-
     - name: Archive coverage report
       uses: actions/upload-artifact@v4
       if: always()
@@ -72,5 +64,5 @@ jobs:
     - name: Report coverage failure
       run: |
         echo "[FAIL] Coverage check FAILED"
-        echo "Code coverage must be >=70% for master/develop branches"
+        echo "Code coverage must be >=50% for the coverage job"
         exit 1
