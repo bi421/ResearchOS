@@ -1,19 +1,16 @@
 """
-LearningRecord — extract actionable lessons from validated experiments.
+Experiment learning — lessons extracted from validated experiments.
 
-Purpose:
-    LearningRecord captures the insights and lessons learned from validated
-    experiments. This is the final step in the experiment workflow:
-    Validation → Learning. Lessons feed back into the knowledge base to
-    improve future research.
+This object belongs to the Experiment layer. It is deliberately distinct
+from ``researchos.objects.cognitive.LearningRecord``, which tracks trader
+cognitive growth, and from ``researchos.objects.knowledge.Knowledge``, which
+is durable semantic market memory.
 
-Based on Article XVII: Object Model — Experiment Layer.
-Based on Article XIII: Knowledge Engine.
+Boundary:
+    Validation → ExperimentLearningRecord → optional Knowledge certification
 
-Guarantees:
-    - Deterministic: Same validation → same learning record
-    - Auditable: Full lifecycle tracking
-    - Repeatable: Complete trace of how lessons were derived
+This object does not certify evidence and does not write durable knowledge by
+itself. Those responsibilities belong to the evidence/knowledge boundaries.
 """
 
 from __future__ import annotations
@@ -25,28 +22,8 @@ from researchos.core.identity import generate_id
 from researchos.core.lifecycle import LifecycleStage
 
 
-class LearningRecord(BaseObject):
-    """
-    Actionable insights extracted from validated experiments.
-
-    A LearningRecord captures what was learned from an experiment:
-    whether the hypothesis was confirmed or rejected, what patterns
-    were observed, and what recommendations can be made for future
-    research.
-
-    Attributes:
-        experiment_id: Link to the Experiment.
-        run_id: Link to the specific ExperimentRun (optional).
-        validation_id: Link to the ExperimentValidation.
-        hypothesis_id: Link to the QuantHypothesis.
-        hypothesis_accepted: Whether the hypothesis was accepted.
-        findings: Key findings from the experiment.
-        patterns_observed: Patterns identified in the results.
-        recommendations: Actionable recommendations.
-        confidence: Confidence in the learning (0.0-1.0).
-        learning_trace: How this learning was derived.
-        tags: Tags for categorisation.
-    """
+class ExperimentLearningRecord(BaseObject):
+    """Actionable lessons extracted from a validated experiment."""
 
     def __init__(
         self,
@@ -65,7 +42,7 @@ class LearningRecord(BaseObject):
         id: str | None = None,
     ):
         if id is None:
-            seed = f"LearningRecord|{experiment_id}|{validation_id}"
+            seed = f"ExperimentLearningRecord|{experiment_id}|{validation_id}"
             id = generate_id(seed)
 
         super().__init__(id=id, ontology_tags=ontology_tags)
@@ -84,11 +61,10 @@ class LearningRecord(BaseObject):
 
         self.lifecycle.transition(
             LifecycleStage.CREATED,
-            reason="Learning record created",
+            reason="Experiment learning record created",
         )
 
     def add_finding(self, finding: str) -> None:
-        """Add a finding to the learning record."""
         self.findings.append(finding)
         self.lifecycle.transition(
             LifecycleStage.UPDATED,
@@ -96,18 +72,18 @@ class LearningRecord(BaseObject):
         )
 
     def add_pattern(self, pattern: str) -> None:
-        """Add an observed pattern."""
         self.patterns_observed.append(pattern)
 
     def add_recommendation(self, recommendation: str) -> None:
-        """Add a recommendation."""
         self.recommendations.append(recommendation)
 
     def finalize(self) -> None:
-        """Mark this learning record as complete."""
         self.lifecycle.transition(
             LifecycleStage.COMPLETE,
-            reason=f"Learning record finalized: {len(self.findings)} findings, {len(self.recommendations)} recommendations",
+            reason=(
+                f"Experiment learning finalized: {len(self.findings)} findings, "
+                f"{len(self.recommendations)} recommendations"
+            ),
         )
 
     def _to_hashable_dict(self) -> dict[str, Any]:
@@ -146,7 +122,7 @@ class LearningRecord(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> LearningRecord:
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentLearningRecord:
         obj = super().from_dict(data)
         obj.experiment_id = data["experiment_id"]
         obj.validation_id = data["validation_id"]
@@ -160,3 +136,7 @@ class LearningRecord(BaseObject):
         obj.learning_trace = data.get("learning_trace", "")
         obj.tags = list(data.get("tags", []))
         return obj
+
+
+# Backward-compatible import name. New code should use the explicit name.
+LearningRecord = ExperimentLearningRecord
