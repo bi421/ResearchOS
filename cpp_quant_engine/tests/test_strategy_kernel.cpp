@@ -487,7 +487,7 @@ TEST(StrategyKernel, SignalRiskAmountOverride) {
   EXPECT_DOUBLE_EQ(r.trades[0].quantity, 250.0);
 }
 
-TEST(StrategyKernel, SignalQuantityOverridesSizing) {
+TEST(StrategyKernel, SignalQuantityDoesNotOverrideFixedLotSizing) {
   auto cfg = zero_cost_cfg();
   cfg.trade.sizing = PositionSizing::FixedLot;
   cfg.trade.fixed_lot = 2.0;
@@ -497,22 +497,22 @@ TEST(StrategyKernel, SignalQuantityOverridesSizing) {
       mk(100, 105, 99.5, 104, 1),
   };
   auto r = run_kernel(cfg, bars, {open_sig_qty(0, 7.0)});
-  EXPECT_DOUBLE_EQ(r.trades[0].quantity, 7.0);
-  EXPECT_DOUBLE_EQ(r.trades[0].net_pnl, 14.0);
+  ASSERT_EQ(r.trades.size(), 1u);
+  EXPECT_DOUBLE_EQ(r.trades[0].quantity, 2.0);
+  EXPECT_DOUBLE_EQ(r.trades[0].net_pnl, 4.0);
 }
 
-TEST(StrategyKernel, RiskSizingWithoutStopUsesDefaultQuantity) {
+TEST(StrategyKernel, RiskSizingWithoutStopRejectsEntry) {
   auto cfg = zero_cost_cfg();
   cfg.trade.sizing = PositionSizing::RiskPercent;
   cfg.trade.default_quantity = 4.0;
-  cfg.trade.stop_loss = 0.0; // no stop
+  cfg.trade.stop_loss = 0.0;
   std::vector<OHLCV> bars = {
       mk(100, 100, 100, 100, 0),
       mk(100, 100, 100, 100, 1),
   };
   auto r = run_kernel(cfg, bars, {open_sig(0)});
-  ASSERT_EQ(r.trades.size(), 1u);
-  EXPECT_DOUBLE_EQ(r.trades[0].quantity, 4.0);
+  EXPECT_EQ(r.trades.size(), 0u);
 }
 
 // ── Trailing stop ──────────────────────────────────────────────────────────
@@ -778,17 +778,18 @@ TEST(StrategyKernel, DailyLossLimitCircuitBreakerClosesPositions) {
   auto cfg = zero_cost_cfg();
   cfg.trade.sizing = PositionSizing::RiskPercent;
   cfg.trade.risk_percent = 2.0;
-  cfg.trade.default_quantity = 500.0; // no stop -> default size; 500 * 4 = -2%
-  cfg.risk.daily_loss_limit_pct = 1.0;
-  // No stop: position bleeds to -2% -> breach triggers forced close.
+  cfg.trade.stop_loss = 100.0;
+  cfg.risk.daily_loss_limit_pct = 0.05;
   std::vector<OHLCV> bars = {
       mk(100, 100, 100, 100, 0),
-      mk(100, 100, 96, 96, 1), // unrealized -2%
+      mk(100, 100, 96, 96, 1),
   };
   auto r = run_kernel(cfg, bars, {open_sig(0)});
   ASSERT_EQ(r.trades.size(), 1u);
   EXPECT_EQ(r.trades[0].exit_reason, ExitReason::DailyLossLimit);
   EXPECT_DOUBLE_EQ(r.trades[0].exit_price, 96.0);
+  EXPECT_DOUBLE_EQ(r.trades[0].quantity, 20.0);
+  EXPECT_DOUBLE_EQ(r.trades[0].net_pnl, -80.0);
 }
 
 TEST(StrategyKernel, DailyLossLimitResetsNextDay) {
@@ -1429,18 +1430,17 @@ TEST(StrategyKernel, ManyOpenPositionsManagedPerBar) {
 
 TEST(StrategyKernel, EquityNeverNegativeAccounting) {
   auto cfg = zero_cost_cfg();
-  cfg.trade.stop_loss = 0.0;
+  cfg.trade.stop_loss = 2.0;
   cfg.trade.sizing = PositionSizing::RiskPercent;
   cfg.trade.risk_percent = 5.0;
   std::vector<OHLCV> bars = {
       mk(100, 100, 100, 100, 0),
-      mk(100, 100, 60, 60, 1), // deep adverse move, no stop
+      mk(100, 100, 97, 97.5, 1),
   };
   auto r = run_kernel(cfg, bars, {open_sig(0)});
   ASSERT_EQ(r.trades.size(), 1u);
   EXPECT_LT(r.trades[0].net_pnl, 0.0);
-  // final equity = initial + net (equity is never guaranteed positive for a
-  // levered loss, but accounting stays consistent)
+  EXPECT_DOUBLE_EQ(r.trades[0].net_pnl, -5000.0);
   EXPECT_DOUBLE_EQ(r.final_equity, 100000.0 + r.trades[0].net_pnl);
   EXPECT_NEAR(r.stats.net_profit, r.trades[0].net_pnl, 1e-9);
 }

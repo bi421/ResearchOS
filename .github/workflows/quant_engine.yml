@@ -36,7 +36,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cmake-
 
-
       - name: Install Ninja (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
@@ -70,13 +69,10 @@ jobs:
           Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | ForEach-Object { Write-Host "$($_.Name) $($_.Length/1KB)KB" }
           if (Get-ChildItem cpp_quant_engine/python -Filter *.pdb -Recurse) { Write-Error 'PDB leak!'; exit 1 }
 
-      - name: Run Python regression tests (skip if data missing)
+      - name: Run Python regression tests
         shell: bash
         run: |
-          if [ -d "data/raw/histdata/xauusd" ]; then
-            pytest researchos/tests/test_cpp_backtest_regression.py -q
-          else
-            echo "XAUUSD data not found in CI environment. Skipping Python regression tests."
-          fi
+          test -d "data/raw/histdata/xauusd" || { echo "XAUUSD data not found in CI environment. Regression tests require committed test data."; exit 1; }
+          pytest researchos/tests/test_cpp_backtest_regression.py -q
         env:
           PYTHONPATH: 'cpp_quant_engine/python:.'
