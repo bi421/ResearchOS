@@ -1,8 +1,7 @@
 """Run the deterministic BTC/USDT research entrypoint."""
 
 from researchos.data_engine.loader import DataLoader
-
-from .btc import BtcUsdtExperiment, BtcUsdtValidator
+from researchos.experiments.crypto.btc import BtcUsdtExperiment, BtcUsdtValidator
 
 
 def main():
