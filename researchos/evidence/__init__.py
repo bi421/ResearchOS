@@ -1,10 +1,9 @@
-"""
-Evidence & Lineage — append-only evidence storage and certification.
+"""Evidence & Lineage — append-only evidence storage and certification.
 
 The evidence package provides immutable artifact envelopes, append-only
 persistence, lineage emission, and certification of the canonical
-Experiment → Run → Result → Validation chain.  It is a trust layer only and
-computes no trading decisions.
+Experiment → Run → Result → Validation → Finding chain. It is a trust layer
+only and computes no trading decisions.
 """
 
 from researchos.evidence.dataset_emission import (
@@ -32,6 +31,16 @@ from researchos.evidence.experiment_emission import (
     emit_experiment,
     emit_experiment_with_dataset,
     experiment_payload,
+)
+from researchos.evidence.finding_emission import (
+    FINDING_ARTIFACT_TYPE,
+    FINDING_EVIDENCE_VERSION,
+    VALIDATION_TO_FINDING_RELATION,
+    build_finding_envelope,
+    certify_finding,
+    emit_finding,
+    finding_hash,
+    finding_payload,
 )
 from researchos.evidence.repository import EvidenceRepository
 from researchos.evidence.result_emission import (
@@ -80,14 +89,12 @@ __all__ = [
     "build_envelope",
     "compute_artifact_hash",
     "compute_lineage_hash",
-    # Dataset evidence emission
     "DATASET_ARTIFACT_TYPE",
     "DATASET_EVIDENCE_VERSION",
     "build_dataset_envelope",
     "emit_dataset",
     "make_dataset_envelope_from_payload",
     "research_dataset_payload",
-    # Experiment evidence emission
     "EXPERIMENT_ARTIFACT_TYPE",
     "EXPERIMENT_EVIDENCE_VERSION",
     "attach_dataset_parent",
@@ -95,7 +102,6 @@ __all__ = [
     "emit_experiment",
     "emit_experiment_with_dataset",
     "experiment_payload",
-    # Run evidence emission
     "EXPERIMENT_TO_RUN_RELATION",
     "RUN_ARTIFACT_TYPE",
     "RUN_EVIDENCE_VERSION",
@@ -104,7 +110,6 @@ __all__ = [
     "emit_run",
     "emit_run_for_experiment",
     "run_payload",
-    # Result evidence emission
     "RESULT_ARTIFACT_TYPE",
     "RESULT_EVIDENCE_VERSION",
     "RUN_TO_RESULT_RELATION",
@@ -113,10 +118,8 @@ __all__ = [
     "emit_result",
     "emit_result_for_run",
     "result_payload",
-    # Runtime certification
     "RuntimeCertification",
     "certify_runtime",
-    # Validation evidence emission
     "RESULT_TO_VALIDATION_RELATION",
     "VALIDATION_ARTIFACT_TYPE",
     "VALIDATION_EVIDENCE_VERSION",
@@ -126,7 +129,14 @@ __all__ = [
     "emit_validation_for_result",
     "validation_hash",
     "validation_payload",
-    # Validation certification
     "ValidationCertification",
     "certify_validation",
+    "FINDING_ARTIFACT_TYPE",
+    "FINDING_EVIDENCE_VERSION",
+    "VALIDATION_TO_FINDING_RELATION",
+    "build_finding_envelope",
+    "certify_finding",
+    "emit_finding",
+    "finding_hash",
+    "finding_payload",
 ]
