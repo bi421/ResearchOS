@@ -10,7 +10,8 @@ from researchos.storage.repository import ResearchRepository
 
 
 def _finding_repository(tmp_path, status="VALIDATED"):
-    repository = EvidenceRepository(str(tmp_path / "evidence.db"))
+    evidence_store = ResearchRepository(str(tmp_path / "evidence.db"))
+    repository = EvidenceRepository(evidence_store)
     envelope = build_envelope(
         artifact_type="Finding",
         payload={"status": status, "validation_id": "validation-1"},
