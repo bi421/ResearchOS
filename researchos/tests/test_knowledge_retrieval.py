@@ -17,26 +17,38 @@ def _seed_chain(repo: ResearchRepository) -> tuple[str, str]:
     evidence = EvidenceRepository(repo)
     dataset = evidence.append_artifact(build_envelope("Dataset", {"id": "dataset-1"}))
     experiment = evidence.append_artifact(
-        build_envelope("Experiment", {"id": "experiment-1"}, [dataset.artifact_hash])
+        build_envelope(
+            "Experiment",
+            {"id": "experiment-1"},
+            parent_hashes=[dataset.artifact_hash],
+        )
     )
     run = evidence.append_artifact(
-        build_envelope("Run", {"id": "run-1"}, [experiment.artifact_hash])
+        build_envelope(
+            "Run",
+            {"id": "run-1"},
+            parent_hashes=[experiment.artifact_hash],
+        )
     )
     result = evidence.append_artifact(
-        build_envelope("Result", {"id": "result-1"}, [run.artifact_hash])
+        build_envelope(
+            "Result",
+            {"id": "result-1"},
+            parent_hashes=[run.artifact_hash],
+        )
     )
     validation = evidence.append_artifact(
         build_envelope(
             "Validation",
             {"id": "validation-1", "status": "VALIDATED"},
-            [result.artifact_hash],
+            parent_hashes=[result.artifact_hash],
         )
     )
     finding = evidence.append_artifact(
         build_envelope(
             "Finding",
             {"id": "finding-1", "status": "VALIDATED", "validation_id": "validation-1"},
-            [validation.artifact_hash],
+            parent_hashes=[validation.artifact_hash],
         )
     )
     return finding.artifact_hash, dataset.artifact_hash
