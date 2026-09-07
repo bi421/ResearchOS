@@ -3,6 +3,10 @@
 This layer reads certified Knowledge Memory and follows its Finding
 source references upstream through the immutable evidence graph. It does not
 infer, rank semantically, embed, or mutate knowledge.
+
+The Knowledge object remains a pure data model. Exact semantic retrieval is
+owned here, at the Knowledge Engine boundary, rather than being implemented
+inside ``researchos.objects.knowledge`` or the generic storage repository.
 """
 
 from __future__ import annotations
@@ -94,6 +98,32 @@ class KnowledgeRetrieval:
                 item.type,
                 item.id,
             ),
+        )
+
+    def query_knowledge(
+        self,
+        *,
+        subject: str | None = None,
+        predicate: str | None = None,
+        object: str | None = None,
+        type: str | None = None,
+        min_confidence: float | None = None,
+    ) -> list[Knowledge]:
+        """Run an explicit exact semantic Knowledge query.
+
+        This is the public convenience API for the Article XIII-style
+        subject/predicate/object query contract. Matching is exact; confidence
+        is an inclusive lower bound. Only Knowledge with validated Finding
+        provenance is returned.
+        """
+        return self.query(
+            KnowledgeQuery(
+                subject=subject,
+                predicate=predicate,
+                object=object,
+                type=type,
+                min_confidence=min_confidence,
+            )
         )
 
     def retrieve(self, query: KnowledgeQuery | None = None) -> list[KnowledgeRetrievalResult]:
