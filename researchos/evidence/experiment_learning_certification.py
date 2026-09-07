@@ -50,7 +50,14 @@ class ExperimentLearningCertification:
         return (
             stored.get("object_type") == "ExperimentLearningRecord"
             and stored.get("validation_id") == self.learning.validation_id
+            and stored.get("experiment_id") == self.learning.experiment_id
+            and stored.get("hypothesis_id") == self.learning.hypothesis_id
         )
+
+
+def _semantic_payload(learning: ExperimentLearningRecord) -> dict:
+    """Return the stable learning representation used for immutability checks."""
+    return learning._to_hashable_dict()
 
 
 def certify_experiment_learning(
@@ -63,6 +70,10 @@ def certify_experiment_learning(
 
     The learning record is stored as a normal research object. It is not an
     evidence artifact and it cannot bypass the Finding -> Knowledge gate.
+
+    Once a Learning ID has been certified, an identical certification is
+    idempotent while a changed semantic payload is rejected rather than
+    overwriting durable research memory.
     """
     finding = evidence_repository.get_artifact(finding_hash)
     if finding is None:
@@ -78,7 +89,22 @@ def certify_experiment_learning(
         # their payload. In that case the evidence graph remains authoritative.
         raise ValueError("Experiment learning validation_id does not match Finding provenance")
 
-    research_repository.save_object(learning)
+    existing = research_repository.load_by_id(learning.id)
+    if existing is not None:
+        if existing.get("object_type") != "ExperimentLearningRecord":
+            raise ValueError(
+                f"Experiment learning ID collision with {existing.get('object_type')!r}: {learning.id}"
+            )
+        existing_learning = ExperimentLearningRecord.from_dict(existing)
+        if _semantic_payload(existing_learning) != _semantic_payload(learning):
+            raise ValueError(
+                "Certified ExperimentLearningRecord is immutable: existing semantic payload "
+                "does not match the requested certification"
+            )
+        learning = existing_learning
+    else:
+        research_repository.save_object(learning)
+
     certification = ExperimentLearningCertification(
         finding_hash=finding_hash,
         learning=learning,
