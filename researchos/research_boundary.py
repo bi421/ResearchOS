@@ -61,6 +61,7 @@ class ResearchEvidenceLink:
     research_id: str
     dataset_id: str
     dataset_content_hash: str
+    dataset_hash: str
     evidence_collection_id: str
     assessment_hash: str
     methodology_version: str
@@ -72,6 +73,7 @@ class ResearchEvidenceLink:
             ("research_id", self.research_id),
             ("dataset_id", self.dataset_id),
             ("dataset_content_hash", self.dataset_content_hash),
+            ("dataset_hash", self.dataset_hash),
             ("evidence_collection_id", self.evidence_collection_id),
             ("assessment_hash", self.assessment_hash),
             ("methodology_version", self.methodology_version),
@@ -85,6 +87,7 @@ class ResearchEvidenceLink:
             "research_id": self.research_id,
             "dataset_id": self.dataset_id,
             "dataset_content_hash": self.dataset_content_hash,
+            "dataset_hash": self.dataset_hash,
             "evidence_collection_id": self.evidence_collection_id,
             "assessment_hash": self.assessment_hash,
             "methodology_version": self.methodology_version,
@@ -97,6 +100,7 @@ class ResearchEvidenceLink:
             research_id=str(data["research_id"]),
             dataset_id=str(data["dataset_id"]),
             dataset_content_hash=str(data["dataset_content_hash"]),
+            dataset_hash=str(data["dataset_hash"]),
             evidence_collection_id=str(data["evidence_collection_id"]),
             assessment_hash=str(data["assessment_hash"]),
             methodology_version=str(data["methodology_version"]),
