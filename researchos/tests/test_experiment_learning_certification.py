@@ -79,3 +79,48 @@ def test_experiment_learning_rejects_mismatched_validation(tmp_path):
         certify_experiment_learning(learning, finding_hash, evidence, research)
 
     assert research.load_by_id(learning.id) is None
+
+
+def test_experiment_learning_certification_is_idempotent(tmp_path):
+    evidence, finding_hash = _finding_repository(tmp_path)
+    research = ResearchRepository(str(tmp_path / "research.db"))
+    learning = ExperimentLearningRecord(
+        experiment_id="experiment-1",
+        validation_id="validation-1",
+        hypothesis_id="hypothesis-1",
+        findings=["stable relationship"],
+        recommendations=["monitor out of sample"],
+    )
+
+    first = certify_experiment_learning(learning, finding_hash, evidence, research)
+    stored_before = research.load_by_id(learning.id)
+    second = certify_experiment_learning(learning, finding_hash, evidence, research)
+    stored_after = research.load_by_id(learning.id)
+
+    assert first.learning_id == second.learning_id == learning.id
+    assert stored_after == stored_before
+
+
+def test_experiment_learning_rejects_semantic_collision(tmp_path):
+    evidence, finding_hash = _finding_repository(tmp_path)
+    research = ResearchRepository(str(tmp_path / "research.db"))
+    learning = ExperimentLearningRecord(
+        experiment_id="experiment-1",
+        validation_id="validation-1",
+        hypothesis_id="hypothesis-1",
+        findings=["stable relationship"],
+    )
+    certify_experiment_learning(learning, finding_hash, evidence, research)
+
+    conflicting = ExperimentLearningRecord(
+        experiment_id="experiment-1",
+        validation_id="validation-1",
+        hypothesis_id="hypothesis-1",
+        findings=["different relationship"],
+    )
+
+    with pytest.raises(ValueError, match="immutable"):
+        certify_experiment_learning(conflicting, finding_hash, evidence, research)
+
+    stored = research.load_by_id(learning.id)
+    assert stored["findings"] == ["stable relationship"]
