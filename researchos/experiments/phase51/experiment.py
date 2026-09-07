@@ -1,25 +1,4 @@
-"""
-Phase 5.1 — walk-forward XAUUSD predictive-value experiment.
-
-Composes the verified existing ``researchos`` infrastructure into the smallest
-scientifically-valid experiment:
-
-    Real XAUUSD data
-      -> target definition (multiclass_label, H=5, tau=0.0)
-      -> lookahead-safe features (FeatureBuilder / ResearchDataset)
-      -> simple probability estimator (EmpiricalProbabilityEstimator)
-      -> defensible baseline (unconditional-frequency)
-      -> chronological walk-forward (train 1200 / valid 200 / step 200)
-      -> out-of-sample evaluation
-      -> calibration (reuses probability_calibration)
-      -> spread/slippage/commission cost adjustment (reuses ExecutionSimulationLayer costs)
-      -> self-validation -> PASS / FAIL / UNCERTAIN / BLOCKED
-      -> deterministic experiment result (Phase51Result)
-
-The legacy ``run_phase51`` function remains the internal scientific primitive.
-Production callers should use ``run_phase51_research`` so dataset identity
-enters through ``ResearchInput`` and cannot be silently detached from results.
-"""
+"""Phase 5.1 deterministic walk-forward predictive-value experiment."""
 
 from __future__ import annotations
 
@@ -79,11 +58,7 @@ def _feature_index(config: Phase51Config, dataset_feature_names: Sequence[str]) 
     return 0
 
 
-def _evaluate_model(
-    est: EmpiricalProbabilityEstimator,
-    val_features,
-    val_labels: Sequence[float],
-) -> tuple[ModelResult, list[int], list[dict[int, float]]]:
+def _evaluate_model(est: EmpiricalProbabilityEstimator, val_features, val_labels: Sequence[float]) -> tuple[ModelResult, list[int], list[dict[int, float]]]:
     preds: list[int] = []
     probs: list[dict[int, float]] = []
     for row in val_features:
@@ -91,7 +66,6 @@ def _evaluate_model(
         probs.append(est.predict_proba(row))
     acc = sum(1 for p, a in zip(preds, val_labels) if int(p) == int(a)) / len(val_labels) if val_labels else 0.0
     from .calibration import _brier_from_proba
-
     brier = _brier_from_proba(probs, val_labels)
 
     def _prec(pp: int) -> float:
@@ -104,28 +78,14 @@ def _evaluate_model(
         fn = sum(1 for p, a in zip(preds, val_labels) if int(p) != pp and int(a) == pp)
         return tp / (tp + fn) if (tp + fn) else 0.0
 
-    return (
-        ModelResult(
-            accuracy=acc,
-            precision_up=_prec(1),
-            precision_down=_prec(-1),
-            recall_up=_rec(1),
-            recall_down=_rec(-1),
-            brier_score=brier,
-            sample_count=len(val_labels),
-        ),
-        preds,
-        probs,
-    )
+    return ModelResult(accuracy=acc, precision_up=_prec(1), precision_down=_prec(-1), recall_up=_rec(1), recall_down=_rec(-1), brier_score=brier, sample_count=len(val_labels)), preds, probs
 
 
 def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -> Phase51Result:
     """Run the Phase 5.1 scientific primitive on aligned OHLCV series."""
     cfg = config or Phase51Config()
-    n = len(close)
-    if n < cfg.train_size + cfg.validation_size:
+    if len(close) < cfg.train_size + cfg.validation_size:
         return Phase51Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="REAL XAUUSD DATA REQUIRED (insufficient bars)")
-
     dataset = _build_dataset(close, high, low, volume, cfg.horizon, cfg.threshold)
     if dataset.sample_count < cfg.train_size + cfg.validation_size:
         return Phase51Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="REAL XAUUSD DATA REQUIRED (insufficient aligned samples)")
@@ -137,15 +97,12 @@ def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -
     all_actuals: list[float] = []
     all_probs: list[dict[int, float]] = []
     all_close_at_val: list[float] = []
-
     train_size, val_size, step = cfg.train_size, cfg.validation_size, cfg.step_size
     folds, start = 0, 0
     while start + train_size + val_size <= len(feat):
-        tr_feat = feat[start : start + train_size]
-        tr_lab = labs[start : start + train_size]
+        tr_feat, tr_lab = feat[start : start + train_size], labs[start : start + train_size]
         val_start = start + train_size
-        val_feat = feat[val_start : val_start + val_size]
-        val_lab = labs[val_start : val_start + val_size]
+        val_feat, val_lab = feat[val_start : val_start + val_size], labs[val_start : val_start + val_size]
         val_close = list(close[val_start : val_start + val_size])
         est = EmpiricalProbabilityEstimator(n_bins=cfg.n_bins, feature_indices=[feat_idx]).fit(tr_feat, tr_lab)
         base_pred = baseline_always_predict(tr_lab, val_lab)
@@ -159,7 +116,6 @@ def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -
         start += step
         if step <= 0:
             break
-
     if folds == 0:
         return Phase51Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="No walk-forward folds could be formed")
 
@@ -169,20 +125,13 @@ def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -
     calibration = evaluate_calibration(all_probs, all_actuals, num_bins=cfg.n_bins, model_brier=model.brier_score, baseline_brier=baseline.brier_score, baseline=baseline)
     significance = evaluate_significance(all_model_preds, all_base_preds, all_actuals, cfg.significance_level)
     flags = aggregate_outcome(data_valid=True, leakage_check=True, out_of_sample=True, cost_adjusted=cfg.cost_applied, reproducible=True, model_accuracy=model.accuracy, baseline_accuracy=baseline.accuracy, net_accuracy_all=cost.net_accuracy_all, significant=significance.significant, min_sample_count=cfg.min_sample_count, validation_sample_count=len(all_actuals), brier_model=model.brier_score, brier_baseline=baseline.brier_score)
-
     metadata = {"phase51_version": "1.0.0", "framework": "researchos.experiments.phase51", "feature_name": names[feat_idx], "num_folds": folds, "feature_count": len(names), "estimator": "EmpiricalProbabilityEstimator", "baseline": "unconditional-frequency majority", "symbol": cfg.symbol, "timeframe": cfg.timeframe, "horizon": cfg.horizon, "threshold": cfg.threshold}
     return Phase51Result(outcome=flags.outcome, symbol=cfg.symbol, timeframe=cfg.timeframe, horizon=cfg.horizon, threshold=cfg.threshold, train_size=train_size, validation_size=val_size, step_size=step, num_folds=folds, baseline=baseline, model=model, cost=cost, calibration=calibration, significance=significance, validation=flags, metadata=metadata)
 
 
-def run_phase51_research(
-    research_input: ResearchInput,
-    resolver: ResearchDataResolver,
-    config: Phase51Config | None = None,
-) -> ResearchExecutionResult:
+def run_phase51_research(research_input: ResearchInput, resolver: ResearchDataResolver, config: Phase51Config | None = None) -> ResearchExecutionResult:
     """Production Phase 5.1 entrypoint bound to ``ResearchInput`` provenance."""
     cfg = config or Phase51Config()
-    if cfg.symbol != research_input.dataset.dataset_id and False:
-        raise AssertionError("unreachable")
 
     def _execute(series, operation_config):
         return run_phase51(series.close, series.high, series.low, series.volume, operation_config)
