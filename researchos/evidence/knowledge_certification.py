@@ -48,7 +48,15 @@ class KnowledgeCertification:
         stored = research_repository.load_by_id(self.knowledge.id)
         if stored is None:
             return False
-        return self.finding_hash in stored.get("source_references", [])
+        return (
+            stored.get("object_type") == KNOWLEDGE_ARTIFACT_TYPE
+            and self.finding_hash in stored.get("source_references", [])
+        )
+
+
+def _semantic_payload(knowledge: Knowledge) -> dict:
+    """Return the stable semantic representation used for persistence checks."""
+    return knowledge._to_hashable_dict()
 
 
 def certify_knowledge(
@@ -62,6 +70,11 @@ def certify_knowledge(
     No semantic transformation or inference is performed here. The supplied
     Knowledge fields are preserved and the certified Finding hash is bound to
     ``source_references`` before persistence.
+
+    Once a Knowledge ID has been certified, it is immutable at this trust
+    boundary: an identical certification is idempotent, while a changed
+    semantic payload or provenance is rejected instead of overwriting the
+    durable memory record.
     """
     finding = evidence_repository.get_artifact(finding_hash)
     if finding is None:
@@ -89,7 +102,23 @@ def certify_knowledge(
         ontology_tags=list(knowledge.ontology_tags),
         id=knowledge.id,
     )
-    research_repository.save_object(bound_knowledge)
+
+    existing = research_repository.load_by_id(bound_knowledge.id)
+    if existing is not None:
+        if existing.get("object_type") != KNOWLEDGE_ARTIFACT_TYPE:
+            raise ValueError(
+                f"Knowledge ID collision with {existing.get('object_type')!r}: "
+                f"{bound_knowledge.id}"
+            )
+        existing_knowledge = Knowledge.from_dict(existing)
+        if _semantic_payload(existing_knowledge) != _semantic_payload(bound_knowledge):
+            raise ValueError(
+                "Certified Knowledge is immutable: existing semantic payload "
+                "does not match the requested certification"
+            )
+        bound_knowledge = existing_knowledge
+    else:
+        research_repository.save_object(bound_knowledge)
 
     certification = KnowledgeCertification(
         finding_hash=finding_hash,
