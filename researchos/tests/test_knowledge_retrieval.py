@@ -8,11 +8,14 @@ from researchos.objects.knowledge import Knowledge
 from researchos.storage.repository import ResearchRepository
 
 
+@pytest.fixture
+def repo() -> ResearchRepository:
+    return ResearchRepository(db_path=":memory:")
+
+
 def _seed_chain(repo: ResearchRepository) -> tuple[str, str]:
     evidence = EvidenceRepository(repo)
-    dataset = evidence.append_artifact(
-        build_envelope("Dataset", {"id": "dataset-1"})
-    )
+    dataset = evidence.append_artifact(build_envelope("Dataset", {"id": "dataset-1"}))
     experiment = evidence.append_artifact(
         build_envelope("Experiment", {"id": "experiment-1"}, [dataset.artifact_hash])
     )
