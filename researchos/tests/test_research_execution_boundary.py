@@ -6,6 +6,10 @@ import inspect
 
 import pytest
 
+from researchos.data_engine.boundary import (
+    DATA_BOUNDARY_SCHEMA_VERSION,
+    ValidatedDatasetRef,
+)
 from researchos.data_engine.research_reader import ResearchSeries
 from researchos.research_boundary import ResearchInput
 from researchos.research_execution import (
@@ -16,8 +20,6 @@ from researchos.research_execution import (
 
 
 def _input() -> ResearchInput:
-    from researchos.data_engine.boundary import DATA_BOUNDARY_SCHEMA_VERSION, ValidatedDatasetRef
-
     ref = ValidatedDatasetRef(
         schema_version=DATA_BOUNDARY_SCHEMA_VERSION,
         dataset_id="dataset-001",
