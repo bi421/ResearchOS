@@ -31,33 +31,7 @@ from researchos.experiments.contracts import (
 
 
 class Experiment(BaseObject):
-    """
-    Blueprint for testing a hypothesis against historical data.
-
-    An Experiment defines:
-        1. Which hypothesis to test
-        2. What dataset to use
-        3. How the simulation should run
-        4. What metrics to track
-        5. What parameters to vary
-
-    Attributes:
-        hypothesis_id: Link to the QuantHypothesis being tested.
-        name: Human-readable name for this experiment.
-        description: Detailed description of the experiment.
-        experiment_type: The type of experiment (Backtest, WalkForward, etc.).
-        dataset_config: Configuration for the dataset to use.
-        simulation_config: Configuration for the simulation engine.
-        metric_definitions: Metrics to track during the experiment.
-        parameters: Additional experiment parameters.
-        run_ids: IDs of all ExperimentRuns executed for this experiment.
-        best_run_id: ID of the best-performing run (by primary metric).
-        experiment_hash: Deterministic hash of the experiment definition.
-        status: Current lifecycle status.
-        version: Experiment version (for tracking changes).
-        tags: Tags for categorisation.
-        experiment_trace: How this experiment was constructed.
-    """
+    """Blueprint for testing a hypothesis against historical data."""
 
     def __init__(
         self,
@@ -101,6 +75,26 @@ class Experiment(BaseObject):
         self.lifecycle.transition(
             LifecycleStage.DRAFT,
             reason="Experiment created in draft",
+        )
+
+    @classmethod
+    def create(
+        cls,
+        name: str = "",
+        description: str = "",
+        hypothesis_id: str = "",
+        **kwargs: Any,
+    ) -> "Experiment":
+        """Create an Experiment through the stable factory API.
+
+        ``hypothesis_id`` remains optional for compatibility with lightweight
+        evidence-chain tests that only need an executable experiment shell.
+        """
+        return cls(
+            hypothesis_id=hypothesis_id,
+            name=name,
+            description=description,
+            **kwargs,
         )
 
     def mark_ready(self) -> None:
@@ -208,7 +202,7 @@ class Experiment(BaseObject):
         return base
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Experiment:
+    def from_dict(cls, data: dict[str, Any]) -> "Experiment":
         obj = super().from_dict(data)
         obj.hypothesis_id = data["hypothesis_id"]
         obj.name = data.get("name", "")
