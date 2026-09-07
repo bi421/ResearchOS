@@ -3,9 +3,9 @@
 Bridges the existing ``market_memory.EvidenceRecord`` contract into the
 append-only evidence graph as a deterministic ``Finding`` artifact.
 
-A finding may only be certified from an existing Validation artifact.  The
-source Validation must be a successful validation result; merely having an
-artifact with an arbitrary type or payload is insufficient.
+A finding may only be certified from an existing Validation artifact and must
+itself be marked ``VALIDATED``.  This keeps the durable-knowledge boundary
+explicit: exploratory or rejected observations cannot be promoted by this API.
 
     Experiment -> Run -> Result -> Validation -> Finding
 
@@ -25,6 +25,7 @@ FINDING_ARTIFACT_TYPE = "Finding"
 FINDING_EVIDENCE_VERSION = "1.0.0"
 VALIDATION_TO_FINDING_RELATION = "derives"
 VALIDATION_ARTIFACT_TYPE = "Validation"
+VALIDATED_STATUS = "VALIDATED"
 
 
 def _primitives(value: Any) -> Any:
@@ -91,11 +92,12 @@ def certify_finding(
     version: str = FINDING_EVIDENCE_VERSION,
     created_at: str = "",
 ) -> EvidenceEnvelope:
-    """Certify an existing research finding against a successful Validation.
+    """Certify a validated research finding against a successful Validation.
 
     The Validation must already exist in the evidence repository and must be
-    stored as a ``Validation`` artifact.  This is deliberate: a finding can
-    never become durable knowledge without a verifiable validation predecessor.
+    stored as a ``Validation`` artifact.  The finding must also carry the
+    canonical ``VALIDATED`` status.  This is deliberate: a finding can never
+    become durable knowledge through this boundary without explicit validation.
     """
     validation = repository.get_artifact(validation_hash)
     if validation is None:
@@ -103,6 +105,12 @@ def certify_finding(
     if validation.artifact_type != VALIDATION_ARTIFACT_TYPE:
         raise ValueError(
             f"Finding certification requires a Validation artifact, got '{validation.artifact_type}'"
+        )
+
+    status = str(getattr(finding, "status", ""))
+    if status != VALIDATED_STATUS:
+        raise ValueError(
+            f"Finding certification requires status='VALIDATED', got '{status or 'UNKNOWN'}'"
         )
 
     envelope = build_finding_envelope(
@@ -117,6 +125,7 @@ def certify_finding(
 __all__ = [
     "FINDING_ARTIFACT_TYPE",
     "FINDING_EVIDENCE_VERSION",
+    "VALIDATED_STATUS",
     "VALIDATION_ARTIFACT_TYPE",
     "VALIDATION_TO_FINDING_RELATION",
     "build_finding_envelope",
