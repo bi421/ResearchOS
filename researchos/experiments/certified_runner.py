@@ -20,12 +20,11 @@ from researchos.experiments.runner import BaseExperimentRunner
 
 
 class EvidenceAwareExperimentRunner(BaseExperimentRunner):
-    """Base runner plus mandatory runtime evidence certification.
+    """Base runner plus runtime evidence certification for every run mode.
 
-    The normal ``run`` return value remains ``(ExperimentRun, ExperimentResult)``.
-    The corresponding certification is retained on ``last_certification`` so
-    callers can inspect or verify the immutable evidence chain without changing
-    existing experiment APIs.
+    The normal runner return values remain unchanged.  Certifications are
+    retained for inspection and verification without changing existing
+    experiment APIs.
     """
 
     def __init__(
@@ -36,6 +35,7 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
     ) -> None:
         super().__init__(backend=backend, router=router)
         self.evidence_repository = evidence_repository or EvidenceRepository()
+        self.certifications: list[RuntimeCertification] = []
         self.last_certification: RuntimeCertification | None = None
 
     def _certify(
@@ -43,8 +43,8 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
         experiment: Experiment,
         run: ExperimentRun,
         result: ExperimentResult,
-    ) -> None:
-        self.last_certification = certify_runtime(
+    ) -> RuntimeCertification:
+        certification = certify_runtime(
             experiment,
             run,
             result,
@@ -54,6 +54,9 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
                 "version": result.statistics.get("backend_version", ""),
             },
         )
+        self.certifications.append(certification)
+        self.last_certification = certification
+        return certification
 
     def run(
         self,
@@ -81,6 +84,44 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
         )
         self._certify(experiment, run, result)
         return run, result
+
+    def run_walk_forward(
+        self,
+        experiment: Experiment,
+        dataset: Any,
+        window_size: int = 252,
+        step_size: int = 63,
+    ) -> list[tuple[ExperimentRun, ExperimentResult]]:
+        """Execute walk-forward runs and certify every successful run."""
+        results = super().run_walk_forward(
+            experiment,
+            dataset,
+            window_size,
+            step_size,
+        )
+        for run, result in results:
+            if run.status.value == "Completed":
+                self._certify(experiment, run, result)
+        return results
+
+    def run_monte_carlo(
+        self,
+        experiment: Experiment,
+        dataset: Any,
+        num_simulations: int = 1000,
+        seed: int | None = None,
+    ) -> list[tuple[ExperimentRun, ExperimentResult]]:
+        """Execute Monte Carlo runs and certify every successful run."""
+        results = super().run_monte_carlo(
+            experiment,
+            dataset,
+            num_simulations,
+            seed,
+        )
+        for run, result in results:
+            if run.status.value == "Completed":
+                self._certify(experiment, run, result)
+        return results
 
 
 __all__ = ["EvidenceAwareExperimentRunner"]
