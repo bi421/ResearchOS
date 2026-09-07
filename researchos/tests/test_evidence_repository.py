@@ -1,21 +1,4 @@
-"""
-Tests for the Phase 5.3a Evidence & Lineage storage foundation
-(hash-contract hardened).
-
-Covers:
-    - ``EvidenceEnvelope`` immutability, determinism, and lineage verification.
-    - Hash-contract hardening:
-        * same payload + different artifact_type => different artifact_hash
-        * version change affects lineage verification
-        * tampered type/version fails verification
-        * unsupported payload type rejected
-    - ``EvidenceRepository`` append-only storage, lineage traversal, integrity.
-    - Schema migration (SCHEMA_VERSION 3) creates the ``evidence`` and
-      ``lineage`` tables.
-
-Contract-preserving: no existing behavior is changed; these tests assert the
-new additive evidence/lineage guarantees and the hardened hash contract.
-"""
+"""Tests for the Phase 5.3a Evidence & Lineage storage foundation."""
 
 from __future__ import annotations
 
@@ -240,11 +223,21 @@ class TestEvidenceRepository:
         assert ev.get_parents(feat.artifact_hash) == [ds.artifact_hash]
         assert ev.get_children(ds.artifact_hash) == [feat.artifact_hash]
 
-    def test_explicit_edge_add(self):
+    def test_explicit_edge_add_requires_existing_evidence(self):
         ev = self._make_repo()
-        ev.add_lineage_edge("parent-hash", "child-hash", relation="produces")
-        assert ev.get_children("parent-hash") == ["child-hash"]
-        assert ev.get_parents("child-hash") == ["parent-hash"]
+        parent = build_envelope("Dataset", {"a": 1})
+        child = build_envelope("Feature", {"b": 2})
+        ev.append_artifact(parent)
+        ev.append_artifact(child)
+        ev.add_lineage_edge(parent.artifact_hash, child.artifact_hash, relation="feeds")
+        assert ev.get_children(parent.artifact_hash) == [child.artifact_hash]
+        assert ev.get_parents(child.artifact_hash) == [parent.artifact_hash]
+
+    def test_orphan_lineage_edge_rejected(self):
+        ev = self._make_repo()
+        with pytest.raises(ValueError, match="does not exist"):
+            ev.add_lineage_edge("missing-parent", "missing-child", relation="feeds")
+        assert ev.count_edges() == 0
 
     def test_invalid_relation_rejected(self):
         ev = self._make_repo()
@@ -253,17 +246,32 @@ class TestEvidenceRepository:
 
     def test_same_lineage_edge_is_idempotent(self):
         ev = self._make_repo()
-        ev.add_lineage_edge("p", "c", relation="feeds")
-        ev.add_lineage_edge("p", "c", relation="feeds")
+        parent = build_envelope("Dataset", {"a": 1})
+        child = build_envelope("Feature", {"b": 2})
+        ev.append_artifact(parent)
+        ev.append_artifact(child)
+        ev.add_lineage_edge(parent.artifact_hash, child.artifact_hash, relation="feeds")
+        ev.add_lineage_edge(parent.artifact_hash, child.artifact_hash, relation="feeds")
         assert ev.count_edges() == 1
 
     def test_conflicting_lineage_relation_rejected(self):
-        """A parent/child pair cannot silently acquire a contradictory relation."""
         ev = self._make_repo()
-        ev.add_lineage_edge("p", "c", relation="feeds")
+        parent = build_envelope("Dataset", {"a": 1})
+        child = build_envelope("Feature", {"b": 2})
+        ev.append_artifact(parent)
+        ev.append_artifact(child)
+        ev.add_lineage_edge(parent.artifact_hash, child.artifact_hash, relation="feeds")
         with pytest.raises(ValueError, match="already exists"):
-            ev.add_lineage_edge("p", "c", relation="produces")
+            ev.add_lineage_edge(parent.artifact_hash, child.artifact_hash, relation="produces")
         assert ev.count_edges() == 1
+
+    def test_append_requires_all_declared_parents(self):
+        ev = self._make_repo()
+        child = build_envelope("Feature", {"b": 2}, parent_hashes=["missing-parent"])
+        with pytest.raises(ValueError, match="parent evidence .* does not exist"):
+            ev.append_artifact(child)
+        assert ev.count_artifacts() == 0
+        assert ev.count_edges() == 0
 
     def test_append_is_deduplicating_not_updating(self):
         ev = self._make_repo()
@@ -314,6 +322,43 @@ class TestEvidenceRepository:
         ev.append_artifact(ds)
         ev.append_artifact(feat)
         assert ev.verify_evidence() is True
+
+    def test_verify_evidence_detects_orphan_edge(self):
+        ev = self._make_repo()
+        parent = build_envelope("Dataset", {"a": 1})
+        child = build_envelope("Feature", {"b": 2})
+        ev.append_artifact(parent)
+        ev.append_artifact(child)
+        conn = ev._repo._get_conn()
+        conn.execute(
+            "INSERT INTO lineage (parent_hash, child_hash, relation, created_at) VALUES (?, ?, ?, ?)",
+            ("orphan", child.artifact_hash, "feeds", "now"),
+        )
+        conn.commit()
+        assert ev.verify_evidence() is False
+
+    def test_verify_evidence_detects_missing_declared_edge(self):
+        ev = self._make_repo()
+        parent = build_envelope("Dataset", {"a": 1})
+        child = build_envelope("Feature", {"b": 2}, parent_hashes=[parent.artifact_hash])
+        ev.append_artifact(parent)
+        ev.append_artifact(child)
+        ev._repo._get_conn().execute("DELETE FROM lineage WHERE parent_hash = ?", (parent.artifact_hash,))
+        ev._repo._get_conn().commit()
+        assert ev.verify_evidence() is False
+
+    def test_verify_evidence_detects_relation_mismatch(self):
+        ev = self._make_repo()
+        parent = build_envelope("Dataset", {"a": 1})
+        child = build_envelope("Feature", {"b": 2}, parent_hashes=[parent.artifact_hash])
+        ev.append_artifact(parent)
+        ev.append_artifact(child)
+        ev._repo._get_conn().execute(
+            "UPDATE lineage SET relation = ? WHERE parent_hash = ? AND child_hash = ?",
+            ("produces", parent.artifact_hash, child.artifact_hash),
+        )
+        ev._repo._get_conn().commit()
+        assert ev.verify_evidence() is False
 
     def test_counts(self):
         ev = self._make_repo()
