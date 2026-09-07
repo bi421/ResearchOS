@@ -7,9 +7,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from researchos.core.identity import deterministic_hash
 from researchos.evidence.envelope import (
-    HASH_SCHEME_VERSION,
     LINEAGE_RELATIONS,
     EvidenceEnvelope,
     compute_artifact_hash,
