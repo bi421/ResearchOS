@@ -27,9 +27,9 @@ class EvidenceRepository:
     def append_artifact(self, envelope: EvidenceEnvelope) -> EvidenceEnvelope:
         """Insert an immutable evidence envelope and its parent edges.
 
-        Re-appending the same content identity is idempotent, even when the
-        observational ``created_at`` differs. Content identity is defined by
-        the artifact hash and lineage; ``created_at`` is not part of either hash.
+        Every declared parent must already exist. This prevents append-time
+        creation of orphan lineage edges and makes the evidence graph closed
+        under its parent references.
         """
         if not envelope.verify():
             raise ValueError(
@@ -67,6 +67,18 @@ class EvidenceRepository:
                     parent_hashes=existing_parents,
                     lineage_hash=existing[5],
                 )
+
+            for parent in envelope.parent_hashes:
+                cursor.execute(
+                    "SELECT 1 FROM evidence WHERE artifact_hash = ?",
+                    (parent,),
+                )
+                if cursor.fetchone() is None:
+                    raise ValueError(
+                        f"Cannot append artifact {envelope.artifact_hash}: "
+                        f"parent evidence {parent} does not exist"
+                    )
+
             cursor.execute(
                 """
                 INSERT INTO evidence
@@ -105,6 +117,18 @@ class EvidenceRepository:
                 f"Unknown lineage relation '{relation}'. Expected one of {LINEAGE_RELATIONS}."
             )
         with self._repo._transaction() as cursor:
+            for artifact_hash, role in (
+                (parent_hash, "parent"),
+                (child_hash, "child"),
+            ):
+                cursor.execute(
+                    "SELECT 1 FROM evidence WHERE artifact_hash = ?",
+                    (artifact_hash,),
+                )
+                if cursor.fetchone() is None:
+                    raise ValueError(
+                        f"Cannot add lineage edge: {role} evidence {artifact_hash} does not exist"
+                    )
             self._insert_edge(cursor, parent_hash, child_hash, relation)
 
     def get_artifact(self, artifact_hash: str) -> EvidenceEnvelope | None:
@@ -146,12 +170,16 @@ class EvidenceRepository:
         return [row[0] for row in cursor.fetchall()]
 
     def verify_evidence(self) -> bool:
+        """Verify artifact hashes, lineage hashes, parent closure, and edge closure."""
         conn = self._repo._get_conn()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT artifact_type, artifact_hash, version, payload, parent_hashes, lineage_hash FROM evidence"
         )
-        for row in cursor.fetchall():
+        rows = cursor.fetchall()
+        evidence_hashes = {row[1] for row in rows}
+
+        for row in rows:
             payload = json.loads(row[3])
             parent_hashes = tuple(json.loads(row[4]))
             expected_artifact = compute_artifact_hash(row[0], row[2], payload)
@@ -160,7 +188,29 @@ class EvidenceRepository:
             expected_lineage = compute_lineage_hash(row[0], row[2], payload, parent_hashes)
             if expected_lineage != row[5]:
                 return False
-        return True
+            if any(parent not in evidence_hashes for parent in parent_hashes):
+                return False
+
+        cursor.execute("SELECT parent_hash, child_hash, relation FROM lineage")
+        for parent_hash, child_hash, relation in cursor.fetchall():
+            if parent_hash not in evidence_hashes or child_hash not in evidence_hashes:
+                return False
+            if relation not in LINEAGE_RELATIONS:
+                return False
+            child = next((row for row in rows if row[1] == child_hash), None)
+            if child is None or parent_hash not in tuple(json.loads(child[4])):
+                return False
+            if relation != _default_relation(child[0]):
+                return False
+
+        expected_edges = {
+            (parent, row[1], _default_relation(row[0]))
+            for row in rows
+            for parent in tuple(json.loads(row[4]))
+        }
+        cursor.execute("SELECT parent_hash, child_hash, relation FROM lineage")
+        actual_edges = set(cursor.fetchall())
+        return actual_edges == expected_edges
 
     def count_artifacts(self) -> int:
         conn = self._repo._get_conn()
@@ -178,8 +228,7 @@ class EvidenceRepository:
         """Insert one canonical relation for a parent/child pair.
 
         Repeating the exact edge is idempotent. A different relation for the
-        same parent/child pair is rejected instead of being silently ignored;
-        otherwise the lineage graph could conceal contradictory semantics.
+        same parent/child pair is rejected instead of being silently ignored.
         """
         cursor.execute(
             """
