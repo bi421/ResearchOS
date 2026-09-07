@@ -32,6 +32,10 @@ from researchos.evidence.experiment_emission import (
     emit_experiment_with_dataset,
     experiment_payload,
 )
+from researchos.evidence.experiment_learning_certification import (
+    ExperimentLearningCertification,
+    certify_experiment_learning,
+)
 from researchos.evidence.finding_emission import (
     FINDING_ARTIFACT_TYPE,
     FINDING_EVIDENCE_VERSION,
@@ -146,6 +150,8 @@ __all__ = [
     "emit_finding",
     "finding_hash",
     "finding_payload",
+    "ExperimentLearningCertification",
+    "certify_experiment_learning",
     "KNOWLEDGE_ARTIFACT_TYPE",
     "KnowledgeCertification",
     "certify_knowledge",
