@@ -12,12 +12,19 @@ from researchos.storage.repository import ResearchRepository
 def _finding_repository(tmp_path, status="VALIDATED"):
     evidence_store = ResearchRepository(str(tmp_path / "evidence.db"))
     repository = EvidenceRepository(evidence_store)
+    validation = build_envelope(
+        artifact_type="Validation",
+        payload={"validation_id": "validation-1", "status": "VALIDATED"},
+        version="1.0.0",
+        created_at="2026-09-07T00:00:00+00:00",
+    )
+    repository.append_artifact(validation)
     envelope = build_envelope(
         artifact_type="Finding",
         payload={"status": status, "validation_id": "validation-1"},
         version="1.0.0",
         created_at="2026-09-07T00:00:00+00:00",
-        parent_hashes=("validation-hash",),
+        parent_hashes=(validation.artifact_hash,),
     )
     repository.append_artifact(envelope)
     return repository, envelope.artifact_hash
