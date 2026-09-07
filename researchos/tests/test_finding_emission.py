@@ -76,6 +76,14 @@ def test_finding_rejects_missing_validation() -> None:
         certify_finding(_finding(), "missing-validation", repository)
 
 
+def test_finding_rejects_non_validation_parent() -> None:
+    repository = EvidenceRepository()
+    result_hash = _seed_result(repository)
+
+    with pytest.raises(ValueError, match="requires a Validation artifact"):
+        certify_finding(_finding(), result_hash, repository)
+
+
 def test_finding_identity_excludes_observational_creation_time() -> None:
     repository = EvidenceRepository()
     validation = _seed_validation(repository)
