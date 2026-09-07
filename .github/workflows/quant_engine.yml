@@ -58,7 +58,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          find cpp_quant_engine/python/cpp_quant_engine -name '*.so' -exec ls -la {} \;
+          find cpp_quant_engine/python/cpp_quant_engine -name '*.so' -exec ls -la {} \\
           if find cpp_quant_engine/python -iname '*.pdb' | grep -q .; then
             echo 'PDB leak!'; exit 1
           fi
@@ -70,13 +70,10 @@ jobs:
           Get-ChildItem cpp_quant_engine/python/cpp_quant_engine/*.pyd | ForEach-Object { Write-Host "$($_.Name) $($_.Length/1KB)KB" }
           if (Get-ChildItem cpp_quant_engine/python -Filter *.pdb -Recurse) { Write-Error 'PDB leak!'; exit 1 }
 
-      - name: Run Python regression tests (skip if data missing)
+      - name: Run Python regression tests
         shell: bash
         run: |
-          if [ -d "data/raw/histdata/xauusd" ]; then
-            pytest researchos/tests/test_cpp_backtest_regression.py -q
-          else
-            echo "XAUUSD data not found in CI environment. Skipping Python regression tests."
-          fi
+          test -d "data/raw/histdata/xauusd" || { echo "XAUUSD data not found in CI environment. Regression tests require committed test data."; exit 1; }
+          pytest researchos/tests/test_cpp_backtest_regression.py -q
         env:
           PYTHONPATH: 'cpp_quant_engine/python:.'
