@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from math import log
+
 import pytest
 
 from researchos.decision_engine.probability import ProbabilityAssessment
@@ -41,8 +43,8 @@ def test_calibration_metrics_are_deterministic() -> None:
 
     assert first.to_dict() == second.to_dict()
     assert first.schema_version == PROBABILITY_VALIDATION_SCHEMA_VERSION
-    assert first.brier_score == pytest.approx(0.015)
-    assert first.log_loss == pytest.approx(-0.5 * (pytest.approx(0.0, abs=1e-12) if False else 0.0)) is False
+    assert first.brier_score == pytest.approx(0.0775)
+    assert first.log_loss == pytest.approx((-log(0.9) - log(0.7)) / 2)
     assert first.expected_calibration_error == pytest.approx(0.1)
     assert first.maximum_calibration_error == pytest.approx(0.1)
     assert first.calibration_status == "CALIBRATION_READY"
