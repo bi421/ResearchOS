@@ -120,3 +120,61 @@ def test_knowledge_rejects_non_finding_source() -> None:
                 evidence_repository,
                 research_repository,
             )
+
+
+def test_repeated_knowledge_certification_is_idempotent() -> None:
+    evidence_repository, finding_hash = _seed_finding()
+
+    with ResearchRepository(":memory:") as research_repository:
+        first = certify_knowledge(
+            finding_hash,
+            _knowledge(),
+            evidence_repository,
+            research_repository,
+        )
+        stored_before = research_repository.load_by_id(first.knowledge_id)
+
+        second = certify_knowledge(
+            finding_hash,
+            _knowledge(),
+            evidence_repository,
+            research_repository,
+        )
+        stored_after = research_repository.load_by_id(second.knowledge_id)
+
+        assert second.knowledge_id == first.knowledge_id
+        assert second.knowledge._to_hashable_dict() == first.knowledge._to_hashable_dict()
+        assert stored_after == stored_before
+
+
+def test_certified_knowledge_rejects_semantic_overwrite() -> None:
+    evidence_repository, finding_hash = _seed_finding()
+
+    with ResearchRepository(":memory:") as research_repository:
+        original = _knowledge()
+        certify_knowledge(
+            finding_hash,
+            original,
+            evidence_repository,
+            research_repository,
+        )
+        original_data = research_repository.load_by_id(original.id)
+
+        changed = Knowledge(
+            type=original.type,
+            subject=original.subject,
+            predicate=original.predicate,
+            object=original.object,
+            confidence=0.91,
+            knowledge_trace=original.knowledge_trace,
+            id=original.id,
+        )
+        with pytest.raises(ValueError, match="immutable"):
+            certify_knowledge(
+                finding_hash,
+                changed,
+                evidence_repository,
+                research_repository,
+            )
+
+        assert research_repository.load_by_id(original.id) == original_data
