@@ -109,3 +109,6 @@ dist/
 
 # Data files (optional - хэрэв том бол)
 data/curated/*.json
+
+# Generated audit artifacts
+AUDIT_REPORT/
