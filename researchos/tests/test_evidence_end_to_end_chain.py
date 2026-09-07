@@ -12,6 +12,8 @@ canonical evidence type can participate in a closed, verifiable graph.
 
 from __future__ import annotations
 
+import pytest
+
 from researchos.evidence.envelope import build_envelope
 from researchos.evidence.repository import EvidenceRepository
 from researchos.storage.repository import ResearchRepository
@@ -82,12 +84,8 @@ def test_canonical_chain_rejects_missing_upstream_evidence() -> None:
         parent_hashes=["missing-experiment"],
     )
 
-    try:
+    with pytest.raises(ValueError, match="parent evidence missing-experiment does not exist"):
         repo.append_artifact(orphan_run)
-    except ValueError as exc:
-        assert "parent evidence missing-experiment does not exist" in str(exc)
-    else:
-        raise AssertionError("orphan evidence must be rejected")
 
     assert repo.count_artifacts() == 0
     assert repo.count_edges() == 0
