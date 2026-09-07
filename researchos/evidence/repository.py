@@ -27,9 +27,9 @@ class EvidenceRepository:
     def append_artifact(self, envelope: EvidenceEnvelope) -> EvidenceEnvelope:
         """Insert an immutable evidence envelope and its parent edges.
 
-        Re-appending the exact same artifact is idempotent. Reusing an existing
-        artifact hash with different stored content is rejected rather than
-        silently ignored or replaced.
+        Re-appending the same content identity is idempotent, even when the
+        observational ``created_at`` differs. Content identity is defined by
+        the artifact hash and lineage; ``created_at`` is not part of either hash.
         """
         if not envelope.verify():
             raise ValueError(
@@ -51,7 +51,6 @@ class EvidenceRepository:
                 if (
                     existing[0] != envelope.artifact_type
                     or existing[1] != envelope.version
-                    or existing[2] != envelope.created_at
                     or existing_payload != envelope.payload
                     or existing_parents != envelope.parent_hashes
                     or existing[5] != envelope.lineage_hash
@@ -59,24 +58,32 @@ class EvidenceRepository:
                     raise ValueError(
                         f"Evidence artifact {envelope.artifact_hash} is immutable and cannot be overwritten"
                     )
-            else:
-                cursor.execute(
-                    """
-                    INSERT INTO evidence
-                    (artifact_type, artifact_hash, version, created_at, payload,
-                     parent_hashes, lineage_hash)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        envelope.artifact_type,
-                        envelope.artifact_hash,
-                        envelope.version,
-                        envelope.created_at,
-                        json.dumps(envelope.payload, ensure_ascii=False, default=str),
-                        json.dumps(list(envelope.parent_hashes), ensure_ascii=False),
-                        envelope.lineage_hash,
-                    ),
+                return EvidenceEnvelope(
+                    artifact_type=existing[0],
+                    artifact_hash=envelope.artifact_hash,
+                    version=existing[1],
+                    created_at=existing[2],
+                    payload=existing_payload,
+                    parent_hashes=existing_parents,
+                    lineage_hash=existing[5],
                 )
+            cursor.execute(
+                """
+                INSERT INTO evidence
+                (artifact_type, artifact_hash, version, created_at, payload,
+                 parent_hashes, lineage_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    envelope.artifact_type,
+                    envelope.artifact_hash,
+                    envelope.version,
+                    envelope.created_at,
+                    json.dumps(envelope.payload, ensure_ascii=False, default=str),
+                    json.dumps(list(envelope.parent_hashes), ensure_ascii=False),
+                    envelope.lineage_hash,
+                ),
+            )
             for parent in envelope.parent_hashes:
                 self._insert_edge(
                     cursor,
