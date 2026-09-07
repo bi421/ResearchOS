@@ -110,8 +110,9 @@ class KnowledgeRetrieval:
         """Traverse all Knowledge source references upstream to root evidence.
 
         Traversal follows Finding ``parent_hashes`` recursively. Each artifact
-        is visited once, and children are processed in lexicographic hash order
-        so the result is stable across runs.
+        is visited once, and siblings are processed in lexicographic hash order
+        so the result is stable across runs. A path-local ancestor set detects
+        real cycles without rejecting valid converging DAG paths.
         """
         data = self._research.load_by_id(knowledge_id)
         if data is None or data.get("object_type") != "Knowledge":
@@ -122,15 +123,19 @@ class KnowledgeRetrieval:
                 f"Knowledge {knowledge_id} has no validated Finding provenance"
             )
 
-        queue: deque[tuple[str, int]] = deque(
-            (finding_hash, 0)
+        queue: deque[tuple[str, int, frozenset[str]]] = deque(
+            (finding_hash, 0, frozenset())
             for finding_hash in sorted(set(knowledge.source_references))
         )
         visited: set[str] = set()
         result: list[ProvenanceNode] = []
 
         while queue:
-            artifact_hash, depth = queue.popleft()
+            artifact_hash, depth, ancestors = queue.popleft()
+            if artifact_hash in ancestors:
+                raise ValueError(
+                    f"Cycle detected in provenance traversal at {artifact_hash}"
+                )
             if artifact_hash in visited:
                 continue
             visited.add(artifact_hash)
@@ -146,12 +151,9 @@ class KnowledgeRetrieval:
                     depth=depth,
                 )
             )
+            next_ancestors = ancestors | {artifact_hash}
             for parent_hash in sorted(set(artifact.parent_hashes)):
-                if parent_hash in visited:
-                    raise ValueError(
-                        f"Cycle detected in provenance traversal at {parent_hash}"
-                    )
-                queue.append((parent_hash, depth + 1))
+                queue.append((parent_hash, depth + 1, next_ancestors))
 
         return tuple(result)
 
