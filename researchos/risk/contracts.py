@@ -10,12 +10,7 @@ RISK_SCHEMA_VERSION = "risk.v1"
 
 @dataclass(frozen=True)
 class TradeStatistics:
-    """Historical payoff statistics used by the risk calculation.
-
-    ``average_win`` and ``average_loss`` use the same monetary unit and
-    represent positive magnitudes. They are descriptive inputs, not a claim
-    that future outcomes will match the historical sample.
-    """
+    """Historical payoff statistics used by the risk calculation."""
 
     average_win: float
     average_loss: float
@@ -34,6 +29,14 @@ class TradeStatistics:
         self.validate()
         return self.average_win / self.average_loss
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TradeStatistics:
+        return cls(
+            average_win=float(data["average_win"]),
+            average_loss=float(data["average_loss"]),
+            sample_size=int(data.get("sample_size", 0)),
+        )
+
 
 @dataclass(frozen=True)
 class RiskPolicy:
@@ -50,6 +53,14 @@ class RiskPolicy:
             raise ValueError("max_risk_fraction must be in [0, 1]")
         if not 0 <= self.max_position_fraction <= 1:
             raise ValueError("max_position_fraction must be in [0, 1]")
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> RiskPolicy:
+        return cls(
+            fractional_kelly=float(data.get("fractional_kelly", 0.25)),
+            max_risk_fraction=float(data.get("max_risk_fraction", 0.01)),
+            max_position_fraction=float(data.get("max_position_fraction", 1.0)),
+        )
 
 
 @dataclass(frozen=True)
@@ -109,6 +120,26 @@ class RiskInput:
             "probability_method": self.probability_method,
             "probability_calibration_status": self.probability_calibration_status,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> RiskInput:
+        version = data.get("schema_version", RISK_SCHEMA_VERSION)
+        if version != RISK_SCHEMA_VERSION:
+            raise ValueError(f"unsupported risk schema: {version}")
+        request = cls(
+            asset=str(data["asset"]),
+            direction=str(data["direction"]),
+            probability=float(data["probability"]),
+            account_equity=float(data["account_equity"]),
+            trade_statistics=TradeStatistics.from_dict(data["trade_statistics"]),
+            risk_policy=RiskPolicy.from_dict(data.get("risk_policy", {})),
+            risk_per_unit=(float(data["risk_per_unit"]) if data.get("risk_per_unit") is not None else None),
+            research_id=data.get("research_id"),
+            probability_method=data.get("probability_method"),
+            probability_calibration_status=data.get("probability_calibration_status"),
+        )
+        request.validate()
+        return request
 
 
 @dataclass(frozen=True)
