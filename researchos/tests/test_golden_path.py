@@ -19,7 +19,9 @@ def repo() -> ResearchRepository:
     return ResearchRepository(db_path=":memory:")
 
 
-def test_golden_path_dataset_to_knowledge_retrieval(repo: ResearchRepository):
+def test_golden_path_dataset_to_knowledge_retrieval(
+    repo: ResearchRepository,
+) -> None:
     """Protect the complete evidence -> learning -> knowledge -> retrieval path."""
     evidence = EvidenceRepository(repo)
 
@@ -65,6 +67,7 @@ def test_golden_path_dataset_to_knowledge_retrieval(repo: ResearchRepository):
             },
             parent_hashes=[validation.artifact_hash],
         )
+    )
 
     learning = ExperimentLearningRecord(
         experiment_id="golden-experiment",
