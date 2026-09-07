@@ -76,3 +76,24 @@ def test_out_of_requested_range_is_rejected():
     )
     assert report.out_of_range_rows == 1
     assert not report.passed_integrity
+
+
+def test_missing_required_field_is_reported_and_rejected():
+    start = 1_735_779_600
+    invalid = row(start)
+    del invalid["spread"]
+
+    report = validate_m1_rows([invalid], start_epoch=start, end_epoch=start)
+
+    assert report.missing_field_rows == 1
+    assert not report.passed_integrity
+
+
+def test_invalid_timestamp_is_reported_and_rejected():
+    start = 1_735_779_600
+    invalid = row(start, time="not-a-timestamp")
+
+    report = validate_m1_rows([invalid], start_epoch=start, end_epoch=start)
+
+    assert report.invalid_timestamp_rows == 1
+    assert not report.passed_integrity
