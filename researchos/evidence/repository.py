@@ -8,7 +8,13 @@ from datetime import datetime, timezone
 from typing import Any
 
 from researchos.core.identity import deterministic_hash
-from researchos.evidence.envelope import HASH_SCHEME_VERSION, LINEAGE_RELATIONS, EvidenceEnvelope
+from researchos.evidence.envelope import (
+    HASH_SCHEME_VERSION,
+    LINEAGE_RELATIONS,
+    EvidenceEnvelope,
+    compute_artifact_hash,
+    compute_lineage_hash,
+)
 from researchos.storage.repository import ResearchRepository
 
 logger = logging.getLogger(__name__)
@@ -141,26 +147,12 @@ class EvidenceRepository:
             "SELECT artifact_type, artifact_hash, version, payload, parent_hashes, lineage_hash FROM evidence"
         )
         for row in cursor.fetchall():
-            expected = deterministic_hash(
-                {
-                    "scheme": HASH_SCHEME_VERSION,
-                    "artifact_type": row[0],
-                    "version": row[2],
-                    "payload": json.loads(row[3]),
-                    "parent_hashes": sorted(tuple(json.loads(row[4]))),
-                }
-            )
-            if expected != row[1]:
+            payload = json.loads(row[3])
+            parent_hashes = tuple(json.loads(row[4]))
+            expected_artifact = compute_artifact_hash(row[0], row[2], payload)
+            if expected_artifact != row[1]:
                 return False
-            expected_lineage = deterministic_hash(
-                {
-                    "scheme": HASH_SCHEME_VERSION,
-                    "artifact_type": row[0],
-                    "version": row[2],
-                    "payload": json.loads(row[3]),
-                    "parent_hashes": sorted(tuple(json.loads(row[4]))),
-                }
-            )
+            expected_lineage = compute_lineage_hash(row[0], row[2], payload, parent_hashes)
             if expected_lineage != row[5]:
                 return False
         return True
