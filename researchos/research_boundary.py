@@ -55,16 +55,23 @@ class ResearchInput:
 
 @dataclass(frozen=True)
 class ResearchEvidenceLink:
-    """Immutable lineage from research to its evidence/probability output."""
+    """Immutable lineage from research execution to its evidence output.
+
+    ``execution_hash`` identifies the exact deterministic research result,
+    while ``assessment_hash`` identifies the downstream probability/assessment
+    artifact. Both are required so the evidence chain cannot silently detach
+    from the research execution that produced it.
+    """
 
     schema_version: str
     research_id: str
     dataset_id: str
     dataset_content_hash: str
     dataset_hash: str
+    methodology_version: str
+    execution_hash: str
     evidence_collection_id: str
     assessment_hash: str
-    methodology_version: str
 
     def __post_init__(self) -> None:
         if self.schema_version != RESEARCH_BOUNDARY_SCHEMA_VERSION:
@@ -74,9 +81,10 @@ class ResearchEvidenceLink:
             ("dataset_id", self.dataset_id),
             ("dataset_content_hash", self.dataset_content_hash),
             ("dataset_hash", self.dataset_hash),
+            ("methodology_version", self.methodology_version),
+            ("execution_hash", self.execution_hash),
             ("evidence_collection_id", self.evidence_collection_id),
             ("assessment_hash", self.assessment_hash),
-            ("methodology_version", self.methodology_version),
         ):
             if not value:
                 raise ValueError(f"{name} is required")
@@ -88,9 +96,10 @@ class ResearchEvidenceLink:
             "dataset_id": self.dataset_id,
             "dataset_content_hash": self.dataset_content_hash,
             "dataset_hash": self.dataset_hash,
+            "methodology_version": self.methodology_version,
+            "execution_hash": self.execution_hash,
             "evidence_collection_id": self.evidence_collection_id,
             "assessment_hash": self.assessment_hash,
-            "methodology_version": self.methodology_version,
         }
 
     @classmethod
@@ -101,7 +110,8 @@ class ResearchEvidenceLink:
             dataset_id=str(data["dataset_id"]),
             dataset_content_hash=str(data["dataset_content_hash"]),
             dataset_hash=str(data["dataset_hash"]),
+            methodology_version=str(data["methodology_version"]),
+            execution_hash=str(data["execution_hash"]),
             evidence_collection_id=str(data["evidence_collection_id"]),
             assessment_hash=str(data["assessment_hash"]),
-            methodology_version=str(data["methodology_version"]),
         )
