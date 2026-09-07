@@ -2,9 +2,9 @@ name: Python Tests
 
 on:
   push:
-    branches: [ master, develop, feature/* ]
+    branches: [ main, master, develop, feature/* ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ main, master, develop ]
 
 jobs:
   test:
@@ -66,5 +66,6 @@ jobs:
     - name: Report test failure
       run: |
         echo "Python test suite FAILED"
+        echo "All code changes require passing tests before merge."
         echo "All code changes require passing tests before merge."
         exit 1
