@@ -32,7 +32,7 @@ class ValidationReport:
     duplicate_timestamps: int
     out_of_range_rows: int
     invalid_ohlc_rows: int
-    invalid_volume_rows: int
+    invalid_volume_flags: int
     negative_spread_rows: int
     max_gap_seconds: int
     gap_count_over_60s: int
@@ -45,7 +45,7 @@ class ValidationReport:
                 self.duplicate_timestamps,
                 self.out_of_range_rows,
                 self.invalid_ohlc_rows,
-                self.invalid_volume_rows,
+                self.invalid_volume_flags,
                 self.negative_spread_rows,
             )
         )
@@ -82,29 +82,29 @@ def validate_m1_rows(
     )
 
     invalid_ohlc = 0
-    invalid_volume = 0
+    invalid_volume_flags = 0
     negative_spread = 0
     for row in materialized:
         values = [row[name] for name in ("open", "high", "low", "close")]
         if not all(_finite(value) for value in values):
             invalid_ohlc += 1
-            continue
-        open_, high, low, close = map(float, values)
-        if (
-            open_ <= 0
-            or high <= 0
-            or low <= 0
-            or close <= 0
-            or high < max(open_, close)
-            or low > min(open_, close)
-            or high < low
-        ):
-            invalid_ohlc += 1
+        else:
+            open_, high, low, close = map(float, values)
+            if (
+                open_ <= 0
+                or high <= 0
+                or low <= 0
+                or close <= 0
+                or high < max(open_, close)
+                or low > min(open_, close)
+                or high < low
+            ):
+                invalid_ohlc += 1
 
         if not _finite(row["tick_volume"]) or float(row["tick_volume"]) < 0:
-            invalid_volume += 1
+            invalid_volume_flags += 1
         if not _finite(row["real_volume"]) or float(row["real_volume"]) < 0:
-            invalid_volume += 1
+            invalid_volume_flags += 1
         if not _finite(row["spread"]) or float(row["spread"]) < 0:
             negative_spread += 1
 
@@ -117,7 +117,7 @@ def validate_m1_rows(
         duplicate_timestamps=duplicate_count,
         out_of_range_rows=out_of_range,
         invalid_ohlc_rows=invalid_ohlc,
-        invalid_volume_rows=invalid_volume,
+        invalid_volume_flags=invalid_volume_flags,
         negative_spread_rows=negative_spread,
         max_gap_seconds=max((b - a for a, b in zip(ordered, ordered[1:])), default=0),
         gap_count_over_60s=len(gaps),
