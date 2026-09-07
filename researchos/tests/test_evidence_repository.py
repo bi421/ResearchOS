@@ -32,10 +32,6 @@ from researchos.evidence.envelope import (
 from researchos.evidence.repository import EvidenceRepository
 from researchos.storage.repository import SCHEMA_VERSION, ResearchRepository
 
-# =============================================================================
-# EvidenceEnvelope
-# =============================================================================
-
 
 class TestEvidenceEnvelope:
     def test_artifact_types_registered(self):
@@ -55,7 +51,6 @@ class TestEvidenceEnvelope:
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_same_payload_different_type_differs(self):
-        """Hardening #1: artifact identity must bind the artifact type."""
         ds = build_envelope("Dataset", {"sym": ["AAPL"]}, version="1.0.0")
         ft = build_envelope("Feature", {"sym": ["AAPL"]}, version="1.0.0")
         assert ds.artifact_hash != ft.artifact_hash
@@ -84,7 +79,6 @@ class TestEvidenceEnvelope:
         assert tampered.verify() is False
 
     def test_verify_detects_tampered_version(self):
-        """Hardening #2: version tampering must fail verification."""
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
         tampered = EvidenceEnvelope(
             artifact_type=e.artifact_type,
@@ -97,7 +91,6 @@ class TestEvidenceEnvelope:
         assert tampered.verify() is False
 
     def test_verify_detects_tampered_type(self):
-        """Hardening #2: artifact_type tampering must fail verification."""
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
         tampered = EvidenceEnvelope(
             artifact_type="Experiment",
@@ -110,14 +103,12 @@ class TestEvidenceEnvelope:
         assert tampered.verify() is False
 
     def test_version_change_affects_lineage(self):
-        """Hardening #2: version change alters the lineage signature."""
         v1 = build_envelope("Dataset", {"a": 1}, version="1.0.0")
         v2 = build_envelope("Dataset", {"a": 1}, version="2.0.0")
         assert v1.lineage_hash != v2.lineage_hash
         assert v1.artifact_hash != v2.artifact_hash
 
     def test_legacy_verify_accepts_pre_hardening_scheme(self):
-        """Backward compatibility: legacy scheme-1 lineage hash still verifies."""
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
         from researchos.core.identity import deterministic_hash
 
@@ -134,10 +125,7 @@ class TestEvidenceEnvelope:
 
     def test_verify_accepts_empty_lineage_hash_legacy(self):
         e = EvidenceEnvelope(
-            artifact_type="Dataset",
-            artifact_hash="abc",
-            payload={"a": 1},
-            lineage_hash="",
+            artifact_type="Dataset", artifact_hash="abc", payload={"a": 1}, lineage_hash=""
         )
         assert e.verify() is True
 
@@ -150,12 +138,7 @@ class TestEvidenceEnvelope:
             EvidenceEnvelope(artifact_type="Dataset", artifact_hash="")
 
     def test_serialization_round_trip(self):
-        e = build_envelope(
-            "Run",
-            {"params": {"a": 1}},
-            version="1.0.0",
-            parent_hashes=["p1", "p2"],
-        )
+        e = build_envelope("Run", {"params": {"a": 1}}, version="1.0.0", parent_hashes=["p1", "p2"])
         restored = EvidenceEnvelope.from_dict(e.to_dict())
         assert restored.artifact_hash == e.artifact_hash
         assert restored.lineage_hash == e.lineage_hash
@@ -174,11 +157,6 @@ class TestEvidenceEnvelope:
         assert e.verify() is True
 
 
-# =============================================================================
-# Payload contract (strict primitive validation)
-# =============================================================================
-
-
 class TestPayloadContract:
     def test_build_rejects_unsupported_object(self):
         with pytest.raises(TypeError):
@@ -193,11 +171,7 @@ class TestPayloadContract:
 
     def test_envelope_constructor_rejects_unsupported_object(self):
         with pytest.raises(TypeError):
-            EvidenceEnvelope(
-                artifact_type="Dataset",
-                artifact_hash="abc",
-                payload={"bad": object()},
-            )
+            EvidenceEnvelope(artifact_type="Dataset", artifact_hash="abc", payload={"bad": object()})
 
     def test_nested_unsupported_object_rejected(self):
         with pytest.raises(TypeError):
@@ -225,11 +199,6 @@ class TestPayloadContract:
             compute_artifact_hash("Dataset", "1.0.0", {"x": object()})
 
 
-# =============================================================================
-# Schema migration
-# =============================================================================
-
-
 class TestSchemaMigration:
     def test_schema_version_is_3(self):
         assert SCHEMA_VERSION == 3
@@ -242,11 +211,6 @@ class TestSchemaMigration:
         tables = {r[0] for r in cursor.fetchall()}
         assert "evidence" in tables
         assert "lineage" in tables
-
-
-# =============================================================================
-# EvidenceRepository
-# =============================================================================
 
 
 class TestEvidenceRepository:
@@ -287,6 +251,20 @@ class TestEvidenceRepository:
         with pytest.raises(ValueError):
             ev.add_lineage_edge("p", "c", relation="bogus")
 
+    def test_same_lineage_edge_is_idempotent(self):
+        ev = self._make_repo()
+        ev.add_lineage_edge("p", "c", relation="feeds")
+        ev.add_lineage_edge("p", "c", relation="feeds")
+        assert ev.count_edges() == 1
+
+    def test_conflicting_lineage_relation_rejected(self):
+        """A parent/child pair cannot silently acquire a contradictory relation."""
+        ev = self._make_repo()
+        ev.add_lineage_edge("p", "c", relation="feeds")
+        with pytest.raises(ValueError, match="already exists"):
+            ev.add_lineage_edge("p", "c", relation="produces")
+        assert ev.count_edges() == 1
+
     def test_append_is_deduplicating_not_updating(self):
         ev = self._make_repo()
         e = build_envelope("Dataset", {"a": 1}, version="1.0.0")
@@ -319,10 +297,7 @@ class TestEvidenceRepository:
             created_at=original.created_at,
             parent_hashes=original.parent_hashes,
             lineage_hash=compute_lineage_hash(
-                original.artifact_type,
-                original.version,
-                {"a": 999},
-                original.parent_hashes,
+                original.artifact_type, original.version, {"a": 999}, original.parent_hashes
             ),
         )
         assert conflicting.verify() is True
