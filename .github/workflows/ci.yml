@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e . && pip install pytest
-      - run: python -m pytest researchos/tests/ -v --tb=short
+      - run: python -m pytest researchos/tests/ tests/unit/ -v --tb=short
   constitution-check:
     runs-on: ubuntu-latest
     steps:
