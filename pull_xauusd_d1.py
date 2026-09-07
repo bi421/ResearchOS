@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import MetaTrader5 as mt5
+import numpy as np
 import pandas as pd
 
 SYMBOL = "XAUUSD"
@@ -41,16 +42,17 @@ def main() -> None:
         raise SystemExit("BLOCKED: timestamps are not monotonic increasing.")
 
     price_cols = ["open", "high", "low", "close"]
-    if not df[price_cols].apply(lambda s: pd.to_numeric(s, errors="coerce").notna()).all().all():
-        raise SystemExit("BLOCKED: non-numeric OHLC values detected.")
-    if not df[price_cols].apply(lambda s: pd.Series(s).map(lambda x: pd.notna(x) and pd.api.types.is_number(x) and pd.np.isfinite(x) if False else True)).all().all():
+    numeric_prices = df[price_cols].apply(pd.to_numeric, errors="coerce")
+    if not np.isfinite(numeric_prices.to_numpy(dtype=float)).all():
         raise SystemExit("BLOCKED: non-finite OHLC values detected.")
+    if (numeric_prices <= 0).any().any():
+        raise SystemExit("BLOCKED: non-positive OHLC values detected.")
 
-    dupes = df["time"].duplicated().sum()
+    dupes = int(df["time"].duplicated().sum())
     gaps = df["time"].diff().dt.total_seconds().div(86400)
-    big_gaps = (gaps > 4).sum()
-    ohlc_invalid = ((df["high"] < df[["open", "close"]].max(axis=1)) | (df["low"] > df[["open", "close"]].min(axis=1)) | (df["high"] < df["low"])).sum()
-    zero_vol = (df["tick_volume"] == 0).sum()
+    big_gaps = int((gaps > 4).sum())
+    ohlc_invalid = int(((df["high"] < df[["open", "close"]].max(axis=1)) | (df["low"] > df[["open", "close"]].min(axis=1)) | (df["high"] < df["low"])).sum())
+    zero_vol = int((df["tick_volume"] == 0).sum())
 
     print("DUPLICATES:", dupes)
     print("SUSPICIOUS GAPS (>4d):", big_gaps)
