@@ -18,17 +18,9 @@ Workflow:
             ↓
     ExperimentValidation
             ↓
-    LearningRecord
-
-Design Principles:
-    - Deterministic: Same inputs → same outputs (seeded RNG, content-addressed IDs)
-    - Auditable: Full lifecycle tracking, all state transitions recorded
-    - Repeatable: Complete parameter capture enables exact re-execution
-    - Serializable: All objects support to_dict/from_dict for storage and transport
-    - C++ Ready: Computation interfaces are abstract; future C++ Quant Engine
-      can replace the backend without changing experiment objects.
-
-Based on Article XVII: Object Model — Experiment Layer.
+    ExperimentLearningRecord
+            ↓
+    Evidence / Knowledge boundary
 """
 
 from researchos.experiments.certified_runner import EvidenceAwareExperimentRunner
@@ -43,14 +35,13 @@ from researchos.experiments.contracts import (
 )
 from researchos.experiments.experiment import Experiment
 from researchos.experiments.hypothesis import QuantHypothesis
-from researchos.experiments.learning import LearningRecord
+from researchos.experiments.learning import ExperimentLearningRecord, LearningRecord
 from researchos.experiments.reports import ExperimentReport
 from researchos.experiments.result import ExperimentResult, ExperimentRun
 from researchos.experiments.runner import AbstractExperimentRunner, BaseExperimentRunner, get_runner
 from researchos.experiments.validation import ExperimentValidation
 
 __all__ = [
-    # Enums / Configs
     "ExperimentStatus",
     "ExperimentType",
     "HypothesisStatus",
@@ -58,7 +49,6 @@ __all__ = [
     "DatasetConfig",
     "SimulationConfig",
     "MetricDefinition",
-    # Core objects
     "QuantHypothesis",
     "Experiment",
     "ExperimentRun",
@@ -68,6 +58,7 @@ __all__ = [
     "AbstractExperimentRunner",
     "get_runner",
     "ExperimentValidation",
+    "ExperimentLearningRecord",
     "LearningRecord",
     "ExperimentReport",
 ]
