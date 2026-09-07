@@ -48,12 +48,23 @@ def test_invalid_ohlc_is_rejected():
     assert not report.passed_integrity
 
 
+def test_invalid_volume_flags_count_each_bad_volume_field():
+    start = 1_735_779_600
+    report = validate_m1_rows(
+        [row(start, tick_volume=-1, real_volume=-2)],
+        start_epoch=start,
+        end_epoch=start,
+    )
+    assert report.invalid_volume_flags == 2
+    assert not report.passed_integrity
+
+
 def test_negative_volume_and_spread_are_rejected():
     start = 1_735_779_600
     report = validate_m1_rows(
         [row(start, tick_volume=-1, spread=-2)], start_epoch=start, end_epoch=start
     )
-    assert report.invalid_volume_rows == 1
+    assert report.invalid_volume_flags == 1
     assert report.negative_spread_rows == 1
     assert not report.passed_integrity
 
