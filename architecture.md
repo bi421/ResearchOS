@@ -1,4 +1,4 @@
-﻿# ResearchOS Architecture
+# ResearchOS Architecture
 
 ## Data Flow (Canonical)
 
@@ -28,61 +28,97 @@ FUTURE LEARNING
   ↓
 PROBABILITY
 
-## Implementation Status (2026-08-18)
+## Implementation Status (2026-09-07)
 
 | Component | Status | Evidence |
 |-----------|--------|----------|
-| Data Engine | ✅ CURRENT | esearchos/data_engine/ — Candle, Dataset, SQLite |
-| Market Memory | ⚠️ TRANSITIONAL | esearchos/market_memory/ — partial integration |
-| Quant Engine | ✅ CURRENT | PythonQuantBackend, C++ backend available |
-| Decision Engine | ✅ CURRENT | compute_evidence_score, EvidenceItem |
-| Macro Intelligence | ✅ CURRENT | macro_intelligence/ — econometrics, regime |
-| Intelligence | ✅ CURRENT | esearchos/intelligence/ — EvidenceGraph |
-| Future Learning | ❌ FUTURE | Not implemented (intentional) |
+| Data Engine | ✅ CURRENT | `researchos/data_engine/` — validation, dataset contracts, SQLite |
+| Market Memory | ⚠️ TRANSITIONAL | `researchos/market_memory/` — event, outcome, conditioning, matching and evidence primitives exist |
+| Quant Engine | ✅ CURRENT | Python reference backend + certified C++ acceleration path |
+| Decision Engine | ✅ CURRENT | evidence scoring, probability assessment and decision contracts |
+| Macro Intelligence | ✅ CURRENT | macro analysis and regime components |
+| Intelligence | ✅ CURRENT | EvidenceGraph and reasoning components |
+| Evidence / Lineage | ⚠️ RUNTIME WIRING | Dataset/Experiment/Run/Result/Validation emission primitives exist; core experiment runtime is not yet automatically persisted to the evidence repository |
+| Future Learning | ❌ FUTURE | Not implemented intentionally |
 
 ## Verified Capabilities
 
-| Capability | Status | Evidence |
-|------------|--------|----------|
-| 7 assets + 3 macro factors analysis | ✅ | un_full_analysis_fixed4.py |
-| Trend detection (SMA) | ✅ | un_trend_analysis_fixed.py |
-| Evidence Score | ✅ | compute_evidence_score() |
-| Backtesting (XAUUSD) | ✅ | un_first_backtest.py |
-| Live vs historical candle validation | ✅ | live_candle_validator.py |
-| Markdown reports | ✅ | 	rend_report_verified.md |
-
-## Backtest Result (XAUUSD 2021-2025 D1)
-
-| Metric | Value |
-|--------|-------|
-| Total bars | 1554 |
-| Num trades | 55 |
-| Final equity | 238,800.45 |
-| Total return | 138.80% |
-| Max drawdown | 20.72% |
-| Result hash | d5b9125af75b069eca4e1b31223cbe3acc5f9aa2777c16636ec819a0368b9b6f |
+| Capability | Status |
+|------------|--------|
+| Deterministic research execution boundary | ✅ |
+| Dataset provenance/content hashing | ✅ |
+| Experiment → execution → evidence lineage primitives | ✅ |
+| Evidence envelope hash scheme 2 | ✅ |
+| Run → Result lineage | ✅ |
+| Object registry collision protection | ✅ |
+| Timezone resolution with explicit failure | ✅ |
+| Python/C++ certified backend routing | ✅ |
+| Package-local market-memory/data-engine/Phase 5.1 tests in CI | ✅ |
+| C++ test failures propagate to CI | ✅ |
+| Calibrated probability | ❌ |
+| Autonomous trading / broker execution | ❌ by design |
 
 ## Critical Invariants
 
 - ✅ NO PREDICTIVE INTELLIGENCE WITHOUT VALIDATED HISTORICAL EVIDENCE
 - ✅ DETERMINISTIC: Same inputs → same outputs
 - ✅ IMMUTABLE: Completed experiments cannot be mutated
-- ⚠️ PROBABILITY: Current Score is heuristic, NOT calibrated probability
+- ⚠️ PROBABILITY: Current score is heuristic, not calibrated probability
+- ✅ NO BROKER EXECUTION
 
 ## Architecture Guards
 
-- ✅ quant_engine must not depend on decision_engine
-- ✅ core must not depend on high-level intelligence
+- ✅ `quant_engine` must not depend on `decision_engine`
+- ✅ `core` must not depend on high-level intelligence
 - ✅ experiments must not mutate configurations
-- ✅ evidence must preserve lineage
-- ✅ learning.py remains future/unimplemented
+- ✅ evidence envelopes preserve deterministic lineage
+- ✅ learning remains future/unimplemented
 - ✅ broker execution does not exist
-- ⚠️ synthetic data gates need strengthening
+- ⚠️ synthetic-data gates require continued strengthening
 
-## Next Steps
+## Next Implementation Milestone
 
-1. Fix change: 0.00% bug in trend analysis
-2. Integrate macro_intelligence into full analysis pipeline
-3. Add MACD, RSI, Bollinger Bands indicators
-4. Implement probability calibration
-5. Create HTML/PDF report format
+### Runtime Evidence Certification
+
+Wire the existing evidence emission layer into the production experiment path without changing scientific calculation semantics:
+
+```text
+Experiment
+   ↓
+Run
+   ↓
+Result
+   ↓
+EvidenceRepository
+```
+
+Required properties:
+
+1. deterministic artifact identity
+2. explicit parent/child lineage
+3. append-only persistence
+4. no timestamp/runtime telemetry in identity hashes
+5. evidence emission failure must not silently produce an uncertified result when certification is explicitly enabled
+6. existing experiment/result hashes and quantitative semantics remain unchanged
+
+## Following Milestones
+
+1. Complete runtime evidence certification.
+2. Strengthen synthetic-data gates.
+3. Complete Market Memory → Research integration.
+4. Build the XAUUSD event → outcome probability pipeline.
+5. Add calibration and baseline comparison.
+6. Only after validated evidence, expose higher-level decision intelligence.
+
+## Protected Scientific Surfaces
+
+Do not modify without a demonstrated scientific defect and explicit architectural review:
+
+- execution hash scheme
+- decision methodology / `DECISION_V1`
+- walk-forward arithmetic and leakage checks
+- cost-model semantics
+- backend certification/routing behavior
+- C++ numerical implementation
+- matcher feature weights
+- broker execution boundary
