@@ -58,12 +58,21 @@ def test_contract_rejects_invalid_probability() -> None:
         calculate_risk(_request(probability=1.1))
 
 
-def test_contract_is_versioned_and_serializable() -> None:
-    payload = _request(research_id="R-001").to_dict()
+def test_contract_is_versioned_and_json_roundtrips() -> None:
+    request = _request(research_id="R-001", probability_method="weighted-evidence")
+    restored = RiskInput.from_dict(request.to_dict())
 
-    assert payload["schema_version"] == "risk.v1"
-    assert payload["research_id"] == "R-001"
-    assert payload["trade_statistics"]["sample_size"] == 200
+    assert restored == request
+    assert restored.to_dict()["schema_version"] == "risk.v1"
+    assert restored.research_id == "R-001"
+
+
+def test_unsupported_schema_is_rejected() -> None:
+    payload = _request().to_dict()
+    payload["schema_version"] = "risk.v999"
+
+    with pytest.raises(ValueError, match="unsupported risk schema"):
+        RiskInput.from_dict(payload)
 
 
 def test_risk_result_is_immutable() -> None:
