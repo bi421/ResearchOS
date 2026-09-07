@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from researchos.risk.contracts import RISK_SCHEMA_VERSION, RiskCalculation, RiskInput
 
+_ZERO_TOLERANCE = 1e-15
+
 
 def _kelly_fraction(probability: float, win_loss_ratio: float) -> float:
     """Return non-negative full Kelly fraction for a binary payoff model."""
@@ -11,7 +13,8 @@ def _kelly_fraction(probability: float, win_loss_ratio: float) -> float:
         raise ValueError("probability must be in [0, 1]")
     if win_loss_ratio <= 0:
         raise ValueError("win_loss_ratio must be positive")
-    return max(0.0, probability - (1.0 - probability) / win_loss_ratio)
+    fraction = probability - (1.0 - probability) / win_loss_ratio
+    return 0.0 if fraction <= _ZERO_TOLERANCE else fraction
 
 
 def calculate_risk(request: RiskInput) -> RiskCalculation:
