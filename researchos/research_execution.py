@@ -8,7 +8,9 @@ research execution input.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import hashlib
+import json
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -24,6 +26,52 @@ class ResearchDataResolver(Protocol):
         ...
 
 
+def _canonical(value: Any) -> Any:
+    """Convert supported result values into a deterministic JSON form."""
+    if isinstance(value, Mapping):
+        return {str(key): _canonical(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+    if isinstance(value, (list, tuple)):
+        return [_canonical(item) for item in value]
+    if isinstance(value, bool | int | float | str) or value is None:
+        return value
+    return str(value)
+
+
+def _result_payload(result: Any) -> Any:
+    """Serialize a research result through its public ``to_dict`` contract."""
+    if hasattr(result, "to_dict"):
+        result = result.to_dict()
+    return _canonical(result)
+
+
+def execution_hash(
+    *,
+    research_id: str,
+    dataset_id: str,
+    dataset_content_hash: str,
+    dataset_hash: str,
+    methodology_version: str,
+    result: Any,
+) -> str:
+    """Return a deterministic SHA-256 identity for one research execution."""
+    payload = {
+        "research_id": research_id,
+        "dataset_id": dataset_id,
+        "dataset_content_hash": dataset_content_hash,
+        "dataset_hash": dataset_hash,
+        "methodology_version": methodology_version,
+        "result": _result_payload(result),
+    }
+    serialized = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(serialized).hexdigest()
+
+
 @dataclass(frozen=True)
 class ResearchExecutionResult:
     """Immutable envelope binding a research result to its input identity."""
@@ -34,6 +82,7 @@ class ResearchExecutionResult:
     dataset_hash: str
     methodology_version: str
     result: Any
+    execution_hash: str = ""
 
     def __post_init__(self) -> None:
         for name in (
@@ -45,6 +94,29 @@ class ResearchExecutionResult:
         ):
             if not getattr(self, name):
                 raise ValueError(f"{name} is required")
+        object.__setattr__(
+            self,
+            "execution_hash",
+            execution_hash(
+                research_id=self.research_id,
+                dataset_id=self.dataset_id,
+                dataset_content_hash=self.dataset_content_hash,
+                dataset_hash=self.dataset_hash,
+                methodology_version=self.methodology_version,
+                result=self.result,
+            ),
+        )
+
+    def verify_integrity(self) -> bool:
+        """Verify that the stored execution hash still matches the envelope."""
+        return self.execution_hash == execution_hash(
+            research_id=self.research_id,
+            dataset_id=self.dataset_id,
+            dataset_content_hash=self.dataset_content_hash,
+            dataset_hash=self.dataset_hash,
+            methodology_version=self.methodology_version,
+            result=self.result,
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -53,7 +125,8 @@ class ResearchExecutionResult:
             "dataset_content_hash": self.dataset_content_hash,
             "dataset_hash": self.dataset_hash,
             "methodology_version": self.methodology_version,
-            "result": self.result.to_dict() if hasattr(self.result, "to_dict") else self.result,
+            "result": _result_payload(self.result),
+            "execution_hash": self.execution_hash,
         }
 
 
@@ -90,4 +163,9 @@ class ResearchExecutor:
         )
 
 
-__all__ = ["ResearchDataResolver", "ResearchExecutionResult", "ResearchExecutor"]
+__all__ = [
+    "ResearchDataResolver",
+    "ResearchExecutionResult",
+    "ResearchExecutor",
+    "execution_hash",
+]
