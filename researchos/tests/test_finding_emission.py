@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from researchos.evidence import EvidenceRepository, certify_finding, certify_validation
+from researchos.evidence import (
+    EvidenceRepository,
+    build_result_envelope,
+    certify_finding,
+    certify_validation,
+    emit_result,
+)
 from researchos.market_memory.evidence import create_evidence_record
 from researchos.quant_engine.validation.contracts import FoldResult, ValidationResult
 
@@ -38,9 +44,23 @@ def _finding():
     )
 
 
+def _seed_result(repository: EvidenceRepository) -> str:
+    result = build_result_envelope(
+        {"result": "validated-test-result"},
+        version="1.0.0",
+        created_at="2026-01-01T00:00:00+00:00",
+    )
+    emit_result(result, repository)
+    return result.artifact_hash
+
+
+def _seed_validation(repository: EvidenceRepository):
+    return certify_validation(_validation(), _seed_result(repository), repository)
+
+
 def test_finding_requires_existing_validation_and_preserves_lineage() -> None:
     repository = EvidenceRepository()
-    validation = certify_validation(_validation(), "result-hash", repository)
+    validation = _seed_validation(repository)
     finding = certify_finding(_finding(), validation.validation_hash, repository)
 
     assert finding.artifact_type == "Finding"
@@ -58,7 +78,7 @@ def test_finding_rejects_missing_validation() -> None:
 
 def test_finding_identity_excludes_observational_creation_time() -> None:
     repository = EvidenceRepository()
-    validation = certify_validation(_validation(), "result-hash", repository)
+    validation = _seed_validation(repository)
     finding = _finding()
 
     first = certify_finding(
@@ -75,4 +95,4 @@ def test_finding_identity_excludes_observational_creation_time() -> None:
     )
 
     assert first.artifact_hash == second.artifact_hash
-    assert repository.count_artifacts() == 2
+    assert repository.count_artifacts() == 3
