@@ -114,22 +114,28 @@ def test_research_input_rejects_invalid_dataset_reference() -> None:
         )
 
 
-def test_research_evidence_link_preserves_lineage() -> None:
-    link = ResearchEvidenceLink(
+def _evidence_link() -> ResearchEvidenceLink:
+    return ResearchEvidenceLink(
         schema_version=RESEARCH_BOUNDARY_SCHEMA_VERSION,
         research_id="research-001",
         dataset_id="dataset-001",
         dataset_content_hash="content-hash",
         dataset_hash="dataset-hash",
+        methodology_version="event-study.v1",
+        execution_hash="execution-hash",
         evidence_collection_id="evidence-001",
         assessment_hash="assessment-hash",
-        methodology_version="event-study.v1",
     )
 
+
+def test_research_evidence_link_preserves_full_lineage() -> None:
+    link = _evidence_link()
     restored = ResearchEvidenceLink.from_dict(link.to_dict())
 
     assert restored == link
     assert restored.dataset_hash == "dataset-hash"
+    assert restored.methodology_version == "event-study.v1"
+    assert restored.execution_hash == "execution-hash"
 
 
 def test_research_evidence_link_requires_dataset_hash() -> None:
@@ -140,7 +146,23 @@ def test_research_evidence_link_requires_dataset_hash() -> None:
             dataset_id="dataset-001",
             dataset_content_hash="content-hash",
             dataset_hash="",
+            methodology_version="event-study.v1",
+            execution_hash="execution-hash",
             evidence_collection_id="evidence-001",
             assessment_hash="assessment-hash",
+        )
+
+
+def test_research_evidence_link_requires_execution_hash() -> None:
+    with pytest.raises(ValueError, match="execution_hash is required"):
+        ResearchEvidenceLink(
+            schema_version=RESEARCH_BOUNDARY_SCHEMA_VERSION,
+            research_id="research-001",
+            dataset_id="dataset-001",
+            dataset_content_hash="content-hash",
+            dataset_hash="dataset-hash",
             methodology_version="event-study.v1",
+            execution_hash="",
+            evidence_collection_id="evidence-001",
+            assessment_hash="assessment-hash",
         )
