@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from researchos.evidence.dataset_emission import build_dataset_envelope, emit_dataset
+from researchos.evidence.envelope import build_envelope
 from researchos.evidence.experiment_emission import emit_experiment_with_dataset
 from researchos.evidence.experiment_learning_certification import (
     certify_experiment_learning,
@@ -131,19 +132,22 @@ def test_domain_pipeline_promotes_validated_finding_to_learning_and_knowledge() 
     experiment = emit_experiment_with_dataset(
         _Experiment(), dataset.artifact_hash, evidence_repo
     )
-    run = emit_run_for_experiment(
-        _Run(), experiment.artifact_hash, evidence_repo
-    )
+    run = emit_run_for_experiment(_Run(), experiment.artifact_hash, evidence_repo)
     result = emit_result_for_run(
-        _Result(), run.artifact_hash, evidence_repo, experiment_hash=experiment.artifact_hash
+        _Result(),
+        run.artifact_hash,
+        evidence_repo,
+        experiment_hash=experiment.artifact_hash,
     )
     validation = emit_validation_for_result(
-        _Validation(), result.artifact_hash, evidence_repo, run_hash=run.artifact_hash,
-        experiment_hash=experiment.artifact_hash, method="walk_forward"
+        _Validation(),
+        result.artifact_hash,
+        evidence_repo,
+        run_hash=run.artifact_hash,
+        experiment_hash=experiment.artifact_hash,
+        method="walk_forward",
     )
-    finding = certify_finding(
-        _Finding(), validation.artifact_hash, evidence_repo
-    )
+    finding = certify_finding(_Finding(), validation.artifact_hash, evidence_repo)
 
     learning = ExperimentLearningRecord(
         experiment_id=_Experiment().experiment_hash,
@@ -172,9 +176,8 @@ def test_domain_pipeline_promotes_validated_finding_to_learning_and_knowledge() 
         finding.artifact_hash, knowledge, evidence_repo, research_repo
     )
 
-    assert research_repo.load_by_id(learning_cert.learning_id)["object_type"] == (
-        "ExperimentLearningRecord"
-    )
+    stored_learning = research_repo.load_by_id(learning_cert.learning_id)
+    assert stored_learning["object_type"] == "ExperimentLearningRecord"
     stored_knowledge = research_repo.load_by_id(knowledge_cert.knowledge_id)
     assert stored_knowledge["object_type"] == "Knowledge"
     assert finding.artifact_hash in stored_knowledge["source_references"]
@@ -193,5 +196,43 @@ def test_unvalidated_finding_cannot_promote_learning_or_knowledge() -> None:
     research_repo = ResearchRepository(db_path=":memory:")
     evidence_repo = EvidenceRepository(repository=research_repo)
 
-    finding = certify_finding
-    del finding
+    validation = build_envelope(
+        "Validation", {"status": "VALIDATED"}
+    )
+    evidence_repo.append_artifact(validation)
+    finding = build_envelope(
+        "Finding",
+        {"status": "EXPLORATORY", "validation_id": "validation-domain-001"},
+        parent_hashes=[validation.artifact_hash],
+    )
+    evidence_repo.append_artifact(finding)
+
+    learning = ExperimentLearningRecord(
+        experiment_id="exp-domain-001",
+        validation_id="validation-domain-001",
+        hypothesis_id="hyp-domain-001",
+    )
+    knowledge = Knowledge(
+        type="Classification_Rule",
+        subject="XAUUSD",
+        predicate="supports",
+        object="exploratory_rule",
+    )
+
+    try:
+        certify_experiment_learning(
+            learning, finding.artifact_hash, evidence_repo, research_repo
+        )
+    except ValueError as exc:
+        assert "VALIDATED" in str(exc)
+    else:
+        raise AssertionError("unvalidated finding must not certify experiment learning")
+
+    try:
+        certify_knowledge(
+            finding.artifact_hash, knowledge, evidence_repo, research_repo
+        )
+    except ValueError as exc:
+        assert "VALIDATED" in str(exc)
+    else:
+        raise AssertionError("unvalidated finding must not certify knowledge")
