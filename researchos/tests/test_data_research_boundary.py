@@ -45,6 +45,7 @@ def test_validated_dataset_ref_contains_content_identity() -> None:
     assert ref.schema_version == DATA_BOUNDARY_SCHEMA_VERSION
     assert ref.dataset_id == dataset.id
     assert ref.dataset_content_hash == dataset.dataset_content_hash
+    assert ref.dataset_hash == dataset.dataset_hash
     assert ref.is_valid is True
 
 
@@ -53,6 +54,22 @@ def test_unvalidated_dataset_cannot_cross_boundary() -> None:
     validation = ValidationReport(total_records=0)
 
     with pytest.raises(ValueError, match="DatasetStatus.VALIDATED"):
+        validated_dataset_ref(dataset, validation)
+
+
+def test_validation_errors_cannot_cross_boundary() -> None:
+    dataset = _dataset()
+    validation = ValidationReport(total_records=1, valid_records=0, errors=["bad OHLC"])
+
+    with pytest.raises(ValueError, match="validation errors"):
+        validated_dataset_ref(dataset, validation)
+
+
+def test_validation_record_count_must_match_dataset() -> None:
+    dataset = _dataset()
+    validation = ValidationReport(total_records=2, valid_records=2)
+
+    with pytest.raises(ValueError, match="record count"):
         validated_dataset_ref(dataset, validation)
 
 
