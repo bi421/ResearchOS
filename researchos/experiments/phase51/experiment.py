@@ -90,12 +90,7 @@ def _data_valid(close, high, low, volume) -> bool:
 
 
 def _walk_forward_contract(sample_count: int, config: Phase51Config) -> tuple[bool, bool, int]:
-    """Return (leakage_free, out_of_sample, fold_count) using a horizon purge.
-
-    A label at t uses information through t+horizon. Therefore the training
-    labels immediately before a validation window are purged by ``horizon``
-    observations so their future label window cannot overlap validation.
-    """
+    """Return (leakage_free, out_of_sample, fold_count) using a horizon purge."""
     if config.horizon <= 0 or config.train_size <= 0 or config.validation_size <= 0 or config.step_size <= 0:
         return False, False, 0
     folds = 0
@@ -157,7 +152,7 @@ def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -
     model = _model_like(all_model_preds, all_actuals, all_probs)
     cost = apply_costs(all_model_preds, all_actuals, all_close_at_val, cfg.threshold, spread_spec=cfg.spread_spec, slippage_spec=cfg.slippage_spec, commission_spec=cfg.commission_spec, cost_applied=cfg.cost_applied)
     calibration = evaluate_calibration(all_probs, all_actuals, num_bins=cfg.n_bins, model_brier=model.brier_score, baseline_brier=baseline.brier_score, baseline=baseline)
-    significance = evaluate_significance(all_model_preds, all_base_preds, all_actuals, cfg.significance_level)
+    significance = evaluate_significance(all_model_preds, all_base_preds, all_actuals, cfg.significance_level, observation_stride=cfg.horizon)
     flags = aggregate_outcome(
         data_valid=_data_valid(close, high, low, volume),
         leakage_check=leakage_check,
@@ -173,7 +168,7 @@ def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -
         brier_model=model.brier_score,
         brier_baseline=baseline.brier_score,
     )
-    metadata = {"phase51_version": "1.1.0", "framework": "researchos.experiments.phase51", "feature_name": names[feat_idx], "num_folds": folds, "feature_count": len(names), "estimator": "EmpiricalProbabilityEstimator", "baseline": "unconditional-frequency majority", "symbol": cfg.symbol, "timeframe": cfg.timeframe, "horizon": cfg.horizon, "threshold": cfg.threshold, "purge_bars": cfg.horizon, "expected_folds": expected_folds}
+    metadata = {"phase51_version": "1.1.0", "framework": "researchos.experiments.phase51", "feature_name": names[feat_idx], "num_folds": folds, "feature_count": len(names), "estimator": "EmpiricalProbabilityEstimator", "baseline": "unconditional-frequency majority", "symbol": cfg.symbol, "timeframe": cfg.timeframe, "horizon": cfg.horizon, "threshold": cfg.threshold, "purge_bars": cfg.horizon, "significance_observation_stride": cfg.horizon, "expected_folds": expected_folds}
     return Phase51Result(outcome=flags.outcome, symbol=cfg.symbol, timeframe=cfg.timeframe, horizon=cfg.horizon, threshold=cfg.threshold, train_size=train_size, validation_size=val_size, step_size=step, num_folds=folds, baseline=baseline, model=model, cost=cost, calibration=calibration, significance=significance, validation=flags, metadata=metadata)
 
 
