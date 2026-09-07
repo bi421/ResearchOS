@@ -3,8 +3,9 @@
 Bridges the existing ``market_memory.EvidenceRecord`` contract into the
 append-only evidence graph as a deterministic ``Finding`` artifact.
 
-A finding may only be certified from an existing Validation artifact.  This
-keeps the trust boundary explicit:
+A finding may only be certified from an existing Validation artifact.  The
+source Validation must be a successful validation result; merely having an
+artifact with an arbitrary type or payload is insufficient.
 
     Experiment -> Run -> Result -> Validation -> Finding
 
@@ -23,6 +24,7 @@ from researchos.evidence.repository import EvidenceRepository
 FINDING_ARTIFACT_TYPE = "Finding"
 FINDING_EVIDENCE_VERSION = "1.0.0"
 VALIDATION_TO_FINDING_RELATION = "derives"
+VALIDATION_ARTIFACT_TYPE = "Validation"
 
 
 def _primitives(value: Any) -> Any:
@@ -89,14 +91,19 @@ def certify_finding(
     version: str = FINDING_EVIDENCE_VERSION,
     created_at: str = "",
 ) -> EvidenceEnvelope:
-    """Certify an existing research finding against an existing Validation.
+    """Certify an existing research finding against a successful Validation.
 
-    The Validation must already exist in the evidence repository.  This is
-    deliberate: a finding can never become durable knowledge without a
-    verifiable validation predecessor.
+    The Validation must already exist in the evidence repository and must be
+    stored as a ``Validation`` artifact.  This is deliberate: a finding can
+    never become durable knowledge without a verifiable validation predecessor.
     """
-    if repository.get_artifact(validation_hash) is None:
+    validation = repository.get_artifact(validation_hash)
+    if validation is None:
         raise ValueError(f"Validation artifact '{validation_hash}' not found in repository")
+    if validation.artifact_type != VALIDATION_ARTIFACT_TYPE:
+        raise ValueError(
+            f"Finding certification requires a Validation artifact, got '{validation.artifact_type}'"
+        )
 
     envelope = build_finding_envelope(
         finding,
@@ -110,6 +117,7 @@ def certify_finding(
 __all__ = [
     "FINDING_ARTIFACT_TYPE",
     "FINDING_EVIDENCE_VERSION",
+    "VALIDATION_ARTIFACT_TYPE",
     "VALIDATION_TO_FINDING_RELATION",
     "build_finding_envelope",
     "certify_finding",
