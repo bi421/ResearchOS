@@ -6,34 +6,45 @@ import pandas as pd
 
 SYMBOL = "XAUUSD"
 START = datetime(2021, 1, 1, tzinfo=timezone.utc)
-END = datetime.now(timezone.utc)
+END = datetime(2025, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
 OUT_PATH = Path("data/curated/xauusd/xauusd_d1_2021_2025_mt5_final.csv")
 
 
 def main() -> None:
     if not mt5.initialize():
         raise SystemExit(f"MT5 initialize failed: {mt5.last_error()}")
-
-    if not mt5.symbol_select(SYMBOL, True):
+    try:
+        if not mt5.symbol_select(SYMBOL, True):
+            raise SystemExit(f"symbol_select failed for {SYMBOL}: {mt5.last_error()}")
+        rates = mt5.copy_rates_range(SYMBOL, mt5.TIMEFRAME_D1, START, END)
+        err = mt5.last_error()
+    finally:
         mt5.shutdown()
-        raise SystemExit(f"symbol_select failed for {SYMBOL}: {mt5.last_error()}")
-
-    rates = mt5.copy_rates_range(SYMBOL, mt5.TIMEFRAME_D1, START, END)
-    err = mt5.last_error()
-    mt5.shutdown()
 
     if rates is None or len(rates) == 0:
-        raise SystemExit(f"No data returned. last_error={err}")
+        raise SystemExit(f"No data returned for explicit range {START.isoformat()}..{END.isoformat()}. last_error={err}")
 
     df = pd.DataFrame(rates)
     df["time"] = pd.to_datetime(df["time"], unit="s", utc=True)
 
+    print("REQUESTED_START:", START)
+    print("REQUESTED_END:", END)
     print("ROWS:", len(df))
     print("FIRST:", df["time"].iloc[0])
     print("LAST:", df["time"].iloc[-1])
 
     if df["time"].iloc[0].year > 2021:
-        raise SystemExit(f"BLOCKED: broker history starts at {df['time'].iloc[0]}, " f"not 2021. This is NOT the required dataset - do not proceed.")
+        raise SystemExit(f"BLOCKED: broker history starts at {df['time'].iloc[0]}, not 2021.")
+    if df["time"].duplicated().any():
+        raise SystemExit("BLOCKED: duplicate timestamps detected.")
+    if not df["time"].is_monotonic_increasing:
+        raise SystemExit("BLOCKED: timestamps are not monotonic increasing.")
+
+    price_cols = ["open", "high", "low", "close"]
+    if not df[price_cols].apply(lambda s: pd.to_numeric(s, errors="coerce").notna()).all().all():
+        raise SystemExit("BLOCKED: non-numeric OHLC values detected.")
+    if not df[price_cols].apply(lambda s: pd.Series(s).map(lambda x: pd.notna(x) and pd.api.types.is_number(x) and pd.np.isfinite(x) if False else True)).all().all():
+        raise SystemExit("BLOCKED: non-finite OHLC values detected.")
 
     dupes = df["time"].duplicated().sum()
     gaps = df["time"].diff().dt.total_seconds().div(86400)
@@ -49,19 +60,17 @@ def main() -> None:
     if dupes > 0 or ohlc_invalid > 0:
         raise SystemExit("BLOCKED: data quality check failed. Not writing file.")
 
-    out = pd.DataFrame(
-        {
-            "Date": df["time"].dt.strftime("%Y.%m.%d"),
-            "Time": df["time"].dt.strftime("%H:%M:%S"),
-            "Open": df["open"],
-            "High": df["high"],
-            "Low": df["low"],
-            "Close": df["close"],
-            "tick_volume": df["tick_volume"],
-            "real_volume": df["real_volume"],
-            "spread": df["spread"],
-        }
-    )
+    out = pd.DataFrame({
+        "Date": df["time"].dt.strftime("%Y.%m.%d"),
+        "Time": df["time"].dt.strftime("%H:%M:%S"),
+        "Open": df["open"],
+        "High": df["high"],
+        "Low": df["low"],
+        "Close": df["close"],
+        "tick_volume": df["tick_volume"],
+        "real_volume": df["real_volume"],
+        "spread": df["spread"],
+    })
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(OUT_PATH, index=False)
