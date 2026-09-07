@@ -1,0 +1,74 @@
+from researchos.decision_engine.probability import ProbabilityAssessment
+from researchos.decision_pipeline import DecisionPipelineInput, run_decision_pipeline
+from researchos.risk.contracts import TradeStatistics
+
+
+def _assessment() -> ProbabilityAssessment:
+    return ProbabilityAssessment(
+        decision_context_id="research-001",
+        evidence_collection_id="evidence-001",
+        bullish_probability=0.60,
+        bearish_probability=0.25,
+        neutral_probability=0.15,
+        confidence=0.80,
+        uncertainty=0.40,
+        evidence_strength=0.70,
+        historical_consistency=0.60,
+        sample_size=20,
+    )
+
+
+def test_pipeline_produces_human_review_report() -> None:
+    report = run_decision_pipeline(
+        DecisionPipelineInput(
+            assessment=_assessment(),
+            asset="XAUUSD",
+            direction="bullish",
+            account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=150, average_loss=100, sample_size=100),
+            research_valid=True,
+            risk_per_unit=20,
+        )
+    )
+
+    assert report.schema_version == "pretrade.v1"
+    assert report.status == "READY_FOR_HUMAN_REVIEW"
+    assert report.probability == 0.60
+    assert report.risk_amount > 0
+    assert report.position_size is not None
+    assert report.research_id == "research-001"
+
+
+def test_pipeline_blocks_invalid_research() -> None:
+    report = run_decision_pipeline(
+        DecisionPipelineInput(
+            assessment=_assessment(),
+            asset="XAUUSD",
+            direction="bullish",
+            account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=150, average_loss=100),
+            research_valid=False,
+            research_limitations=("validation pending",),
+        )
+    )
+
+    assert report.status == "BLOCKED_RESEARCH_VALIDATION"
+    assert report.risk_valid is True
+    assert report.limitations == ("validation pending",)
+
+
+def test_pipeline_accepts_serialized_probability_boundary() -> None:
+    data = _assessment().to_dict()
+    report = run_decision_pipeline(
+        DecisionPipelineInput(
+            assessment=data,
+            asset="XAUUSD",
+            direction="bearish",
+            account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=100, average_loss=100),
+            research_valid=True,
+        )
+    )
+
+    assert report.direction == "bearish"
+    assert report.probability == 0.25
