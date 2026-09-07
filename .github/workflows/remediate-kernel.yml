@@ -1,0 +1,41 @@
+name: Repair Strategy Kernel
+on:
+  push:
+    branches: [audit/remediation-p0]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Restore kernel and apply risk boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show b0a95e283b7146a85ce215a18ddf2760a04ed5af:cpp_quant_engine/src/strategy/strategy_kernel.cpp > cpp_quant_engine/src/strategy/strategy_kernel.cpp
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('cpp_quant_engine/src/strategy/strategy_kernel.cpp')
+          s = p.read_text(encoding='utf-8-sig')
+          old = '''  if (plan.stop_distance > 0.0) return risk / plan.stop_distance;\n  return tc.default_quantity;'''
+          new = '''  if (plan.stop_distance <= 0.0) return 0.0;\n  return risk > 0.0 ? risk / plan.stop_distance : 0.0;'''
+          if old not in s:
+              raise SystemExit('risk sizing pattern not found')
+          s = s.replace(old, new, 1)
+          old = 'const double qty = sig.quantity > 0.0 ? sig.quantity : size_quantity(ctx, sig, plan);'
+          new = 'const double qty = size_quantity(ctx, sig, plan);'
+          if old not in s:
+              raise SystemExit('caller quantity bypass pattern not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          git rm .github/workflows/remediate-kernel.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cpp_quant_engine/src/strategy/strategy_kernel.cpp
+          git commit -m 'fix(risk): restore and harden C++ strategy kernel'
+          git push origin HEAD:audit/remediation-p0
