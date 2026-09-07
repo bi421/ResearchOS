@@ -7,8 +7,9 @@ cognitive growth, and from ``researchos.objects.knowledge.Knowledge``, which
 is durable semantic market memory.
 
 Boundary:
-    Validation → ExperimentLearningRecord → optional Knowledge certification
+    Validation → Finding → ExperimentLearningRecord → optional Knowledge certification
 
+The Validation is represented in the evidence graph by a certified Finding.
 This object does not certify evidence and does not write durable knowledge by
 itself. Those responsibilities belong to the evidence/knowledge boundaries.
 """
