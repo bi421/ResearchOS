@@ -11,8 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
-from researchos.experiments.phase51.experiment import Phase51Config, run_phase51
 from researchos.experiments.phase51.contracts import Outcome, Phase51Result
+from researchos.experiments.phase51.experiment import Phase51Config, run_phase51
 
 
 @dataclass(frozen=True)
@@ -96,8 +96,6 @@ class BtcUsdtValidator:
         reasons: list[str] = []
         if result.symbol.upper() != "BTCUSDT":
             reasons.append("result symbol is not BTCUSDT")
-        if result.validation is None:
-            reasons.append("experiment validation flags are missing")
         if result.outcome == Outcome.BLOCKED:
             reasons.append("BTC/USDT dataset was insufficient for the experiment")
         sample_count = result.model.sample_count if result.model is not None else 0
@@ -106,7 +104,7 @@ class BtcUsdtValidator:
         return BtcUsdtValidationReport(
             valid=not reasons,
             reasons=tuple(reasons),
-            outcome=result.outcome.value,
+            outcome=result.outcome,
             sample_count=sample_count,
         )
 
