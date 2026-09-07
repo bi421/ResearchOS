@@ -31,6 +31,7 @@ Design Principles:
 Based on Article XVII: Object Model — Experiment Layer.
 """
 
+from researchos.experiments.certified_runner import EvidenceAwareExperimentRunner
 from researchos.experiments.contracts import (
     DatasetConfig,
     ExperimentStatus,
@@ -63,6 +64,7 @@ __all__ = [
     "ExperimentRun",
     "ExperimentResult",
     "BaseExperimentRunner",
+    "EvidenceAwareExperimentRunner",
     "AbstractExperimentRunner",
     "get_runner",
     "ExperimentValidation",
