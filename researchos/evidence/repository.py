@@ -21,7 +21,12 @@ class EvidenceRepository:
         self._repo = repository or ResearchRepository(db_path=":memory:")
 
     def append_artifact(self, envelope: EvidenceEnvelope) -> EvidenceEnvelope:
-        """Insert an immutable evidence envelope and its parent edges."""
+        """Insert an immutable evidence envelope and its parent edges.
+
+        Re-appending the exact same artifact is idempotent. Reusing an existing
+        artifact hash with different stored content is rejected rather than
+        silently ignored or replaced.
+        """
         if not envelope.verify():
             raise ValueError(
                 f"EvidenceEnvelope lineage_hash mismatch for artifact {envelope.artifact_hash}"
@@ -29,21 +34,45 @@ class EvidenceRepository:
         with self._repo._transaction() as cursor:
             cursor.execute(
                 """
-                INSERT OR IGNORE INTO evidence
-                (artifact_type, artifact_hash, version, created_at, payload,
-                 parent_hashes, lineage_hash)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                SELECT artifact_type, version, created_at, payload, parent_hashes, lineage_hash
+                FROM evidence
+                WHERE artifact_hash = ?
                 """,
-                (
-                    envelope.artifact_type,
-                    envelope.artifact_hash,
-                    envelope.version,
-                    envelope.created_at,
-                    json.dumps(envelope.payload, ensure_ascii=False, default=str),
-                    json.dumps(list(envelope.parent_hashes), ensure_ascii=False),
-                    envelope.lineage_hash,
-                ),
+                (envelope.artifact_hash,),
             )
+            existing = cursor.fetchone()
+            if existing is not None:
+                existing_payload = json.loads(existing[3])
+                existing_parents = tuple(json.loads(existing[4]))
+                if (
+                    existing[0] != envelope.artifact_type
+                    or existing[1] != envelope.version
+                    or existing[2] != envelope.created_at
+                    or existing_payload != envelope.payload
+                    or existing_parents != envelope.parent_hashes
+                    or existing[5] != envelope.lineage_hash
+                ):
+                    raise ValueError(
+                        f"Evidence artifact {envelope.artifact_hash} is immutable and cannot be overwritten"
+                    )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO evidence
+                    (artifact_type, artifact_hash, version, created_at, payload,
+                     parent_hashes, lineage_hash)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        envelope.artifact_type,
+                        envelope.artifact_hash,
+                        envelope.version,
+                        envelope.created_at,
+                        json.dumps(envelope.payload, ensure_ascii=False, default=str),
+                        json.dumps(list(envelope.parent_hashes), ensure_ascii=False),
+                        envelope.lineage_hash,
+                    ),
+                )
             for parent in envelope.parent_hashes:
                 self._insert_edge(
                     cursor,
@@ -109,19 +138,30 @@ class EvidenceRepository:
         conn = self._repo._get_conn()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT artifact_type, version, payload, parent_hashes, lineage_hash FROM evidence"
+            "SELECT artifact_type, artifact_hash, version, payload, parent_hashes, lineage_hash FROM evidence"
         )
         for row in cursor.fetchall():
             expected = deterministic_hash(
                 {
                     "scheme": HASH_SCHEME_VERSION,
                     "artifact_type": row[0],
-                    "version": row[1],
-                    "payload": json.loads(row[2]),
-                    "parent_hashes": sorted(tuple(json.loads(row[3]))),
+                    "version": row[2],
+                    "payload": json.loads(row[3]),
+                    "parent_hashes": sorted(tuple(json.loads(row[4]))),
                 }
             )
-            if expected != row[4]:
+            if expected != row[1]:
+                return False
+            expected_lineage = deterministic_hash(
+                {
+                    "scheme": HASH_SCHEME_VERSION,
+                    "artifact_type": row[0],
+                    "version": row[2],
+                    "payload": json.loads(row[3]),
+                    "parent_hashes": sorted(tuple(json.loads(row[4]))),
+                }
+            )
+            if expected_lineage != row[5]:
                 return False
         return True
 
