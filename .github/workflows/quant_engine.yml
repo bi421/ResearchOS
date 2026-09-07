@@ -36,7 +36,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cmake-
 
-
       - name: Install Ninja (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
@@ -58,7 +57,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          find cpp_quant_engine/python/cpp_quant_engine -name '*.so' -exec ls -la {} \\
+          find cpp_quant_engine/python/cpp_quant_engine -name '*.so' -exec ls -la {} \;
           if find cpp_quant_engine/python -iname '*.pdb' | grep -q .; then
             echo 'PDB leak!'; exit 1
           fi
