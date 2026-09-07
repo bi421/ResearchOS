@@ -1,9 +1,14 @@
+"""US10Y real-yield research test; credentials are environment-only."""
+import os
+
 import numpy as np
 import pandas as pd
 from fredapi import Fred
 from scipy import stats
 
-FRED_API_KEY = "c23c25c4c1abb2777d1067591842c1c6"
+FRED_API_KEY = os.environ.get("FRED_API_KEY")
+if not FRED_API_KEY:
+    raise RuntimeError("FRED_API_KEY is required to run us10y_full_test.py")
 
 print("Downloading US10Y real yield (DFII10) from FRED...")
 fred = Fred(api_key=FRED_API_KEY)
@@ -55,13 +60,13 @@ for horizon in horizons:
     X_all = d[factor_cols].values
     y_all = d["target"].values
     preds, actuals = [], []
-    for i in range(lookback, len(d)):
+    for i in range(lookback, len(d), horizon):
         X_train = X_all[:i]
         y_train = y_all[:i]
         X_test = X_all[i : i + 1]
         X_train_design = np.column_stack([np.ones(len(X_train)), X_train])
         try:
-            coef, res, rank, sv = np.linalg.lstsq(X_train_design, y_train, rcond=None)
+            coef, *_ = np.linalg.lstsq(X_train_design, y_train, rcond=None)
         except Exception:
             continue
         X_test_design = np.column_stack([np.ones(1), X_test])
