@@ -35,6 +35,7 @@ from researchos.evidence.experiment_emission import (
 from researchos.evidence.finding_emission import (
     FINDING_ARTIFACT_TYPE,
     FINDING_EVIDENCE_VERSION,
+    VALIDATED_STATUS,
     VALIDATION_TO_FINDING_RELATION,
     build_finding_envelope,
     certify_finding,
@@ -133,6 +134,7 @@ __all__ = [
     "certify_validation",
     "FINDING_ARTIFACT_TYPE",
     "FINDING_EVIDENCE_VERSION",
+    "VALIDATED_STATUS",
     "VALIDATION_TO_FINDING_RELATION",
     "build_finding_envelope",
     "certify_finding",
