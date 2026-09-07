@@ -5,6 +5,7 @@ research probability plus account, payoff, and risk-policy inputs and returns
 an immutable risk calculation. It never places orders or depends on a broker.
 """
 
+from researchos.risk.adapters import risk_input_from_probability
 from researchos.risk.contracts import (
     RiskCalculation,
     RiskInput,
@@ -19,4 +20,5 @@ __all__ = [
     "RiskPolicy",
     "TradeStatistics",
     "calculate_risk",
+    "risk_input_from_probability",
 ]
