@@ -175,10 +175,33 @@ class EvidenceRepository:
         return cursor.fetchone()[0]
 
     def _insert_edge(self, cursor, parent_hash: str, child_hash: str, relation: str) -> None:
+        """Insert one canonical relation for a parent/child pair.
+
+        Repeating the exact edge is idempotent. A different relation for the
+        same parent/child pair is rejected instead of being silently ignored;
+        otherwise the lineage graph could conceal contradictory semantics.
+        """
+        cursor.execute(
+            """
+            SELECT relation
+            FROM lineage
+            WHERE parent_hash = ? AND child_hash = ?
+            """,
+            (parent_hash, child_hash),
+        )
+        existing = cursor.fetchone()
+        if existing is not None:
+            if existing[0] != relation:
+                raise ValueError(
+                    f"Lineage edge {parent_hash} -> {child_hash} already exists with relation "
+                    f"'{existing[0]}', cannot replace with '{relation}'"
+                )
+            return
+
         now = datetime.now(timezone.utc).isoformat()
         cursor.execute(
             """
-            INSERT OR IGNORE INTO lineage
+            INSERT INTO lineage
             (parent_hash, child_hash, relation, created_at)
             VALUES (?, ?, ?, ?)
             """,
