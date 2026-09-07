@@ -33,8 +33,8 @@ class ValidatedDatasetRef:
     def __post_init__(self) -> None:
         if self.schema_version != DATA_BOUNDARY_SCHEMA_VERSION:
             raise ValueError("unsupported data boundary schema version")
-        if not self.dataset_id or not self.dataset_content_hash:
-            raise ValueError("dataset identity is required")
+        if not self.dataset_id or not self.dataset_content_hash or not self.dataset_hash:
+            raise ValueError("complete dataset identity is required")
         if self.record_count < 0:
             raise ValueError("record_count must be non-negative")
         if not 0.0 <= self.validation_quality_score <= 1.0:
@@ -65,7 +65,7 @@ class ValidatedDatasetRef:
             schema_version=str(data["schema_version"]),
             dataset_id=str(data["dataset_id"]),
             dataset_content_hash=str(data["dataset_content_hash"]),
-            dataset_hash=str(data.get("dataset_hash", "")),
+            dataset_hash=str(data["dataset_hash"]),
             symbol=str(data["symbol"]),
             timeframe=str(data["timeframe"]),
             data_type=str(data["data_type"]),
@@ -80,11 +80,17 @@ def validated_dataset_ref(
     dataset: HistoricalDataset,
     validation: ValidationReport,
 ) -> ValidatedDatasetRef:
-    """Create the research-facing reference only after validation."""
+    """Create the research-facing reference only after complete validation."""
     if dataset.status != DatasetStatus.VALIDATED:
         raise ValueError("dataset must have DatasetStatus.VALIDATED before crossing the boundary")
-    if not dataset.dataset_content_hash:
-        raise ValueError("dataset content hash is required")
+    if not dataset.dataset_content_hash or not dataset.dataset_hash:
+        raise ValueError("complete dataset identity is required before crossing the boundary")
+    if validation.errors:
+        raise ValueError("validation errors must be empty before crossing the boundary")
+    if validation.total_records != dataset.record_count:
+        raise ValueError("validation record count must match dataset record count")
+    if validation.quality_score <= 0.0:
+        raise ValueError("validation quality score must be greater than zero")
 
     return ValidatedDatasetRef(
         schema_version=DATA_BOUNDARY_SCHEMA_VERSION,
