@@ -26,18 +26,7 @@ class ValidationReport:
 
     @property
     def passed_integrity(self) -> bool:
-        return all(
-            value == 0
-            for value in (
-                self.duplicate_timestamps,
-                self.out_of_range_rows,
-                self.invalid_ohlc_rows,
-                self.invalid_volume_flags,
-                self.negative_spread_rows,
-                self.invalid_timestamp_rows,
-                self.out_of_order_rows,
-            )
-        )
+        return all(value == 0 for value in (self.duplicate_timestamps, self.out_of_range_rows, self.invalid_ohlc_rows, self.invalid_volume_flags, self.negative_spread_rows, self.invalid_timestamp_rows, self.out_of_order_rows))
 
 
 def _finite(value: object) -> bool:
@@ -58,26 +47,18 @@ def validate_m1_rows(rows: Iterable[Mapping[str, object]], *, start_epoch: int, 
     """Validate broker rows without imposing a false 24/7 continuity rule."""
     materialized = list(rows)
     parsed_timestamps: list[int] = []
+    valid_mask: list[bool] = []
     invalid_timestamp_rows = 0
     for row in materialized:
         try:
             parsed_timestamps.append(_epoch_seconds(row["time"]))
-        except (KeyError, TypeError, ValueError, OverflowError):
-            parsed_timestamps.append(0)
-            invalid_timestamp_rows += 1
-
-    valid_timestamps = [ts for i, ts in enumerate(parsed_timestamps) if not (invalid_timestamp_rows and ts == 0 and i >= 0)]
-    # The sentinel above is only used for malformed timestamps; keep a separate
-    # mask so a legitimate epoch-zero timestamp is never silently discarded.
-    valid_mask: list[bool] = []
-    for row in materialized:
-        try:
-            _epoch_seconds(row["time"])
             valid_mask.append(True)
         except (KeyError, TypeError, ValueError, OverflowError):
+            parsed_timestamps.append(0)
             valid_mask.append(False)
-    valid_timestamps = [ts for ts, ok in zip(parsed_timestamps, valid_mask) if ok]
+            invalid_timestamp_rows += 1
 
+    valid_timestamps = [ts for ts, ok in zip(parsed_timestamps, valid_mask) if ok]
     unique = set(valid_timestamps)
     duplicate_count = len(valid_timestamps) - len(unique)
     out_of_range = sum(not (start_epoch <= ts <= end_epoch) for ts in valid_timestamps)
@@ -108,17 +89,4 @@ def validate_m1_rows(rows: Iterable[Mapping[str, object]], *, start_epoch: int, 
 
     ordered = sorted(unique)
     gaps = [b - a for a, b in zip(ordered, ordered[1:]) if b - a > 60]
-
-    return ValidationReport(
-        rows=len(materialized),
-        unique_timestamps=len(unique),
-        duplicate_timestamps=duplicate_count,
-        out_of_range_rows=out_of_range,
-        invalid_ohlc_rows=invalid_ohlc,
-        invalid_volume_flags=invalid_volume_flags,
-        negative_spread_rows=negative_spread,
-        max_gap_seconds=max((b - a for a, b in zip(ordered, ordered[1:])), default=0),
-        gap_count_over_60s=len(gaps),
-        invalid_timestamp_rows=invalid_timestamp_rows,
-        out_of_order_rows=out_of_order_rows,
-    )
+    return ValidationReport(rows=len(materialized), unique_timestamps=len(unique), duplicate_timestamps=duplicate_count, out_of_range_rows=out_of_range, invalid_ohlc_rows=invalid_ohlc, invalid_volume_flags=invalid_volume_flags, negative_spread_rows=negative_spread, max_gap_seconds=max((b - a for a, b in zip(ordered, ordered[1:])), default=0), gap_count_over_60s=len(gaps), invalid_timestamp_rows=invalid_timestamp_rows, out_of_order_rows=out_of_order_rows)
