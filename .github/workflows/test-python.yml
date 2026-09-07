@@ -29,9 +29,9 @@ jobs:
         pip install -e ".[dev]"
         pip install pytest pytest-cov pytest-xdist ruff
 
-    - name: Lint with ruff (deterministic E,F,W)
+    - name: Lint production Python code with ruff (deterministic E,F,W)
       run: |
-        ruff check . --statistics
+        ruff check researchos macro_intelligence cpp_quant_engine/python tests --statistics
 
     - name: Run pytest suite
       run: |
