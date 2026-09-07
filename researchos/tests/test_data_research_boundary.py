@@ -120,9 +120,27 @@ def test_research_evidence_link_preserves_lineage() -> None:
         research_id="research-001",
         dataset_id="dataset-001",
         dataset_content_hash="content-hash",
+        dataset_hash="dataset-hash",
         evidence_collection_id="evidence-001",
         assessment_hash="assessment-hash",
         methodology_version="event-study.v1",
     )
 
-    assert ResearchEvidenceLink.from_dict(link.to_dict()) == link
+    restored = ResearchEvidenceLink.from_dict(link.to_dict())
+
+    assert restored == link
+    assert restored.dataset_hash == "dataset-hash"
+
+
+def test_research_evidence_link_requires_dataset_hash() -> None:
+    with pytest.raises(ValueError, match="dataset_hash is required"):
+        ResearchEvidenceLink(
+            schema_version=RESEARCH_BOUNDARY_SCHEMA_VERSION,
+            research_id="research-001",
+            dataset_id="dataset-001",
+            dataset_content_hash="content-hash",
+            dataset_hash="",
+            evidence_collection_id="evidence-001",
+            assessment_hash="assessment-hash",
+            methodology_version="event-study.v1",
+        )
