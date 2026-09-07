@@ -1,4 +1,4 @@
-#include "quant/strategy/strategy_kernel.h"
+﻿#include "quant/strategy/strategy_kernel.h"
 #include "quant/strategy/position.h"
 #include "strategy_internal.h"
 
@@ -31,7 +31,7 @@ struct StopPlan {
 struct Context {
   const std::vector<OHLCV>& bars;
   const StrategyConfig& cfg;
-  const std::vector<double>& atr; // empty when ATR is not required
+  const std::vector<double>& atr;
 
   SimulationResult* result{nullptr};
   double cash{0.0};
@@ -50,8 +50,6 @@ struct Context {
   bool prev_session_known{false};
 };
 
-// ── ATR ────────────────────────────────────────────────────────────────────
-
 std::vector<double> compute_atr(const std::vector<OHLCV>& bars, int period) {
   period = std::max(1, period);
   std::vector<double> atr(bars.size(), 0.0);
@@ -69,8 +67,6 @@ std::vector<double> compute_atr(const std::vector<OHLCV>& bars, int period) {
   }
   return atr;
 }
-
-// ── Stop planning ──────────────────────────────────────────────────────────
 
 StopPlan build_stop_plan(const StrategySignal& sig, const TradeConfig& tc,
                          const std::vector<double>& atr, double raw) {
@@ -98,13 +94,10 @@ StopPlan build_stop_plan(const StrategySignal& sig, const TradeConfig& tc,
   }
 
   double trailing = 0.0;
-  if (sig.has_trailing_stop) {
-    trailing = sig.trailing_stop;
-  } else if (!atr.empty() && tc.atr_trailing_multiplier > 0.0) {
+  if (sig.has_trailing_stop) trailing = sig.trailing_stop;
+  else if (!atr.empty() && tc.atr_trailing_multiplier > 0.0)
     trailing = atr[static_cast<size_t>(sig.bar_index)] * tc.atr_trailing_multiplier;
-  } else {
-    trailing = tc.trailing_stop;
-  }
+  else trailing = tc.trailing_stop;
 
   const double ref_dist = sl_dist > 0.0 ? sl_dist : tp_dist;
   pl.stop_distance = sl_dist;
@@ -130,14 +123,10 @@ StopPlan build_stop_plan(const StrategySignal& sig, const TradeConfig& tc,
   return pl;
 }
 
-// ── Costs ──────────────────────────────────────────────────────────────────
-
 double apply_exit_costs(const TradeConfig& tc, TradeSide side, double raw) {
   const double dir = side == TradeSide::Long ? -1.0 : 1.0;
   return raw + dir * tc.slippage_pct * raw + dir * (tc.spread_pct / 2.0) * raw;
 }
-
-// ── Fill accounting ────────────────────────────────────────────────────────
 
 void close_partial(Context& ctx, OpenPosition& p, double raw_fill, double pct) {
   const double closed_qty = p.quantity * pct;
@@ -210,8 +199,6 @@ void close_all(Context& ctx, double raw_fill, ExitReason reason, int64_t bar_idx
   ctx.positions.clear();
 }
 
-// ── Access helpers ─────────────────────────────────────────────────────────
-
 std::vector<OpenPosition>::iterator find_last_of_side(std::vector<OpenPosition>& v,
                                                       TradeSide side) {
   for (auto it = v.rbegin(); it != v.rend(); ++it)
@@ -237,16 +224,14 @@ bool trading_allowed(const Context& ctx, const OHLCV& bar) {
 double size_quantity(const Context& ctx, const StrategySignal& sig, const StopPlan& plan) {
   const TradeConfig& tc = ctx.cfg.trade;
   if (tc.sizing == PositionSizing::FixedLot) return tc.fixed_lot;
+  if (plan.stop_distance <= 0.0) return 0.0;
   const double risk = sig.risk_amount > 0.0
                           ? sig.risk_amount
                           : (tc.risk_amount > 0.0
                                  ? tc.risk_amount
                                  : ctx.current_equity * tc.risk_percent / 100.0);
-  if (plan.stop_distance > 0.0) return risk / plan.stop_distance;
-  return tc.default_quantity;
+  return risk > 0.0 ? risk / plan.stop_distance : 0.0;
 }
-
-// ── Signal execution ───────────────────────────────────────────────────────
 
 void execute_signal(Context& ctx, const StrategySignal& sig, const OHLCV& bar,
                     int64_t bar_idx) {
@@ -261,7 +246,7 @@ void execute_signal(Context& ctx, const StrategySignal& sig, const OHLCV& bar,
       const double raw = bar.open;
       const double reference = ctx.bars[static_cast<size_t>(sig.bar_index)].close;
       const StopPlan plan = build_stop_plan(sig, tc, ctx.atr, reference);
-      const double qty = sig.quantity > 0.0 ? sig.quantity : size_quantity(ctx, sig, plan);
+      const double qty = size_quantity(ctx, sig, plan);
       if (qty <= 0.0) { ++ctx.signals_ignored; return; }
 
       const double dir = sig.side == TradeSide::Long ? 1.0 : -1.0;
@@ -289,7 +274,7 @@ void execute_signal(Context& ctx, const StrategySignal& sig, const OHLCV& bar,
       p.total_commission = commission;
       p.realized_pnl = -commission;
       p.entry_value = entry_value;
-      p.risked_amount = plan.stop_distance > 0.0 ? plan.stop_distance * qty : 0.0;
+      p.risked_amount = plan.stop_distance * qty;
       p.slippage = std::abs(entry_price - raw) * qty;
       ctx.cash -= commission;
       ctx.positions.push_back(std::move(p));
@@ -324,15 +309,10 @@ void execute_signal(Context& ctx, const StrategySignal& sig, const OHLCV& bar,
   }
 }
 
-// ── Per-bar position management ────────────────────────────────────────────
-
 bool manage_one(Context& ctx, OpenPosition& p, const OHLCV& bar, int64_t bar_idx) {
   const TradeConfig& tc = ctx.cfg.trade;
   p.update_mfe_mae(bar.high, bar.low);
   ++p.bars_open;
-
-  // Price exits first; the stop takes priority over the take-profit
-  // (conservative: when both are inside one candle, the stop fills).
   if (p.stop_hit(bar.high, bar.low)) {
     const double raw = p.stop_fill(bar.open);
     const ExitReason reason = p.trailing_active ? ExitReason::TrailingStop
@@ -346,8 +326,6 @@ bool manage_one(Context& ctx, OpenPosition& p, const OHLCV& bar, int64_t bar_idx
                    bar.timestamp);
     return true;
   }
-
-  // Partial close at the partial target.
   if (!p.partial_closed && tc.partial_close_pct > 0.0 && p.partial_target > 0.0) {
     const bool hit = p.is_long() ? bar.high >= p.partial_target : bar.low <= p.partial_target;
     if (hit) {
@@ -356,25 +334,15 @@ bool manage_one(Context& ctx, OpenPosition& p, const OHLCV& bar, int64_t bar_idx
       close_partial(ctx, p, raw, tc.partial_close_pct);
     }
   }
-
   const double best = p.is_long() ? bar.high : bar.low;
-
-  // Break-even move.
   if (!p.break_even_moved && p.break_even_activation > 0.0 &&
-      p.profit_per_unit(best) >= p.break_even_activation) {
-    p.move_stop_to_break_even();
-  }
-
-  // Trailing stop (ratchets only in the direction of profit).
+      p.profit_per_unit(best) >= p.break_even_activation) p.move_stop_to_break_even();
   if (p.trailing_distance > 0.0) {
     if (!p.trailing_active &&
-        (p.activation_distance <= 0.0 || p.profit_per_unit(best) >= p.activation_distance)) {
+        (p.activation_distance <= 0.0 || p.profit_per_unit(best) >= p.activation_distance))
       p.trailing_active = true;
-    }
     if (p.trailing_active) p.ratchet_trailing(best);
   }
-
-  // Time stop.
   if (tc.max_bars_in_trade > 0 && p.bars_open >= tc.max_bars_in_trade) {
     close_position(ctx, p, bar.close, ExitReason::TimeStop, bar_idx, bar.timestamp);
     return true;
@@ -397,17 +365,12 @@ double mark_to_market(const Context& ctx, double close) {
   return eq;
 }
 
-// ── Statistics ─────────────────────────────────────────────────────────────
-
 double periods_per_year(const std::vector<OHLCV>& bars) {
   if (bars.size() < 2) return 252.0;
   std::vector<int64_t> deltas;
   deltas.reserve(bars.size() - 1);
-  for (size_t i = 1; i < bars.size(); ++i) {
-    deltas.push_back(std::chrono::duration_cast<std::chrono::seconds>(
-                         bars[i].timestamp - bars[i - 1].timestamp)
-                         .count());
-  }
+  for (size_t i = 1; i < bars.size(); ++i)
+    deltas.push_back(std::chrono::duration_cast<std::chrono::seconds>(bars[i].timestamp - bars[i - 1].timestamp).count());
   std::sort(deltas.begin(), deltas.end());
   const double med = static_cast<double>(deltas[deltas.size() / 2]);
   return med > 0.0 ? (365.25 * 86400.0) / med : 252.0;
@@ -416,7 +379,6 @@ double periods_per_year(const std::vector<OHLCV>& bars) {
 void compute_stats(SimulationResult& r, const std::vector<OHLCV>& bars) {
   auto& s = r.stats;
   s.total_trades = r.trades.size();
-
   double gross_profit = 0.0, gross_loss = 0.0, net = 0.0, sum_r = 0.0;
   size_t wins = 0, losses = 0, breakeven = 0;
   size_t cur_w = 0, cur_l = 0, max_w = 0, max_l = 0;
@@ -425,516 +387,118 @@ void compute_stats(SimulationResult& r, const std::vector<OHLCV>& bars) {
     sum_r += t.r_multiple;
     s.total_commission += t.commission;
     s.total_slippage += t.slippage;
-    if (t.is_profitable()) {
-      ++wins;
-      gross_profit += t.net_pnl;
-      ++cur_w;
-      cur_l = 0;
-      max_w = std::max(max_w, cur_w);
-    } else if (t.is_loss()) {
-      ++losses;
-      gross_loss += -t.net_pnl;
-      ++cur_l;
-      cur_w = 0;
-      max_l = std::max(max_l, cur_l);
-    } else {
-      ++breakeven;
-    }
+    if (t.is_profitable()) { ++wins; gross_profit += t.net_pnl; ++cur_w; cur_l = 0; max_w = std::max(max_w, cur_w); }
+    else if (t.is_loss()) { ++losses; gross_loss += -t.net_pnl; ++cur_l; cur_w = 0; max_l = std::max(max_l, cur_l); }
+    else { ++breakeven; }
   }
-
   s.winning_trades = wins;
   s.losing_trades = losses;
   s.breakeven_trades = breakeven;
   s.win_rate = s.total_trades ? static_cast<double>(wins) / s.total_trades * 100.0 : 0.0;
   s.average_win = wins ? gross_profit / static_cast<double>(wins) : 0.0;
   s.average_loss = losses ? -gross_loss / static_cast<double>(losses) : 0.0;
-  s.average_rr = s.average_loss != 0.0
-                     ? std::abs(s.average_win / s.average_loss)
-                     : (wins ? std::numeric_limits<double>::infinity() : 0.0);
-  s.gross_profit = gross_profit;
-  s.gross_loss = gross_loss;
-  s.profit_factor = gross_loss > 0.0
-                        ? gross_profit / gross_loss
-                        : (gross_profit > 0.0 ? std::numeric_limits<double>::infinity() : 0.0);
-  s.net_profit = net;
+  s.average_rr = s.average_loss != 0.0 ? std::abs(s.average_win / s.average_loss) : (wins ? std::numeric_limits<double>::infinity() : 0.0);
+  s.gross_profit = gross_profit; s.gross_loss = gross_loss; s.net_profit = net;
+  s.profit_factor = gross_loss > 0.0 ? gross_profit / gross_loss : (gross_profit > 0.0 ? std::numeric_limits<double>::infinity() : 0.0);
   s.expectancy = s.total_trades ? net / static_cast<double>(s.total_trades) : 0.0;
   s.expectancy_r = s.total_trades ? sum_r / static_cast<double>(s.total_trades) : 0.0;
-  s.max_consecutive_wins = max_w;
-  s.max_consecutive_losses = max_l;
-
+  s.max_consecutive_wins = max_w; s.max_consecutive_losses = max_l;
   if (!r.equity_curve.empty()) {
-    double peak = r.equity_curve[0];
-    double max_dd = 0.0;
-    double max_dd_peak = peak;
-    for (double eq : r.equity_curve) {
-      if (eq > peak) peak = eq;
-      const double dd = peak > 0.0 ? (peak - eq) / peak : 0.0;
-      if (dd > max_dd) {
-        max_dd = dd;
-        max_dd_peak = peak;
-      }
-    }
-    s.max_drawdown_pct = max_dd * 100.0;
-    s.max_drawdown = max_dd_peak * max_dd;
+    double peak = r.equity_curve[0], max_dd = 0.0, max_dd_peak = peak;
+    for (double eq : r.equity_curve) { if (eq > peak) peak = eq; const double dd = peak > 0.0 ? (peak - eq) / peak : 0.0; if (dd > max_dd) { max_dd = dd; max_dd_peak = peak; } }
+    s.max_drawdown_pct = max_dd * 100.0; s.max_drawdown = max_dd_peak * max_dd;
   }
-
   const size_t n = r.equity_curve.size();
   if (n >= 2) {
-    double mean = 0.0;
-    std::vector<double> rets;
-    rets.reserve(n - 1);
-    for (size_t i = 1; i < n; ++i) {
-      const double prev = r.equity_curve[i - 1];
-      const double rr = prev > 0.0 ? (r.equity_curve[i] - prev) / prev : 0.0;
-      rets.push_back(rr);
-      mean += rr;
-    }
-    mean /= static_cast<double>(n - 1);
-    double var = 0.0, downside = 0.0;
-    for (double rr : rets) {
-      const double d = rr - mean;
-      var += d * d;
-      if (rr < 0.0) downside += rr * rr;
-    }
-    var /= static_cast<double>(n - 1);
-    const double sd = std::sqrt(var);
-    const double downside_dev = std::sqrt(downside / static_cast<double>(n - 1));
-    const double periods = periods_per_year(bars);
-
-    s.annualized_volatility = sd * std::sqrt(periods);
-    if (sd > 0.0) s.sharpe = (mean / sd) * std::sqrt(periods);
-    if (downside_dev > 0.0) {
-      s.sortino = (mean / downside_dev) * std::sqrt(periods);
-    } else if (mean > 0.0) {
-      s.sortino = std::numeric_limits<double>::infinity();
-    }
-
-    const double initial = r.initial_equity;
-    const double final = r.final_equity;
+    double mean = 0.0; std::vector<double> rets; rets.reserve(n - 1);
+    for (size_t i = 1; i < n; ++i) { const double prev = r.equity_curve[i - 1]; const double rr = prev > 0.0 ? (r.equity_curve[i] - prev) / prev : 0.0; rets.push_back(rr); mean += rr; }
+    mean /= static_cast<double>(n - 1); double var = 0.0, downside = 0.0;
+    for (double rr : rets) { const double d = rr - mean; var += d * d; if (rr < 0.0) downside += rr * rr; }
+    var /= static_cast<double>(n - 1); const double sd = std::sqrt(var); const double downside_dev = std::sqrt(downside / static_cast<double>(n - 1)); const double periods = periods_per_year(bars);
+    s.annualized_volatility = sd * std::sqrt(periods); if (sd > 0.0) s.sharpe = (mean / sd) * std::sqrt(periods);
+    if (downside_dev > 0.0) s.sortino = (mean / downside_dev) * std::sqrt(periods); else if (mean > 0.0) s.sortino = std::numeric_limits<double>::infinity();
+    const double initial = r.initial_equity, final = r.final_equity;
     if (initial > 0.0) s.total_return_pct = (final / initial - 1.0) * 100.0;
-    if (initial > 0.0 && final > 0.0 && n > 0)
-      s.annualized_return = std::pow(final / initial, periods / static_cast<double>(n)) - 1.0;
-    if (s.max_drawdown_pct > 0.0)
-      s.calmar = (s.annualized_return * 100.0) / s.max_drawdown_pct;
+    if (initial > 0.0 && final > 0.0 && n > 0) s.annualized_return = std::pow(final / initial, periods / static_cast<double>(n)) - 1.0;
+    if (s.max_drawdown_pct > 0.0) s.calmar = (s.annualized_return * 100.0) / s.max_drawdown_pct;
   }
-
-  if (!r.drawdown_curve.empty()) {
-    double acc = 0.0;
-    for (double dd : r.drawdown_curve) acc += dd * dd;
-    s.ulcer_index = std::sqrt(acc / static_cast<double>(r.drawdown_curve.size()));
-  }
-
+  if (!r.drawdown_curve.empty()) { double acc = 0.0; for (double dd : r.drawdown_curve) acc += dd * dd; s.ulcer_index = std::sqrt(acc / static_cast<double>(r.drawdown_curve.size())); }
   if (s.max_drawdown > 0.0) s.recovery_factor = s.net_profit / s.max_drawdown;
 }
 
-// ── Calendar period returns ────────────────────────────────────────────────
-
-std::vector<PeriodReturn> build_period_returns(const std::vector<OHLCV>& bars,
-                                               const SimulationResult& r, int granularity) {
-  std::vector<PeriodReturn> out;
-  std::string cur;
-  double period_start = r.initial_equity;
-  double last_eq = r.initial_equity;
+std::vector<PeriodReturn> build_period_returns(const std::vector<OHLCV>& bars, const SimulationResult& r, int granularity) {
+  std::vector<PeriodReturn> out; std::string cur; double period_start = r.initial_equity, last_eq = r.initial_equity;
   for (size_t i = 0; i < bars.size(); ++i) {
-    const auto up = detail::utc_parts(bars[i].timestamp);
-    char buf[16];
-    if (granularity == 1)
-      std::snprintf(buf, sizeof(buf), "%04d-%02d", up.year, up.month);
-    else
-      std::snprintf(buf, sizeof(buf), "%04d", up.year);
-    std::string lbl(buf);
-    if (cur.empty()) cur = lbl;
-    if (lbl != cur) {
-      PeriodReturn pr;
-      pr.label = cur;
-      pr.start_equity = period_start;
-      pr.end_equity = last_eq;
-      pr.return_pct = period_start > 0.0 ? (last_eq / period_start - 1.0) * 100.0 : 0.0;
-      out.push_back(std::move(pr));
-      cur = lbl;
-      period_start = last_eq;
-    }
+    const auto up = detail::utc_parts(bars[i].timestamp); char buf[16];
+    if (granularity == 1) std::snprintf(buf, sizeof(buf), "%04d-%02d", up.year, up.month); else std::snprintf(buf, sizeof(buf), "%04d", up.year);
+    std::string lbl(buf); if (cur.empty()) cur = lbl;
+    if (lbl != cur) { PeriodReturn pr; pr.label = cur; pr.start_equity = period_start; pr.end_equity = last_eq; pr.return_pct = period_start > 0.0 ? (last_eq / period_start - 1.0) * 100.0 : 0.0; out.push_back(std::move(pr)); cur = lbl; period_start = last_eq; }
     last_eq = r.equity_curve[i];
   }
-  if (!cur.empty()) {
-    PeriodReturn pr;
-    pr.label = cur;
-    pr.start_equity = period_start;
-    pr.end_equity = last_eq;
-    pr.return_pct = period_start > 0.0 ? (last_eq / period_start - 1.0) * 100.0 : 0.0;
-    out.push_back(std::move(pr));
-  }
+  if (!cur.empty()) { PeriodReturn pr; pr.label = cur; pr.start_equity = period_start; pr.end_equity = last_eq; pr.return_pct = period_start > 0.0 ? (last_eq / period_start - 1.0) * 100.0 : 0.0; out.push_back(std::move(pr)); }
   return out;
 }
 
 } // namespace
 
-// ── StrategyKernel ─────────────────────────────────────────────────────────
-
 StrategyKernel::StrategyKernel(StrategyConfig config) : config_(std::move(config)) {}
-
 void StrategyKernel::set_config(StrategyConfig config) { config_ = std::move(config); }
-
 const StrategyConfig& StrategyKernel::config() const { return config_; }
 
-Result<SimulationResult> StrategyKernel::run(const std::vector<OHLCV>& bars,
-                                             const std::vector<StrategySignal>& signals,
-                                             bool compute_hash) {
-  if (bars.empty())
-    return Error(ErrorCode::InsufficientData, "strategy kernel requires at least one bar");
+Result<SimulationResult> StrategyKernel::run(const std::vector<OHLCV>& bars, const std::vector<StrategySignal>& signals, bool compute_hash) {
+  if (bars.empty()) return Error(ErrorCode::InsufficientData, "strategy kernel requires at least one bar");
   for (size_t i = 0; i < bars.size(); ++i) {
-    if (!bars[i].is_valid())
-      return Error(ErrorCode::InvalidArgument,
-                   "invalid OHLC bar at index " + std::to_string(i));
-    if (i > 0 && bars[i].timestamp < bars[i - 1].timestamp)
-      return Error(ErrorCode::InvalidArgument, "bar timestamps must be non-decreasing");
+    if (!bars[i].is_valid()) return Error(ErrorCode::InvalidArgument, "invalid OHLC bar at index " + std::to_string(i));
+    if (i > 0 && bars[i].timestamp < bars[i - 1].timestamp) return Error(ErrorCode::InvalidArgument, "bar timestamps must be non-decreasing");
   }
-  for (const auto& s : signals) {
-    if (s.bar_index < 0 || s.bar_index >= static_cast<int64_t>(bars.size()))
-      return Error(ErrorCode::OutOfBounds, "signal bar_index out of range");
-  }
-
+  for (const auto& s : signals) if (s.bar_index < 0 || s.bar_index >= static_cast<int64_t>(bars.size())) return Error(ErrorCode::OutOfBounds, "signal bar_index out of range");
   const TradeConfig& tc = config_.trade;
-
-  // Sort the signal stream by bar index (stable: equal bar indices keep input
-  // order) so execution is deterministic regardless of the caller's ordering.
-  std::vector<const StrategySignal*> ordered;
-  ordered.reserve(signals.size());
-  for (const auto& s : signals) ordered.push_back(&s);
-  std::stable_sort(ordered.begin(), ordered.end(),
-                   [](const StrategySignal* a, const StrategySignal* b) {
-                     return a->bar_index < b->bar_index;
-                   });
-
-  const bool need_atr = tc.stop_type == StopType::ATR || tc.atr_sl_multiplier > 0.0 ||
-                        tc.atr_tp_multiplier > 0.0 || tc.atr_trailing_multiplier > 0.0;
-  std::vector<double> atr;
-  if (need_atr) atr = compute_atr(bars, tc.atr_period);
-
-  SimulationResult result;
-  result.initial_equity = config_.risk.initial_equity;
-  result.equity_curve.reserve(bars.size());
-  result.drawdown_curve.reserve(bars.size());
-  result.trades.reserve(std::min(signals.size(), static_cast<size_t>(1u << 18)));
-
-  Context ctx{bars, config_, atr};
-  ctx.result = &result;
-  ctx.cash = config_.risk.initial_equity;
-  ctx.current_equity = config_.risk.initial_equity;
-  ctx.positions.reserve(config_.risk.max_open_positions > 0
-                            ? config_.risk.max_open_positions
-                            : 1024);
-  ctx.pending.reserve(ordered.size());
-
-  const RiskConfig& rc = config_.risk;
-  const bool need_daily = rc.daily_loss_limit_pct > 0.0 || rc.max_trades_per_day > 0.0;
-  const bool need_session = rc.session.enabled || rc.close_on_session_end;
-
-  double peak_eq = config_.risk.initial_equity;
-  size_t si = 0;
-
+  std::vector<const StrategySignal*> ordered; ordered.reserve(signals.size()); for (const auto& s : signals) ordered.push_back(&s);
+  std::stable_sort(ordered.begin(), ordered.end(), [](const StrategySignal* a, const StrategySignal* b) { return a->bar_index < b->bar_index; });
+  const bool need_atr = tc.stop_type == StopType::ATR || tc.atr_sl_multiplier > 0.0 || tc.atr_tp_multiplier > 0.0 || tc.atr_trailing_multiplier > 0.0;
+  std::vector<double> atr; if (need_atr) atr = compute_atr(bars, tc.atr_period);
+  SimulationResult result; result.initial_equity = config_.risk.initial_equity; result.equity_curve.reserve(bars.size()); result.drawdown_curve.reserve(bars.size()); result.trades.reserve(std::min(signals.size(), static_cast<size_t>(1u << 18)));
+  Context ctx{bars, config_, atr}; ctx.result = &result; ctx.cash = config_.risk.initial_equity; ctx.current_equity = config_.risk.initial_equity; ctx.positions.reserve(config_.risk.max_open_positions > 0 ? config_.risk.max_open_positions : 1024); ctx.pending.reserve(ordered.size());
+  const RiskConfig& rc = config_.risk; const bool need_daily = rc.daily_loss_limit_pct > 0.0 || rc.max_trades_per_day > 0.0; const bool need_session = rc.session.enabled || rc.close_on_session_end;
+  double peak_eq = config_.risk.initial_equity; size_t si = 0;
   for (size_t i = 0; i < bars.size(); ++i) {
     const OHLCV& bar = bars[i];
-
     if (need_daily || need_session) {
       const auto up = detail::utc_parts(bar.timestamp);
-      if (need_daily && up.day_key != ctx.last_day_key) {
-        ctx.last_day_key = up.day_key;
-        ctx.daily_start_equity = ctx.current_equity;
-        ctx.daily_trades = 0;
-        ctx.loss_limit_hit = false;
-      }
-      if (rc.close_on_session_end && rc.session.enabled) {
-        const bool in = rc.session.allows(up.hour, up.weekday);
-        if (ctx.prev_session_known && ctx.prev_in_session && !in)
-          close_all(ctx, bar.open, ExitReason::SessionClose, static_cast<int64_t>(i),
-                    bar.timestamp);
-        ctx.prev_in_session = in;
-        ctx.prev_session_known = true;
-      }
+      if (need_daily && up.day_key != ctx.last_day_key) { ctx.last_day_key = up.day_key; ctx.daily_start_equity = ctx.current_equity; ctx.daily_trades = 0; ctx.loss_limit_hit = false; }
+      if (rc.close_on_session_end && rc.session.enabled) { const bool in = rc.session.allows(up.hour, up.weekday); if (ctx.prev_session_known && ctx.prev_in_session && !in) close_all(ctx, bar.open, ExitReason::SessionClose, static_cast<int64_t>(i), bar.timestamp); ctx.prev_in_session = in; ctx.prev_session_known = true; }
     }
-
-    // Execute signals queued by the previous bar at this bar's open.
-    for (const StrategySignal* sig : ctx.pending) execute_signal(ctx, *sig, bar, static_cast<int64_t>(i));
-    ctx.pending.clear();
-
-    // Manage open positions through this bar.
+    for (const StrategySignal* sig : ctx.pending) execute_signal(ctx, *sig, bar, static_cast<int64_t>(i)); ctx.pending.clear();
     manage_positions(ctx, bar, static_cast<int64_t>(i));
-
-    // Equity / drawdown at the close.
     double eq = mark_to_market(ctx, bar.close);
-
-    // Daily loss-limit circuit breaker (at the close).
-    if (rc.daily_loss_limit_pct > 0.0 && !ctx.loss_limit_hit &&
-        eq <= ctx.daily_start_equity * (1.0 - rc.daily_loss_limit_pct / 100.0)) {
-      ctx.loss_limit_hit = true;
-      close_all(ctx, bar.close, ExitReason::DailyLossLimit, static_cast<int64_t>(i),
-                bar.timestamp);
-      eq = ctx.cash;
-    }
-
-    ctx.current_equity = eq;
-    result.equity_curve.push_back(eq);
-    if (eq > peak_eq) peak_eq = eq;
-    const double dd_pct = peak_eq > 0.0 ? (peak_eq - eq) / peak_eq * 100.0 : 0.0;
-    result.drawdown_curve.push_back(dd_pct);
-
-    // Queue this bar's signals (filled at the open of bar i+1).
-    while (si < ordered.size() && ordered[si]->bar_index == static_cast<int64_t>(i)) {
-      const StrategySignal* sig = ordered[si];
-      if (ctx.loss_limit_hit && sig->action == SignalAction::Open) {
-        ++ctx.signals_ignored;
-      } else {
-        ctx.pending.push_back(sig);
-      }
-      ++si;
-      ++result.signals_processed;
-    }
+    if (rc.daily_loss_limit_pct > 0.0 && !ctx.loss_limit_hit && eq <= ctx.daily_start_equity * (1.0 - rc.daily_loss_limit_pct / 100.0)) { ctx.loss_limit_hit = true; close_all(ctx, bar.close, ExitReason::DailyLossLimit, static_cast<int64_t>(i), bar.timestamp); eq = ctx.cash; }
+    ctx.current_equity = eq; result.equity_curve.push_back(eq); if (eq > peak_eq) peak_eq = eq; const double dd_pct = peak_eq > 0.0 ? (peak_eq - eq) / peak_eq * 100.0 : 0.0; result.drawdown_curve.push_back(dd_pct);
+    while (si < ordered.size() && ordered[si]->bar_index == static_cast<int64_t>(i)) { const StrategySignal* sig = ordered[si]; if (ctx.loss_limit_hit && sig->action == SignalAction::Open) ++ctx.signals_ignored; else ctx.pending.push_back(sig); ++si; ++result.signals_processed; }
   }
-
-  // Liquidate anything still open at the final close.
-  if (!ctx.positions.empty())
-    close_all(ctx, bars.back().close, ExitReason::EndOfData,
-              static_cast<int64_t>(bars.size()) - 1, bars.back().timestamp);
-
-  result.bars_processed = bars.size();
-  result.signals_opened = ctx.signals_opened;
-  result.signals_ignored = ctx.signals_ignored;
-  result.final_equity = ctx.cash;
-
-  compute_stats(result, bars);
-  result.monthly_returns = build_period_returns(bars, result, 1);
-  result.yearly_returns = build_period_returns(bars, result, 2);
-
-  if (compute_hash) {
-    result.input_hash = compute_input_hash(bars, signals, config_);
-    result.result_hash = result.compute_result_hash();
-  }
+  if (!ctx.positions.empty()) close_all(ctx, bars.back().close, ExitReason::EndOfData, static_cast<int64_t>(bars.size()) - 1, bars.back().timestamp);
+  result.bars_processed = bars.size(); result.signals_opened = ctx.signals_opened; result.signals_ignored = ctx.signals_ignored; result.final_equity = ctx.cash;
+  compute_stats(result, bars); result.monthly_returns = build_period_returns(bars, result, 1); result.yearly_returns = build_period_returns(bars, result, 2);
+  if (compute_hash) { result.input_hash = compute_input_hash(bars, signals, config_); result.result_hash = result.compute_result_hash(); }
   return Result<SimulationResult>::ok(std::move(result));
 }
 
-// ── Input hash ─────────────────────────────────────────────────────────────
-
-std::string compute_input_hash(const std::vector<OHLCV>& bars,
-                               const std::vector<StrategySignal>& signals,
-                               const StrategyConfig& config) {
-  using detail::canonical_bool;
-  using detail::canonical_double;
-  using detail::canonical_int;
-  using detail::canonical_object;
-  using detail::canonical_str;
-  using detail::iso8601;
-  using detail::sha256_hex;
-
-  std::string bars_json = "[";
-  for (size_t i = 0; i < bars.size(); ++i) {
-    if (i) bars_json += ",";
-    const auto& b = bars[i];
-    bars_json += canonical_object({
-        {"t", canonical_str(iso8601(b.timestamp))},
-        {"o", canonical_double(b.open)},
-        {"h", canonical_double(b.high)},
-        {"l", canonical_double(b.low)},
-        {"c", canonical_double(b.close)},
-        {"v", canonical_double(b.volume)},
-    });
-  }
-  bars_json += "]";
-
-  std::string sig_json = "[";
-  std::vector<const StrategySignal*> sig_order;
-  sig_order.reserve(signals.size());
-  for (const auto& s : signals) sig_order.push_back(&s);
-  std::stable_sort(sig_order.begin(), sig_order.end(),
-                   [](const StrategySignal* a, const StrategySignal* b) {
-                     return a->bar_index < b->bar_index;
-                   });
-  for (size_t i = 0; i < sig_order.size(); ++i) {
-    if (i) sig_json += ",";
-    const auto& s = *sig_order[i];
-    sig_json += canonical_object({
-        {"bar_index", canonical_int(s.bar_index)},
-        {"action", canonical_str(action_name(s.action))},
-        {"side", canonical_str(side_name(s.side))},
-        {"quantity", canonical_double(s.quantity)},
-        {"stop_loss", canonical_double(s.stop_loss)},
-        {"take_profit", canonical_double(s.take_profit)},
-        {"trailing_stop", canonical_double(s.trailing_stop)},
-        {"has_stop_loss", canonical_bool(s.has_stop_loss)},
-        {"has_take_profit", canonical_bool(s.has_take_profit)},
-        {"has_trailing_stop", canonical_bool(s.has_trailing_stop)},
-        {"risk_amount", canonical_double(s.risk_amount)},
-    });
-  }
-  sig_json += "]";
-
-  const auto& t = config.trade;
-  const auto& r = config.risk;
-  const auto& sess = r.session;
-  const char* sizing_name =
-      t.sizing == PositionSizing::FixedLot ? "FixedLot" : "RiskPercent";
-  const char* stop_name = t.stop_type == StopType::ATR
-                              ? "ATR"
-                              : (t.stop_type == StopType::Fixed ? "Fixed" : "None");
-
-  const std::string cfg_json = canonical_object({
-      {"trade", canonical_object({
-          {"sizing", canonical_str(sizing_name)},
-          {"fixed_lot", canonical_double(t.fixed_lot)},
-          {"risk_percent", canonical_double(t.risk_percent)},
-          {"risk_amount", canonical_double(t.risk_amount)},
-          {"default_quantity", canonical_double(t.default_quantity)},
-          {"commission_pct", canonical_double(t.commission_pct)},
-          {"commission_per_lot", canonical_double(t.commission_per_lot)},
-          {"spread_pct", canonical_double(t.spread_pct)},
-          {"slippage_pct", canonical_double(t.slippage_pct)},
-          {"stop_type", canonical_str(stop_name)},
-          {"stop_loss", canonical_double(t.stop_loss)},
-          {"take_profit", canonical_double(t.take_profit)},
-          {"atr_period", canonical_int(t.atr_period)},
-          {"atr_sl_multiplier", canonical_double(t.atr_sl_multiplier)},
-          {"atr_tp_multiplier", canonical_double(t.atr_tp_multiplier)},
-          {"trailing_stop", canonical_double(t.trailing_stop)},
-          {"atr_trailing_multiplier", canonical_double(t.atr_trailing_multiplier)},
-          {"trailing_activation_pct", canonical_double(t.trailing_activation_pct)},
-          {"break_even_activation_pct", canonical_double(t.break_even_activation_pct)},
-          {"partial_close_pct", canonical_double(t.partial_close_pct)},
-          {"partial_close_target_pct", canonical_double(t.partial_close_target_pct)},
-          {"max_bars_in_trade", canonical_int(t.max_bars_in_trade)},
-          {"allow_long", canonical_bool(t.allow_long)},
-          {"allow_short", canonical_bool(t.allow_short)},
-      })},
-      {"risk", canonical_object({
-          {"initial_equity", canonical_double(r.initial_equity)},
-          {"daily_loss_limit_pct", canonical_double(r.daily_loss_limit_pct)},
-          {"max_open_positions", canonical_int(static_cast<int64_t>(r.max_open_positions))},
-          {"max_trades_per_day", canonical_int(static_cast<int64_t>(r.max_trades_per_day))},
-          {"close_on_session_end", canonical_bool(r.close_on_session_end)},
-          {"session", canonical_object({
-              {"enabled", canonical_bool(sess.enabled)},
-              {"utc_start_hour", canonical_int(sess.utc_start_hour)},
-              {"utc_end_hour", canonical_int(sess.utc_end_hour)},
-              {"allow_saturday", canonical_bool(sess.allow_saturday)},
-              {"allow_sunday", canonical_bool(sess.allow_sunday)},
-          })},
-      })},
-  });
-
-  return sha256_hex(canonical_object({
-      {"bars", bars_json},
-      {"config", cfg_json},
-      {"signals", sig_json},
-  }));
+std::string compute_input_hash(const std::vector<OHLCV>& bars, const std::vector<StrategySignal>& signals, const StrategyConfig& config) {
+  using detail::canonical_bool; using detail::canonical_double; using detail::canonical_int; using detail::canonical_object; using detail::canonical_str; using detail::iso8601; using detail::sha256_hex;
+  std::string bars_json = "["; for (size_t i = 0; i < bars.size(); ++i) { if (i) bars_json += ","; const auto& b = bars[i]; bars_json += canonical_object({detail::KV{std::string("t"), canonical_str(iso8601(b.timestamp))}, detail::KV{std::string("o"), canonical_double(b.open)}, detail::KV{std::string("h"), canonical_double(b.high)}, detail::KV{std::string("l"), canonical_double(b.low)}, detail::KV{std::string("c"), canonical_double(b.close)}, detail::KV{std::string("v"), canonical_double(b.volume)}}); } bars_json += "]";
+  std::string sig_json = "["; std::vector<const StrategySignal*> sig_order; sig_order.reserve(signals.size()); for (const auto& s : signals) sig_order.push_back(&s); std::stable_sort(sig_order.begin(), sig_order.end(), [](const StrategySignal* a, const StrategySignal* b) { return a->bar_index < b->bar_index; }); for (size_t i = 0; i < sig_order.size(); ++i) { if (i) sig_json += ","; const auto& s = *sig_order[i]; sig_json += canonical_object({detail::KV{std::string("bar_index"), canonical_int(s.bar_index)}, detail::KV{std::string("action"), canonical_str(action_name(s.action))}, detail::KV{std::string("side"), canonical_str(side_name(s.side))}, detail::KV{std::string("quantity"), canonical_double(s.quantity)}, detail::KV{std::string("stop_loss"), canonical_double(s.stop_loss)}, detail::KV{std::string("take_profit"), canonical_double(s.take_profit)}, detail::KV{std::string("trailing_stop"), canonical_double(s.trailing_stop)}, detail::KV{std::string("has_stop_loss"), canonical_bool(s.has_stop_loss)}, detail::KV{std::string("has_take_profit"), canonical_bool(s.has_take_profit)}, detail::KV{std::string("has_trailing_stop"), canonical_bool(s.has_trailing_stop)}, detail::KV{std::string("risk_amount"), canonical_double(s.risk_amount)}); } sig_json += "]";
+  const auto& t = config.trade; const auto& r = config.risk; const auto& sess = r.session; const char* sizing_name = t.sizing == PositionSizing::FixedLot ? "FixedLot" : "RiskPercent"; const char* stop_name = t.stop_type == StopType::ATR ? "ATR" : (t.stop_type == StopType::Fixed ? "Fixed" : "None");
+  const std::string cfg_json = canonical_object({detail::KV{std::string("trade"), canonical_object({detail::KV{std::string("sizing"), canonical_str(sizing_name)}, detail::KV{std::string("fixed_lot"), canonical_double(t.fixed_lot)}, detail::KV{std::string("risk_percent"), canonical_double(t.risk_percent)}, detail::KV{std::string("risk_amount"), canonical_double(t.risk_amount)}, detail::KV{std::string("default_quantity"), canonical_double(t.default_quantity)}, detail::KV{std::string("commission_pct"), canonical_double(t.commission_pct)}, detail::KV{std::string("commission_per_lot"), canonical_double(t.commission_per_lot)}, detail::KV{std::string("spread_pct"), canonical_double(t.spread_pct)}, detail::KV{std::string("slippage_pct"), canonical_double(t.slippage_pct)}, detail::KV{std::string("stop_type"), canonical_str(stop_name)}, detail::KV{std::string("stop_loss"), canonical_double(t.stop_loss)}, detail::KV{std::string("take_profit"), canonical_double(t.take_profit)}, detail::KV{std::string("atr_period"), canonical_int(t.atr_period)}, detail::KV{std::string("atr_sl_multiplier"), canonical_double(t.atr_sl_multiplier)}, detail::KV{std::string("atr_tp_multiplier"), canonical_double(t.atr_tp_multiplier)}, detail::KV{std::string("trailing_stop"), canonical_double(t.trailing_stop)}, detail::KV{std::string("atr_trailing_multiplier"), canonical_double(t.atr_trailing_multiplier)}, detail::KV{std::string("trailing_activation_pct"), canonical_double(t.trailing_activation_pct)}, detail::KV{std::string("break_even_activation_pct"), canonical_double(t.break_even_activation_pct)}, detail::KV{std::string("partial_close_pct"), canonical_double(t.partial_close_pct)}, detail::KV{std::string("partial_close_target_pct"), canonical_double(t.partial_close_target_pct)}, detail::KV{std::string("max_bars_in_trade"), canonical_int(t.max_bars_in_trade)}, detail::KV{std::string("allow_long"), canonical_bool(t.allow_long)}, detail::KV{std::string("allow_short"), canonical_bool(t.allow_short)})}, detail::KV{std::string("risk"), canonical_object({detail::KV{std::string("initial_equity"), canonical_double(r.initial_equity)}, detail::KV{std::string("daily_loss_limit_pct"), canonical_double(r.daily_loss_limit_pct)}, detail::KV{std::string("max_open_positions"), canonical_int(static_cast<int64_t>(r.max_open_positions))}, detail::KV{std::string("max_trades_per_day"), canonical_int(static_cast<int64_t>(r.max_trades_per_day))}, detail::KV{std::string("close_on_session_end"), canonical_bool(r.close_on_session_end)}, detail::KV{std::string("session"), canonical_object({detail::KV{std::string("enabled"), canonical_bool(sess.enabled)}, detail::KV{std::string("utc_start_hour"), canonical_int(sess.utc_start_hour)}, detail::KV{std::string("utc_end_hour"), canonical_int(sess.utc_end_hour)}, detail::KV{std::string("allow_saturday"), canonical_bool(sess.allow_saturday)}, detail::KV{std::string("allow_sunday"), canonical_bool(sess.allow_sunday)})})})});
+  return sha256_hex(canonical_object({detail::KV{std::string("bars"), bars_json}, detail::KV{std::string("config"), cfg_json}, detail::KV{std::string("signals"), sig_json}}));
 }
 
-// ── Result hash ────────────────────────────────────────────────────────────
-
 std::string SimulationResult::compute_result_hash() const {
-  using detail::canonical_bool;
-  using detail::canonical_double;
-  using detail::canonical_double_array;
-  using detail::canonical_int;
-  using detail::canonical_object;
-  using detail::canonical_str;
-  using detail::iso8601;
-  using detail::sha256_hex;
-
-  std::string trades_json = "[";
-  for (size_t i = 0; i < trades.size(); ++i) {
-    if (i) trades_json += ",";
-    const auto& t = trades[i];
-    trades_json += canonical_object({
-        {"id", canonical_int(t.trade_id)},
-        {"side", canonical_str(side_name(t.side))},
-        {"entry_bar", canonical_int(t.entry_bar)},
-        {"exit_bar", canonical_int(t.exit_bar)},
-        {"entry_time", canonical_str(iso8601(t.entry_time))},
-        {"exit_time", canonical_str(iso8601(t.exit_time))},
-        {"entry_price", canonical_double(t.entry_price)},
-        {"exit_price", canonical_double(t.exit_price)},
-        {"avg_exit_price", canonical_double(t.avg_exit_price)},
-        {"quantity", canonical_double(t.quantity)},
-        {"gross_pnl", canonical_double(t.gross_pnl)},
-        {"net_pnl", canonical_double(t.net_pnl)},
-        {"net_pnl_pct", canonical_double(t.net_pnl_pct)},
-        {"r_multiple", canonical_double(t.r_multiple)},
-        {"commission", canonical_double(t.commission)},
-        {"slippage", canonical_double(t.slippage)},
-        {"mfe", canonical_double(t.mfe)},
-        {"mae", canonical_double(t.mae)},
-        {"bars_held", canonical_int(t.bars_held)},
-        {"exit_reason", canonical_str(exit_reason_name(t.exit_reason))},
-        {"partial_close", canonical_bool(t.partial_close)},
-        {"partial_fill_count", canonical_int(t.partial_fill_count)},
-    });
-  }
-  trades_json += "]";
-
-  auto period_to_json = [](const PeriodReturn& pr) {
-    return canonical_object({
-        {"label", canonical_str(pr.label)},
-        {"return_pct", canonical_double(pr.return_pct)},
-        {"start_equity", canonical_double(pr.start_equity)},
-        {"end_equity", canonical_double(pr.end_equity)},
-    });
-  };
-  std::string monthly_json = "[";
-  for (size_t i = 0; i < monthly_returns.size(); ++i) {
-    if (i) monthly_json += ",";
-    monthly_json += period_to_json(monthly_returns[i]);
-  }
-  monthly_json += "]";
-  std::string yearly_json = "[";
-  for (size_t i = 0; i < yearly_returns.size(); ++i) {
-    if (i) yearly_json += ",";
-    yearly_json += period_to_json(yearly_returns[i]);
-  }
-  yearly_json += "]";
-
+  using detail::canonical_bool; using detail::canonical_double; using detail::canonical_double_array; using detail::canonical_int; using detail::canonical_object; using detail::canonical_str; using detail::iso8601; using detail::sha256_hex;
+  std::string trades_json = "["; for (size_t i = 0; i < trades.size(); ++i) { if (i) trades_json += ","; const auto& t = trades[i]; trades_json += canonical_object({detail::KV{std::string("id"), canonical_int(t.trade_id)}, detail::KV{std::string("side"), canonical_str(side_name(t.side))}, detail::KV{std::string("entry_bar"), canonical_int(t.entry_bar)}, detail::KV{std::string("exit_bar"), canonical_int(t.exit_bar)}, detail::KV{std::string("entry_time"), canonical_str(iso8601(t.entry_time))}, detail::KV{std::string("exit_time"), canonical_str(iso8601(t.exit_time))}, detail::KV{std::string("entry_price"), canonical_double(t.entry_price)}, detail::KV{std::string("exit_price"), canonical_double(t.exit_price)}, detail::KV{std::string("avg_exit_price"), canonical_double(t.avg_exit_price)}, detail::KV{std::string("quantity"), canonical_double(t.quantity)}, detail::KV{std::string("gross_pnl"), canonical_double(t.gross_pnl)}, detail::KV{std::string("net_pnl"), canonical_double(t.net_pnl)}, detail::KV{std::string("net_pnl_pct"), canonical_double(t.net_pnl_pct)}, detail::KV{std::string("r_multiple"), canonical_double(t.r_multiple)}, detail::KV{std::string("commission"), canonical_double(t.commission)}, detail::KV{std::string("slippage"), canonical_double(t.slippage)}, detail::KV{std::string("mfe"), canonical_double(t.mfe)}, detail::KV{std::string("mae"), canonical_double(t.mae)}, detail::KV{std::string("bars_held"), canonical_int(t.bars_held)}, detail::KV{std::string("exit_reason"), canonical_str(exit_reason_name(t.exit_reason))}, detail::KV{std::string("partial_close"), canonical_bool(t.partial_close)}, detail::KV{std::string("partial_fill_count"), canonical_int(t.partial_fill_count)}); } trades_json += "]";
+  auto period_to_json = [](const PeriodReturn& pr) { return canonical_object({detail::KV{std::string("label"), canonical_str(pr.label)}, detail::KV{std::string("return_pct"), canonical_double(pr.return_pct)}, detail::KV{std::string("start_equity"), canonical_double(pr.start_equity)}, detail::KV{std::string("end_equity"), canonical_double(pr.end_equity)}}); };
+  std::string monthly_json = "["; for (size_t i = 0; i < monthly_returns.size(); ++i) { if (i) monthly_json += ","; monthly_json += period_to_json(monthly_returns[i]); } monthly_json += "]";
+  std::string yearly_json = "["; for (size_t i = 0; i < yearly_returns.size(); ++i) { if (i) yearly_json += ","; yearly_json += period_to_json(yearly_returns[i]); } yearly_json += "]";
   const auto& s = stats;
-  return sha256_hex(canonical_object({
-      {"input_hash", canonical_str(input_hash)},
-      {"initial_equity", canonical_double(initial_equity)},
-      {"final_equity", canonical_double(final_equity)},
-      {"bars_processed", canonical_int(static_cast<int64_t>(bars_processed))},
-      {"signals_processed", canonical_int(static_cast<int64_t>(signals_processed))},
-      {"signals_opened", canonical_int(static_cast<int64_t>(signals_opened))},
-      {"signals_ignored", canonical_int(static_cast<int64_t>(signals_ignored))},
-      {"equity_curve", canonical_double_array(equity_curve)},
-      {"trades", trades_json},
-      {"monthly_returns", monthly_json},
-      {"yearly_returns", yearly_json},
-      {"stats", canonical_object({
-          {"total_trades", canonical_int(static_cast<int64_t>(s.total_trades))},
-          {"winning_trades", canonical_int(static_cast<int64_t>(s.winning_trades))},
-          {"losing_trades", canonical_int(static_cast<int64_t>(s.losing_trades))},
-          {"breakeven_trades", canonical_int(static_cast<int64_t>(s.breakeven_trades))},
-          {"win_rate", canonical_double(s.win_rate)},
-          {"average_win", canonical_double(s.average_win)},
-          {"average_loss", canonical_double(s.average_loss)},
-          {"average_rr", canonical_double(s.average_rr)},
-          {"profit_factor", canonical_double(s.profit_factor)},
-          {"expectancy", canonical_double(s.expectancy)},
-          {"expectancy_r", canonical_double(s.expectancy_r)},
-          {"gross_profit", canonical_double(s.gross_profit)},
-          {"gross_loss", canonical_double(s.gross_loss)},
-          {"net_profit", canonical_double(s.net_profit)},
-          {"max_drawdown", canonical_double(s.max_drawdown)},
-          {"max_drawdown_pct", canonical_double(s.max_drawdown_pct)},
-          {"max_consecutive_losses", canonical_int(static_cast<int64_t>(s.max_consecutive_losses))},
-          {"max_consecutive_wins", canonical_int(static_cast<int64_t>(s.max_consecutive_wins))},
-          {"recovery_factor", canonical_double(s.recovery_factor)},
-          {"sharpe", canonical_double(s.sharpe)},
-          {"sortino", canonical_double(s.sortino)},
-          {"calmar", canonical_double(s.calmar)},
-          {"ulcer_index", canonical_double(s.ulcer_index)},
-          {"total_commission", canonical_double(s.total_commission)},
-          {"total_slippage", canonical_double(s.total_slippage)},
-          {"total_return_pct", canonical_double(s.total_return_pct)},
-          {"annualized_return", canonical_double(s.annualized_return)},
-          {"annualized_volatility", canonical_double(s.annualized_volatility)},
-      })},
-  }));
+  return sha256_hex(canonical_object({detail::KV{std::string("input_hash"), canonical_str(input_hash)}, detail::KV{std::string("initial_equity"), canonical_double(initial_equity)}, detail::KV{std::string("final_equity"), canonical_double(final_equity)}, detail::KV{std::string("bars_processed"), canonical_int(static_cast<int64_t>(bars_processed))}, detail::KV{std::string("signals_processed"), canonical_int(static_cast<int64_t>(signals_processed))}, detail::KV{std::string("signals_opened"), canonical_int(static_cast<int64_t>(signals_opened))}, detail::KV{std::string("signals_ignored"), canonical_int(static_cast<int64_t>(signals_ignored))}, detail::KV{std::string("equity_curve"), canonical_double_array(equity_curve)}, detail::KV{std::string("trades"), trades_json}, detail::KV{std::string("monthly_returns"), monthly_json}, detail::KV{std::string("yearly_returns"), yearly_json}, detail::KV{std::string("stats"), canonical_object({detail::KV{std::string("total_trades"), canonical_int(static_cast<int64_t>(s.total_trades))}, detail::KV{std::string("winning_trades"), canonical_int(static_cast<int64_t>(s.winning_trades))}, detail::KV{std::string("losing_trades"), canonical_int(static_cast<int64_t>(s.losing_trades))}, detail::KV{std::string("breakeven_trades"), canonical_int(static_cast<int64_t>(s.breakeven_trades))}, detail::KV{std::string("win_rate"), canonical_double(s.win_rate)}, detail::KV{std::string("average_win"), canonical_double(s.average_win)}, detail::KV{std::string("average_loss"), canonical_double(s.average_loss)}, detail::KV{std::string("average_rr"), canonical_double(s.average_rr)}, detail::KV{std::string("profit_factor"), canonical_double(s.profit_factor)}, detail::KV{std::string("expectancy"), canonical_double(s.expectancy)}, detail::KV{std::string("expectancy_r"), canonical_double(s.expectancy_r)}, detail::KV{std::string("gross_profit"), canonical_double(s.gross_profit)}, detail::KV{std::string("gross_loss"), canonical_double(s.gross_loss)}, detail::KV{std::string("net_profit"), canonical_double(s.net_profit)}, detail::KV{std::string("max_drawdown"), canonical_double(s.max_drawdown)}, detail::KV{std::string("max_drawdown_pct"), canonical_double(s.max_drawdown_pct)}, detail::KV{std::string("max_consecutive_losses"), canonical_int(static_cast<int64_t>(s.max_consecutive_losses))}, detail::KV{std::string("max_consecutive_wins"), canonical_int(static_cast<int64_t>(s.max_consecutive_wins))}, detail::KV{std::string("recovery_factor"), canonical_double(s.recovery_factor)}, detail::KV{std::string("sharpe"), canonical_double(s.sharpe)}, detail::KV{std::string("sortino"), canonical_double(s.sortino)}, detail::KV{std::string("calmar"), canonical_double(s.calmar)}, detail::KV{std::string("ulcer_index"), canonical_double(s.ulcer_index)}, detail::KV{std::string("total_commission"), canonical_double(s.total_commission)}, detail::KV{std::string("total_slippage"), canonical_double(s.total_slippage)}, detail::KV{std::string("total_return_pct"), canonical_double(s.total_return_pct)}, detail::KV{std::string("annualized_return"), canonical_double(s.annualized_return)}, detail::KV{std::string("annualized_volatility"), canonical_double(s.annualized_volatility)}})}}));
 }
 
 } // namespace strategy
