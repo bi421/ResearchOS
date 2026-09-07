@@ -31,7 +31,7 @@ jobs:
 
     - name: Lint production Python code with ruff (deterministic E,F,W)
       run: |
-        ruff check researchos macro_intelligence cpp_quant_engine/python --output-format=concise
+        ruff check researchos --exclude '**/tests/**' --output-format=concise
 
     - name: Run pytest suite
       run: |
