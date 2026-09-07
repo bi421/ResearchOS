@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from researchos.evidence.envelope import EvidenceEnvelope
 from researchos.evidence.repository import EvidenceRepository
 from researchos.objects.knowledge import Knowledge
 from researchos.storage.repository import ResearchRepository
