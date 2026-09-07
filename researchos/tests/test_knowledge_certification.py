@@ -2,13 +2,19 @@ from __future__ import annotations
 
 import pytest
 
-from researchos.evidence import EvidenceRepository, build_result_envelope, emit_result
-from researchos.evidence.finding_emission import certify_finding
-from researchos.evidence.knowledge_certification import KnowledgeCertification, certify_knowledge
+from researchos.evidence import (
+    EvidenceRepository,
+    KnowledgeCertification,
+    build_result_envelope,
+    certify_finding,
+    certify_knowledge,
+    emit_result,
+)
+from researchos.evidence.validation_certification import certify_validation
 from researchos.market_memory.evidence import create_evidence_record
 from researchos.objects.knowledge import Knowledge
 from researchos.quant_engine.validation.contracts import FoldResult, ValidationResult
-from researchos.evidence.validation_certification import certify_validation
+from researchos.storage.repository import ResearchRepository
 
 
 def _validation() -> ValidationResult:
@@ -68,7 +74,6 @@ def _knowledge() -> Knowledge:
 
 def test_validated_finding_enters_durable_knowledge_memory() -> None:
     evidence_repository, finding_hash = _seed_finding()
-    from researchos.storage.repository import ResearchRepository
 
     with ResearchRepository(":memory:") as research_repository:
         certification = certify_knowledge(
@@ -87,7 +92,6 @@ def test_validated_finding_enters_durable_knowledge_memory() -> None:
 
 def test_knowledge_rejects_missing_finding() -> None:
     evidence_repository = EvidenceRepository()
-    from researchos.storage.repository import ResearchRepository
 
     with ResearchRepository(":memory:") as research_repository:
         with pytest.raises(ValueError, match="Finding artifact not found"):
@@ -107,7 +111,6 @@ def test_knowledge_rejects_non_finding_source() -> None:
         created_at="2026-01-01T00:00:00+00:00",
     )
     emit_result(result, evidence_repository)
-    from researchos.storage.repository import ResearchRepository
 
     with ResearchRepository(":memory:") as research_repository:
         with pytest.raises(ValueError, match="must be a Finding artifact"):
