@@ -84,6 +84,7 @@ class EvidenceRepository:
                     envelope.lineage_hash,
                 ),
             )
+            _insert_evidence_mirror(cursor, envelope)
             for parent in envelope.parent_hashes:
                 self._insert_edge(
                     cursor,
@@ -91,7 +92,6 @@ class EvidenceRepository:
                     envelope.artifact_hash,
                     _default_relation(envelope.artifact_type),
                 )
-        self._repo.save_object(_envelope_as_object(envelope))
         return envelope
 
     def add_lineage_edge(
@@ -184,6 +184,33 @@ class EvidenceRepository:
             """,
             (parent_hash, child_hash, relation, now),
         )
+
+
+def _insert_evidence_mirror(cursor, envelope: EvidenceEnvelope) -> None:
+    """Persist the generic mirror without allowing overwrite or cross-type collision."""
+    data = envelope.to_dict()
+    data["object_type"] = "EvidenceEnvelope"
+    cursor.execute("SELECT object_type, data FROM objects WHERE id = ?", (envelope.artifact_hash,))
+    existing = cursor.fetchone()
+    if existing is not None:
+        existing_data = json.loads(existing[1])
+        if existing[0] != "EvidenceEnvelope" or existing_data != data:
+            raise ValueError(
+                f"Object id {envelope.artifact_hash} already exists with conflicting content"
+            )
+        return
+    cursor.execute(
+        """
+        INSERT INTO objects (id, object_type, created_at, data)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            envelope.artifact_hash,
+            "EvidenceEnvelope",
+            envelope.created_at,
+            json.dumps(data, ensure_ascii=False, default=str),
+        ),
+    )
 
 
 def _default_relation(artifact_type: str) -> str:
