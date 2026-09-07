@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+import pytest
+
 from researchos.evidence.dataset_emission import build_dataset_envelope, emit_dataset
 from researchos.evidence.envelope import build_envelope
 from researchos.evidence.experiment_emission import emit_experiment_with_dataset
@@ -197,7 +199,8 @@ def test_unvalidated_finding_cannot_promote_learning_or_knowledge() -> None:
     evidence_repo = EvidenceRepository(repository=research_repo)
 
     validation = build_envelope(
-        "Validation", {"status": "VALIDATED"}
+        "Validation",
+        {"validation_id": "validation-domain-001", "status": "VALIDATED"},
     )
     evidence_repo.append_artifact(validation)
     finding = build_envelope(
@@ -219,20 +222,17 @@ def test_unvalidated_finding_cannot_promote_learning_or_knowledge() -> None:
         object="exploratory_rule",
     )
 
-    try:
+    with pytest.raises(ValueError, match="VALIDATED"):
         certify_experiment_learning(
             learning, finding.artifact_hash, evidence_repo, research_repo
         )
-    except ValueError as exc:
-        assert "VALIDATED" in str(exc)
-    else:
-        raise AssertionError("unvalidated finding must not certify experiment learning")
+    assert research_repo.load_by_id(learning.id) is None
 
-    try:
+    with pytest.raises(ValueError, match="VALIDATED"):
         certify_knowledge(
             finding.artifact_hash, knowledge, evidence_repo, research_repo
         )
-    except ValueError as exc:
-        assert "VALIDATED" in str(exc)
-    else:
-        raise AssertionError("unvalidated finding must not certify knowledge")
+    assert research_repo.load_by_id(knowledge.id) is None
+    assert evidence_repo.count_artifacts() == 2
+    assert evidence_repo.count_edges() == 1
+    assert evidence_repo.verify_evidence() is True
