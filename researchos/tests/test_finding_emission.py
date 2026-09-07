@@ -25,7 +25,7 @@ def _validation() -> ValidationResult:
     )
 
 
-def _finding():
+def _finding(status: str = "VALIDATED"):
     return create_evidence_record(
         finding_name="bullish_crossover",
         dataset_id="xauusd-test",
@@ -40,7 +40,7 @@ def _finding():
         result={"probability_1d": 0.61},
         uncertainty={"ci95": [0.55, 0.67]},
         validation_method="walk_forward",
-        status="VALIDATED",
+        status=status,
     )
 
 
@@ -82,6 +82,14 @@ def test_finding_rejects_non_validation_parent() -> None:
 
     with pytest.raises(ValueError, match="requires a Validation artifact"):
         certify_finding(_finding(), result_hash, repository)
+
+
+def test_finding_rejects_unvalidated_status() -> None:
+    repository = EvidenceRepository()
+    validation = _seed_validation(repository)
+
+    with pytest.raises(ValueError, match="status='VALIDATED'"):
+        certify_finding(_finding("EXPLORATORY"), validation.validation_hash, repository)
 
 
 def test_finding_identity_excludes_observational_creation_time() -> None:
