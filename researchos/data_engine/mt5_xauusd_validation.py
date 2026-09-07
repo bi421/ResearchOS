@@ -1,6 +1,6 @@
 """Pure validation helpers for MT5 XAUUSD M1 acquisition.
 
-The MT5 terminal is deliberately not imported here.  This keeps validation
+The MT5 terminal is deliberately not imported here. This keeps validation
 portable and testable in CI while the acquisition adapter remains an external
 Python 3.12 boundary.
 """
@@ -31,6 +31,8 @@ class ValidationReport:
     unique_timestamps: int
     duplicate_timestamps: int
     out_of_range_rows: int
+    invalid_timestamp_rows: int
+    missing_field_rows: int
     invalid_ohlc_rows: int
     invalid_volume_flags: int
     negative_spread_rows: int
@@ -44,6 +46,8 @@ class ValidationReport:
             for value in (
                 self.duplicate_timestamps,
                 self.out_of_range_rows,
+                self.invalid_timestamp_rows,
+                self.missing_field_rows,
                 self.invalid_ohlc_rows,
                 self.invalid_volume_flags,
                 self.negative_spread_rows,
@@ -54,7 +58,7 @@ class ValidationReport:
 def _finite(value: object) -> bool:
     try:
         return math.isfinite(float(value))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return False
 
 
@@ -73,33 +77,48 @@ def validate_m1_rows(
 ) -> ValidationReport:
     """Validate broker rows without imposing a false 24/7 continuity rule."""
     materialized = list(rows)
-    timestamps = [_epoch_seconds(row["time"]) for row in materialized]
-    unique = set(timestamps)
+    timestamps: list[int] = []
+    invalid_timestamp_rows = 0
+    missing_field_rows = 0
 
+    for row in materialized:
+        if any(name not in row for name in REQUIRED_FIELDS):
+            missing_field_rows += 1
+            continue
+        try:
+            timestamps.append(_epoch_seconds(row["time"]))
+        except (TypeError, ValueError, OverflowError, OSError):
+            invalid_timestamp_rows += 1
+
+    unique = set(timestamps)
     duplicate_count = len(timestamps) - len(unique)
-    out_of_range = sum(
-        not (start_epoch <= ts <= end_epoch) for ts in timestamps
-    )
+    out_of_range = sum(not (start_epoch <= ts <= end_epoch) for ts in timestamps)
 
     invalid_ohlc = 0
     invalid_volume_flags = 0
     negative_spread = 0
     for row in materialized:
-        values = [row[name] for name in ("open", "high", "low", "close")]
-        if not all(_finite(value) for value in values):
-            invalid_ohlc += 1
-        else:
-            open_, high, low, close = map(float, values)
-            if (
-                open_ <= 0
-                or high <= 0
-                or low <= 0
-                or close <= 0
-                or high < max(open_, close)
-                or low > min(open_, close)
-                or high < low
-            ):
+        if any(name not in row for name in REQUIRED_FIELDS):
+            continue
+
+        try:
+            values = [row[name] for name in ("open", "high", "low", "close")]
+            if not all(_finite(value) for value in values):
                 invalid_ohlc += 1
+            else:
+                open_, high, low, close = map(float, values)
+                if (
+                    open_ <= 0
+                    or high <= 0
+                    or low <= 0
+                    or close <= 0
+                    or high < max(open_, close)
+                    or low > min(open_, close)
+                    or high < low
+                ):
+                    invalid_ohlc += 1
+        except (TypeError, ValueError, OverflowError):
+            invalid_ohlc += 1
 
         if not _finite(row["tick_volume"]) or float(row["tick_volume"]) < 0:
             invalid_volume_flags += 1
@@ -116,6 +135,8 @@ def validate_m1_rows(
         unique_timestamps=len(unique),
         duplicate_timestamps=duplicate_count,
         out_of_range_rows=out_of_range,
+        invalid_timestamp_rows=invalid_timestamp_rows,
+        missing_field_rows=missing_field_rows,
         invalid_ohlc_rows=invalid_ohlc,
         invalid_volume_flags=invalid_volume_flags,
         negative_spread_rows=negative_spread,
