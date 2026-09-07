@@ -8,7 +8,7 @@ from researchos.data_engine.boundary import (
     validated_dataset_ref,
 )
 from researchos.data_engine.candle import Candle
-from researchos.data_engine.contracts import DatasetStatus, ValidationReport
+from researchos.data_engine.contracts import ValidationReport
 from researchos.data_engine.dataset import HistoricalDataset
 from researchos.research_boundary import (
     RESEARCH_BOUNDARY_SCHEMA_VERSION,
