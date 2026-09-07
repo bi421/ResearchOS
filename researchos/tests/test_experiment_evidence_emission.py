@@ -1,28 +1,10 @@
-"""
-Tests for Phase 5.3b.2 — Experiment Evidence Emission.
-
-Covers:
-    - ``build_experiment_envelope`` determinism and identity.
-    - Payload projection from the existing ``Experiment`` contract:
-      experiment_hash, hypothesis identity, dataset references,
-      dataset_config snapshot, simulation_config snapshot, methodology/version.
-    - Persistence + retrieval via ``EvidenceRepository``.
-    - Dataset → Experiment lineage edge wiring.
-    - Hash-scheme-2 marker and strict payload contract.
-
-Verification requirements:
-    - identical experiment → identical artifact_hash
-    - changed config → different artifact_hash
-    - dataset linkage preserved
-    - artifact retrievable from EvidenceRepository
-    - lineage edge Dataset -> Experiment works
-"""
+"""Tests for Experiment evidence emission and Dataset → Experiment lineage."""
 
 from __future__ import annotations
 
 import pytest
 
-from researchos.evidence.envelope import HASH_SCHEME_VERSION, EvidenceEnvelope
+from researchos.evidence.envelope import HASH_SCHEME_VERSION, EvidenceEnvelope, build_envelope
 from researchos.evidence.experiment_emission import (
     EXPERIMENT_ARTIFACT_TYPE,
     EXPERIMENT_EVIDENCE_VERSION,
@@ -33,24 +15,12 @@ from researchos.evidence.experiment_emission import (
     experiment_payload,
 )
 from researchos.evidence.repository import EvidenceRepository
-from researchos.experiments.contracts import (
-    DatasetConfig,
-    MetricDefinition,
-    SimulationConfig,
-)
+from researchos.experiments.contracts import DatasetConfig, MetricDefinition, SimulationConfig
 from researchos.experiments.experiment import Experiment
 from researchos.storage.repository import ResearchRepository
 
 
-def _make_experiment(
-    hypothesis_id="hyp1",
-    name="Exp",
-    dataset=None,
-    sim=None,
-    params=None,
-    version="1.0.0",
-    status=None,
-) -> Experiment:
+def _make_experiment(hypothesis_id="hyp1", name="Exp", dataset=None, sim=None, params=None, version="1.0.0", status=None) -> Experiment:
     dataset = dataset or DatasetConfig(source="yahoo", symbols=["AAPL"])
     sim = sim or SimulationConfig(seed=42)
     exp = Experiment(
@@ -71,6 +41,12 @@ def _make_repo() -> EvidenceRepository:
     return EvidenceRepository(repository=ResearchRepository(db_path=":memory:"))
 
 
+def _seed_parent(repo: EvidenceRepository, artifact_type: str = "Dataset") -> str:
+    parent = build_envelope(artifact_type, {"fixture": artifact_type, "id": "parent"}, version="1.0.0")
+    repo.append_artifact(parent)
+    return parent.artifact_hash
+
+
 class TestExperimentPayload:
     def test_payload_preserves_content(self):
         exp = _make_experiment()
@@ -85,9 +61,7 @@ class TestExperimentPayload:
         assert payload["parameters"] == {"lookback": 20}
 
     def test_payload_excludes_created_at(self):
-        exp = _make_experiment()
-        payload = experiment_payload(exp)
-        assert "created_at" not in payload
+        assert "created_at" not in experiment_payload(_make_experiment())
 
     def test_payload_does_not_mutate_experiment(self):
         exp = _make_experiment()
@@ -106,17 +80,13 @@ class TestBuildExperimentEnvelope:
         assert e1.lineage_hash == e2.lineage_hash
 
     def test_changed_dataset_config_different_artifact_hash(self):
-        d1 = DatasetConfig(source="yahoo", symbols=["AAPL"])
-        d2 = DatasetConfig(source="google", symbols=["GOOG"])
-        e1 = build_experiment_envelope(_make_experiment(dataset=d1))
-        e2 = build_experiment_envelope(_make_experiment(dataset=d2))
+        e1 = build_experiment_envelope(_make_experiment(dataset=DatasetConfig(source="yahoo", symbols=["AAPL"])))
+        e2 = build_experiment_envelope(_make_experiment(dataset=DatasetConfig(source="google", symbols=["GOOG"])))
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_changed_sim_config_different_artifact_hash(self):
-        s1 = SimulationConfig(seed=42)
-        s2 = SimulationConfig(seed=999)
-        e1 = build_experiment_envelope(_make_experiment(sim=s1))
-        e2 = build_experiment_envelope(_make_experiment(sim=s2))
+        e1 = build_experiment_envelope(_make_experiment(sim=SimulationConfig(seed=42)))
+        e2 = build_experiment_envelope(_make_experiment(sim=SimulationConfig(seed=999)))
         assert e1.artifact_hash != e2.artifact_hash
 
     def test_changed_params_different_artifact_hash(self):
@@ -130,8 +100,7 @@ class TestBuildExperimentEnvelope:
 
     def test_scheme_version_is_2(self):
         assert HASH_SCHEME_VERSION == "2"
-        e = build_experiment_envelope(_make_experiment())
-        assert e.verify() is True
+        assert build_experiment_envelope(_make_experiment()).verify() is True
 
     def test_version_binds_into_identity(self):
         e1 = build_experiment_envelope(_make_experiment(version="1.0.0"))
@@ -146,21 +115,17 @@ class TestBuildExperimentEnvelope:
 
 class TestDatasetLineage:
     def test_dataset_parent_preserved(self):
-        exp = _make_experiment()
-        e = build_experiment_envelope(exp, parent_hashes=["ds-hash-1"])
+        e = build_experiment_envelope(_make_experiment(), parent_hashes=["ds-hash-1"])
         assert "ds-hash-1" in e.parent_hashes
 
     def test_attach_dataset_parent_adds_hash(self):
-        exp = _make_experiment()
-        base = build_experiment_envelope(exp)
+        base = build_experiment_envelope(_make_experiment())
         linked = attach_dataset_parent(base, "ds-hash-1")
         assert "ds-hash-1" in linked.parent_hashes
-        # Original envelope unchanged (immutability).
         assert base.parent_hashes == ()
 
     def test_dataset_parent_preserved_in_payload_linked(self):
-        exp = _make_experiment(dataset=DatasetConfig(source="yahoo"))
-        base = build_experiment_envelope(exp)
+        base = build_experiment_envelope(_make_experiment(dataset=DatasetConfig(source="yahoo")))
         linked = attach_dataset_parent(base, "ds-hash-1")
         assert linked.payload["dataset_config"]["source"] == "yahoo"
         assert linked.verify() is True
@@ -172,9 +137,7 @@ class TestEmitExperiment:
         e = build_experiment_envelope(_make_experiment())
         emit_experiment(e, repo)
         fetched = repo.get_artifact(e.artifact_hash)
-        assert fetched is not None
-        assert fetched.artifact_type == "Experiment"
-        assert fetched.verify() is True
+        assert fetched is not None and fetched.artifact_type == "Experiment" and fetched.verify() is True
 
     def test_emit_returns_stored_envelope(self):
         repo = _make_repo()
@@ -185,32 +148,27 @@ class TestEmitExperiment:
 
     def test_emit_rejects_non_experiment_type(self):
         repo = _make_repo()
-        from researchos.evidence.envelope import build_envelope
-
         non_exp = build_envelope("Feature", {"x": 1})
         with pytest.raises(ValueError):
             emit_experiment(non_exp, repo)
 
     def test_emit_default_in_memory_repo(self):
         e = build_experiment_envelope(_make_experiment())
-        stored = emit_experiment(e)
-        assert stored.artifact_hash == e.artifact_hash
+        assert emit_experiment(e).artifact_hash == e.artifact_hash
 
 
 class TestDatasetExperimentLineage:
     def test_lineage_edge_dataset_to_experiment(self):
         repo = _make_repo()
-        ds_hash = "dataset-hash-0001"
+        ds_hash = _seed_parent(repo)
         e = build_experiment_envelope(_make_experiment(), parent_hashes=[ds_hash])
         emit_experiment(e, repo)
-        children = repo.get_children(ds_hash)
-        assert e.artifact_hash in children
-        parents = repo.get_parents(e.artifact_hash)
-        assert ds_hash in parents
+        assert e.artifact_hash in repo.get_children(ds_hash)
+        assert ds_hash in repo.get_parents(e.artifact_hash)
 
     def test_emit_experiment_with_dataset_links_lineage(self):
         repo = _make_repo()
-        ds_hash = "dataset-hash-0002"
+        ds_hash = _seed_parent(repo)
         stored = emit_experiment_with_dataset(_make_experiment(), ds_hash, repo)
         assert ds_hash in stored.parent_hashes
         assert repo.count_edges() == 1
@@ -218,11 +176,6 @@ class TestDatasetExperimentLineage:
 
 
 class TestProgressTracking:
-    """Track progress against the Phase 5.3b.2 acceptance criteria."""
-
-    def _make_repo(self) -> EvidenceRepository:
-        return _make_repo()
-
     def test_acceptance_identical_identical_hash(self):
         assert build_experiment_envelope(_make_experiment()).artifact_hash == build_experiment_envelope(_make_experiment()).artifact_hash
 
@@ -245,7 +198,7 @@ class TestProgressTracking:
 
     def test_acceptance_dataset_to_experiment_edge(self):
         repo = _make_repo()
-        ds_hash = "ds-hash-lineage"
+        ds_hash = _seed_parent(repo)
         stored = emit_experiment_with_dataset(_make_experiment(), ds_hash, repo)
         assert repo.get_children(ds_hash) == [stored.artifact_hash]
 
