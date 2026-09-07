@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from researchos.risk import RiskInput, RiskPolicy, TradeStatistics, calculate_risk
+from researchos.risk import RiskInput, TradeStatistics, calculate_risk
 
 
 def _request(**overrides: object) -> RiskInput:
