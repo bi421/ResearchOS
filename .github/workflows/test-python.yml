@@ -67,5 +67,4 @@ jobs:
       run: |
         echo "Python test suite FAILED"
         echo "All code changes require passing tests before merge."
-        echo "All code changes require passing tests before merge."
         exit 1
