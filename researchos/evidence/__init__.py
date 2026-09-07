@@ -43,6 +43,11 @@ from researchos.evidence.finding_emission import (
     finding_hash,
     finding_payload,
 )
+from researchos.evidence.knowledge_certification import (
+    KNOWLEDGE_ARTIFACT_TYPE,
+    KnowledgeCertification,
+    certify_knowledge,
+)
 from researchos.evidence.repository import EvidenceRepository
 from researchos.evidence.result_emission import (
     RESULT_ARTIFACT_TYPE,
@@ -141,4 +146,7 @@ __all__ = [
     "emit_finding",
     "finding_hash",
     "finding_payload",
+    "KNOWLEDGE_ARTIFACT_TYPE",
+    "KnowledgeCertification",
+    "certify_knowledge",
 ]
