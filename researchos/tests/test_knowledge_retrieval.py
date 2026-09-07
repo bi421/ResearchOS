@@ -83,6 +83,37 @@ def test_query_is_exact_deterministic_and_filters_unvalidated(repo: ResearchRepo
     assert [item.id for item in first] == [item.id for item in second]
 
 
+def test_query_knowledge_exposes_subject_predicate_object_contract(repo: ResearchRepository):
+    finding_hash, _ = _seed_chain(repo)
+    matching = Knowledge(
+        type="Event_Impact",
+        subject="XAUUSD",
+        predicate="response",
+        object="higher",
+        confidence=0.8,
+        source_references=[finding_hash],
+    )
+    different_object = Knowledge(
+        type="Event_Impact",
+        subject="XAUUSD",
+        predicate="response",
+        object="lower",
+        confidence=0.9,
+        source_references=[finding_hash],
+    )
+    repo.save_object(matching)
+    repo.save_object(different_object)
+
+    retrieval = KnowledgeRetrieval(repo, EvidenceRepository(repo))
+    results = retrieval.query_knowledge(
+        subject="XAUUSD",
+        predicate="response",
+        object="higher",
+    )
+
+    assert [item.id for item in results] == [matching.id]
+
+
 def test_retrieve_returns_complete_upstream_provenance(repo: ResearchRepository):
     finding_hash, dataset_hash = _seed_chain(repo)
     knowledge = Knowledge(
