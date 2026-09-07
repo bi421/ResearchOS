@@ -108,6 +108,8 @@ def _walk_forward_contract(sample_count: int, config: Phase51Config) -> tuple[bo
 def run_phase51(close, high, low, volume, config: Phase51Config | None = None) -> Phase51Result:
     """Run Phase 5.1 with explicit data, leakage, and OOS validation predicates."""
     cfg = config or Phase51Config()
+    if cfg.horizon <= 0 or cfg.train_size <= 0 or cfg.validation_size <= 0 or cfg.step_size <= 0:
+        return Phase51Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="Invalid temporal configuration")
     if not _data_valid(close, high, low, volume):
         return Phase51Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="Invalid non-finite or misaligned OHLCV data")
     if len(close) < cfg.train_size + cfg.horizon + cfg.validation_size:
