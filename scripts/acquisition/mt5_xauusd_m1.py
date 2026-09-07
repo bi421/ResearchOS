@@ -9,6 +9,8 @@ Example:
     python scripts/acquisition/mt5_xauusd_m1.py \
         --start 2021-01-01 --end 2025-12-31 \
         --output-dir data/raw/mt5/xauusd
+
+``--end`` is inclusive through 23:59:59 UTC.
 """
 
 from __future__ import annotations
@@ -19,8 +21,13 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 from pathlib import Path
+import sys
 import time
 from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from researchos.data_engine.mt5_xauusd_validation import validate_m1_rows
 
@@ -78,7 +85,9 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
-def fetch_chunk(mt5: Any, start: datetime, end: datetime, retries: int, delay: float) -> list[dict[str, Any]]:
+def fetch_chunk(
+    mt5: Any, start: datetime, end: datetime, retries: int, delay: float
+) -> list[dict[str, Any]]:
     last_error: object = None
     for attempt in range(1, retries + 1):
         rates = mt5.copy_rates_range("XAUUSD", mt5.TIMEFRAME_M1, start, end)
@@ -100,6 +109,7 @@ def main() -> int:
     parser.add_argument("--retries", type=int, default=5)
     parser.add_argument("--retry-delay", type=float, default=2.0)
     args = parser.parse_args()
+    args.end = args.end + timedelta(days=1) - timedelta(seconds=1)
 
     if args.end < args.start:
         raise SystemExit("--end must be on or after --start")
