@@ -2,7 +2,7 @@ name: Python Tests
 
 on:
   push:
-    branches: [ main, master, develop, feature/* ]
+    branches: [ main, master, develop, feature/*, production-hardening ]
   pull_request:
     branches: [ main, master, develop ]
 
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
     - uses: actions/checkout@v7
@@ -35,10 +35,8 @@ jobs:
 
     - name: Run pytest suite
       run: |
-        # These six legacy/integration suites are intentionally excluded because
-        # they require external broker/live-market infrastructure or specialized
-        # runtime state that is not available in deterministic GitHub CI.
-        # They remain runnable locally and are not treated as passing CI tests.
+        # These infrastructure-dependent suites are intentionally excluded from
+        # deterministic GitHub CI. They remain runnable locally.
         pytest researchos/tests/ tests/unit/ researchos/data_engine/tests/ researchos/market_memory/tests/ researchos/experiments/phase51/tests/ researchos/experiments/phase52/tests/ --ignore=researchos/tests/test_ensemble.py --ignore=researchos/tests/test_sp500.py --ignore=researchos/tests/test_strategies_real.py --ignore=researchos/tests/test_tpsl.py --ignore=researchos/tests/test_tpsl_grid.py --ignore=researchos/tests/test_cpp_backtest_regression.py -v --tb=short --junitxml=test-results.xml
 
     - name: Upload test results
@@ -51,9 +49,6 @@ jobs:
     - name: Generate coverage report
       if: matrix.python-version == '3.11'
       run: |
-        # Keep the coverage population identical to the CI test population so
-        # the six infrastructure-dependent suites cannot silently disappear
-        # from coverage accounting without this explicit exclusion.
         pytest researchos/tests/ tests/unit/ researchos/data_engine/tests/ researchos/market_memory/tests/ researchos/experiments/phase51/tests/ researchos/experiments/phase52/tests/ --ignore=researchos/tests/test_ensemble.py --ignore=researchos/tests/test_sp500.py --ignore=researchos/tests/test_strategies_real.py --ignore=researchos/tests/test_tpsl.py --ignore=researchos/tests/test_tpsl_grid.py --ignore=researchos/tests/test_cpp_backtest_regression.py --cov=researchos --cov-report=xml --cov-report=html
 
     - name: Upload coverage to Codecov
