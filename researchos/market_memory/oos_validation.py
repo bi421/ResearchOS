@@ -57,13 +57,16 @@ def assert_label_boundaries(
     validation_start = min(event.timestamp for event in validation_events)
     test_start = min(event.timestamp for event in test_events)
     train_ends = [label_end_getter(event) for event in train_events]
-    train_ends = [value for value in train_ends if value is not None]
     validation_ends = [label_end_getter(event) for event in validation_events]
-    validation_ends = [value for value in validation_ends if value is not None]
 
-    if train_ends and max(train_ends) >= validation_start:
+    if any(value is None for value in train_ends):
+        raise ValueError("label boundary audit requires realized end timestamp for every train event")
+    if any(value is None for value in validation_ends):
+        raise ValueError("label boundary audit requires realized end timestamp for every validation event")
+
+    if max(train_ends) >= validation_start:
         raise ValueError("label boundary leakage: train label extends into validation")
-    if validation_ends and max(validation_ends) >= test_start:
+    if max(validation_ends) >= test_start:
         raise ValueError("label boundary leakage: validation label extends into test")
 
 
