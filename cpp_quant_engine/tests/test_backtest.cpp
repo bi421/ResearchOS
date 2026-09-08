@@ -224,32 +224,6 @@ TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
   EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
 }
 
-TEST(BacktestEngineTest, WalkForwardNeverFallsBackToFullSample) {
-  InMemoryOHLCVSource data;
-  for (int i = 0; i < 10; ++i) {
-    data.data.push_back(OHLCV{
-      .timestamp = now(),
-      .open = 100.0,
-      .high = 101.0,
-      .low = 99.0,
-      .close = 100.0,
-      .volume = 1000.0
-    });
-  }
-
-  BacktestEngine engine;
-  auto result = engine.run_walk_forward(
-      data,
-      [](size_t, const std::vector<OHLCV>&) -> SignalResult {
-        return {TradeDirection::Buy, 1.0};
-      },
-      5,
-      2);
-
-  ASSERT_TRUE(result.is_err());
-  EXPECT_EQ(ErrorCode::NotImplemented, result.error().code());
-}
-
 TEST(BacktestEngineTest, WalkForwardProducesDisjointOosFolds) {
   InMemoryOHLCVSource data;
   const auto base_time = now();
