@@ -69,7 +69,11 @@ def _resolve_feature_index(config: Phase52Config, names: Sequence[str]) -> int:
     return 0
 
 
-def _evaluate_model(est: EmpiricalProbabilityEstimator, val_features, val_labels: Sequence[float]) -> tuple[ModelResult, list[int], list[dict[int, float]]]:
+def _evaluate_model(
+    est: EmpiricalProbabilityEstimator,
+    val_features,
+    val_labels: Sequence[float],
+) -> tuple[ModelResult, list[int], list[dict[int, float]]]:
     preds: list[int] = []
     probs: list[dict[int, float]] = []
     for row in val_features:
@@ -149,12 +153,7 @@ def run_phase52(
     timestamps: Sequence[object] | None = None,
     macro_timestamps: dict[str, Sequence[object]] | None = None,
 ) -> Phase52Result:
-    """Run Phase 5.2 only with an explicit timestamp identity contract.
-
-    ``timestamps`` and ``macro_timestamps`` are mandatory for empirical
-    execution. The legacy value-only API is intentionally blocked so a caller
-    cannot bypass exact timestamp validation with equal-length arrays.
-    """
+    """Run Phase 5.2 only with an explicit timestamp identity contract."""
     cfg = config or Phase52Config()
 
     if timestamps is None or macro_timestamps is None:
@@ -194,9 +193,17 @@ def run_phase52(
     if len(close) < cfg.train_size + cfg.validation_size:
         return Phase52Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="REAL XAUUSD DATA REQUIRED (insufficient bars)")
 
-    missing_required = [s for s in cfg.required_macro_symbols if s not in macro_factor_series or len(macro_factor_series[s]) != len(list(close))]
+    missing_required = [
+        s for s in cfg.required_macro_symbols
+        if s not in macro_factor_series or len(macro_factor_series[s]) != len(close)
+    ]
     if missing_required:
-        return Phase52Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason=f"REQUIRED MACRO DATA MISSING OR MISALIGNED: {', '.join(missing_required)}", macro_symbols_missing=tuple(missing_required))
+        return Phase52Result.blocked(
+            symbol=cfg.symbol,
+            timeframe=cfg.timeframe,
+            reason=f"REQUIRED MACRO DATA MISSING OR MISALIGNED: {', '.join(missing_required)}",
+            macro_symbols_missing=tuple(missing_required),
+        )
 
     dataset, macro_diag = build_macro_augmented_dataset(close, high, low, volume, macro_factor_series, cfg.horizon, cfg.threshold)
     if dataset.sample_count < cfg.train_size + cfg.validation_size:
