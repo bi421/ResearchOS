@@ -1,0 +1,1 @@
+This implementation is OOS evaluation for a fixed SignalFn. It is not a claim of model fitting. The API must gain an explicit train callback before fitted-parameter walk-forward certification.

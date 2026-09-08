@@ -1,0 +1,1 @@
+Status: implemented on feat/real-walk-forward. The remaining certification gate is CI plus review of statistical dependence and dataset provenance.

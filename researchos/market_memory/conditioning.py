@@ -22,30 +22,20 @@ from researchos.market_memory.event_schema import (
     MarketEvent,
 )
 
+
 # =============================================================================
 # Condition Evaluation
 # =============================================================================
 
 
 def evaluate_condition(event: MarketEvent, spec: ConditionSpec) -> bool:
-    """
-    Evaluate whether a single event matches a condition specification.
-
-    Args:
-        event: The market event to evaluate
-        spec: The condition specification
-
-    Returns:
-        True if the event matches all conditions
-    """
+    """Evaluate whether a single event matches every condition in ``spec``."""
     if event.outcome is None:
         return False
 
     ctx = event.context
     for key, value in spec.conditions.items():
         if key == "direction":
-            if ctx.market_regime.startswith("Trending"):
-                pass
             if event.direction != value:
                 return False
         elif key == "market_regime":
@@ -64,19 +54,17 @@ def evaluate_condition(event: MarketEvent, spec: ConditionSpec) -> bool:
             if bool(ctx.sma_fast > ctx.sma_slow) != value:
                 return False
         elif key == "atr_percentile":
-            # Not implemented in V1
+            # Not implemented in V1: fail closed rather than silently ignoring it.
             return False
         else:
-            # Unknown condition key
+            # Unknown condition key: fail closed to prevent accidental broad matches.
             return False
     return True
 
 
 def filter_events(events: list[MarketEvent], spec: ConditionSpec) -> list[MarketEvent]:
-    """
-    Filter events that match a condition specification.
-    """
-    return [e for e in events if evaluate_condition(e, spec)]
+    """Filter events that match a condition specification."""
+    return [event for event in events if evaluate_condition(event, spec)]
 
 
 # =============================================================================
@@ -117,28 +105,28 @@ def compute_conditional_statistics(
     bootstrap_seed: int = 42,
     confidence_level: float = 0.95,
 ) -> ConditionalResult:
-    """
-    Compute conditional statistics for events matching a condition.
+    """Compute deterministic conditional statistics for matching events.
 
-    Args:
-        events: All market events
-        spec: Condition specification
-        outcome_field: Field name in EventOutcome to analyze
-        bootstrap_num_resamples: Number of bootstrap resamples
-        bootstrap_seed: Random seed for bootstrap
-        confidence_level: Confidence level for CI
-
-    Returns:
-        ConditionalResult with computed statistics
+    Invalid statistical parameters are rejected explicitly. Non-finite outcome
+    values are excluded from the empirical sample rather than contaminating the
+    result. No missing-value repair or interpolation is performed.
     """
+    if bootstrap_num_resamples < 1:
+        raise ValueError("bootstrap_num_resamples must be >= 1")
+    if not 0.0 < confidence_level < 1.0:
+        raise ValueError("confidence_level must be strictly between 0 and 1")
+    if not isinstance(bootstrap_seed, int):
+        raise TypeError("bootstrap_seed must be an int")
+    if not outcome_field or not isinstance(outcome_field, str):
+        raise ValueError("outcome_field must be a non-empty string")
+
     matched = filter_events(events, spec)
 
-    # Extract outcome values
-    values = []
-    for e in matched:
-        val = getattr(e.outcome, outcome_field, None) if e.outcome else None
-        if val is not None and isinstance(val, (int, float)):
-            values.append(float(val))
+    values: list[float] = []
+    for event in matched:
+        value = getattr(event.outcome, outcome_field, None) if event.outcome else None
+        if isinstance(value, (int, float)) and math.isfinite(float(value)):
+            values.append(float(value))
 
     n = len(values)
     if n == 0:
@@ -149,27 +137,19 @@ def compute_conditional_statistics(
             raw_probability=0.0,
             mean_return=0.0,
             std_return=0.0,
-            status="INCONCLUSIVE",
-            notes="No events matched condition",
+            status=EvidenceStatus.INCONCLUSIVE.value,
+            notes="No finite outcomes matched condition",
         )
 
     mean_val = _mean(values)
     std_val = _std(values)
-
-    # Probability of positive return
-    positive_count = sum(1 for v in values if v > 0)
-    raw_prob = positive_count / n if n > 0 else 0.0
-
-    # Bootstrap confidence interval for mean
+    positive_count = sum(1 for value in values if value > 0)
+    raw_prob = positive_count / n
     ci = _bootstrap_mean_ci(values, bootstrap_num_resamples, bootstrap_seed, confidence_level)
 
-    # Status determination
     if n < 5:
         status = EvidenceStatus.EXPLORATORY.value
         notes = f"Small sample (n={n})"
-    elif n < 20:
-        status = EvidenceStatus.UNVALIDATED.value
-        notes = f"Moderate sample (n={n}), needs OOS validation"
     else:
         status = EvidenceStatus.UNVALIDATED.value
         notes = f"Sample n={n}, awaiting temporal validation"
@@ -195,28 +175,27 @@ def _bootstrap_mean_ci(
     seed: int,
     confidence_level: float,
 ) -> tuple[float, float] | None:
-    """
-    Compute bootstrap confidence interval for the mean.
-    """
-    import random
-
+    """Compute a deterministic percentile-bootstrap confidence interval."""
     if len(values) < 2:
         return None
+    if num_resamples < 1:
+        raise ValueError("num_resamples must be >= 1")
+    if not 0.0 < confidence_level < 1.0:
+        raise ValueError("confidence_level must be strictly between 0 and 1")
+
+    import random
 
     rng = random.Random(seed)
     n = len(values)
-    resample_means = []
-    for _ in range(num_resamples):
-        resample = [rng.choice(values) for _ in range(n)]
-        resample_means.append(_mean(resample))
-
-    resample_means.sort()
+    resample_means = [
+        _mean([rng.choice(values) for _ in range(n)])
+        for _ in range(num_resamples)
+    ]
     alpha = 1.0 - confidence_level
-    lower_idx = int(math.floor(alpha / 2.0 * num_resamples))
-    upper_idx = int(math.floor((1.0 - alpha / 2.0) * num_resamples))
-    lower_idx = max(0, min(lower_idx, num_resamples - 1))
-    upper_idx = max(0, min(upper_idx, num_resamples - 1))
-    return (resample_means[lower_idx], resample_means[upper_idx])
+    return (
+        _percentile(resample_means, alpha / 2.0),
+        _percentile(resample_means, 1.0 - alpha / 2.0),
+    )
 
 
 # =============================================================================
@@ -226,17 +205,15 @@ def _bootstrap_mean_ci(
 
 @dataclass
 class MultipleTestingAudit:
-    """
-    Audit trail for multiple hypothesis testing.
-    """
+    """Audit trail for multiple hypothesis testing."""
 
     total_hypotheses_tested: int = 0
-    conditions_tested: list[str] = None
+    conditions_tested: list[str] | None = None
     selection_process: str = ""
     correction_applied: str = "None"
     limitations: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.conditions_tested is None:
             self.conditions_tested = []
 

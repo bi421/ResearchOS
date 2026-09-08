@@ -156,6 +156,147 @@ TEST(BacktestEngineTest, RunWithSignal) {
   EXPECT_EQ(100, result.value().total_bars);
 }
 
+TEST(BacktestEngineTest, SignalsExecuteAtFollowingBarOpen) {
+  InMemoryOHLCVSource data;
+  data.data.push_back(OHLCV{.timestamp = now(), .open = 100.0, .high = 105.0,
+                            .low = 95.0, .close = 104.0, .volume = 1000.0});
+  data.data.push_back(OHLCV{.timestamp = now() + std::chrono::minutes(1),
+                            .open = 120.0, .high = 125.0, .low = 115.0,
+                            .close = 122.0, .volume = 1000.0});
+  data.data.push_back(OHLCV{.timestamp = now() + std::chrono::minutes(2),
+                            .open = 121.0, .high = 123.0, .low = 119.0,
+                            .close = 121.0, .volume = 1000.0});
+
+  BacktestEngine engine;
+  BacktestConfig cfg;
+  cfg.initial_capital = 100000.0;
+  cfg.commission_pct = 0.0;
+  cfg.slippage_pct = 0.0;
+  cfg.allow_short = false;
+  engine.set_config(cfg);
+
+  auto result = engine.run(data, [](size_t index, const std::vector<OHLCV>&) -> SignalResult {
+    if (index == 0) return {TradeDirection::Buy, 1.0};
+    return {TradeDirection::Buy, 0.0};
+  });
+
+  ASSERT_TRUE(result.is_ok());
+  const auto closed = result.value().trade_book.closed_trades();
+  ASSERT_EQ(1u, closed.size());
+  EXPECT_DOUBLE_EQ(120.0, closed[0].entry_price);
+  EXPECT_DOUBLE_EQ(121.0, closed[0].exit_price);
+}
+
+TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
+  InMemoryOHLCVSource data;
+  for (int i = 0; i < 3; ++i) {
+    data.data.push_back(OHLCV{
+      .timestamp = now() + std::chrono::minutes(i),
+      .open = 100.0,
+      .high = 100.0,
+      .low = 100.0,
+      .close = 100.0,
+      .volume = 1000.0
+    });
+  }
+
+  BacktestEngine engine;
+  BacktestConfig cfg;
+  cfg.initial_capital = 100000.0;
+  cfg.commission_pct = 0.0;
+  cfg.slippage_pct = 0.0;
+  cfg.allow_short = true;
+  engine.set_config(cfg);
+
+  auto result = engine.run(data, [](size_t index, const std::vector<OHLCV>&) -> SignalResult {
+    if (index == 0) return {TradeDirection::Sell, 10.0};
+    if (index == 1) return {TradeDirection::Buy, 15.0};
+    return {TradeDirection::Buy, 0.0};
+  });
+
+  ASSERT_TRUE(result.is_ok());
+  const auto closed = result.value().trade_book.closed_trades();
+  ASSERT_EQ(2u, closed.size());
+  EXPECT_EQ(TradeDirection::Sell, closed[0].direction);
+  EXPECT_DOUBLE_EQ(10.0, closed[0].quantity);
+  EXPECT_EQ(TradeDirection::Buy, closed[1].direction);
+  EXPECT_DOUBLE_EQ(5.0, closed[1].quantity);
+  EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
+}
+
+TEST(BacktestEngineTest, WalkForwardProducesDisjointOosFolds) {
+  InMemoryOHLCVSource data;
+  const auto base_time = now();
+  for (int i = 0; i < 18; ++i) {
+    data.data.push_back(OHLCV{
+      .timestamp = base_time + std::chrono::minutes(i),
+      .open = 100.0 + i,
+      .high = 101.0 + i,
+      .low = 99.0 + i,
+      .close = 100.0 + i,
+      .volume = 1000.0
+    });
+  }
+
+  BacktestEngine engine;
+  BacktestConfig cfg;
+  cfg.initial_capital = 100000.0;
+  cfg.commission_pct = 0.0;
+  cfg.slippage_pct = 0.0;
+  cfg.allow_short = false;
+  engine.set_config(cfg);
+
+  std::vector<size_t> observed_oos_indices;
+  std::vector<size_t> observed_history_sizes;
+  auto result = engine.run_walk_forward(
+      data,
+      [&data, &observed_oos_indices, &observed_history_sizes](
+          size_t index, const std::vector<OHLCV>& history) -> SignalResult {
+        // The callback receives the global OOS index, while history is
+        // fold-local. Therefore history.size() is intentionally not index + 1.
+        EXPECT_GE(index, 4u);
+        EXPECT_LT(index, data.size());
+        EXPECT_GE(history.size(), 5u);
+        EXPECT_LE(history.size(), 6u);
+        if (!history.empty() && index < data.size()) {
+          // The newest history bar must be exactly the current OOS bar; no
+          // future bar may be visible to the signal callback.
+          EXPECT_EQ(history.back().timestamp, data[index].timestamp);
+        }
+        observed_oos_indices.push_back(index);
+        observed_history_sizes.push_back(history.size());
+        return {TradeDirection::Buy, 0.0};
+      },
+      4,
+      2);
+
+  ASSERT_TRUE(result.is_ok());
+  EXPECT_EQ(8u, result.value().total_bars);
+  EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
+  EXPECT_EQ(0u, result.value().num_trades);
+  ASSERT_EQ(8u, observed_oos_indices.size());
+  EXPECT_EQ((std::vector<size_t>{4, 5, 8, 9, 12, 13, 16, 17}), observed_oos_indices);
+  EXPECT_EQ((std::vector<size_t>{5, 6, 5, 6, 5, 6, 5, 6}), observed_history_sizes);
+}
+
+TEST(BacktestEngineTest, WalkForwardRejectsIncompleteFold) {
+  InMemoryOHLCVSource data;
+  for (int i = 0; i < 5; ++i) {
+    data.data.push_back(OHLCV{.timestamp = now(), .open = 100.0, .high = 101.0,
+                              .low = 99.0, .close = 100.0, .volume = 1000.0});
+  }
+  BacktestEngine engine;
+  auto result = engine.run_walk_forward(
+      data,
+      [](size_t, const std::vector<OHLCV>&) -> SignalResult {
+        return {TradeDirection::Buy, 1.0};
+      },
+      4,
+      2);
+  ASSERT_TRUE(result.is_err());
+  EXPECT_EQ(ErrorCode::InvalidArgument, result.error().code());
+}
+
 TEST(BacktestEngineTest, EmptyData) {
   InMemoryOHLCVSource data;
   BacktestEngine engine;
