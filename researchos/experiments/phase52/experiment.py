@@ -32,6 +32,7 @@ from researchos.experiments.phase51.statistics import evaluate_significance
 from .alignment import validate_exact_timestamp_alignment
 from .contracts import BaselineResult, ModelResult, Phase52Result
 from .dataset import build_macro_augmented_dataset
+from .provenance import build_input_provenance
 
 
 @dataclass
@@ -205,6 +206,17 @@ def run_phase52(
             macro_symbols_missing=tuple(missing_required),
         )
 
+    input_provenance = build_input_provenance(
+        target_timestamps,
+        close,
+        high,
+        low,
+        volume,
+        macro_timestamps,
+        macro_factor_series,
+        cfg.required_macro_symbols,
+    )
+
     dataset, macro_diag = build_macro_augmented_dataset(close, high, low, volume, macro_factor_series, cfg.horizon, cfg.threshold)
     if dataset.sample_count < cfg.train_size + cfg.validation_size:
         return Phase52Result.blocked(symbol=cfg.symbol, timeframe=cfg.timeframe, reason="REAL XAUUSD + MACRO DATA REQUIRED (insufficient aligned samples after merge)", macro_symbols_present=macro_diag.symbols_present, macro_symbols_missing=macro_diag.symbols_missing)
@@ -246,7 +258,7 @@ def run_phase52(
     calibration = evaluate_calibration(all_probs, all_actuals, num_bins=cfg.n_bins, model_brier=model.brier_score, baseline_brier=baseline.brier_score, baseline=baseline)
     significance = evaluate_significance(all_model_preds, all_base_preds, all_actuals, cfg.significance_level)
     flags = aggregate_outcome(data_valid=True, leakage_check=True, out_of_sample=True, cost_adjusted=cfg.cost_applied, reproducible=True, model_accuracy=model.accuracy, baseline_accuracy=baseline.accuracy, net_accuracy_all=cost.net_accuracy_all, significant=significance.significant, min_sample_count=cfg.min_sample_count, validation_sample_count=len(all_actuals), brier_model=model.brier_score, brier_baseline=baseline.brier_score)
-    metadata = {"phase52_version": "1.0.0", "framework": "researchos.experiments.phase52", "feature_name": names[feat_idx], "num_folds": folds, "feature_count": len(names), "price_feature_count": dataset.metadata.get("price_feature_count"), "macro_feature_count": dataset.metadata.get("macro_feature_count"), "estimator": "EmpiricalProbabilityEstimator", "baseline": "unconditional-frequency majority", "symbol": cfg.symbol, "timeframe": cfg.timeframe, "horizon": cfg.horizon, "threshold": cfg.threshold, "timestamp_contract": "exact_utc_one_to_one_order_preserving"}
+    metadata = {"phase52_version": "1.0.0", "framework": "researchos.experiments.phase52", "feature_name": names[feat_idx], "num_folds": folds, "feature_count": len(names), "price_feature_count": dataset.metadata.get("price_feature_count"), "macro_feature_count": dataset.metadata.get("macro_feature_count"), "estimator": "EmpiricalProbabilityEstimator", "baseline": "unconditional-frequency majority", "symbol": cfg.symbol, "timeframe": cfg.timeframe, "horizon": cfg.horizon, "threshold": cfg.threshold, "timestamp_contract": "exact_utc_one_to_one_order_preserving", "input_provenance": input_provenance}
     return Phase52Result(outcome=flags.outcome, symbol=cfg.symbol, timeframe=cfg.timeframe, horizon=cfg.horizon, threshold=cfg.threshold, train_size=train_size, validation_size=val_size, step_size=step, num_folds=folds, macro_symbols_present=macro_diag.symbols_present, macro_symbols_missing=macro_diag.symbols_missing, estimator_feature_name=names[feat_idx], baseline=baseline, model=model, cost=cost, calibration=calibration, significance=significance, validation=flags, metadata=metadata)
 
 
