@@ -40,7 +40,7 @@ class OOSValidationResult:
     status: str
     minimum_test_events: int
     validation_method: str = "walk_forward_expanding_purged"
-    purge_days: int = 1
+    purge_days: int = 0
     embargo_days: int = 0
 
 
@@ -55,21 +55,22 @@ def walk_forward_validate(
     step_size: int = 50,
     min_test_events: int = 20,
     confidence_level: float = 0.95,
-    purge_days: int = 1,
+    purge_days: int = 0,
     embargo_days: int = 0,
+    max_outcome_horizon_days: int | None = None,
 ) -> OOSValidationResult:
     """Evaluate a pre-specified condition with purged walk-forward folds.
 
     No random shuffling is used. Every split is chronological. Because a
     forward-looking outcome can extend beyond the event timestamp, observations
     whose label window crosses a train/validation or validation/test boundary
-    are removed from the earlier partition. An optional embargo then leaves a
-    further gap after the validation boundary before the next partition.
+    are removed from the earlier partition.
 
-    ``purge_days`` must cover the maximum forward outcome horizon used by the
-    caller. The Market Memory pipeline uses a one-day outcome, so its default is
-    one day. This prevents overlapping labels from leaking information across
-    temporal partitions.
+    ``max_outcome_horizon_days`` declares the longest forward label horizon used
+    by the caller. When supplied, ``purge_days`` must be at least that horizon;
+    otherwise the validator fails closed instead of silently allowing a
+    potentially leaky split. The pipeline should derive this value from its
+    actual outcome configuration rather than relying on a hard-coded default.
     """
     if initial_train_size < 1 or validation_size < 1 or test_size < 1:
         raise ValueError("window sizes must be >= 1")
@@ -77,6 +78,15 @@ def walk_forward_validate(
         raise ValueError("step_size and min_test_events must be >= 1")
     if purge_days < 0 or embargo_days < 0:
         raise ValueError("purge_days and embargo_days must be >= 0")
+    if max_outcome_horizon_days is not None and max_outcome_horizon_days < 1:
+        raise ValueError("max_outcome_horizon_days must be >= 1 when supplied")
+    if (
+        max_outcome_horizon_days is not None
+        and purge_days < max_outcome_horizon_days
+    ):
+        raise ValueError(
+            "purge_days must be >= max_outcome_horizon_days to prevent label leakage"
+        )
     if not 0.0 < confidence_level < 1.0:
         raise ValueError("confidence_level must be strictly between 0 and 1")
 
@@ -99,11 +109,11 @@ def walk_forward_validate(
         purge_delta = timedelta(days=purge_days)
         embargo_delta = timedelta(days=embargo_days)
 
-        # Keep chronological boundaries, but purge earlier partitions whose
-        # forward labels can overlap the next partition.
         train_cutoff = validation_start - purge_delta
         validation_cutoff = test_start - purge_delta
-        train = [event for event in ordered[:train_end] if event.timestamp < train_cutoff]
+        train = [
+            event for event in ordered[:train_end] if event.timestamp < train_cutoff
+        ]
         validation = [
             event
             for event in ordered[train_end:validation_end_index]
@@ -111,8 +121,6 @@ def walk_forward_validate(
             and event.timestamp < validation_cutoff
         ]
 
-        # Embargo is applied to the start of the test set. It is intentionally
-        # separate from purge so callers can choose a stronger separation.
         test_lower_bound = test_start + embargo_delta
         test = [
             event
@@ -125,7 +133,9 @@ def walk_forward_validate(
         test_values = _matched_values(test, matcher, outcome_getter)
         test_successes = sum(v > 0.0 for v in test_values)
         ci = (
-            wilson_proportion_ci(test_successes, len(test_values), confidence_level).confidence_interval
+            wilson_proportion_ci(
+                test_successes, len(test_values), confidence_level
+            ).confidence_interval
             if test_values
             else None
         )
