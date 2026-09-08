@@ -2,9 +2,9 @@ name: Security Scan
 
 on:
   push:
-    branches: [ main, master, develop, feature/* ]
+    branches: [ main, master, develop, feature/*, production-hardening ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ master, develop, production-hardening ]
 
 jobs:
   gitleaks:
