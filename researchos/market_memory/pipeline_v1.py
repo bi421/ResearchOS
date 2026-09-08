@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from researchos.market_memory.conditioning import ConditionSpec, MultipleTestingAudit, compute_conditional_statistics, filter_events
 from researchos.market_memory.event_extractor import extract_sma_crossover_events
@@ -109,7 +109,18 @@ def run_market_memory_pipeline(
     oos_results = {}
 
     def label_end_getter(event):
-        return event.timestamp + timedelta(days=_PIPELINE_OUTCOME_HORIZON_DAYS)
+        """Return the actual future observation timestamp used by the outcome."""
+        if event.outcome is None:
+            return None
+        value = event.outcome.data_availability.get(
+            f"realized_end_{_PIPELINE_OUTCOME_HORIZON_DAYS}d"
+        )
+        if value is None:
+            return None
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return None
 
     for cr in conditional_results:
         condition = cr.condition_spec
@@ -186,7 +197,7 @@ def run_market_memory_pipeline(
             condition_definition=str(cr.condition_spec.to_dict()["conditions"]), sample_size=cr.sample_size,
             time_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
             computation_method="forward_return_analysis", code_module="researchos.market_memory.pipeline_v1",
-            statistical_method="Bonferroni-adjusted Wilson probability CI + percentile bootstrap mean CI + purged walk-forward OOS + label-boundary audit",
+            statistical_method="Bonferroni-adjusted Wilson probability CI + percentile bootstrap mean CI + purged walk-forward OOS + actual realized label-boundary audit",
             result={"raw_probability": cr.raw_probability, "mean_return": cr.mean_return, "std_return": cr.std_return},
             uncertainty=uncertainty, validation_method="walk_forward_expanding_purged", random_seed=seed, status=status,
         ))
