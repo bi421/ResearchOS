@@ -27,6 +27,12 @@ from researchos.market_memory.statistical_evidence import wilson_proportion_ci
 from researchos.market_memory.temporal_validation import chronological_split, check_temporal_integrity
 
 
+# Single source of truth for the outcome horizon used by this pipeline's
+# inferential target. Any future multi-horizon experiment must raise this to
+# the maximum label horizon before invoking OOS validation.
+_PIPELINE_OUTCOME_HORIZON_DAYS = 1
+
+
 def _compute_dataset_hash(file_path: str) -> str:
     """Compute a deterministic SHA256 dataset identity."""
     h = hashlib.sha256()
@@ -58,24 +64,16 @@ def run_market_memory_pipeline(
     enforce_production_gate: bool = False,
     minimum_events: int = 100,
 ) -> MarketMemoryReport:
-    """Run deterministic Market Memory research from raw CSV to report.
-
-    ``enforce_production_gate=True`` makes the evidence-publication boundary
-    fail closed: all event/outcome/provenance checks run before any evidence
-    record is created. The default remains exploratory for backward
-    compatibility.
-    """
+    """Run deterministic Market Memory research from raw CSV to report."""
     from researchos.market_memory.event_extractor import load_xauusd_d1
 
     if minimum_events < 1:
         raise ValueError("minimum_events must be >= 1")
 
-    # 1. Load data and bind dataset identity to actual bytes.
     df = load_xauusd_d1(data_path)
     dataset_hash = _compute_dataset_hash(data_path)
     dataset_id = f"{asset}_{timeframe}_{dataset_hash}"
 
-    # 2. Extract events.
     events = extract_sma_crossover_events(
         df,
         fast_period=fast_period,
@@ -84,15 +82,17 @@ def run_market_memory_pipeline(
         seed=seed,
     )
 
-    # 3. Compute strictly forward outcomes.
     price_df = df.select(["timestamp", "open", "high", "low", "close"])
-    events = compute_forward_outcomes(events, price_df)
+    events = compute_forward_outcomes(
+        events,
+        price_df,
+        horizons=[_PIPELINE_OUTCOME_HORIZON_DAYS],
+    )
 
     temporal_audit = check_temporal_integrity(events)
     if temporal_audit["status"] != "PASS":
         raise ValueError(f"Temporal integrity failed: {temporal_audit['issues']}")
 
-    # Production gate MUST run after outcomes exist but BEFORE evidence creation.
     if enforce_production_gate:
         gate = check_production_evidence_readiness(
             events,
@@ -116,7 +116,6 @@ def run_market_memory_pipeline(
                 notes="PRODUCTION GATE FAILED: " + "; ".join(gate.issues),
             )
 
-    # 4. Pre-specified conditions.
     if conditions is None:
         conditions = [
             ConditionSpec("all_crossovers", {}, "All SMA crossovers"),
@@ -126,7 +125,6 @@ def run_market_memory_pipeline(
             ConditionSpec("high_volatility", {"volatility_state": "High"}, "Crossovers in high volatility regime"),
         ]
 
-    # 5. Conditional statistics with probability CI + mean bootstrap CI.
     conditional_results = []
     probability_evidence = {}
     for spec in conditions:
@@ -139,7 +137,6 @@ def run_market_memory_pipeline(
             successes = sum(value > 0.0 for value in values)
             probability_evidence[spec.name] = wilson_proportion_ci(successes, len(values))
 
-    # 6. Strict chronological train/validation/test + walk-forward OOS.
     train_events, validation_events, test_events = chronological_split(events)
     validation_results = []
     oos_results = {}
@@ -157,6 +154,8 @@ def run_market_memory_pipeline(
             test_size=max(20, min(100, len(events) // 10 or 1)),
             step_size=max(20, min(100, len(events) // 10 or 1)),
             min_test_events=20,
+            purge_days=_PIPELINE_OUTCOME_HORIZON_DAYS,
+            max_outcome_horizon_days=_PIPELINE_OUTCOME_HORIZON_DAYS,
         ) if len(events) >= 160 else None
         oos_results[cr.condition_name] = oos
 
@@ -184,16 +183,13 @@ def run_market_memory_pipeline(
                 validation_statistic=val_mean,
                 test_statistic=test_mean,
                 is_stable=is_stable,
-                validation_method="walk_forward_expanding" if oos is not None else "chronological_split_insufficient_for_oos",
+                validation_method="walk_forward_expanding_purged" if oos is not None else "chronological_split_insufficient_for_oos",
                 notes=notes,
             )
         )
 
-    # 7. Self-audit.
     audit = run_self_audit(events, conditional_results)
 
-    # 8. Evidence is only VALIDATED when OOS is stable. Exploratory results are
-    # retained for research visibility but explicitly remain UNVALIDATED.
     evidence_records = []
     for cr in conditional_results:
         oos = oos_results[cr.condition_name]
@@ -209,6 +205,9 @@ def run_market_memory_pipeline(
                 "folds": oos.total_folds,
                 "passed_folds": oos.passed_folds,
                 "validation_method": oos.validation_method,
+                "purge_days": oos.purge_days,
+                "embargo_days": oos.embargo_days,
+                "max_outcome_horizon_days": _PIPELINE_OUTCOME_HORIZON_DAYS,
             }
         ev = create_evidence_record(
             finding_name=f"SMA Crossover {cr.condition_name}",
@@ -220,20 +219,19 @@ def run_market_memory_pipeline(
             time_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
             computation_method="forward_return_analysis",
             code_module="researchos.market_memory.pipeline_v1",
-            statistical_method="Wilson proportion CI + percentile bootstrap mean CI + walk-forward OOS",
+            statistical_method="Wilson proportion CI + percentile bootstrap mean CI + purged walk-forward OOS",
             result={
                 "raw_probability": cr.raw_probability,
                 "mean_return": cr.mean_return,
                 "std_return": cr.std_return,
             },
             uncertainty=uncertainty,
-            validation_method="walk_forward_expanding",
+            validation_method="walk_forward_expanding_purged",
             random_seed=seed,
             status=status,
         )
         evidence_records.append(ev)
 
-    # 9. Multiple-testing audit is explicit; no correction is silently applied.
     multiple_testing = MultipleTestingAudit(
         total_hypotheses_tested=len(conditions),
         conditions_tested=[c.name for c in conditions],
@@ -242,7 +240,6 @@ def run_market_memory_pipeline(
         limitations="Multiple conditions increase false-positive risk; multiplicity correction is required before confirmatory claims.",
     )
 
-    # 10. Conservative overall status.
     if audit.overall_status == "FAIL":
         overall_status = EvidenceStatus.REJECTED.value
     elif all(oos is not None and oos.stable for oos in oos_results.values()) and oos_results:
