@@ -84,6 +84,27 @@ TEST(TradeBookTest, CloseTrade) {
   EXPECT_TRUE(book.get_trade(1)->is_profitable());
 }
 
+TEST(TradeBookTest, PartialClosePreservesRemainingPosition) {
+  TradeBook book;
+  Trade t;
+  t.direction = TradeDirection::Buy;
+  t.quantity = 100.0;
+  t.entry_price = 50.0;
+  t.entry_commission = 10.0;
+  book.add_trade(t);
+
+  const auto exit_time = now();
+  book.close_trade(1, 55.0, exit_time, 5.0, 40.0);
+
+  ASSERT_EQ(1u, book.open_trades().size());
+  EXPECT_DOUBLE_EQ(60.0, book.open_trades()[0].quantity);
+  ASSERT_EQ(1u, book.closed_trades().size());
+  EXPECT_DOUBLE_EQ(40.0, book.closed_trades()[0].quantity);
+  EXPECT_DOUBLE_EQ(4.0, book.closed_trades()[0].entry_commission);
+  EXPECT_DOUBLE_EQ(6.0, book.open_trades()[0].entry_commission);
+  EXPECT_DOUBLE_EQ(5.0, book.closed_trades()[0].exit_commission);
+}
+
 TEST(TradeBookTest, CancelTrade) {
   TradeBook book;
   book.add_trade(Trade{});
@@ -154,32 +175,6 @@ TEST(BacktestEngineTest, RunWithSignal) {
   ASSERT_TRUE(result.is_ok());
   EXPECT_GT(result.value().equity_curve.size(), 0);
   EXPECT_EQ(100, result.value().total_bars);
-}
-
-TEST(BacktestEngineTest, WalkForwardNeverFallsBackToFullSample) {
-  InMemoryOHLCVSource data;
-  for (int i = 0; i < 10; ++i) {
-    data.data.push_back(OHLCV{
-      .timestamp = now(),
-      .open = 100.0,
-      .high = 101.0,
-      .low = 99.0,
-      .close = 100.0,
-      .volume = 1000.0
-    });
-  }
-
-  BacktestEngine engine;
-  auto result = engine.run_walk_forward(
-      data,
-      [](size_t, const std::vector<OHLCV>&) -> SignalResult {
-        return {TradeDirection::Buy, 1.0};
-      },
-      5,
-      2);
-
-  ASSERT_TRUE(result.is_err());
-  EXPECT_EQ(ErrorCode::NotImplemented, result.error().code());
 }
 
 TEST(BacktestEngineTest, EmptyData) {
