@@ -41,7 +41,14 @@ TEST(IntegrationTest, MarketDataToBacktestToReport) {
   EXPECT_GT(report.yearly_returns.size(), 0u);
   EXPECT_GT(report.monthly_returns.size(), 0u);
   EXPECT_GT(report.returns.size(), 0u);
-  EXPECT_EQ(report.base.total_trades,
+
+  // total_trades includes both open and closed trades; win/loss counts only
+  // classify closed trades. The invariant is therefore total = open + closed,
+  // while closed = wins + losses.
+  const auto open_count = result.value().trade_book.open_trades().size();
+  const auto closed_count = result.value().trade_book.closed_trades().size();
+  EXPECT_EQ(report.base.total_trades, open_count + closed_count);
+  EXPECT_EQ(closed_count,
             report.base.winning_trades + report.base.losing_trades);
 
   auto json = serialization::report_to_json(report);
