@@ -1,15 +1,9 @@
-"""
-Phase 5.2 — tests.
-
-Validates the deterministic, leak-free, macro-gating behavior of the Phase
-5.2 macro-augmented experiment. Synthetic data is used ONLY for these unit
-tests — it is never treated as empirical evidence, matching the Phase 5.1
-testing discipline.
-"""
+"""Phase 5.2 scientific-boundary and deterministic regression tests."""
 
 from __future__ import annotations
 
 import random
+from datetime import datetime, timedelta, timezone
 
 from researchos.experiments.phase52 import (
     MACRO_SYMBOLS,
@@ -22,7 +16,6 @@ from researchos.experiments.phase52.contracts import Outcome
 
 
 def _synthetic_ohlcv(n: int = 3000, seed: int = 42):
-    """Deterministic synthetic OHLCV (unit-test only, never empirical evidence)."""
     rng = random.Random(seed)
     close = [2000.0]
     for _ in range(n - 1):
@@ -34,7 +27,6 @@ def _synthetic_ohlcv(n: int = 3000, seed: int = 42):
 
 
 def _synthetic_macro(n: int, seed: int = 7) -> dict[str, list[float]]:
-    """Deterministic synthetic macro factor series (unit-test only)."""
     rng = random.Random(seed)
     out: dict[str, list[float]] = {}
     bases = {"DXY": 100.0, "US10Y": 4.0, "VIX": 18.0}
@@ -46,116 +38,121 @@ def _synthetic_macro(n: int, seed: int = 7) -> dict[str, list[float]]:
     return out
 
 
-# ── determinism ────────────────────────────────────────────────────────
+def _timestamps(n: int) -> list[datetime]:
+    start = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    return [start + timedelta(minutes=i) for i in range(n)]
+
+
+def _run_inputs():
+    close, high, low, volume = _synthetic_ohlcv()
+    macro = _synthetic_macro(len(close))
+    ts = _timestamps(len(close))
+    macro_ts = {symbol: list(ts) for symbol in MACRO_SYMBOLS}
+    return close, high, low, volume, macro, ts, macro_ts
 
 
 def test_run_phase52_deterministic_hash():
-    close, high, low, volume = _synthetic_ohlcv()
-    macro = _synthetic_macro(len(close))
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
     cfg = Phase52Config(train_size=400, validation_size=100, step_size=100)
-    r1 = run_phase52(close, high, low, volume, macro, cfg)
-    r2 = run_phase52(close, high, low, volume, macro, cfg)
+    r1 = run_phase52(close, high, low, volume, macro, cfg, timestamps=ts, macro_timestamps=macro_ts)
+    r2 = run_phase52(close, high, low, volume, macro, cfg, timestamps=ts, macro_timestamps=macro_ts)
     assert r1.reproducibility_hash == r2.reproducibility_hash
     assert r1.to_dict() == r2.to_dict()
 
 
-# ── macro gating (the core new behavior vs Phase 5.1) ───────────────────
-
-
-def test_run_phase52_blocked_when_macro_missing():
+def test_run_phase52_blocks_legacy_value_only_api():
     close, high, low, volume = _synthetic_ohlcv()
     macro = _synthetic_macro(len(close))
-    del macro["VIX"]  # simulate one required factor unavailable
-    cfg = Phase52Config(train_size=400, validation_size=100, step_size=100)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100))
     assert r.outcome == Outcome.BLOCKED
-    assert "VIX" in r.validation.reasons[0]
+    assert "TIMESTAMP ALIGNMENT" in r.validation.reasons[0]
+
+
+def test_run_phase52_blocks_equal_length_shifted_macro_timestamps():
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    macro_ts["DXY"] = [ts[0] + timedelta(minutes=1)] + ts[1:]
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100), timestamps=ts, macro_timestamps=macro_ts)
+    assert r.outcome == Outcome.BLOCKED
+    assert "DXY" in r.validation.reasons[0]
+    assert "exact timestamp mismatch" in r.validation.reasons[0]
+
+
+def test_run_phase52_blocks_missing_macro_timestamp_contract():
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    del macro_ts["VIX"]
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100), timestamps=ts, macro_timestamps=macro_ts)
+    assert r.outcome == Outcome.BLOCKED
     assert "VIX" in r.macro_symbols_missing
 
 
-def test_run_phase52_blocked_when_macro_misaligned_length():
-    close, high, low, volume = _synthetic_ohlcv()
+def test_run_phase52_blocks_when_macro_missing():
+    close, high, low, volume, _, ts, macro_ts = _run_inputs()
     macro = _synthetic_macro(len(close))
-    macro["DXY"] = macro["DXY"][:-10]  # wrong length vs close
-    cfg = Phase52Config(train_size=400, validation_size=100, step_size=100)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    del macro["VIX"]
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100), timestamps=ts, macro_timestamps=macro_ts)
+    assert r.outcome == Outcome.BLOCKED
+    assert "VIX" in r.validation.reasons[0]
+
+
+def test_run_phase52_blocks_when_macro_misaligned_length():
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    macro["DXY"] = macro["DXY"][:-10]
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert r.outcome == Outcome.BLOCKED
     assert "DXY" in r.macro_symbols_missing
 
 
-def test_run_phase52_blocked_when_insufficient_bars():
+def test_run_phase52_blocks_when_insufficient_bars():
     close, high, low, volume = _synthetic_ohlcv(n=50)
     macro = _synthetic_macro(50)
-    cfg = Phase52Config(train_size=400, validation_size=100)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    ts = _timestamps(50)
+    macro_ts = {symbol: list(ts) for symbol in MACRO_SYMBOLS}
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert r.outcome == Outcome.BLOCKED
     assert "REAL XAUUSD DATA REQUIRED" in r.validation.reasons[0]
 
 
 def test_run_phase52_all_macro_symbols_present_and_used_when_available():
-    close, high, low, volume = _synthetic_ohlcv()
-    macro = _synthetic_macro(len(close))
-    cfg = Phase52Config(train_size=400, validation_size=100, step_size=100)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100, step_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert set(r.macro_symbols_present) == set(MACRO_SYMBOLS)
     assert r.macro_symbols_missing == ()
-    # Default feature resolution should have picked a macro feature, not a
-    # pure price feature, since macro data was fully available.
     assert r.estimator_feature_name.startswith("macro_")
 
 
-# ── walk-forward / leakage-safety ────────────────────────────────────────
-
-
 def test_run_phase52_produces_multiple_folds():
-    close, high, low, volume = _synthetic_ohlcv(n=2000)
-    macro = _synthetic_macro(len(close))
-    cfg = Phase52Config(train_size=400, validation_size=100, step_size=100)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100, step_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert r.outcome != Outcome.BLOCKED
     assert r.num_folds > 1
 
 
 def test_run_phase52_estimator_feature_explicit_override():
-    close, high, low, volume = _synthetic_ohlcv()
-    macro = _synthetic_macro(len(close))
-    cfg = Phase52Config(train_size=400, validation_size=100, step_size=100, estimator_feature=0)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100, step_size=100, estimator_feature=0), timestamps=ts, macro_timestamps=macro_ts)
     assert r.outcome != Outcome.BLOCKED
-    # Index 0 is always a price feature ("returns"), confirming override honored.
     assert not r.estimator_feature_name.startswith("macro_")
-
-
-# ── macro feature builder ────────────────────────────────────────────────
 
 
 def test_macro_feature_builder_marks_missing_symbols():
     series = {"DXY": [100.0 + i * 0.1 for i in range(50)]}
-    builder = MacroFeatureBuilder(aligned_length=50, factor_series=series)
-    fs = builder.build()
+    fs = MacroFeatureBuilder(aligned_length=50, factor_series=series).build()
     assert fs.symbols_present == ("DXY",)
     assert set(fs.symbols_missing) == {"US10Y", "VIX"}
-    assert len(fs.feature_names) == 9  # 3 factors * 3 features each
-    # Missing-symbol columns are all None.
+    assert len(fs.feature_names) == 9
     us10y_idx = fs.feature_names.index("macro_US10Y_return_1")
     assert all(row[us10y_idx] is None for row in fs.data)
 
 
 def test_macro_feature_builder_no_lookahead_on_first_bars():
     series = {"DXY": [100.0 + i * 0.1 for i in range(30)]}
-    builder = MacroFeatureBuilder(aligned_length=30, factor_series=series)
-    fs = builder.build()
+    fs = MacroFeatureBuilder(aligned_length=30, factor_series=series).build()
     ret_idx = fs.feature_names.index("macro_DXY_return_1")
-    assert fs.data[0][ret_idx] is None  # no prior bar to compute a return from
-
-
-# ── result shape ──────────────────────────────────────────────────────
+    assert fs.data[0][ret_idx] is None
 
 
 def test_phase52_result_is_phase52result_instance():
-    close, high, low, volume = _synthetic_ohlcv()
-    macro = _synthetic_macro(len(close))
-    cfg = Phase52Config(train_size=400, validation_size=100, step_size=100)
-    r = run_phase52(close, high, low, volume, macro, cfg)
+    close, high, low, volume, macro, ts, macro_ts = _run_inputs()
+    r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100, step_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert isinstance(r, Phase52Result)
     assert r.outcome in (Outcome.PASS, Outcome.FAIL, Outcome.UNCERTAIN, Outcome.BLOCKED)
