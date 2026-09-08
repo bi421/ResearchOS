@@ -132,12 +132,9 @@ TEST(BacktestEngineTest, RunWithSignal) {
   InMemoryOHLCVSource data;
   for (int i = 0; i < 100; ++i) {
     data.data.push_back(OHLCV{
-      .timestamp = now(),
-      .open = 100.0 + i * 0.1,
-      .high = 101.0 + i * 0.1,
-      .low = 99.0 + i * 0.1,
-      .close = 100.5 + i * 0.1,
-      .volume = 1000.0
+      .timestamp = now(), .open = 100.0 + i * 0.1,
+      .high = 101.0 + i * 0.1, .low = 99.0 + i * 0.1,
+      .close = 100.5 + i * 0.1, .volume = 1000.0
     });
   }
 
@@ -190,14 +187,8 @@ TEST(BacktestEngineTest, SignalsExecuteAtFollowingBarOpen) {
 TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
   InMemoryOHLCVSource data;
   for (int i = 0; i < 3; ++i) {
-    data.data.push_back(OHLCV{
-      .timestamp = now() + std::chrono::minutes(i),
-      .open = 100.0,
-      .high = 100.0,
-      .low = 100.0,
-      .close = 100.0,
-      .volume = 1000.0
-    });
+    data.data.push_back(OHLCV{.timestamp = now() + std::chrono::minutes(i),
+      .open = 100.0, .high = 100.0, .low = 100.0, .close = 100.0, .volume = 1000.0});
   }
 
   BacktestEngine engine;
@@ -224,30 +215,54 @@ TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
   EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
 }
 
-TEST(BacktestEngineTest, WalkForwardNeverFallsBackToFullSample) {
+TEST(BacktestEngineTest, WalkForwardProducesDisjointOosFolds) {
   InMemoryOHLCVSource data;
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 12; ++i) {
     data.data.push_back(OHLCV{
-      .timestamp = now(),
-      .open = 100.0,
-      .high = 101.0,
-      .low = 99.0,
-      .close = 100.0,
+      .timestamp = now() + std::chrono::minutes(i),
+      .open = 100.0 + i,
+      .high = 101.0 + i,
+      .low = 99.0 + i,
+      .close = 100.0 + i,
       .volume = 1000.0
     });
   }
 
   BacktestEngine engine;
+  BacktestConfig cfg;
+  cfg.initial_capital = 100000.0;
+  cfg.commission_pct = 0.0;
+  cfg.slippage_pct = 0.0;
+  cfg.allow_short = false;
+  engine.set_config(cfg);
+
   auto result = engine.run_walk_forward(
       data,
-      [](size_t, const std::vector<OHLCV>&) -> SignalResult {
-        return {TradeDirection::Buy, 1.0};
+      [](size_t index, const std::vector<OHLCV>& history) -> SignalResult {
+        EXPECT_EQ(index + 1, history.size());
+        return {TradeDirection::Buy, 0.0};
       },
-      5,
-      2);
+      4, 2);
 
+  ASSERT_TRUE(result.is_ok());
+  EXPECT_EQ(8u, result.value().total_bars);
+  EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
+  EXPECT_EQ(0u, result.value().num_trades);
+}
+
+TEST(BacktestEngineTest, WalkForwardRejectsIncompleteFold) {
+  InMemoryOHLCVSource data;
+  for (int i = 0; i < 5; ++i) {
+    data.data.push_back(OHLCV{.timestamp = now(), .open = 100.0,
+      .high = 101.0, .low = 99.0, .close = 100.0, .volume = 1000.0});
+  }
+  BacktestEngine engine;
+  auto result = engine.run_walk_forward(
+      data, [](size_t, const std::vector<OHLCV>&) -> SignalResult {
+        return {TradeDirection::Buy, 1.0};
+      }, 4, 2);
   ASSERT_TRUE(result.is_err());
-  EXPECT_EQ(ErrorCode::NotImplemented, result.error().code());
+  EXPECT_EQ(ErrorCode::InvalidArgument, result.error().code());
 }
 
 TEST(BacktestEngineTest, EmptyData) {
