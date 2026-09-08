@@ -39,15 +39,36 @@ void TradeBook::add_trade(Trade trade) {
 }
 
 void TradeBook::close_trade(uint64_t trade_id, double exit_price, TimePoint exit_time,
-                             double commission) {
-  for (auto& t : trades_) {
-    if (t.id == trade_id && t.status == TradeStatus::Open) {
-      t.exit_price = exit_price;
-      t.exit_time = exit_time;
-      t.exit_commission = commission;
-      t.status = TradeStatus::Closed;
-      break;
+                             double commission, double quantity) {
+  for (auto it = trades_.begin(); it != trades_.end(); ++it) {
+    if (it->id != trade_id || it->status != TradeStatus::Open) continue;
+
+    const double requested = quantity > 0.0 ? quantity : it->quantity;
+    if (requested > it->quantity || requested <= 0.0) return;
+
+    if (requested == it->quantity) {
+      it->exit_price = exit_price;
+      it->exit_time = exit_time;
+      it->exit_commission = commission;
+      it->status = TradeStatus::Closed;
+      return;
     }
+
+    // Split the position while preserving the original entry economics.
+    const double ratio = requested / it->quantity;
+    Trade closed = *it;
+    closed.id = next_id_++;
+    closed.quantity = requested;
+    closed.entry_commission = it->entry_commission * ratio;
+    closed.exit_price = exit_price;
+    closed.exit_time = exit_time;
+    closed.exit_commission = commission;
+    closed.status = TradeStatus::Closed;
+
+    it->quantity -= requested;
+    it->entry_commission -= closed.entry_commission;
+    trades_.push_back(std::move(closed));
+    return;
   }
 }
 
