@@ -32,11 +32,14 @@ def check_production_evidence_readiness(
     """
     issues: list[str] = []
     source = dataset_source.strip().lower()
-    blocked_sources = {"synthetic", "demo", "mock", "fixture"}
-    if source in blocked_sources:
-        issues.append(f"blocked evidence source: {source}")
+    blocked_tokens = ("synthetic", "demo", "mock", "fixture")
+    blocked = next((token for token in blocked_tokens if token in source), None)
+    if blocked:
+        issues.append(f"blocked evidence source: {blocked}")
     if not dataset_source.strip():
         issues.append("dataset_source is required")
+    if minimum_events < 1:
+        issues.append("minimum_events must be >= 1")
     if len(events) < minimum_events:
         issues.append(f"insufficient events: {len(events)} < {minimum_events}")
 
