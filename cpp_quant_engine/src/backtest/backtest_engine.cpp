@@ -15,27 +15,49 @@ std::vector<OHLCV> InMemoryOHLCVSource::range(size_t start, size_t end) const {
 Result<void> BacktestEngine::execute_signal(const SignalResult& signal, const OHLCV& bar,
                                              double& cash, double& position,
                                              TradeBook& book) const {
-  double price = bar.close;
-  double slippage = price * config_.slippage_pct;
+  const double price = bar.close;
+  const double slippage = price * config_.slippage_pct;
 
   if (signal.direction == TradeDirection::Buy) {
+    // A buy first closes any existing short. Only the residual quantity opens
+    // a new long, so cash and the trade ledger remain position-consistent.
     if (position < 0.0) {
-      double buy_qty = std::min(signal.quantity, -position);
+      const double close_qty = std::min(signal.quantity, -position);
+      const double exit_price = price + slippage;
+      const double commission = close_qty * exit_price * config_.commission_pct;
+      cash -= close_qty * exit_price + commission;
+      position += close_qty;
+
+      for (const auto& trade : book.open_trades()) {
+        if (trade.direction == TradeDirection::Sell) {
+          book.close_trade(trade.id, exit_price, bar.timestamp, commission, close_qty);
+          break;
+        }
+      }
+
+      const double residual = signal.quantity - close_qty;
+      if (residual <= 0.0) return Result<void>::ok();
+
+      const double cost = residual * exit_price;
+      const double entry_commission = cost * config_.commission_pct;
+      if (cash < cost + entry_commission) return Result<void>::ok();
+      cash -= cost + entry_commission;
+      position += residual;
+
       Trade t;
       t.symbol = book.symbol();
       t.direction = TradeDirection::Buy;
-      t.quantity = buy_qty;
-      t.entry_price = price + slippage;
-      t.entry_commission = t.entry_price * buy_qty * config_.commission_pct;
+      t.quantity = residual;
+      t.entry_price = exit_price;
+      t.entry_commission = entry_commission;
       t.entry_time = bar.timestamp;
-      t.status = TradeStatus::Closed;
-      t.exit_price = t.entry_price;
-      t.exit_commission = 0.0;
-      t.exit_time = bar.timestamp;
+      t.status = TradeStatus::Open;
       book.add_trade(t);
+      return Result<void>::ok();
     }
-    double cost = signal.quantity * (price + slippage);
-    double comm = cost * config_.commission_pct;
+
+    const double cost = signal.quantity * (price + slippage);
+    const double comm = cost * config_.commission_pct;
     if (cash >= cost + comm) {
       cash -= cost + comm;
       position += signal.quantity;
@@ -50,27 +72,47 @@ Result<void> BacktestEngine::execute_signal(const SignalResult& signal, const OH
       book.add_trade(t);
     }
   } else {
+    // A sell first closes any existing long. Only the residual quantity opens
+    // a new short, preventing accidental creation of an over-sized position.
     if (position > 0.0) {
-      double sell_qty = std::min(signal.quantity, position);
-      double proceeds = sell_qty * (price - slippage);
-      double comm = (sell_qty * price) * config_.commission_pct;
-      cash += proceeds - comm;
-      position -= sell_qty;
-      Trade t;
-      t.symbol = book.symbol();
-      t.direction = TradeDirection::Sell;
-      t.quantity = sell_qty;
-      t.entry_price = price;
-      t.entry_commission = 0.0;
-      t.entry_time = bar.timestamp;
-      t.exit_price = price - slippage;
-      t.exit_commission = comm;
-      t.exit_time = bar.timestamp;
-      t.status = TradeStatus::Closed;
-      book.add_trade(t);
-    } else if (config_.allow_short) {
-      double proceeds = signal.quantity * (price - slippage);
-      double comm = (signal.quantity * price) * config_.commission_pct;
+      const double close_qty = std::min(signal.quantity, position);
+      const double exit_price = price - slippage;
+      const double commission = close_qty * exit_price * config_.commission_pct;
+      cash += close_qty * exit_price - commission;
+      position -= close_qty;
+
+      for (const auto& trade : book.open_trades()) {
+        if (trade.direction == TradeDirection::Buy) {
+          book.close_trade(trade.id, exit_price, bar.timestamp, commission, close_qty);
+          break;
+        }
+      }
+
+      const double residual = signal.quantity - close_qty;
+      if (residual <= 0.0) return Result<void>::ok();
+
+      if (config_.allow_short) {
+        const double proceeds = residual * exit_price;
+        const double entry_commission = proceeds * config_.commission_pct;
+        cash += proceeds - entry_commission;
+        position -= residual;
+
+        Trade t;
+        t.symbol = book.symbol();
+        t.direction = TradeDirection::Sell;
+        t.quantity = residual;
+        t.entry_price = exit_price;
+        t.entry_commission = entry_commission;
+        t.entry_time = bar.timestamp;
+        t.status = TradeStatus::Open;
+        book.add_trade(t);
+      }
+      return Result<void>::ok();
+    }
+
+    if (config_.allow_short) {
+      const double proceeds = signal.quantity * (price - slippage);
+      const double comm = (signal.quantity * (price - slippage)) * config_.commission_pct;
       cash += proceeds - comm;
       position -= signal.quantity;
       Trade t;
@@ -127,11 +169,29 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
 
   if (position != 0.0) {
     const auto& last_bar = data[data.size() - 1];
-    cash += position * last_bar.close;
-    position = 0.0;
-    for (const auto& t : book.open_trades()) {
-      book.close_trade(t.id, last_bar.close, last_bar.timestamp);
+    if (position > 0.0) {
+      const double exit_price = last_bar.close - last_bar.close * config_.slippage_pct;
+      const double commission = position * exit_price * config_.commission_pct;
+      cash += position * exit_price - commission;
+      for (const auto& t : book.open_trades()) {
+        if (t.direction == TradeDirection::Buy) {
+          book.close_trade(t.id, exit_price, last_bar.timestamp, commission, position);
+          break;
+        }
+      }
+    } else {
+      const double qty = -position;
+      const double exit_price = last_bar.close + last_bar.close * config_.slippage_pct;
+      const double commission = qty * exit_price * config_.commission_pct;
+      cash -= qty * exit_price + commission;
+      for (const auto& t : book.open_trades()) {
+        if (t.direction == TradeDirection::Sell) {
+          book.close_trade(t.id, exit_price, last_bar.timestamp, commission, qty);
+          break;
+        }
+      }
     }
+    position = 0.0;
   }
 
   result.final_equity = cash;
