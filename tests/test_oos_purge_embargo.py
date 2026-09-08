@@ -33,6 +33,7 @@ def test_walk_forward_purges_labels_crossing_boundaries():
         step_size=2,
         min_test_events=1,
         purge_days=1,
+        max_outcome_horizon_days=1,
     )
 
     first = result.folds[0]
@@ -54,6 +55,7 @@ def test_walk_forward_embargo_removes_early_test_observations():
         step_size=2,
         min_test_events=1,
         purge_days=1,
+        max_outcome_horizon_days=1,
         embargo_days=1,
     )
 
@@ -72,3 +74,35 @@ def test_negative_purge_or_embargo_is_rejected():
             test_size=2,
             purge_days=-1,
         )
+
+
+def test_purge_must_cover_maximum_label_horizon():
+    with pytest.raises(ValueError, match="max_outcome_horizon_days"):
+        walk_forward_validate(
+            _events(),
+            _all,
+            _value,
+            initial_train_size=3,
+            validation_size=2,
+            test_size=2,
+            purge_days=1,
+            max_outcome_horizon_days=5,
+        )
+
+
+def test_multi_day_label_horizon_accepts_matching_purge():
+    result = walk_forward_validate(
+        _events(20),
+        _all,
+        _value,
+        initial_train_size=6,
+        validation_size=4,
+        test_size=4,
+        step_size=4,
+        min_test_events=1,
+        purge_days=5,
+        max_outcome_horizon_days=5,
+    )
+
+    assert result.purge_days == 5
+    assert result.status in {"VALIDATED", "INCONCLUSIVE"}
