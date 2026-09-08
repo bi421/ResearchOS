@@ -4,6 +4,10 @@ This module is intentionally a trust-layer adapter.  It does not execute
 research or change trading logic.  Given already-computed Experiment, Run and
 Result objects, it certifies their immutable evidence envelopes in dependency
 order and verifies the resulting lineage chain.
+
+Scientific evidence is restricted to non-synthetic experiment inputs.  Synthetic,
+demo, mock, and fixture sources remain valid for engineering tests but cannot be
+promoted into the certified Experiment → Run → Result evidence chain.
 """
 
 from __future__ import annotations
@@ -17,6 +21,36 @@ from researchos.evidence.experiment_emission import build_experiment_envelope
 from researchos.evidence.repository import EvidenceRepository
 from researchos.evidence.result_emission import build_result_envelope
 from researchos.evidence.run_emission import build_run_envelope
+
+
+_SYNTHETIC_SOURCES = frozenset({"synthetic", "demo", "mock", "fixture"})
+
+
+def _is_synthetic_experiment(experiment: Any) -> bool:
+    """Return whether an experiment is explicitly backed by synthetic data."""
+    dataset_config = getattr(experiment, "dataset_config", None)
+    if dataset_config is None:
+        return False
+
+    source = getattr(dataset_config, "source", "")
+    if isinstance(source, str) and source.strip().lower() in _SYNTHETIC_SOURCES:
+        return True
+
+    parameters = getattr(dataset_config, "parameters", {})
+    if isinstance(parameters, Mapping):
+        classification = parameters.get("data_classification", "")
+        if isinstance(classification, str) and classification.strip().lower() == "synthetic":
+            return True
+    return False
+
+
+def _assert_evidence_eligible(experiment: Any) -> None:
+    """Reject synthetic experiment inputs at the evidence-certification boundary."""
+    if _is_synthetic_experiment(experiment):
+        raise ValueError(
+            "Synthetic, demo, mock, and fixture datasets cannot be certified as "
+            "research evidence; use a validated real-market dataset."
+        )
 
 
 @dataclass(frozen=True)
@@ -81,11 +115,17 @@ def certify_runtime(
     When supplied, the dataset artifact must already exist; this prevents a
     dangling Dataset → Experiment reference.
 
-    The three artifacts are emitted in dependency order.  Existing identical
+    Synthetic/demo/mock/fixture experiment sources are rejected before any
+    evidence artifact is written. This gate keeps engineering fixtures out of
+    the scientific evidence store.
+
+    The three artifacts are emitted in dependency order. Existing identical
     artifacts are deduplicated by ``EvidenceRepository`` and are never updated.
     """
     if not isinstance(repository, EvidenceRepository):
         raise TypeError("repository must be an EvidenceRepository")
+
+    _assert_evidence_eligible(experiment)
 
     if dataset_hash and repository.get_artifact(dataset_hash) is None:
         raise ValueError(f"dataset evidence artifact '{dataset_hash}' does not exist")
