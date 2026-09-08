@@ -32,7 +32,12 @@ def compute_forward_outcomes(
     horizons: list[int] | None = None,
     threshold: float = 0.0,
 ) -> list[MarketEvent]:
-    """Compute forward outcomes at calendar-day horizons without lookahead."""
+    """Compute forward outcomes at calendar-day horizons without lookahead.
+
+    Each realized outcome records the timestamp of the actual future
+    observation used for its return. This timestamp is authoritative for
+    label-window leakage audits; the requested horizon is only a target time.
+    """
     if horizons is None:
         horizons = [1, 2, 3, 5, 10, 20]
     if any(h < 1 for h in horizons):
@@ -57,13 +62,14 @@ def compute_forward_outcomes(
             updated_events.append(event)
             continue
         idx = ts_to_idx[event.timestamp]
-        _timeframe_minutes(event.timeframe)  # reject unsupported empirical timeframe
+        _timeframe_minutes(event.timeframe)
         event_close = event.event_price
         returns: dict[str, float | None] = {}
         directions: dict[str, str | None] = {}
         mfe: dict[str, float | None] = {}
         mae: dict[str, float | None] = {}
         hits: dict[str, bool | None] = {}
+        realized_ends: dict[str, str] = {}
 
         for h in horizons:
             target = event.timestamp + timedelta(days=h)
@@ -78,6 +84,8 @@ def compute_forward_outcomes(
                 hits[f"hit_{h}d"] = None
                 continue
 
+            realized_end = timestamps[future_idx]
+            realized_ends[f"realized_end_{h}d"] = realized_end.isoformat()
             future_close = closes[future_idx]
             future_high = highs[future_idx]
             future_low = lows[future_idx]
@@ -109,10 +117,11 @@ def compute_forward_outcomes(
             mfe_20d=mfe.get("mfe_20d"), mae_20d=mae.get("mae_20d"),
             hit_threshold_1d=hits.get("hit_1d"), hit_threshold_5d=hits.get("hit_5d"),
             hit_threshold_20d=hits.get("hit_20d"),
+            outcome_calculation_method="forward_return_from_actual_future_observation_timestamp",
             data_availability={
                 f"return_{h}d": "available" if returns.get(f"return_{h}d") is not None else "unavailable"
                 for h in horizons
-            },
+            } | realized_ends,
         )
         updated_events.append(
             MarketEvent(
