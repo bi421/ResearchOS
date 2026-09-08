@@ -70,7 +70,7 @@ def test_run_phase52_blocks_legacy_value_only_api():
 
 def test_run_phase52_blocks_equal_length_shifted_macro_timestamps():
     close, high, low, volume, macro, ts, macro_ts = _run_inputs()
-    macro_ts["DXY"] = [ts[0] + timedelta(minutes=1)] + ts[1:]
+    macro_ts["DXY"] = [value + timedelta(minutes=1) for value in ts]
     r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert r.outcome == Outcome.BLOCKED
     assert "DXY" in r.validation.reasons[0]
