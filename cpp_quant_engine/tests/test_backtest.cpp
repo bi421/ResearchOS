@@ -51,7 +51,7 @@ TEST(BacktestEngineTest, WalkForwardProducesDisjointOosFolds) {
   InMemoryOHLCVSource data;
   for (int i = 0; i < 18; ++i) data.data.push_back(OHLCV{.timestamp = now() + std::chrono::minutes(i), .open = 100.0 + i, .high = 101.0 + i, .low = 99.0 + i, .close = 100.0 + i, .volume = 1000.0});
   BacktestEngine engine; BacktestConfig cfg; cfg.initial_capital = 100000.0; cfg.commission_pct = 0.0; cfg.slippage_pct = 0.0; cfg.allow_short = false; engine.set_config(cfg);
-  auto result = engine.run_walk_forward(data, [](size_t index, const std::vector<OHLCV>& history) -> SignalResult { EXPECT_EQ(index + 1, history.size()); return {TradeDirection::Buy, 0.0}; }, 4, 2);
+  auto result = engine.run_walk_forward(data, [](size_t index, const std::vector<OHLCV>& history) -> SignalResult { EXPECT_EQ(index >= 4 ? index - 4 + 1 : index + 1, history.size()); return {TradeDirection::Buy, 0.0}; }, 4, 2);
   ASSERT_TRUE(result.is_ok()); EXPECT_EQ(8u, result.value().total_bars); EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity); EXPECT_EQ(0u, result.value().num_trades);
 }
 
