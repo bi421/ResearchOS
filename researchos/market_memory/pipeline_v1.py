@@ -9,6 +9,7 @@ from researchos.market_memory.conditioning import ConditionSpec, MultipleTesting
 from researchos.market_memory.event_extractor import extract_sma_crossover_events
 from researchos.market_memory.event_schema import EventType, EvidenceStatus, MarketMemoryReport, ValidationResult
 from researchos.market_memory.evidence import create_evidence_record
+from researchos.market_memory.label_dependence import audit_label_overlap
 from researchos.market_memory.oos_validation import walk_forward_validate
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
 from researchos.market_memory.production_gate import check_production_evidence_readiness
@@ -159,13 +160,19 @@ def run_market_memory_pipeline(
             notes=notes,
         ))
 
-    audit = run_self_audit(events, conditional_results)
+    dependence_audit = audit_label_overlap(events, label_end_getter)
+    audit = run_self_audit(
+        events,
+        conditional_results,
+        label_end_getter=label_end_getter,
+        multiple_testing_corrected=True,
+    )
     multiple_testing = MultipleTestingAudit(
         total_hypotheses_tested=hypothesis_count,
         conditions_tested=[c.name for c in conditions],
         selection_process="Pre-specified based on domain knowledge (regime, direction, volatility)",
         correction_applied=f"Bonferroni family-wise error control: alpha={_PIPELINE_ALPHA:.4f}, per-hypothesis alpha={corrected_alpha:.6f}",
-        limitations="Probability CIs use Bonferroni-adjusted confidence. Bootstrap mean CI remains descriptive; OOS stability is required for validation.",
+        limitations="Probability CIs use Bonferroni-adjusted confidence. Bootstrap mean CI remains descriptive; OOS stability is required for validation. Bonferroni does not remove serial dependence from overlapping realized labels.",
     )
 
     evidence_records = []
@@ -184,6 +191,16 @@ def run_market_memory_pipeline(
                 "hypotheses": hypothesis_count,
                 "per_hypothesis_alpha": corrected_alpha,
             }
+        uncertainty["label_dependence"] = {
+            "method": "realized_label_interval_overlap",
+            "interval_definition": "[event_timestamp, realized_end)",
+            "total_events": dependence_audit.total_events,
+            "events_with_realized_end": dependence_audit.events_with_realized_end,
+            "missing_realized_end": dependence_audit.missing_realized_end,
+            "overlap_pairs": dependence_audit.overlap_pairs,
+            "max_concurrent_labels": dependence_audit.max_concurrent_labels,
+            "interpretation": "Overlap is reported as dependence information; it is not treated as evidence of leakage.",
+        }
         if oos:
             uncertainty["oos"] = {
                 "status": oos.status, "folds": oos.total_folds, "passed_folds": oos.passed_folds,
@@ -197,7 +214,7 @@ def run_market_memory_pipeline(
             condition_definition=str(cr.condition_spec.to_dict()["conditions"]), sample_size=cr.sample_size,
             time_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
             computation_method="forward_return_analysis", code_module="researchos.market_memory.pipeline_v1",
-            statistical_method="Bonferroni-adjusted Wilson probability CI + percentile bootstrap mean CI + purged walk-forward OOS + actual realized label-boundary audit",
+            statistical_method="Bonferroni-adjusted Wilson probability CI + percentile bootstrap mean CI + purged walk-forward OOS + realized-label boundary and dependence audit",
             result={"raw_probability": cr.raw_probability, "mean_return": cr.mean_return, "std_return": cr.std_return},
             uncertainty=uncertainty, validation_method="walk_forward_expanding_purged", random_seed=seed, status=status,
         ))
@@ -221,5 +238,5 @@ def run_market_memory_pipeline(
         },
         conditional_results=conditional_results, validation_results=validation_results, evidence_records=evidence_records,
         self_audit=audit, overall_status=overall_status,
-        notes=f"Dataset hash: {dataset_hash}. Multiple testing audit: {multiple_testing.to_dict()}",
+        notes=f"Dataset hash: {dataset_hash}. Multiple testing audit: {multiple_testing.to_dict()}. Label dependence audit: {dependence_audit}",
     )
