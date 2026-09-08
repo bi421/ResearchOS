@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, master, develop, feature/*, production-hardening ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main, master, develop, production-hardening ]
 
 jobs:
   test:
