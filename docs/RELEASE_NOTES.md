@@ -1,4 +1,4 @@
-﻿# ResearchOS Release Notes
+# ResearchOS Release Notes
 
 **Latest Release:** v1.0.1 (Release Candidate)
 **Release Date:** 2026-08-16

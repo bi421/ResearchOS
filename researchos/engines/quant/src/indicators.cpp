@@ -1,4 +1,4 @@
-﻿#include "indicators.h"
+#include "indicators.h"
 #include "data_loader.h"
 #include <cmath>
 #include <algorithm>

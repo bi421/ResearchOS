@@ -1,4 +1,4 @@
-﻿# cpp_quant_engine Python path setup
+# cpp_quant_engine Python path setup
 
 Энэ package нь sys.path-д автоматаар нэмэгддэггүй тул шинэ орчин/компьютер дээр
 дараах алхмыг гүйцэтгэх шаардлагатай:

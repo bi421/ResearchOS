@@ -1,4 +1,4 @@
-﻿#include "backtest.h"
+#include "backtest.h"
 #include "indicators.h"
 #include <cmath>
 #include <algorithm>

@@ -1,4 +1,4 @@
-﻿// Research Optimization Engine — comprehensive unit tests.
+// Research Optimization Engine — comprehensive unit tests.
 //
 // Covers: parameter spaces (grids, ranges, int ranges, log scale, mixed-radix
 // combo decoding, overflow), ParamSet accessors, optimization metrics

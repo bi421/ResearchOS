@@ -1,4 +1,4 @@
-﻿#include "quant/strategy/strategy_kernel.h"
+#include "quant/strategy/strategy_kernel.h"
 #include "quant/strategy/position.h"
 #include "strategy_internal.h"
 

@@ -1,4 +1,4 @@
-﻿if(NOT TARGET quant_engine)
+if(NOT TARGET quant_engine)
     message(FATAL_ERROR "bindings/ must be configured from the root")
 endif()
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)

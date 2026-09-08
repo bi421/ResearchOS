@@ -112,3 +112,11 @@ data/curated/*.json
 
 # Generated audit artifacts
 AUDIT_REPORT/
+
+# stale one-off dumps/reports (cleaned 2026-09-08)
+old_names.txt
+new_names.txt
+old_tests.txt
+new_tests.txt
+duplicate_resolution_report.txt
+*.ps1

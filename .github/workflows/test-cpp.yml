@@ -2,7 +2,7 @@ name: C++ Tests
 
 on:
   push:
-    branches: [ master, develop, feature/* ]
+    branches: [ main, master, develop, feature/* ]
     paths:
       - 'cpp_quant_engine/**'
       - '.github/workflows/test-cpp.yml'

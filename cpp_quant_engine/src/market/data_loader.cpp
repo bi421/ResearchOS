@@ -1,4 +1,4 @@
-﻿#include "quant/market/data_loader.h"
+#include "quant/market/data_loader.h"
 #include "quant/core/logger.h"
 #include <fstream>
 #include <sstream>

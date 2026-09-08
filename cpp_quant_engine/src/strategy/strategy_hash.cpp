@@ -1,4 +1,4 @@
-﻿#include "strategy_internal.h"
+#include "strategy_internal.h"
 
 #include <algorithm>
 #include <array>

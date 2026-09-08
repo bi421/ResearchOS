@@ -1,4 +1,4 @@
-﻿// BridgeBackend — the stable implementation of the Python/C++ integration
+// BridgeBackend — the stable implementation of the Python/C++ integration
 // contract (IBridgeBackend). Owns no global state; every call is pure and
 // deterministic. See python/bridge_interface.h for the contract and
 // python/bridge_models.h for the hash/canonical serialization rules.

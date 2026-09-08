@@ -1,4 +1,4 @@
-﻿#include "data_loader.h"
+#include "data_loader.h"
 #include <fstream>
 #include <sstream>
 #include <iomanip>

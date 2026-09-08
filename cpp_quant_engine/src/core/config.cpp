@@ -1,4 +1,4 @@
-﻿#include "quant/core/config.h"
+#include "quant/core/config.h"
 #include <format>
 #include <optional>
 #include <sstream>

@@ -1,4 +1,4 @@
-﻿            t.entry_time = entry_time;
+            t.entry_time = entry_time;
             t.exit_time = timestamps[i];
             t.entry_price = entry_price;
             t.exit_price = close_price;

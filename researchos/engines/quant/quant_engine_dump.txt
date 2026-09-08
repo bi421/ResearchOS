@@ -1,4 +1,4 @@
-﻿#include "quant_engine.h"
+#include "quant_engine.h"
 #include <iostream>
 
 namespace cpp_quant {

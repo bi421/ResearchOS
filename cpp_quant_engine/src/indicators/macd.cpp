@@ -1,4 +1,4 @@
-﻿#include "quant/indicators/macd.h"
+#include "quant/indicators/macd.h"
 #include <cmath>
 #include <stdexcept>
 

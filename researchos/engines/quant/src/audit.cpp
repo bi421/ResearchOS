@@ -1,4 +1,4 @@
-﻿#include "audit.h"
+#include "audit.h"
 #include "indicators.h"
 #include <cmath>
 #include <algorithm>

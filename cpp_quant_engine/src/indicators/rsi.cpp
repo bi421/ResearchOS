@@ -1,4 +1,4 @@
-﻿#include "quant/indicators/rsi.h"
+#include "quant/indicators/rsi.h"
 #include <cmath>
 #include <stdexcept>
 

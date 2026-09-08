@@ -1,4 +1,4 @@
-﻿#include <cstddef>
+#include <cstddef>
 #ifndef QUANT_STRATEGY_STRATEGY_CONFIG_H
 #define QUANT_STRATEGY_STRATEGY_CONFIG_H
 
