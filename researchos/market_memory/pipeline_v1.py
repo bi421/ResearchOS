@@ -13,11 +13,12 @@ from researchos.market_memory.oos_validation import walk_forward_validate
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
 from researchos.market_memory.production_gate import check_production_evidence_readiness
 from researchos.market_memory.self_audit import run_self_audit
-from researchos.market_memory.statistical_evidence import wilson_proportion_ci
+from researchos.market_memory.statistical_evidence import bonferroni_alpha, wilson_proportion_ci
 from researchos.market_memory.temporal_validation import chronological_split, check_temporal_integrity
 
 
 _PIPELINE_OUTCOME_HORIZON_DAYS = 1
+_PIPELINE_ALPHA = 0.05
 
 
 def _compute_dataset_hash(file_path: str) -> str:
@@ -86,6 +87,10 @@ def run_market_memory_pipeline(
             ConditionSpec("high_volatility", {"volatility_state": "High"}, "Crossovers in high volatility regime"),
         ]
 
+    hypothesis_count = len(conditions)
+    corrected_alpha = bonferroni_alpha(_PIPELINE_ALPHA, hypothesis_count)
+    corrected_confidence_level = 1.0 - corrected_alpha
+
     conditional_results = []
     probability_evidence = {}
     for spec in conditions:
@@ -93,7 +98,11 @@ def run_market_memory_pipeline(
         conditional_results.append(result)
         values = _finite_returns(events, spec)
         if values:
-            probability_evidence[spec.name] = wilson_proportion_ci(sum(value > 0.0 for value in values), len(values))
+            probability_evidence[spec.name] = wilson_proportion_ci(
+                sum(value > 0.0 for value in values),
+                len(values),
+                confidence_level=corrected_confidence_level,
+            )
 
     train_events, validation_events, test_events = chronological_split(events)
     validation_results = []
@@ -137,6 +146,14 @@ def run_market_memory_pipeline(
         ))
 
     audit = run_self_audit(events, conditional_results)
+    multiple_testing = MultipleTestingAudit(
+        total_hypotheses_tested=hypothesis_count,
+        conditions_tested=[c.name for c in conditions],
+        selection_process="Pre-specified based on domain knowledge (regime, direction, volatility)",
+        correction_applied=f"Bonferroni family-wise error control: alpha={_PIPELINE_ALPHA:.4f}, per-hypothesis alpha={corrected_alpha:.6f}",
+        limitations="Probability CIs use Bonferroni-adjusted confidence. Bootstrap mean CI remains descriptive; OOS stability is required for validation.",
+    )
+
     evidence_records = []
     for cr in conditional_results:
         oos = oos_results[cr.condition_name]
@@ -146,6 +163,13 @@ def run_market_memory_pipeline(
         uncertainty = {"mean_confidence_interval": cr.confidence_interval}
         if prob:
             uncertainty["probability_confidence_interval"] = list(prob.confidence_interval)
+            uncertainty["probability_confidence_level"] = prob.confidence_level
+            uncertainty["multiple_testing"] = {
+                "method": "bonferroni",
+                "family_alpha": _PIPELINE_ALPHA,
+                "hypotheses": hypothesis_count,
+                "per_hypothesis_alpha": corrected_alpha,
+            }
         if oos:
             uncertainty["oos"] = {
                 "status": oos.status, "folds": oos.total_folds, "passed_folds": oos.passed_folds,
@@ -159,17 +183,11 @@ def run_market_memory_pipeline(
             condition_definition=str(cr.condition_spec.to_dict()["conditions"]), sample_size=cr.sample_size,
             time_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
             computation_method="forward_return_analysis", code_module="researchos.market_memory.pipeline_v1",
-            statistical_method="Wilson proportion CI + percentile bootstrap mean CI + purged walk-forward OOS + label-boundary audit",
+            statistical_method="Bonferroni-adjusted Wilson probability CI + percentile bootstrap mean CI + purged walk-forward OOS + label-boundary audit",
             result={"raw_probability": cr.raw_probability, "mean_return": cr.mean_return, "std_return": cr.std_return},
             uncertainty=uncertainty, validation_method="walk_forward_expanding_purged", random_seed=seed, status=status,
         ))
 
-    multiple_testing = MultipleTestingAudit(
-        total_hypotheses_tested=len(conditions), conditions_tested=[c.name for c in conditions],
-        selection_process="Pre-specified based on domain knowledge (regime, direction, volatility)",
-        correction_applied="None (exploratory unless separately corrected)",
-        limitations="Multiple conditions increase false-positive risk; multiplicity correction is required before confirmatory claims.",
-    )
     if audit.overall_status == "FAIL":
         overall_status = EvidenceStatus.REJECTED.value
     elif all(oos is not None and oos.stable for oos in oos_results.values()) and oos_results:
