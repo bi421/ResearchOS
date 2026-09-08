@@ -63,10 +63,10 @@ def build_input_provenance(
             "timestamp": _utc_timestamp(ts),
             "close": c,
             "high": h,
-            "low": l,
+            "low": low_value,
             "volume": v,
         }
-        for ts, c, h, l, v in zip(timestamps, close, high, low, volume)
+        for ts, c, h, low_value, v in zip(timestamps, close, high, low, volume)
     ]
     price_hash = reproducibility_hash(price_records)
     macro_hashes = {
