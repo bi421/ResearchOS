@@ -1,26 +1,4 @@
-"""
-Phase 5.2 entrypoint — run the macro-augmented (DXY / US10Y / VIX) XAUUSD
-predictive-value experiment.
-
-Usage:
-    python -m researchos.experiments.phase52.scripts.run_phase52_experiment \\
-        --csv path/to/xauusd_d1.csv \\
-        --dxy path/to/dxy_d1.csv --us10y path/to/us10y_d1.csv --vix path/to/vix_d1.csv \\
-        --format mt5 --symbol XAUUSD
-
-All four CSVs are required. Macro series are aligned to the XAUUSD bar dates
-by exact date match only — bars on a date where a macro series has no
-matching row are treated as missing for that symbol at that bar, never
-interpolated or forward-filled, per the "no synthetic-data-as-evidence" rule
-carried over from Phase 5.1.
-
-If any required file is missing or a macro series fails the alignment
-requirement, the experiment reports:
-
-    BLOCKED — REQUIRED MACRO DATA MISSING OR MISALIGNED: <symbols>
-
-This is a data-availability state, NOT a model success/failure verdict.
-"""
+"""Phase 5.2 entrypoint — macro-augmented XAUUSD predictive-value experiment."""
 
 from __future__ import annotations
 
@@ -29,8 +7,11 @@ import json
 import os
 import sys
 
+import pandas as pd
+
 from researchos.data_engine.loader import CsvLoader
 from researchos.experiments.phase52 import Phase52Config, run_phase52
+from researchos.experiments.phase52.alignment import validate_exact_timestamp_alignment
 
 
 def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
@@ -45,15 +26,22 @@ def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
     high = [c.high for c in candles]
     low = [c.low for c in candles]
     volume = [c.volume for c in candles]
-    dates = [str(c.timestamp)[:10] for c in candles]
-    return close, high, low, volume, dates
+    timestamps = [c.timestamp for c in candles]
+    return close, high, low, volume, timestamps
 
 
-def _load_macro_series_aligned(csv_path: str, fmt: str, symbol: str, timeframe: str, target_dates: list[str]) -> list[float | None]:
-    """Load a macro CSV and align it to ``target_dates`` by exact date match.
+def _load_macro_series_exact(
+    csv_path: str,
+    fmt: str,
+    symbol: str,
+    timeframe: str,
+    target_timestamps: list[object],
+) -> list[float | None]:
+    """Load a macro series only after exact timestamp validation.
 
-    A date present in ``target_dates`` without a matching macro row becomes
-    ``None`` at that index (never interpolated).
+    This function deliberately performs no date truncation or repair. The
+    factor must contain exactly the same UTC timestamps, in the same order,
+    as XAUUSD before values are accepted as research evidence.
     """
     loader = CsvLoader()
     if fmt == "mt5":
@@ -62,8 +50,10 @@ def _load_macro_series_aligned(csv_path: str, fmt: str, symbol: str, timeframe: 
         candles = loader.load_tradingview_candles(csv_path, symbol=symbol, timeframe=timeframe)
     else:
         candles = loader.load_candles_auto(csv_path, symbol=symbol, timeframe=timeframe)
-    by_date = {str(c.timestamp)[:10]: c.close for c in candles}
-    return [by_date.get(d) for d in target_dates]
+
+    factor_timestamps = [c.timestamp for c in candles]
+    validate_exact_timestamp_alignment(target_timestamps, factor_timestamps, symbol)
+    return [c.close for c in candles]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -86,7 +76,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default="", help="Optional JSON output path")
     args = parser.parse_args(argv)
 
-    missing_files = [name for name, path in (("XAUUSD csv", args.csv), ("DXY csv", args.dxy), ("US10Y csv", args.us10y), ("VIX csv", args.vix)) if not path or not os.path.exists(path)]
+    missing_files = [
+        name
+        for name, path in (
+            ("XAUUSD csv", args.csv),
+            ("DXY csv", args.dxy),
+            ("US10Y csv", args.us10y),
+            ("VIX csv", args.vix),
+        )
+        if not path or not os.path.exists(path)
+    ]
     if missing_files:
         result = run_phase52([], [], [], [], {})
         print("=" * 60)
@@ -98,14 +97,22 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        close, high, low, volume, dates = _load_candles(args.csv, args.format, args.symbol, args.timeframe)
+        close, high, low, volume, timestamps = _load_candles(
+            args.csv, args.format, args.symbol, args.timeframe
+        )
         macro = {
-            "DXY": _load_macro_series_aligned(args.dxy, args.format, "DXY", args.timeframe, dates),
-            "US10Y": _load_macro_series_aligned(args.us10y, args.format, "US10Y", args.timeframe, dates),
-            "VIX": _load_macro_series_aligned(args.vix, args.format, "VIX", args.timeframe, dates),
+            "DXY": _load_macro_series_exact(
+                args.dxy, args.format, "DXY", args.timeframe, timestamps
+            ),
+            "US10Y": _load_macro_series_exact(
+                args.us10y, args.format, "US10Y", args.timeframe, timestamps
+            ),
+            "VIX": _load_macro_series_exact(
+                args.vix, args.format, "VIX", args.timeframe, timestamps
+            ),
         }
     except Exception as e:  # noqa: BLE001
-        print(f"BLOCKED — data load failed: {e}")
+        print(f"BLOCKED — exact data alignment failed: {e}")
         return 2
 
     cfg = Phase52Config(
