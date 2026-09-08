@@ -7,8 +7,6 @@ import json
 import os
 import sys
 
-import pandas as pd
-
 from researchos.data_engine.loader import CsvLoader
 from researchos.experiments.phase52 import Phase52Config, run_phase52
 from researchos.experiments.phase52.alignment import validate_exact_timestamp_alignment
@@ -30,19 +28,8 @@ def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
     return close, high, low, volume, timestamps
 
 
-def _load_macro_series_exact(
-    csv_path: str,
-    fmt: str,
-    symbol: str,
-    timeframe: str,
-    target_timestamps: list[object],
-) -> list[float | None]:
-    """Load a macro series only after exact timestamp validation.
-
-    This function deliberately performs no date truncation or repair. The
-    factor must contain exactly the same UTC timestamps, in the same order,
-    as XAUUSD before values are accepted as research evidence.
-    """
+def _load_macro_series_exact(csv_path: str, fmt: str, symbol: str, timeframe: str, target_timestamps: list[object]):
+    """Load a macro series only after exact timestamp validation."""
     loader = CsvLoader()
     if fmt == "mt5":
         candles = loader.load_mt5_candles(csv_path, symbol=symbol, timeframe=timeframe)
@@ -50,10 +37,9 @@ def _load_macro_series_exact(
         candles = loader.load_tradingview_candles(csv_path, symbol=symbol, timeframe=timeframe)
     else:
         candles = loader.load_candles_auto(csv_path, symbol=symbol, timeframe=timeframe)
-
     factor_timestamps = [c.timestamp for c in candles]
     validate_exact_timestamp_alignment(target_timestamps, factor_timestamps, symbol)
-    return [c.close for c in candles]
+    return [c.close for c in candles], factor_timestamps
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -77,58 +63,31 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     missing_files = [
-        name
-        for name, path in (
-            ("XAUUSD csv", args.csv),
-            ("DXY csv", args.dxy),
-            ("US10Y csv", args.us10y),
-            ("VIX csv", args.vix),
-        )
+        name for name, path in (("XAUUSD csv", args.csv), ("DXY csv", args.dxy), ("US10Y csv", args.us10y), ("VIX csv", args.vix))
         if not path or not os.path.exists(path)
     ]
     if missing_files:
-        result = run_phase52([], [], [], [], {})
         print("=" * 60)
-        print(f"OUTCOME: {result.outcome}")
-        print(f"REASON:  {result.validation.reasons[0]}")
+        print("OUTCOME: BLOCKED")
+        print("REASON:  REAL XAUUSD + MACRO DATA REQUIRED")
         print(f"MISSING FILES: {', '.join(missing_files)}")
         print("=" * 60)
-        print("BLOCKED — REAL XAUUSD + MACRO DATA REQUIRED")
         return 2
 
     try:
-        close, high, low, volume, timestamps = _load_candles(
-            args.csv, args.format, args.symbol, args.timeframe
-        )
-        macro = {
-            "DXY": _load_macro_series_exact(
-                args.dxy, args.format, "DXY", args.timeframe, timestamps
-            ),
-            "US10Y": _load_macro_series_exact(
-                args.us10y, args.format, "US10Y", args.timeframe, timestamps
-            ),
-            "VIX": _load_macro_series_exact(
-                args.vix, args.format, "VIX", args.timeframe, timestamps
-            ),
-        }
+        close, high, low, volume, timestamps = _load_candles(args.csv, args.format, args.symbol, args.timeframe)
+        macro = {}
+        macro_timestamps = {}
+        for symbol, path in (("DXY", args.dxy), ("US10Y", args.us10y), ("VIX", args.vix)):
+            values, factor_timestamps = _load_macro_series_exact(path, args.format, symbol, args.timeframe, timestamps)
+            macro[symbol] = values
+            macro_timestamps[symbol] = factor_timestamps
     except Exception as e:  # noqa: BLE001
         print(f"BLOCKED — exact data alignment failed: {e}")
         return 2
 
-    cfg = Phase52Config(
-        symbol=args.symbol,
-        timeframe=args.timeframe,
-        horizon=args.horizon,
-        threshold=args.threshold,
-        train_size=args.train,
-        validation_size=args.valid,
-        step_size=args.step,
-        spread_spec=args.spread,
-        slippage_spec=args.slippage,
-        commission_spec=args.commission,
-    )
-
-    result = run_phase52(close, high, low, volume, macro, cfg)
+    cfg = Phase52Config(symbol=args.symbol, timeframe=args.timeframe, horizon=args.horizon, threshold=args.threshold, train_size=args.train, validation_size=args.valid, step_size=args.step, spread_spec=args.spread, slippage_spec=args.slippage, commission_spec=args.commission)
+    result = run_phase52(close, high, low, volume, macro, cfg, timestamps=timestamps, macro_timestamps=macro_timestamps)
 
     print("=" * 60)
     print(f"SYMBOL:              {result.symbol}")
@@ -142,7 +101,6 @@ def main(argv: list[str] | None = None) -> int:
     print(f"OUTCOME:             {result.outcome}")
     print(f"REPRODUCIBILITY_HASH:{result.reproducibility_hash}")
     print("=" * 60)
-
     if result.model is not None:
         print(f"MODEL ACCURACY:  {result.model.accuracy:.4f}")
         print(f"BASELINE ACC:    {result.baseline.accuracy:.4f}")
@@ -152,12 +110,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"P-VALUE:         {result.significance.p_value:.4f}")
         print(f"SIGNIFICANT:     {result.significance.significant}")
     print(f"VALIDATION:      {result.validation.outcome}")
-
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:
             json.dump(result.to_dict(), f, indent=2, default=str)
         print(f"Result written to {args.out}")
-
     return 0
 
 
