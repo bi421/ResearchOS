@@ -20,7 +20,6 @@ Result<void> BacktestEngine::execute_signal(const SignalResult& signal, const OH
 
   if (signal.direction == TradeDirection::Buy) {
     if (position < 0.0) {
-      // Close the short: record an immediate, closed buy-back trade.
       double buy_qty = std::min(signal.quantity, -position);
       Trade t;
       t.symbol = book.symbol();
@@ -114,7 +113,6 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
     double equity = cash + position * bar.close;
     result.equity_curve.push_back(equity);
 
-    // Running drawdown curve (positive percentage magnitude, 0 at peaks).
     running_peak = std::max(running_peak, equity);
     result.drawdown_curve.push_back(
         running_peak > 0.0 ? (running_peak - equity) / running_peak * 100.0 : 0.0);
@@ -131,7 +129,6 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
     const auto& last_bar = data[data.size() - 1];
     cash += position * last_bar.close;
     position = 0.0;
-    // Close any open trades at the final bar for a consistent trade log.
     for (const auto& t : book.open_trades()) {
       book.close_trade(t.id, last_bar.close, last_bar.timestamp);
     }
@@ -155,8 +152,14 @@ Result<BacktestResult> BacktestEngine::run(MarketData& data, SignalFn signal_fn)
 Result<BacktestResult> BacktestEngine::run_walk_forward(
     OHLCVSource& data, SignalFn signal_fn,
     size_t train_window, size_t test_window) {
-  // Stub: runs full backtest for now
-  return run(data, std::move(signal_fn));
+  (void)data;
+  (void)signal_fn;
+  (void)train_window;
+  (void)test_window;
+  // Never silently substitute an in-sample full backtest for walk-forward OOS validation.
+  return Result<BacktestResult>::fail(
+      Error{ErrorCode::NotImplemented,
+            "walk-forward backtesting is not implemented; refusing to run a full-sample backtest"});
 }
 
 } // namespace quant
