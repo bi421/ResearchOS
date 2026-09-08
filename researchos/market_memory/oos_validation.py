@@ -50,21 +50,12 @@ def assert_label_boundaries(
     test_events: Sequence[object],
     label_end_getter: Callable[[object], datetime | None],
 ) -> None:
-    """Fail closed unless realized label windows stay inside their partition.
-
-    The invariant is evaluated on actual label-end timestamps rather than row
-    offsets. This is the final boundary check after chronological partitioning:
-    every train label must end before validation starts, and every validation
-    label must end before test starts. Events without a realizable label end are
-    ignored because they cannot prove leakage safety and should normally have
-    been removed by outcome availability filtering.
-    """
+    """Fail closed unless realized label windows stay inside their partition."""
     if not train_events or not validation_events or not test_events:
         return
 
     validation_start = min(event.timestamp for event in validation_events)
     test_start = min(event.timestamp for event in test_events)
-
     train_ends = [label_end_getter(event) for event in train_events]
     train_ends = [value for value in train_ends if value is not None]
     validation_ends = [label_end_getter(event) for event in validation_events]
@@ -90,8 +81,13 @@ def walk_forward_validate(
     purge_days: int = 0,
     embargo_days: int = 0,
     max_outcome_horizon_days: int | None = None,
+    label_end_getter: Callable[[object], datetime | None] | None = None,
 ) -> OOSValidationResult:
-    """Evaluate a pre-specified condition with purged walk-forward folds."""
+    """Evaluate a pre-specified condition with purged walk-forward folds.
+
+    When ``label_end_getter`` is supplied, every fold performs an explicit
+    realized label-window boundary audit in addition to the purge check.
+    """
     if initial_train_size < 1 or validation_size < 1 or test_size < 1:
         raise ValueError("window sizes must be >= 1")
     if step_size < 1 or min_test_events < 1:
@@ -101,9 +97,7 @@ def walk_forward_validate(
     if max_outcome_horizon_days is not None and max_outcome_horizon_days < 1:
         raise ValueError("max_outcome_horizon_days must be >= 1 when supplied")
     if max_outcome_horizon_days is not None and purge_days < max_outcome_horizon_days:
-        raise ValueError(
-            "purge_days must be >= max_outcome_horizon_days to prevent label leakage"
-        )
+        raise ValueError("purge_days must be >= max_outcome_horizon_days to prevent label leakage")
     if not 0.0 < confidence_level < 1.0:
         raise ValueError("confidence_level must be strictly between 0 and 1")
 
@@ -125,7 +119,6 @@ def walk_forward_validate(
 
         purge_delta = timedelta(days=purge_days)
         embargo_delta = timedelta(days=embargo_days)
-
         train_cutoff = validation_start - purge_delta
         validation_cutoff = test_start - purge_delta
         train = [event for event in ordered[:train_end] if event.timestamp < train_cutoff]
@@ -139,6 +132,9 @@ def walk_forward_validate(
             if event.timestamp >= test_lower_bound and event.timestamp <= test_end
         ]
 
+        if label_end_getter is not None:
+            assert_label_boundaries(train, validation, test, label_end_getter)
+
         train_values = _matched_values(train, matcher, outcome_getter)
         validation_values = _matched_values(validation, matcher, outcome_getter)
         test_values = _matched_values(test, matcher, outcome_getter)
@@ -150,9 +146,7 @@ def walk_forward_validate(
         train_prob = _probability(train_values)
         validation_prob = _probability(validation_values)
         test_prob = _probability(test_values)
-        passed = len(test_values) >= min_test_events and _stable(
-            train_prob, validation_prob, test_prob
-        )
+        passed = len(test_values) >= min_test_events and _stable(train_prob, validation_prob, test_prob)
         note = "" if passed else "Insufficient OOS sample or unstable probability"
         results.append(
             OOSFoldResult(
