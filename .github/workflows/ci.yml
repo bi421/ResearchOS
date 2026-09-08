@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 on:
   push:
     branches: [ main, production-hardening ]
@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      - run: pip install -e.[dev] || pip install -e.
+      - run: pip install -e.[dev] || pip install -e. || pip install.
       - run: pytest -q
 
   quant-engine:
@@ -31,9 +31,11 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ccache-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
-      - run: cmake -S. -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
-      - run: cmake --build build -j
+          key: ccache-${{ runner.os }}-${{ hashFiles('cpp_quant_engine/**/CMakeLists.txt') }}
+      - name: Configure
+        run: cmake -S cpp_quant_engine -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - name: Build
+        run: cmake --build build -j
 
   coverage:
     runs-on: ubuntu-latest
@@ -42,5 +44,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - run: pip install -e.[dev] pytest-cov
-      - run: pytest --cov --cov-report=xml
+          cache: 'pip'
+      - run: pip install -e.[dev] pytest-cov || pip install pytest-cov
+      - run: pytest --cov --cov-report=xml -q
