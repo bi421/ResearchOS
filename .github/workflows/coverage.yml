@@ -28,7 +28,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest researchos/tests/ tests/unit/ researchos/data_engine/tests/ researchos/market_memory/tests/ researchos/experiments/phase51/tests/ \
+        pytest researchos/tests/ tests/unit/ researchos/data_engine/tests/ researchos/market_memory/tests/ researchos/experiments/phase51/tests/ researchos/experiments/phase52/tests/ \
           --ignore=researchos/tests/test_ensemble.py \
           --ignore=researchos/tests/test_sp500.py \
           --ignore=researchos/tests/test_strategies_real.py \
