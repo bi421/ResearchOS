@@ -2,14 +2,15 @@ name: C++ Tests
 
 on:
   push:
-    branches: [ main, master, develop, feature/* ]
+    branches: [ main, master, develop, feature/*, production-hardening ]
     paths:
       - 'cpp_quant_engine/**'
       - '.github/workflows/test-cpp.yml'
   pull_request:
-    branches: [ master, develop ]
+    branches: [ master, develop, production-hardening ]
     paths:
       - 'cpp_quant_engine/**'
+      - '.github/workflows/test-cpp.yml'
 
 jobs:
   build-and-test:
