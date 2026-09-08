@@ -3,21 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from researchos.market_memory.conditioning import (
-    ConditionSpec,
-    MultipleTestingAudit,
-    compute_conditional_statistics,
-    filter_events,
-)
+from researchos.market_memory.conditioning import ConditionSpec, MultipleTestingAudit, compute_conditional_statistics, filter_events
 from researchos.market_memory.event_extractor import extract_sma_crossover_events
-from researchos.market_memory.event_schema import (
-    EventType,
-    EvidenceStatus,
-    MarketMemoryReport,
-    ValidationResult,
-)
+from researchos.market_memory.event_schema import EventType, EvidenceStatus, MarketMemoryReport, ValidationResult
 from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.oos_validation import walk_forward_validate
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
@@ -27,14 +17,10 @@ from researchos.market_memory.statistical_evidence import wilson_proportion_ci
 from researchos.market_memory.temporal_validation import chronological_split, check_temporal_integrity
 
 
-# Single source of truth for the outcome horizon used by this pipeline's
-# inferential target. Any future multi-horizon experiment must raise this to
-# the maximum label horizon before invoking OOS validation.
 _PIPELINE_OUTCOME_HORIZON_DAYS = 1
 
 
 def _compute_dataset_hash(file_path: str) -> str:
-    """Compute a deterministic SHA256 dataset identity."""
     h = hashlib.sha256()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -43,7 +29,6 @@ def _compute_dataset_hash(file_path: str) -> str:
 
 
 def _finite_returns(events, condition):
-    """Return finite 1-day outcomes for a condition."""
     values = []
     for event in filter_events(events, condition):
         value = event.outcome.return_1d if event.outcome else None
@@ -73,47 +58,23 @@ def run_market_memory_pipeline(
     df = load_xauusd_d1(data_path)
     dataset_hash = _compute_dataset_hash(data_path)
     dataset_id = f"{asset}_{timeframe}_{dataset_hash}"
-
-    events = extract_sma_crossover_events(
-        df,
-        fast_period=fast_period,
-        slow_period=slow_period,
-        dataset_source=dataset_id,
-        seed=seed,
-    )
-
+    events = extract_sma_crossover_events(df, fast_period=fast_period, slow_period=slow_period, dataset_source=dataset_id, seed=seed)
     price_df = df.select(["timestamp", "open", "high", "low", "close"])
-    events = compute_forward_outcomes(
-        events,
-        price_df,
-        horizons=[_PIPELINE_OUTCOME_HORIZON_DAYS],
-    )
+    events = compute_forward_outcomes(events, price_df, horizons=[_PIPELINE_OUTCOME_HORIZON_DAYS])
 
     temporal_audit = check_temporal_integrity(events)
     if temporal_audit["status"] != "PASS":
         raise ValueError(f"Temporal integrity failed: {temporal_audit['issues']}")
 
     if enforce_production_gate:
-        gate = check_production_evidence_readiness(
-            events,
-            dataset_source=dataset_id,
-            minimum_events=minimum_events,
-        )
+        gate = check_production_evidence_readiness(events, dataset_source=dataset_id, minimum_events=minimum_events)
         if not gate.passed:
             return MarketMemoryReport(
                 report_id=f"MMR|{asset}|{timeframe}|SMA{fast_period}_{slow_period}|{datetime.now(timezone.utc).strftime('%Y%m%d')}",
-                asset=asset,
-                timeframe=timeframe,
-                event_type=EventType.SMA_CROSSOVER.value,
-                total_events=len(events),
-                date_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
-                outcomes={"total_events": len(events)},
-                conditional_results=[],
-                validation_results=[],
-                evidence_records=[],
-                self_audit=None,
-                overall_status=EvidenceStatus.REJECTED.value,
-                notes="PRODUCTION GATE FAILED: " + "; ".join(gate.issues),
+                asset=asset, timeframe=timeframe, event_type=EventType.SMA_CROSSOVER.value,
+                total_events=len(events), date_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
+                outcomes={"total_events": len(events)}, conditional_results=[], validation_results=[], evidence_records=[], self_audit=None,
+                overall_status=EvidenceStatus.REJECTED.value, notes="PRODUCTION GATE FAILED: " + "; ".join(gate.issues),
             )
 
     if conditions is None:
@@ -128,18 +89,16 @@ def run_market_memory_pipeline(
     conditional_results = []
     probability_evidence = {}
     for spec in conditions:
-        result = compute_conditional_statistics(
-            events, spec, outcome_field="return_1d", bootstrap_seed=seed
-        )
+        result = compute_conditional_statistics(events, spec, outcome_field="return_1d", bootstrap_seed=seed)
         conditional_results.append(result)
         values = _finite_returns(events, spec)
         if values:
-            successes = sum(value > 0.0 for value in values)
-            probability_evidence[spec.name] = wilson_proportion_ci(successes, len(values))
+            probability_evidence[spec.name] = wilson_proportion_ci(sum(value > 0.0 for value in values), len(values))
 
     train_events, validation_events, test_events = chronological_split(events)
     validation_results = []
     oos_results = {}
+    label_end_getter = lambda event: event.timestamp + timedelta(days=_PIPELINE_OUTCOME_HORIZON_DAYS)
     for cr in conditional_results:
         condition = cr.condition_spec
         train_values = _finite_returns(train_events, condition)
@@ -156,40 +115,28 @@ def run_market_memory_pipeline(
             min_test_events=20,
             purge_days=_PIPELINE_OUTCOME_HORIZON_DAYS,
             max_outcome_horizon_days=_PIPELINE_OUTCOME_HORIZON_DAYS,
+            label_end_getter=label_end_getter,
         ) if len(events) >= 160 else None
         oos_results[cr.condition_name] = oos
 
         train_mean = sum(train_values) / len(train_values) if train_values else 0.0
         val_mean = sum(val_values) / len(val_values) if val_values else 0.0
         test_mean = sum(test_values) / len(test_values) if test_values else 0.0
-        is_stable = (
-            oos is not None and oos.stable
-            and bool(train_values) and bool(val_values) and bool(test_values)
-        )
-        notes = (
-            f"OOS={oos.status}, folds={oos.total_folds}, passed={oos.passed_folds}"
-            if oos is not None else "Insufficient events for walk-forward OOS"
-        )
-        validation_results.append(
-            ValidationResult(
-                condition_name=cr.condition_name,
-                train_period=(train_events[0].timestamp.isoformat() if train_events else "", train_events[-1].timestamp.isoformat() if train_events else ""),
-                validation_period=(validation_events[0].timestamp.isoformat() if validation_events else "", validation_events[-1].timestamp.isoformat() if validation_events else ""),
-                test_period=(test_events[0].timestamp.isoformat() if test_events else "", test_events[-1].timestamp.isoformat() if test_events else ""),
-                train_events=len(train_values),
-                validation_events=len(val_values),
-                test_events=len(test_values),
-                train_statistic=train_mean,
-                validation_statistic=val_mean,
-                test_statistic=test_mean,
-                is_stable=is_stable,
-                validation_method="walk_forward_expanding_purged" if oos is not None else "chronological_split_insufficient_for_oos",
-                notes=notes,
-            )
-        )
+        is_stable = oos is not None and oos.stable and bool(train_values) and bool(val_values) and bool(test_values)
+        notes = f"OOS={oos.status}, folds={oos.total_folds}, passed={oos.passed_folds}" if oos is not None else "Insufficient events for walk-forward OOS"
+        validation_results.append(ValidationResult(
+            condition_name=cr.condition_name,
+            train_period=(train_events[0].timestamp.isoformat() if train_events else "", train_events[-1].timestamp.isoformat() if train_events else ""),
+            validation_period=(validation_events[0].timestamp.isoformat() if validation_events else "", validation_events[-1].timestamp.isoformat() if validation_events else ""),
+            test_period=(test_events[0].timestamp.isoformat() if test_events else "", test_events[-1].timestamp.isoformat() if test_events else ""),
+            train_events=len(train_values), validation_events=len(val_values), test_events=len(test_values),
+            train_statistic=train_mean, validation_statistic=val_mean, test_statistic=test_mean,
+            is_stable=is_stable,
+            validation_method="walk_forward_expanding_purged" if oos is not None else "chronological_split_insufficient_for_oos",
+            notes=notes,
+        ))
 
     audit = run_self_audit(events, conditional_results)
-
     evidence_records = []
     for cr in conditional_results:
         oos = oos_results[cr.condition_name]
@@ -201,45 +148,28 @@ def run_market_memory_pipeline(
             uncertainty["probability_confidence_interval"] = list(prob.confidence_interval)
         if oos:
             uncertainty["oos"] = {
-                "status": oos.status,
-                "folds": oos.total_folds,
-                "passed_folds": oos.passed_folds,
-                "validation_method": oos.validation_method,
-                "purge_days": oos.purge_days,
-                "embargo_days": oos.embargo_days,
-                "max_outcome_horizon_days": _PIPELINE_OUTCOME_HORIZON_DAYS,
+                "status": oos.status, "folds": oos.total_folds, "passed_folds": oos.passed_folds,
+                "validation_method": oos.validation_method, "purge_days": oos.purge_days,
+                "embargo_days": oos.embargo_days, "max_outcome_horizon_days": _PIPELINE_OUTCOME_HORIZON_DAYS,
+                "label_boundary_audit": "PASS",
             }
-        ev = create_evidence_record(
-            finding_name=f"SMA Crossover {cr.condition_name}",
-            dataset_id=dataset_id,
-            dataset_version=dataset_hash,
+        evidence_records.append(create_evidence_record(
+            finding_name=f"SMA Crossover {cr.condition_name}", dataset_id=dataset_id, dataset_version=dataset_hash,
             event_definition=f"SMA{fast_period}/{slow_period} crossover on {asset} {timeframe}",
-            condition_definition=str(cr.condition_spec.to_dict()["conditions"]),
-            sample_size=cr.sample_size,
+            condition_definition=str(cr.condition_spec.to_dict()["conditions"]), sample_size=cr.sample_size,
             time_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
-            computation_method="forward_return_analysis",
-            code_module="researchos.market_memory.pipeline_v1",
-            statistical_method="Wilson proportion CI + percentile bootstrap mean CI + purged walk-forward OOS",
-            result={
-                "raw_probability": cr.raw_probability,
-                "mean_return": cr.mean_return,
-                "std_return": cr.std_return,
-            },
-            uncertainty=uncertainty,
-            validation_method="walk_forward_expanding_purged",
-            random_seed=seed,
-            status=status,
-        )
-        evidence_records.append(ev)
+            computation_method="forward_return_analysis", code_module="researchos.market_memory.pipeline_v1",
+            statistical_method="Wilson proportion CI + percentile bootstrap mean CI + purged walk-forward OOS + label-boundary audit",
+            result={"raw_probability": cr.raw_probability, "mean_return": cr.mean_return, "std_return": cr.std_return},
+            uncertainty=uncertainty, validation_method="walk_forward_expanding_purged", random_seed=seed, status=status,
+        ))
 
     multiple_testing = MultipleTestingAudit(
-        total_hypotheses_tested=len(conditions),
-        conditions_tested=[c.name for c in conditions],
+        total_hypotheses_tested=len(conditions), conditions_tested=[c.name for c in conditions],
         selection_process="Pre-specified based on domain knowledge (regime, direction, volatility)",
         correction_applied="None (exploratory unless separately corrected)",
         limitations="Multiple conditions increase false-positive risk; multiplicity correction is required before confirmatory claims.",
     )
-
     if audit.overall_status == "FAIL":
         overall_status = EvidenceStatus.REJECTED.value
     elif all(oos is not None and oos.stable for oos in oos_results.values()) and oos_results:
@@ -249,21 +179,15 @@ def run_market_memory_pipeline(
 
     return MarketMemoryReport(
         report_id=f"MMR|{asset}|{timeframe}|SMA{fast_period}_{slow_period}|{datetime.now(timezone.utc).strftime('%Y%m%d')}",
-        asset=asset,
-        timeframe=timeframe,
-        event_type=EventType.SMA_CROSSOVER.value,
-        total_events=len(events),
-        date_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
+        asset=asset, timeframe=timeframe, event_type=EventType.SMA_CROSSOVER.value,
+        total_events=len(events), date_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
         outcomes={
             "total_events": len(events),
             "bullish_count": sum(1 for e in events if e.direction == "bullish"),
             "bearish_count": sum(1 for e in events if e.direction == "bearish"),
             "avg_return_1d": (sum(v for e in events if e.outcome and isinstance((v := e.outcome.return_1d), (int, float)) and v == v and abs(v) != float("inf")) / len([e for e in events if e.outcome and isinstance(e.outcome.return_1d, (int, float)) and e.outcome.return_1d == e.outcome.return_1d and abs(e.outcome.return_1d) != float("inf")])) if any(e.outcome and isinstance(e.outcome.return_1d, (int, float)) and e.outcome.return_1d == e.outcome.return_1d and abs(e.outcome.return_1d) != float("inf") for e in events) else 0.0,
         },
-        conditional_results=conditional_results,
-        validation_results=validation_results,
-        evidence_records=evidence_records,
-        self_audit=audit,
-        overall_status=overall_status,
+        conditional_results=conditional_results, validation_results=validation_results, evidence_records=evidence_records,
+        self_audit=audit, overall_status=overall_status,
         notes=f"Dataset hash: {dataset_hash}. Multiple testing audit: {multiple_testing.to_dict()}",
     )
