@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Callable, Sequence
 
 from researchos.market_memory.statistical_evidence import wilson_proportion_ci
@@ -44,6 +44,38 @@ class OOSValidationResult:
     embargo_days: int = 0
 
 
+def assert_label_boundaries(
+    train_events: Sequence[object],
+    validation_events: Sequence[object],
+    test_events: Sequence[object],
+    label_end_getter: Callable[[object], datetime | None],
+) -> None:
+    """Fail closed unless realized label windows stay inside their partition.
+
+    The invariant is evaluated on actual label-end timestamps rather than row
+    offsets. This is the final boundary check after chronological partitioning:
+    every train label must end before validation starts, and every validation
+    label must end before test starts. Events without a realizable label end are
+    ignored because they cannot prove leakage safety and should normally have
+    been removed by outcome availability filtering.
+    """
+    if not train_events or not validation_events or not test_events:
+        return
+
+    validation_start = min(event.timestamp for event in validation_events)
+    test_start = min(event.timestamp for event in test_events)
+
+    train_ends = [label_end_getter(event) for event in train_events]
+    train_ends = [value for value in train_ends if value is not None]
+    validation_ends = [label_end_getter(event) for event in validation_events]
+    validation_ends = [value for value in validation_ends if value is not None]
+
+    if train_ends and max(train_ends) >= validation_start:
+        raise ValueError("label boundary leakage: train label extends into validation")
+    if validation_ends and max(validation_ends) >= test_start:
+        raise ValueError("label boundary leakage: validation label extends into test")
+
+
 def walk_forward_validate(
     events: Sequence[object],
     matcher: Callable[[object], bool],
@@ -59,19 +91,7 @@ def walk_forward_validate(
     embargo_days: int = 0,
     max_outcome_horizon_days: int | None = None,
 ) -> OOSValidationResult:
-    """Evaluate a pre-specified condition with purged walk-forward folds.
-
-    No random shuffling is used. Every split is chronological. Because a
-    forward-looking outcome can extend beyond the event timestamp, observations
-    whose label window crosses a train/validation or validation/test boundary
-    are removed from the earlier partition.
-
-    ``max_outcome_horizon_days`` declares the longest forward label horizon used
-    by the caller. When supplied, ``purge_days`` must be at least that horizon;
-    otherwise the validator fails closed instead of silently allowing a
-    potentially leaky split. The pipeline should derive this value from its
-    actual outcome configuration rather than relying on a hard-coded default.
-    """
+    """Evaluate a pre-specified condition with purged walk-forward folds."""
     if initial_train_size < 1 or validation_size < 1 or test_size < 1:
         raise ValueError("window sizes must be >= 1")
     if step_size < 1 or min_test_events < 1:
@@ -80,10 +100,7 @@ def walk_forward_validate(
         raise ValueError("purge_days and embargo_days must be >= 0")
     if max_outcome_horizon_days is not None and max_outcome_horizon_days < 1:
         raise ValueError("max_outcome_horizon_days must be >= 1 when supplied")
-    if (
-        max_outcome_horizon_days is not None
-        and purge_days < max_outcome_horizon_days
-    ):
+    if max_outcome_horizon_days is not None and purge_days < max_outcome_horizon_days:
         raise ValueError(
             "purge_days must be >= max_outcome_horizon_days to prevent label leakage"
         )
@@ -111,20 +128,14 @@ def walk_forward_validate(
 
         train_cutoff = validation_start - purge_delta
         validation_cutoff = test_start - purge_delta
-        train = [
-            event for event in ordered[:train_end] if event.timestamp < train_cutoff
-        ]
+        train = [event for event in ordered[:train_end] if event.timestamp < train_cutoff]
         validation = [
-            event
-            for event in ordered[train_end:validation_end_index]
-            if event.timestamp >= validation_start
-            and event.timestamp < validation_cutoff
+            event for event in ordered[train_end:validation_end_index]
+            if event.timestamp >= validation_start and event.timestamp < validation_cutoff
         ]
-
         test_lower_bound = test_start + embargo_delta
         test = [
-            event
-            for event in ordered[test_start_index:test_end_index]
+            event for event in ordered[test_start_index:test_end_index]
             if event.timestamp >= test_lower_bound and event.timestamp <= test_end
         ]
 
@@ -133,11 +144,8 @@ def walk_forward_validate(
         test_values = _matched_values(test, matcher, outcome_getter)
         test_successes = sum(v > 0.0 for v in test_values)
         ci = (
-            wilson_proportion_ci(
-                test_successes, len(test_values), confidence_level
-            ).confidence_interval
-            if test_values
-            else None
+            wilson_proportion_ci(test_successes, len(test_values), confidence_level).confidence_interval
+            if test_values else None
         )
         train_prob = _probability(train_values)
         validation_prob = _probability(validation_values)
@@ -170,22 +178,12 @@ def walk_forward_validate(
     stable = bool(results) and passed == len(results)
     status = "VALIDATED" if stable else ("INCONCLUSIVE" if results else "INSUFFICIENT_DATA")
     return OOSValidationResult(
-        tuple(results),
-        passed,
-        len(results),
-        stable,
-        status,
-        min_test_events,
-        purge_days=purge_days,
-        embargo_days=embargo_days,
+        tuple(results), passed, len(results), stable, status, min_test_events,
+        purge_days=purge_days, embargo_days=embargo_days,
     )
 
 
-def _matched_values(
-    events: Sequence[object],
-    matcher: Callable[[object], bool],
-    getter: Callable[[object], float | None],
-) -> list[float]:
+def _matched_values(events: Sequence[object], matcher: Callable[[object], bool], getter: Callable[[object], float | None]) -> list[float]:
     values: list[float] = []
     for event in events:
         if matcher(event):
@@ -207,4 +205,4 @@ def _stable(train: float, validation: float, test: float, tolerance: float = 0.1
     return max(train, validation, test) - min(train, validation, test) <= tolerance
 
 
-__all__ = ["OOSFoldResult", "OOSValidationResult", "walk_forward_validate"]
+__all__ = ["OOSFoldResult", "OOSValidationResult", "assert_label_boundaries", "walk_forward_validate"]
