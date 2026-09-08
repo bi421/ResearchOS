@@ -1,19 +1,4 @@
-"""Market Memory Pipeline — end-to-end market memory research pipeline.
-
-Pipeline stages:
-  1. Load data
-  2. Extract events
-  3. Compute forward outcomes
-  4. Conditional analysis
-  5. Statistical uncertainty
-  6. Walk-forward OOS validation
-  7. Self-audit
-  8. Evidence generation
-  9. Report generation
-
-The pipeline is deterministic and never treats exploratory statistics as
-validated evidence without temporal out-of-sample support.
-"""
+"""Market Memory Pipeline — end-to-end market memory research pipeline."""
 
 from __future__ import annotations
 
@@ -36,6 +21,7 @@ from researchos.market_memory.event_schema import (
 from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.oos_validation import walk_forward_validate
 from researchos.market_memory.outcome_engine import compute_forward_outcomes
+from researchos.market_memory.production_gate import check_production_evidence_readiness
 from researchos.market_memory.self_audit import run_self_audit
 from researchos.market_memory.statistical_evidence import wilson_proportion_ci
 from researchos.market_memory.temporal_validation import chronological_split, check_temporal_integrity
@@ -68,9 +54,21 @@ def run_market_memory_pipeline(
     slow_period: int = 100,
     seed: int = 42,
     conditions: list[ConditionSpec] | None = None,
+    *,
+    enforce_production_gate: bool = False,
+    minimum_events: int = 100,
 ) -> MarketMemoryReport:
-    """Run deterministic Market Memory research from raw CSV to report."""
+    """Run deterministic Market Memory research from raw CSV to report.
+
+    ``enforce_production_gate=True`` makes the evidence-publication boundary
+    fail closed: all event/outcome/provenance checks run before any evidence
+    record is created. The default remains exploratory for backward
+    compatibility.
+    """
     from researchos.market_memory.event_extractor import load_xauusd_d1
+
+    if minimum_events < 1:
+        raise ValueError("minimum_events must be >= 1")
 
     # 1. Load data and bind dataset identity to actual bytes.
     df = load_xauusd_d1(data_path)
@@ -93,6 +91,30 @@ def run_market_memory_pipeline(
     temporal_audit = check_temporal_integrity(events)
     if temporal_audit["status"] != "PASS":
         raise ValueError(f"Temporal integrity failed: {temporal_audit['issues']}")
+
+    # Production gate MUST run after outcomes exist but BEFORE evidence creation.
+    if enforce_production_gate:
+        gate = check_production_evidence_readiness(
+            events,
+            dataset_source=dataset_id,
+            minimum_events=minimum_events,
+        )
+        if not gate.passed:
+            return MarketMemoryReport(
+                report_id=f"MMR|{asset}|{timeframe}|SMA{fast_period}_{slow_period}|{datetime.now(timezone.utc).strftime('%Y%m%d')}",
+                asset=asset,
+                timeframe=timeframe,
+                event_type=EventType.SMA_CROSSOVER.value,
+                total_events=len(events),
+                date_range=(events[0].timestamp.isoformat() if events else "", events[-1].timestamp.isoformat() if events else ""),
+                outcomes={"total_events": len(events)},
+                conditional_results=[],
+                validation_results=[],
+                evidence_records=[],
+                self_audit=None,
+                overall_status=EvidenceStatus.REJECTED.value,
+                notes="PRODUCTION GATE FAILED: " + "; ".join(gate.issues),
+            )
 
     # 4. Pre-specified conditions.
     if conditions is None:
