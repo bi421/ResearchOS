@@ -19,8 +19,6 @@ Result<void> BacktestEngine::execute_signal(const SignalResult& signal, const OH
   const double slippage = price * config_.slippage_pct;
 
   if (signal.direction == TradeDirection::Buy) {
-    // A buy first closes any existing short. Only the residual quantity opens
-    // a new long, so cash and the trade ledger remain position-consistent.
     if (position < 0.0) {
       const double close_qty = std::min(signal.quantity, -position);
       const double exit_price = price + slippage;
@@ -72,8 +70,6 @@ Result<void> BacktestEngine::execute_signal(const SignalResult& signal, const OH
       book.add_trade(t);
     }
   } else {
-    // A sell first closes any existing long. Only the residual quantity opens
-    // a new short, preventing accidental creation of an over-sized position.
     if (position > 0.0) {
       const double close_qty = std::min(signal.quantity, position);
       const double exit_price = price - slippage;
@@ -112,7 +108,7 @@ Result<void> BacktestEngine::execute_signal(const SignalResult& signal, const OH
 
     if (config_.allow_short) {
       const double proceeds = signal.quantity * (price - slippage);
-      const double comm = (signal.quantity * (price - slippage)) * config_.commission_pct;
+      const double comm = proceeds * config_.commission_pct;
       cash += proceeds - comm;
       position -= signal.quantity;
       Trade t;
@@ -144,29 +140,38 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
 
   std::vector<OHLCV> history;
   history.reserve(data.size());
+  std::optional<SignalResult> pending_signal;
 
   double running_peak = -std::numeric_limits<double>::infinity();
 
   for (size_t i = 0; i < data.size(); ++i) {
     const auto& bar = data[i];
+
+    // Signals are generated from the completed/current bar and can only be
+    // executed on the following bar's open. This prevents same-close
+    // execution from leaking information from the signal bar into fills.
+    if (pending_signal.has_value() && pending_signal->quantity > 0.0) {
+      OHLCV execution_bar = bar;
+      execution_bar.close = bar.open;
+      auto exec = execute_signal(*pending_signal, execution_bar, cash, position, book);
+      if (exec.is_err()) return exec.error();
+    }
+
     history.push_back(bar);
     result.bars_used.push_back(bar);
 
-    double equity = cash + position * bar.close;
+    const double equity = cash + position * bar.close;
     result.equity_curve.push_back(equity);
-
     running_peak = std::max(running_peak, equity);
     result.drawdown_curve.push_back(
         running_peak > 0.0 ? (running_peak - equity) / running_peak * 100.0 : 0.0);
 
-    auto signal = signal_fn(i, history);
-
-    if (signal.quantity > 0.0) {
-      auto exec = execute_signal(signal, bar, cash, position, book);
-      if (exec.is_err()) return exec.error();
-    }
+    pending_signal = signal_fn(i, history);
   }
 
+  // A signal generated on the final bar has no subsequent bar and is therefore
+  // deliberately not executed. Any existing position is closed at the final
+  // close using the configured exit costs.
   if (position != 0.0) {
     const auto& last_bar = data[data.size() - 1];
     if (position > 0.0) {
@@ -196,7 +201,10 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
 
   result.final_equity = cash;
   result.trade_book = std::move(book);
-  result.total_return_pct = ((result.final_equity - config_.initial_capital) / config_.initial_capital) * 100.0;
+  result.num_trades = result.trade_book.closed_trades().size();
+  result.win_rate = result.trade_book.win_rate();
+  result.total_return_pct = ((result.final_equity - config_.initial_capital) /
+                             config_.initial_capital) * 100.0;
 
   auto dd = RiskMetrics::max_drawdown(result.equity_curve);
   if (dd.is_ok()) result.max_drawdown_pct = dd.value().max_drawdown_pct;
@@ -216,7 +224,6 @@ Result<BacktestResult> BacktestEngine::run_walk_forward(
   (void)signal_fn;
   (void)train_window;
   (void)test_window;
-  // Never silently substitute an in-sample full backtest for walk-forward OOS validation.
   return Result<BacktestResult>::fail(
       Error{ErrorCode::NotImplemented,
             "walk-forward backtesting is not implemented; refusing to run a full-sample backtest"});
