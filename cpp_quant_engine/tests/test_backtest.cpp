@@ -177,6 +177,65 @@ TEST(BacktestEngineTest, RunWithSignal) {
   EXPECT_EQ(100, result.value().total_bars);
 }
 
+TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
+  InMemoryOHLCVSource data;
+  for (int i = 0; i < 3; ++i) {
+    data.data.push_back(OHLCV{
+      .timestamp = now() + std::chrono::minutes(i),
+      .open = 100.0,
+      .high = 100.0,
+      .low = 100.0,
+      .close = 100.0,
+      .volume = 1000.0
+    });
+  }
+
+  BacktestEngine engine;
+  BacktestConfig cfg;
+  cfg.initial_capital = 100000.0;
+  cfg.commission_pct = 0.0;
+  cfg.slippage_pct = 0.0;
+  cfg.allow_short = true;
+  engine.set_config(cfg);
+
+  auto result = engine.run(data, [](size_t index, const std::vector<OHLCV>&) -> SignalResult {
+    if (index == 0) return {TradeDirection::Sell, 10.0};
+    if (index == 1) return {TradeDirection::Buy, 15.0};
+    return {TradeDirection::Buy, 0.0};
+  });
+
+  ASSERT_TRUE(result.is_ok());
+  EXPECT_DOUBLE_EQ(5.0, result.value().trade_book.open_trades()[0].quantity);
+  EXPECT_EQ(1u, result.value().trade_book.closed_trades().size());
+  EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
+}
+
+TEST(BacktestEngineTest, WalkForwardNeverFallsBackToFullSample) {
+  InMemoryOHLCVSource data;
+  for (int i = 0; i < 10; ++i) {
+    data.data.push_back(OHLCV{
+      .timestamp = now(),
+      .open = 100.0,
+      .high = 101.0,
+      .low = 99.0,
+      .close = 100.0,
+      .volume = 1000.0
+    });
+  }
+
+  BacktestEngine engine;
+  auto result = engine.run_walk_forward(
+      data,
+      [](size_t, const std::vector<OHLCV>&) -> SignalResult {
+        return {TradeDirection::Buy, 1.0};
+      },
+      5,
+      2);
+
+  ASSERT_TRUE(result.is_err());
+  EXPECT_EQ(ErrorCode::NotImplemented, result.error().code());
+}
+
 TEST(BacktestEngineTest, EmptyData) {
   InMemoryOHLCVSource data;
   BacktestEngine engine;
