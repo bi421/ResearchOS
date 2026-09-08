@@ -1,0 +1,1 @@
+Validation artifacts in this directory document production gates and contracts. Walk-forward validation is chronological and out-of-sample; fitted models require an explicit train-only fitting boundary.
