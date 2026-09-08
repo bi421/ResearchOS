@@ -32,8 +32,11 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - name: Install nanobind
-        run: pip install nanobind ninja ccache
+      - name: Install deps
+        run: |
+          pip install nanobind
+          sudo apt-get update -y
+          sudo apt-get install -y ccache ninja-build
       - uses: actions/cache@v4
         with:
           path: ~/.ccache
