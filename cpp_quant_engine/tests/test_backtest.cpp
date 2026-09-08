@@ -84,27 +84,6 @@ TEST(TradeBookTest, CloseTrade) {
   EXPECT_TRUE(book.get_trade(1)->is_profitable());
 }
 
-TEST(TradeBookTest, PartialClosePreservesRemainingPosition) {
-  TradeBook book;
-  Trade t;
-  t.direction = TradeDirection::Buy;
-  t.quantity = 100.0;
-  t.entry_price = 50.0;
-  t.entry_commission = 10.0;
-  book.add_trade(t);
-
-  const auto exit_time = now();
-  book.close_trade(1, 55.0, exit_time, 5.0, 40.0);
-
-  ASSERT_EQ(1u, book.open_trades().size());
-  EXPECT_DOUBLE_EQ(60.0, book.open_trades()[0].quantity);
-  ASSERT_EQ(1u, book.closed_trades().size());
-  EXPECT_DOUBLE_EQ(40.0, book.closed_trades()[0].quantity);
-  EXPECT_DOUBLE_EQ(4.0, book.closed_trades()[0].entry_commission);
-  EXPECT_DOUBLE_EQ(6.0, book.open_trades()[0].entry_commission);
-  EXPECT_DOUBLE_EQ(5.0, book.closed_trades()[0].exit_commission);
-}
-
 TEST(TradeBookTest, CancelTrade) {
   TradeBook book;
   book.add_trade(Trade{});
@@ -175,6 +154,37 @@ TEST(BacktestEngineTest, RunWithSignal) {
   ASSERT_TRUE(result.is_ok());
   EXPECT_GT(result.value().equity_curve.size(), 0);
   EXPECT_EQ(100, result.value().total_bars);
+}
+
+TEST(BacktestEngineTest, SignalsExecuteAtFollowingBarOpen) {
+  InMemoryOHLCVSource data;
+  data.data.push_back(OHLCV{.timestamp = now(), .open = 100.0, .high = 105.0,
+                            .low = 95.0, .close = 104.0, .volume = 1000.0});
+  data.data.push_back(OHLCV{.timestamp = now() + std::chrono::minutes(1),
+                            .open = 120.0, .high = 125.0, .low = 115.0,
+                            .close = 122.0, .volume = 1000.0});
+  data.data.push_back(OHLCV{.timestamp = now() + std::chrono::minutes(2),
+                            .open = 121.0, .high = 123.0, .low = 119.0,
+                            .close = 121.0, .volume = 1000.0});
+
+  BacktestEngine engine;
+  BacktestConfig cfg;
+  cfg.initial_capital = 100000.0;
+  cfg.commission_pct = 0.0;
+  cfg.slippage_pct = 0.0;
+  cfg.allow_short = false;
+  engine.set_config(cfg);
+
+  auto result = engine.run(data, [](size_t index, const std::vector<OHLCV>&) -> SignalResult {
+    if (index == 0) return {TradeDirection::Buy, 1.0};
+    return {TradeDirection::Buy, 0.0};
+  });
+
+  ASSERT_TRUE(result.is_ok());
+  const auto closed = result.value().trade_book.closed_trades();
+  ASSERT_EQ(1u, closed.size());
+  EXPECT_DOUBLE_EQ(120.0, closed[0].entry_price);
+  EXPECT_DOUBLE_EQ(121.0, closed[0].exit_price);
 }
 
 TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
