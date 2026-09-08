@@ -12,6 +12,8 @@ Design rules (mirrors ``quant_engine.machine_learning.features``):
     * Missing/misaligned macro data yields ``None`` at that index rather than
       an interpolated or synthetic value — synthetic-data-as-evidence is
       never permitted per the Phase 5.x experiment constraints.
+    * Date/index alignment is an upstream contract. This builder never
+      interpolates, forward-fills, resamples, or otherwise repairs macro data.
 """
 
 from __future__ import annotations
@@ -22,9 +24,6 @@ from dataclasses import dataclass
 
 MACRO_SYMBOLS: tuple[str, ...] = ("DXY", "US10Y", "VIX")
 
-# 3 features per factor: 1-bar return, 5-bar rolling mean of returns,
-# 20-bar rolling z-score of level. Kept small and explainable, matching the
-# "smallest scientifically valid" principle used in Phase 5.1.
 _FEATURES_PER_FACTOR: tuple[str, ...] = ("return_1", "roll_mean_return_5", "roll_zscore_20")
 
 
@@ -79,18 +78,16 @@ class MacroFeatureSet:
 
 
 class MacroFeatureBuilder:
-    """Builds DXY / US10Y / VIX derived features aligned to a target index.
+    """Build DXY / US10Y / VIX features from already-aligned sequences.
 
-    ``factor_series`` maps a subset of ``MACRO_SYMBOLS`` to closing-price
-    sequences already aligned (same length, same bar order) to the target
-    XAUUSD series. Callers are responsible for the alignment/resampling step
-    (e.g. forward-filling a lower-frequency series to daily bars) — this
-    builder performs no interpolation of its own, only feature derivation.
+    ``factor_series`` must already be aligned bar-for-bar with the target
+    XAUUSD series: same length, same order, and the caller's date-index
+    contract must have been validated before this builder is invoked.
 
-    Any symbol absent from ``factor_series`` (or with fewer values than the
-    aligned length) is recorded in ``symbols_missing`` and its 3 feature
-    columns are filled with ``None`` at every row rather than silently
-    dropped, so callers/experiments can see exactly what was unavailable.
+    This builder intentionally performs no interpolation, forward-fill,
+    resampling, date matching, or synthetic repair. Any missing symbol or
+    wrong-length series is represented by ``None`` columns and surfaced in
+    ``symbols_missing`` so the experiment gate can block it.
     """
 
     def __init__(self, aligned_length: int, factor_series: dict[str, Sequence[float | None]]):
@@ -114,7 +111,7 @@ class MacroFeatureBuilder:
 
             present.append(symbol)
             ret1 = _returns(series)
-            roll_mean5 = _rolling_apply(ret1, 5, lambda w: _mean([x for x in w if x is not None]) if all(x is not None for x in w) else None)  # noqa: E501
+            roll_mean5 = _rolling_apply(ret1, 5, _mean)
             zscore20 = _zscore_series(series, 20)
 
             names.append(f"macro_{symbol}_return_1")
