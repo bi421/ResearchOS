@@ -1,26 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import zipfile
 from pathlib import Path
 
 import pandas as pd
 
+from researchos.data_engine.xauusd_gap_policy import classify_gap
+
 EXPECTED_MEMBER = "XAUUSD_M1_2021_2025_MT5.csv"
-
-
-def classify_gap(start: pd.Timestamp, end: pd.Timestamp) -> str:
-    """Conservative session classification; suspicious gaps remain unresolved."""
-    # MT5 XAUUSD commonly has a weekly closure. This classifier only labels
-    # gaps whose entire interval crosses the Saturday/Sunday boundary as
-    # weekend-related; it deliberately does not assume holidays or broker
-    # maintenance windows are valid closures.
-    if start.weekday() == 4 and end.weekday() == 6:
-        return "weekend_closure_candidate"
-    if start.weekday() >= 5 or end.weekday() >= 5:
-        return "weekend_overlap_candidate"
-    return "non_weekend_suspicious"
 
 
 def audit(path: Path) -> dict:
@@ -29,7 +19,6 @@ def audit(path: Path) -> dict:
             raise ValueError("Corrupt ZIP archive")
         if EXPECTED_MEMBER not in zf.namelist():
             raise ValueError(f"Missing member: {EXPECTED_MEMBER}")
-        import io
         df = pd.read_csv(io.BytesIO(zf.read(EXPECTED_MEMBER)), usecols=["time"])
 
     t = pd.to_datetime(df["time"], utc=True, errors="coerce")
