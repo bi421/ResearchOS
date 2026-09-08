@@ -41,7 +41,9 @@ TEST(IntegrationTest, MarketDataToBacktestToReport) {
   EXPECT_GT(report.yearly_returns.size(), 0u);
   EXPECT_GT(report.monthly_returns.size(), 0u);
   EXPECT_GT(report.returns.size(), 0u);
-  EXPECT_EQ(report.base.total_trades,
+  // total_trades includes currently open trades; W/L only classify closed trades.
+  // Therefore total_trades must be at least the number of classified outcomes.
+  EXPECT_GE(report.base.total_trades,
             report.base.winning_trades + report.base.losing_trades);
 
   auto json = serialization::report_to_json(report);
