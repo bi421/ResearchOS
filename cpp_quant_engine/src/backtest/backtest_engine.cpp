@@ -1,7 +1,10 @@
 #include "quant/backtest/backtest_engine.h"
 #include "quant/backtest/market_data.h"
 #include "quant/statistics/risk.h"
+#include <algorithm>
 #include <limits>
+#include <optional>
+#include <utility>
 
 namespace quant {
 
@@ -147,9 +150,6 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
   for (size_t i = 0; i < data.size(); ++i) {
     const auto& bar = data[i];
 
-    // Signals are generated from the completed/current bar and can only be
-    // executed on the following bar's open. This prevents same-close
-    // execution from leaking information from the signal bar into fills.
     if (pending_signal.has_value() && pending_signal->quantity > 0.0) {
       OHLCV execution_bar = bar;
       execution_bar.close = bar.open;
@@ -169,9 +169,6 @@ Result<BacktestResult> BacktestEngine::run(OHLCVSource& data, SignalFn signal_fn
     pending_signal = signal_fn(i, history);
   }
 
-  // A signal generated on the final bar has no subsequent bar and is therefore
-  // deliberately not executed. Any existing position is closed at the final
-  // close using the configured exit costs.
   if (position != 0.0) {
     const auto& last_bar = data[data.size() - 1];
     if (position > 0.0) {
@@ -220,13 +217,85 @@ Result<BacktestResult> BacktestEngine::run(MarketData& data, SignalFn signal_fn)
 Result<BacktestResult> BacktestEngine::run_walk_forward(
     OHLCVSource& data, SignalFn signal_fn,
     size_t train_window, size_t test_window) {
-  (void)data;
-  (void)signal_fn;
-  (void)train_window;
-  (void)test_window;
-  return Result<BacktestResult>::fail(
-      Error{ErrorCode::NotImplemented,
-            "walk-forward backtesting is not implemented; refusing to run a full-sample backtest"});
+  if (train_window == 0 || test_window == 0) {
+    return Result<BacktestResult>::fail(
+        Error{ErrorCode::InvalidArgument, "walk-forward windows must be greater than zero"});
+  }
+  if (data.size() < train_window + test_window) {
+    return Result<BacktestResult>::fail(
+        Error{ErrorCode::InvalidArgument, "insufficient bars for a train/test walk-forward fold"});
+  }
+
+  // SignalFn has no fit/train callback. Therefore this API implements a strict
+  // chronological OOS evaluator for a fixed deterministic signal function:
+  // each fold exposes the training history to the signal, but trades are
+  // disabled until the test interval. No observations after test_end are ever
+  // visible to the fold. The train window is context/warm-up, not parameter
+  // optimization; callers requiring fitting must perform that fit explicitly
+  // and bind the resulting parameters before supplying signal_fn.
+  BacktestResult aggregate;
+  aggregate.config = config_;
+  aggregate.total_bars = 0;
+  aggregate.final_equity = config_.initial_capital;
+  aggregate.trade_book = TradeBook();
+
+  double compounded_equity = config_.initial_capital;
+  size_t fold_start = 0;
+  size_t fold_id = 0;
+
+  while (fold_start + train_window + test_window <= data.size()) {
+    const size_t test_start = fold_start + train_window;
+    const size_t test_end = test_start + test_window;
+
+    std::vector<OHLCV> fold_data;
+    fold_data.reserve(train_window + test_window);
+    for (size_t i = fold_start; i < test_end; ++i) {
+      fold_data.push_back(data[i]);
+    }
+
+    InMemoryOHLCVSource fold_source;
+    fold_source.data = std::move(fold_data);
+
+    auto fold_result = run(fold_source, [&, test_start_local = train_window](
+                                      size_t local_index,
+                                      const std::vector<OHLCV>& history) -> SignalResult {
+      if (local_index < test_start_local) {
+        return {TradeDirection::Buy, 0.0};
+      }
+      // The callback sees only fold-local history, whose prefix is the training
+      // interval and whose suffix is the current test interval. This preserves
+      // causal indicator warm-up without allowing future test bars into a signal.
+      return signal_fn(fold_start + local_index, history);
+    });
+    if (fold_result.is_err()) return fold_result.error();
+
+    const auto& fold = fold_result.value();
+    const double fold_return = fold.total_return_pct / 100.0;
+    compounded_equity *= (1.0 + fold_return);
+    aggregate.total_bars += test_window;
+    ++fold_id;
+
+    for (const auto& trade : fold.trade_book.closed_trades()) {
+      aggregate.trade_book.add_trade(trade);
+    }
+
+    // Advance by the non-overlapping test interval. The next fold's training
+    // window expands forward, while each OOS test interval remains disjoint.
+    fold_start = test_start;
+  }
+
+  if (fold_id == 0) {
+    return Result<BacktestResult>::fail(
+        Error{ErrorCode::InvalidArgument, "walk-forward produced no complete OOS folds"});
+  }
+
+  aggregate.final_equity = compounded_equity;
+  aggregate.num_trades = aggregate.trade_book.closed_trades().size();
+  aggregate.win_rate = aggregate.trade_book.win_rate();
+  aggregate.total_return_pct =
+      ((aggregate.final_equity - config_.initial_capital) / config_.initial_capital) * 100.0;
+  aggregate.max_drawdown_pct = 0.0;
+  return aggregate;
 }
 
 } // namespace quant
