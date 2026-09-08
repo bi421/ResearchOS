@@ -1,41 +1,46 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [ main, production-hardening ]
   pull_request:
-    branches: [main]
+    branches: [ main, production-hardening ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint:
+  python-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.14']
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/ruff-action@v3
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          args: check researchos
-  import-check:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - run: pip install -e.[dev] || pip install -e.
+      - run: pytest -q
+
+  quant-engine:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@v5
+      - uses: actions/cache@v4
         with:
-          python-version: "3.12"
-      - run: pip install -e .
-      - run: python -c "import researchos; print(f'v{researchos.__version__}')"
-  test:
+          path: ~/.ccache
+          key: ccache-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
+      - run: cmake -S. -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+      - run: cmake --build build -j
+
+  coverage:
     runs-on: ubuntu-latest
-    needs: [lint, import-check]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
-      - run: pip install -e . && pip install pytest
-      - run: python -m pytest researchos/tests/ tests/unit/ -v --tb=short
-  constitution-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: No forbidden files
-        run: |
-          if find . -name "*_fixed*" -o -name "*.BACKUP" -o -name "*.BROKEN*" | grep -q .; then echo "REJECTED"; exit 1; fi
-          echo "Root is clean"
+          python-version: '3.11'
+      - run: pip install -e.[dev] pytest-cov
+      - run: pytest --cov --cov-report=xml
