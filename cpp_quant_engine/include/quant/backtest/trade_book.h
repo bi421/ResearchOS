@@ -41,7 +41,7 @@ public:
 
   void add_trade(Trade trade);
   void close_trade(uint64_t trade_id, double exit_price, TimePoint exit_time,
-                   double commission = 0.0);
+                   double commission = 0.0, double quantity = 0.0);
   void cancel_trade(uint64_t trade_id);
 
   const std::vector<Trade>& trades() const { return trades_; }
