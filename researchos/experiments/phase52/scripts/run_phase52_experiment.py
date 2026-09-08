@@ -28,7 +28,13 @@ def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
     return close, high, low, volume, timestamps
 
 
-def _load_macro_series_exact(csv_path: str, fmt: str, symbol: str, timeframe: str, target_timestamps: list[object]):
+def _load_macro_series_exact(
+    csv_path: str,
+    fmt: str,
+    symbol: str,
+    timeframe: str,
+    target_timestamps: list[object],
+):
     """Load a macro series only after exact timestamp validation."""
     loader = CsvLoader()
     if fmt == "mt5":
@@ -63,7 +69,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     missing_files = [
-        name for name, path in (("XAUUSD csv", args.csv), ("DXY csv", args.dxy), ("US10Y csv", args.us10y), ("VIX csv", args.vix))
+        name
+        for name, path in (
+            ("XAUUSD csv", args.csv),
+            ("DXY csv", args.dxy),
+            ("US10Y csv", args.us10y),
+            ("VIX csv", args.vix),
+        )
         if not path or not os.path.exists(path)
     ]
     if missing_files:
@@ -75,19 +87,43 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        close, high, low, volume, timestamps = _load_candles(args.csv, args.format, args.symbol, args.timeframe)
+        close, high, low, volume, timestamps = _load_candles(
+            args.csv, args.format, args.symbol, args.timeframe
+        )
         macro = {}
         macro_timestamps = {}
         for symbol, path in (("DXY", args.dxy), ("US10Y", args.us10y), ("VIX", args.vix)):
-            values, factor_timestamps = _load_macro_series_exact(path, args.format, symbol, args.timeframe, timestamps)
+            values, factor_timestamps = _load_macro_series_exact(
+                path, args.format, symbol, args.timeframe, timestamps
+            )
             macro[symbol] = values
             macro_timestamps[symbol] = factor_timestamps
     except Exception as e:  # noqa: BLE001
         print(f"BLOCKED — exact data alignment failed: {e}")
         return 2
 
-    cfg = Phase52Config(symbol=args.symbol, timeframe=args.timeframe, horizon=args.horizon, threshold=args.threshold, train_size=args.train, validation_size=args.valid, step_size=args.step, spread_spec=args.spread, slippage_spec=args.slippage, commission_spec=args.commission)
-    result = run_phase52(close, high, low, volume, macro, cfg, timestamps=timestamps, macro_timestamps=macro_timestamps)
+    cfg = Phase52Config(
+        symbol=args.symbol,
+        timeframe=args.timeframe,
+        horizon=args.horizon,
+        threshold=args.threshold,
+        train_size=args.train,
+        validation_size=args.valid,
+        step_size=args.step,
+        spread_spec=args.spread,
+        slippage_spec=args.slippage,
+        commission_spec=args.commission,
+    )
+    result = run_phase52(
+        close,
+        high,
+        low,
+        volume,
+        macro,
+        cfg,
+        timestamps=timestamps,
+        macro_timestamps=macro_timestamps,
+    )
 
     print("=" * 60)
     print(f"SYMBOL:              {result.symbol}")
