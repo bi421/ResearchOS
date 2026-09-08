@@ -1,0 +1,1 @@
+The backtest engine executes generated signals only on the following bar open. Walk-forward folds expose only causal history and keep OOS test intervals disjoint.
