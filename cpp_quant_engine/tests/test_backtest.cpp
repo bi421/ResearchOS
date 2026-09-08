@@ -205,8 +205,12 @@ TEST(BacktestEngineTest, ReversalAccountsForClosingAndResidualOpening) {
   });
 
   ASSERT_TRUE(result.is_ok());
-  EXPECT_DOUBLE_EQ(5.0, result.value().trade_book.open_trades()[0].quantity);
-  EXPECT_EQ(1u, result.value().trade_book.closed_trades().size());
+  const auto closed = result.value().trade_book.closed_trades();
+  ASSERT_EQ(2u, closed.size());
+  EXPECT_EQ(TradeDirection::Sell, closed[0].direction);
+  EXPECT_DOUBLE_EQ(10.0, closed[0].quantity);
+  EXPECT_EQ(TradeDirection::Buy, closed[1].direction);
+  EXPECT_DOUBLE_EQ(5.0, closed[1].quantity);
   EXPECT_DOUBLE_EQ(100000.0, result.value().final_equity);
 }
 
