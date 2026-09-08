@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -12,7 +12,7 @@ from researchos.market_memory.statistical_evidence import bonferroni_alpha, wils
 
 
 def _event(i: int, outcome: float = 0.01, source: str = "real_mt5") -> MarketEvent:
-    ts = datetime(2025, 1, 1 + i, tzinfo=timezone.utc)
+    ts = datetime(2025, 1, 1, tzinfo=timezone.utc) + timedelta(days=i)
     context = EventContext(event_id=f"e{i}", asset="XAUUSD", timeframe="D1", timestamp=ts)
     return MarketEvent(
         event_id=f"e{i}", asset="XAUUSD", timeframe="D1", event_type="sma_crossover",
