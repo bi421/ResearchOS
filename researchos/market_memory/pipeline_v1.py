@@ -107,7 +107,10 @@ def run_market_memory_pipeline(
     train_events, validation_events, test_events = chronological_split(events)
     validation_results = []
     oos_results = {}
-    label_end_getter = lambda event: event.timestamp + timedelta(days=_PIPELINE_OUTCOME_HORIZON_DAYS)
+
+    def label_end_getter(event):
+        return event.timestamp + timedelta(days=_PIPELINE_OUTCOME_HORIZON_DAYS)
+
     for cr in conditional_results:
         condition = cr.condition_spec
         train_values = _finite_returns(train_events, condition)
