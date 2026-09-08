@@ -1,12 +1,12 @@
 """Outcome Engine — deterministic forward outcome calculation for market events.
 
-Forward horizons are interpreted as calendar days, converted to timestamps
-rather than row offsets. This prevents a 1-day horizon from accidentally
-becoming one bar on M1/H1 datasets.
+Forward horizons are interpreted as calendar days and located by timestamp,
+not row offsets. This prevents a 1-day horizon from becoming one M1/H1 bar.
 """
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from datetime import timedelta
 
 import polars as pl
@@ -57,8 +57,8 @@ def compute_forward_outcomes(
             updated_events.append(event)
             continue
         idx = ts_to_idx[event.timestamp]
+        _timeframe_minutes(event.timeframe)  # reject unsupported empirical timeframe
         event_close = event.event_price
-        bar_minutes = _timeframe_minutes(event.timeframe)
         returns: dict[str, float | None] = {}
         directions: dict[str, str | None] = {}
         mfe: dict[str, float | None] = {}
@@ -67,7 +67,9 @@ def compute_forward_outcomes(
 
         for h in horizons:
             target = event.timestamp + timedelta(days=h)
-            future_idx = next((j for j in range(idx + 1, len(timestamps)) if timestamps[j] >= target), None)
+            future_idx = bisect_left(timestamps, target, lo=idx + 1)
+            if future_idx >= len(timestamps):
+                future_idx = None
             if future_idx is None:
                 returns[f"return_{h}d"] = None
                 directions[f"direction_{h}d"] = None
@@ -75,9 +77,7 @@ def compute_forward_outcomes(
                 mae[f"mae_{h}d"] = None
                 hits[f"hit_{h}d"] = None
                 continue
-            # bar_minutes is deliberately resolved above so unsupported
-            # timeframes fail before empirical results are generated.
-            _ = bar_minutes
+
             future_close = closes[future_idx]
             future_high = highs[future_idx]
             future_low = lows[future_idx]
