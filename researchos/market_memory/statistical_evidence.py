@@ -1,4 +1,4 @@
-"""Statistical evidence primitives for Market Memory.
+﻿"""Statistical evidence primitives for Market Memory.
 
 These functions keep descriptive statistics separate from inferential claims.
 All calculations are deterministic and contain explicit sample-size guards.
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Tuple
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,7 @@ class ProportionEvidence:
     successes: int
     trials: int
     probability: float
-    confidence_interval: tuple[float, float]
+    confidence_interval: Tuple[float, float]
     confidence_level: float = 0.95
     method: str = "wilson_score"
 

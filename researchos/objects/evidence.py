@@ -1,8 +1,8 @@
-"""
-Evidence objects — interpreted observations that support or contradict hypotheses.
+﻿"""
+Evidence objects â€” interpreted observations that support or contradict hypotheses.
 
-Based on Article XVII: Object Model — Evidence Layer.
-Based on Article XVI: Scientific Reasoning Framework — Evidence Layer.
+Based on Article XVII: Object Model â€” Evidence Layer.
+Based on Article XVI: Scientific Reasoning Framework â€” Evidence Layer.
 
 Evidence is an observation that has been interpreted and contextualized
 to support or contradict a specific hypothesis. The key difference from
@@ -45,11 +45,11 @@ class Evidence(BaseObject):
     """
     An observation that has been interpreted and contextualized.
 
-    Based on Article XVII: Object Model — Evidence.
+    Based on Article XVII: Object Model â€” Evidence.
 
     Evidence quality is computed from 6 factors:
-        Quality = Source_Reliability × Recency × Relevance ×
-                  Consensus × Structural_Importance × Quality_Factor
+        Quality = Source_Reliability Ã— Recency Ã— Relevance Ã—
+                  Consensus Ã— Structural_Importance Ã— Quality_Factor
 
     Attributes:
         observation_id: Link to source Observation
@@ -57,7 +57,7 @@ class Evidence(BaseObject):
         interpretation: How the observation is interpreted
         direction: Supporting, Contradicting, or Neutral
         quality: Computed quality score (0.0-1.0)
-        confidence: Quality × (1 - uncertainty)
+        confidence: Quality Ã— (1 - uncertainty)
         weight: Relative importance
         tier: Primary, Secondary, or Tertiary
         age_days: Days since observation
@@ -126,8 +126,8 @@ class Evidence(BaseObject):
         """
         Compute evidence quality from 6 factors.
 
-        Quality = Source_Reliability × Recency × Relevance ×
-                  Consensus × Structural_Importance × Quality_Factor
+        Quality = Source_Reliability Ã— Recency Ã— Relevance Ã—
+                  Consensus Ã— Structural_Importance Ã— Quality_Factor
         """
         quality = self.source_reliability * self.recency * self.relevance * self.consensus * self.structural_importance * self.quality_factor
         return min(1.0, max(0.0, quality))
@@ -136,7 +136,7 @@ class Evidence(BaseObject):
         """
         Compute evidence confidence.
 
-        Confidence = Quality × (1.0 - Uncertainty)
+        Confidence = Quality Ã— (1.0 - Uncertainty)
         """
         return self.quality * (1.0 - self.uncertainty)
 
@@ -155,7 +155,7 @@ class Evidence(BaseObject):
 
     def age_days(self, reference_time: datetime | None = None) -> int:
         """Days since the observation was made."""
-        ref = reference_time or utc_now()
+        ref = reference_time or self.created_at
         return days_between(self.observation_timestamp, ref)
 
     def aging_multiplier(self, reference_time: datetime | None = None) -> float:
@@ -185,7 +185,7 @@ class Evidence(BaseObject):
         """
         Compute the evidence weight.
 
-        Weight = Confidence × AgingMultiplier × TierMultiplier
+        Weight = Confidence Ã— AgingMultiplier Ã— TierMultiplier
 
         Args:
             reference_time: The time to use as "now" for age computation.
@@ -273,7 +273,7 @@ class EvidenceRegistry(BaseObject):
     """
     A collection of all evidence for a research cycle.
 
-    Based on Article XVII: Object Model — EvidenceRegistry.
+    Based on Article XVII: Object Model â€” EvidenceRegistry.
     """
 
     def __init__(
