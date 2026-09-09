@@ -25,6 +25,7 @@ import json
 from typing import Any
 
 from researchos.market_memory.event_schema import EvidenceRecord, EvidenceStatus
+from researchos.research_identity import DatasetIdentity
 
 
 def compute_evidence_provenance_digest(
@@ -45,7 +46,7 @@ def compute_evidence_provenance_digest(
     """Return a deterministic SHA-256 identity for an evidence computation.
 
     The digest binds the finding identity to the dataset content/version and
-    to the exact research inputs/results represented by the record.  Callers
+    to the exact research inputs/results represented by the record. Callers
     should supply a content hash as ``dataset_version`` when certifying real
     evidence; the function itself never invents a data identity.
     """
@@ -83,8 +84,24 @@ def create_evidence_record(
     validation_method: str = "",
     random_seed: int | None = None,
     status: str = EvidenceStatus.EXPLORATORY.value,
+    *,
+    dataset_identity: DatasetIdentity | None = None,
 ) -> EvidenceRecord:
-    """Create an evidence record with a content-bound provenance identity."""
+    """Create an evidence record with a content-bound provenance identity.
+
+    When ``dataset_identity`` is supplied, all canonical dataset identity
+    fields are checked against the record and persisted in the provenance
+    envelope. This provides a strict bridge from the validated-data boundary
+    without breaking legacy exploratory callers that only provide
+    ``dataset_version``.
+    """
+    if dataset_identity is not None:
+        dataset_identity.assert_matches(
+            dataset_id=dataset_id,
+            dataset_content_hash=dataset_identity.dataset_content_hash,
+            dataset_hash=dataset_identity.dataset_hash,
+        )
+
     provenance_digest = compute_evidence_provenance_digest(
         dataset_id=dataset_id,
         dataset_version=dataset_version,
@@ -101,11 +118,14 @@ def create_evidence_record(
     )
     finding_id = f"EVIDENCE|{dataset_id}|{finding_name}|{condition_definition}|{time_range[0]}|{provenance_digest[:16]}"
     record_uncertainty = dict(uncertainty or {})
-    record_uncertainty["provenance"] = {
+    provenance = {
         "algorithm": "sha256",
         "evidence_computation_digest": provenance_digest,
         "dataset_version_bound": dataset_version,
     }
+    if dataset_identity is not None:
+        provenance["dataset_identity"] = dataset_identity.to_dict()
+    record_uncertainty["provenance"] = provenance
     return EvidenceRecord(
         finding_id=finding_id,
         finding_name=finding_name,
