@@ -65,7 +65,7 @@ class DecisionEvidenceItem:
     provenance: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data = {
             "source": self.source.value,
             "source_id": self.source_id,
             "direction": self.direction.value,
@@ -74,8 +74,10 @@ class DecisionEvidenceItem:
             "confidence": self.confidence,
             "description": self.description,
             "supporting_ids": list(self.supporting_ids),
-            "provenance": self.provenance,
         }
+        if self.provenance:
+            data["provenance"] = self.provenance
+        return data
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DecisionEvidenceItem:
