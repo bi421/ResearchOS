@@ -3,7 +3,7 @@ from researchos.decision_pipeline import DecisionPipelineInput, run_decision_pip
 from researchos.risk.contracts import TradeStatistics
 
 
-def _assessment() -> ProbabilityAssessment:
+def _assessment(*, calibration_status: str | None = None) -> ProbabilityAssessment:
     return ProbabilityAssessment(
         decision_context_id="research-001",
         evidence_collection_id="evidence-001",
@@ -15,6 +15,7 @@ def _assessment() -> ProbabilityAssessment:
         evidence_strength=0.70,
         historical_consistency=0.60,
         sample_size=20,
+        probability_calibration_status=calibration_status,
     )
 
 
@@ -60,11 +61,10 @@ def test_pipeline_accepts_serialized_probability_boundary() -> None:
 
 
 def test_pipeline_propagates_evidence_backed_calibration_status() -> None:
-    assessment = _assessment()
-    assessment.probability_calibration_status = "Well-Calibrated"
     report = run_decision_pipeline(
         DecisionPipelineInput(
-            assessment=assessment, asset="XAUUSD", direction="bullish", account_equity=10_000,
+            assessment=_assessment(calibration_status="Well-Calibrated"),
+            asset="XAUUSD", direction="bullish", account_equity=10_000,
             trade_statistics=TradeStatistics(average_win=150, average_loss=100, sample_size=100),
             research_valid=True,
         )
@@ -74,10 +74,10 @@ def test_pipeline_propagates_evidence_backed_calibration_status() -> None:
 
 
 def test_probability_calibration_status_round_trips_through_serialization() -> None:
-    assessment = _assessment()
-    assessment.probability_calibration_status = "Poorly Calibrated"
+    assessment = _assessment(calibration_status="Poorly Calibrated")
     restored = ProbabilityAssessment.from_dict(assessment.to_dict())
     assert restored.probability_calibration_status == "Poorly Calibrated"
+    assert restored.assessment_hash == assessment.assessment_hash
     report = run_decision_pipeline(
         DecisionPipelineInput(
             assessment=restored, asset="XAUUSD", direction="bullish", account_equity=10_000,
