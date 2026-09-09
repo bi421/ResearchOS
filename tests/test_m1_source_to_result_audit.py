@@ -57,6 +57,8 @@ def _result(source: Path, tmp_path: Path, *, label: int = 0) -> Path:
         "stage": "M1_WALK_FORWARD_RAW_PROBABILITY",
         "scientific_status": "OOS_RAW_PROBABILITY_ONLY_NO_EDGE_CLAIM",
         "source_artifact": {"sha256": source_sha},
+        "dataset": {"sha256": "a" * 64},
+        "contract": {"asset": "XAUUSD", "timeframe": "M1", "label": "hit_threshold_1d"},
         "split": {"train_size": 4, "validation_size": 2, "step_size": 2},
         "folds": [{
             "fold": 1,
@@ -117,3 +119,14 @@ def test_source_to_result_audit_rejects_wrong_source_hash(tmp_path: Path):
     output = audit(source, result)
     assert output["status"] == "FAIL"
     assert any("SHA-256" in failure for failure in output["failures"])
+
+
+def test_source_to_result_audit_rejects_tampered_dataset_identity(tmp_path: Path):
+    source = _source(tmp_path)
+    result = _result(source, tmp_path, label=0)
+    payload = json.loads(result.read_text(encoding="utf-8"))
+    payload["dataset"]["sha256"] = "c" * 64
+    result.write_text(json.dumps(payload), encoding="utf-8")
+    output = audit(source, result)
+    assert output["status"] == "FAIL"
+    assert any("dataset SHA-256" in failure for failure in output["failures"])
