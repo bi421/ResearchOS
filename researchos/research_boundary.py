@@ -5,17 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from researchos.data_engine.boundary import ValidatedDatasetRef
+from researchos.research_identity import DatasetIdentity
 
 RESEARCH_BOUNDARY_SCHEMA_VERSION = "research-boundary.v1"
 
 
 @dataclass(frozen=True)
 class ResearchInput:
-    """Explicit research input contract.
-
-    A research run can only identify its dataset through the validated data
-    boundary. This prevents research code from bypassing data validation.
-    """
+    """Explicit research input contract."""
 
     schema_version: str
     research_id: str
@@ -55,13 +52,7 @@ class ResearchInput:
 
 @dataclass(frozen=True)
 class ResearchEvidenceLink:
-    """Immutable lineage from research execution to its evidence output.
-
-    ``execution_hash`` identifies the exact deterministic research result,
-    while ``assessment_hash`` identifies the downstream probability/assessment
-    artifact. Both are required so the evidence chain cannot silently detach
-    from the research execution that produced it.
-    """
+    """Immutable lineage from research execution to its evidence output."""
 
     schema_version: str
     research_id: str
@@ -88,6 +79,45 @@ class ResearchEvidenceLink:
         ):
             if not value:
                 raise ValueError(f"{name} is required")
+
+    @property
+    def dataset_identity(self) -> DatasetIdentity:
+        return DatasetIdentity(
+            dataset_id=self.dataset_id,
+            dataset_content_hash=self.dataset_content_hash,
+            dataset_hash=self.dataset_hash,
+        )
+
+    def assert_dataset_identity(self, reference: ValidatedDatasetRef) -> None:
+        """Reject an evidence link detached from the validated input dataset."""
+        self.dataset_identity.assert_matches(
+            dataset_id=reference.dataset_id,
+            dataset_content_hash=reference.dataset_content_hash,
+            dataset_hash=reference.dataset_hash,
+        )
+
+    @classmethod
+    def from_research_input(
+        cls,
+        research_input: ResearchInput,
+        *,
+        execution_hash: str,
+        evidence_collection_id: str,
+        assessment_hash: str,
+    ) -> ResearchEvidenceLink:
+        """Construct a link directly from the validated research input."""
+        dataset = research_input.dataset
+        return cls(
+            schema_version=RESEARCH_BOUNDARY_SCHEMA_VERSION,
+            research_id=research_input.research_id,
+            dataset_id=dataset.dataset_id,
+            dataset_content_hash=dataset.dataset_content_hash,
+            dataset_hash=dataset.dataset_hash,
+            methodology_version=research_input.methodology_version,
+            execution_hash=execution_hash,
+            evidence_collection_id=evidence_collection_id,
+            assessment_hash=assessment_hash,
+        )
 
     def to_dict(self) -> dict[str, str]:
         return {
