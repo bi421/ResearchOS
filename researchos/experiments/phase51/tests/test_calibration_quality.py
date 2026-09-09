@@ -17,6 +17,7 @@ def test_calibration_quality_is_evidence_derived():
 
     assert result.reliability_table["calibration_error"] == pytest.approx(0.1)
     assert result.reliability_table["calibration_status"] == CALIBRATION_STATUS_POORLY_CALIBRATED
+    assert result.calibration_status == CALIBRATION_STATUS_POORLY_CALIBRATED
 
 
 def test_calibration_quality_accepts_error_below_constitutional_threshold():
@@ -26,6 +27,7 @@ def test_calibration_quality_accepts_error_below_constitutional_threshold():
 
     assert result.reliability_table["calibration_error"] == pytest.approx(0.0)
     assert result.reliability_table["calibration_status"] == CALIBRATION_STATUS_WELL_CALIBRATED
+    assert result.calibration_status == CALIBRATION_STATUS_WELL_CALIBRATED
 
 
 def test_calibration_quality_does_not_claim_calibration_without_observations():
@@ -33,6 +35,7 @@ def test_calibration_quality_does_not_claim_calibration_without_observations():
 
     assert result.reliability_table["calibration_error"] is None
     assert result.reliability_table["calibration_status"] == CALIBRATION_STATUS_NEEDS_ADJUSTMENT
+    assert result.calibration_status == CALIBRATION_STATUS_NEEDS_ADJUSTMENT
 
 
 def test_calibration_rejects_invalid_bin_count():
