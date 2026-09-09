@@ -1,19 +1,10 @@
-"""Canonical bridge from Market Memory evidence to Decision Engine evidence.
-
-This module is intentionally a thin adapter: Market Memory remains the owner
-of historical research, while the Decision Engine receives only validated,
-directional evidence items. No trading decision is made here.
-"""
+"""Canonical bridge from validated Market Memory evidence to Decision Engine."""
 
 from __future__ import annotations
 
 import ast
 
-from researchos.decision_engine.contracts import (
-    DecisionEvidenceItem,
-    EvidenceSource,
-    ProbabilityOutcome,
-)
+from researchos.decision_engine.contracts import DecisionEvidenceItem, EvidenceSource, ProbabilityOutcome
 from researchos.decision_engine.evidence import EvidenceCollection
 from researchos.decision_engine.probability import ProbabilityAssessment, ProbabilityCalculator
 from researchos.market_memory.event_schema import EvidenceRecord, EvidenceStatus, MarketMemoryReport
@@ -48,13 +39,14 @@ def _confidence(record: EvidenceRecord, direction: ProbabilityOutcome) -> float:
     return 1.0 - abs(p - 0.5) * 2.0
 
 
-def evidence_record_to_decision_item(record: EvidenceRecord) -> DecisionEvidenceItem | None:
-    """Convert one validated Market Memory finding into canonical decision evidence.
+def _provenance(record: EvidenceRecord) -> dict[str, object]:
+    """Extract the immutable Market Memory provenance envelope without mutation."""
+    value = record.uncertainty.get("provenance", {})
+    return dict(value) if isinstance(value, dict) else {}
 
-    Rejected/non-validated findings are excluded. Weight is explicitly 1.0 for
-    this v1 bridge so the ProbabilityCalculator does not introduce another
-    hidden source weight; the empirical probability is represented as confidence.
-    """
+
+def evidence_record_to_decision_item(record: EvidenceRecord) -> DecisionEvidenceItem | None:
+    """Convert one validated Market Memory finding into canonical decision evidence."""
     if record.status != EvidenceStatus.VALIDATED.value:
         return None
 
@@ -72,6 +64,7 @@ def evidence_record_to_decision_item(record: EvidenceRecord) -> DecisionEvidence
             f"empirical probability={record.result.get('raw_probability', 'unavailable')}"
         ),
         supporting_ids=[record.finding_id],
+        provenance=_provenance(record),
     )
 
 
@@ -80,12 +73,7 @@ def market_memory_to_decision_evidence(
     *,
     directional_only: bool = True,
 ) -> list[DecisionEvidenceItem]:
-    """Bridge a MarketMemoryReport into canonical DecisionEvidenceItem objects.
-
-    By default only explicit bullish/bearish conditions are forwarded. This
-    prevents the current v1 regime/aggregate findings from being double-counted
-    as independent directional evidence.
-    """
+    """Bridge a MarketMemoryReport into canonical DecisionEvidenceItem objects."""
     items: list[DecisionEvidenceItem] = []
     for record in report.evidence_records:
         item = evidence_record_to_decision_item(record)
@@ -108,8 +96,4 @@ def market_memory_to_probability(
     return ProbabilityCalculator().calculate(collection)
 
 
-__all__ = [
-    "evidence_record_to_decision_item",
-    "market_memory_to_decision_evidence",
-    "market_memory_to_probability",
-]
+__all__ = ["evidence_record_to_decision_item", "market_memory_to_decision_evidence", "market_memory_to_probability"]
