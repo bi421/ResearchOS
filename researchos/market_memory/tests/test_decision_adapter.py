@@ -5,7 +5,7 @@ from researchos.market_memory.decision_adapter import market_memory_to_decision_
 from researchos.market_memory.event_schema import EvidenceRecord, EvidenceStatus, MarketMemoryReport
 
 
-def _record(name: str, condition: str, probability: float, status: str = EvidenceStatus.VALIDATED.value) -> EvidenceRecord:
+def _record(name: str, condition: str, probability: float, status: str = EvidenceStatus.VALIDATED.value, uncertainty: dict | None = None) -> EvidenceRecord:
     return EvidenceRecord(
         finding_id=f"EVIDENCE|{name}",
         finding_name=name,
@@ -19,6 +19,7 @@ def _record(name: str, condition: str, probability: float, status: str = Evidenc
         code_module="test",
         statistical_method="wilson",
         result={"raw_probability": probability},
+        uncertainty=uncertainty or {},
         status=status,
     )
 
@@ -38,14 +39,9 @@ def test_validated_directional_market_memory_reaches_decision_evidence() -> None
         _record("bullish_crossover", "{'direction':'bullish'}", 0.70),
         _record("bearish_crossover", "{'direction':'bearish'}", 0.30),
     )
-
     items = market_memory_to_decision_evidence(report)
-
     assert len(items) == 2
-    assert {item.direction for item in items} == {
-        ProbabilityOutcome.BULLISH,
-        ProbabilityOutcome.BEARISH,
-    }
+    assert {item.direction for item in items} == {ProbabilityOutcome.BULLISH, ProbabilityOutcome.BEARISH}
     bullish = next(i for i in items if i.direction is ProbabilityOutcome.BULLISH)
     bearish = next(i for i in items if i.direction is ProbabilityOutcome.BEARISH)
     assert bullish.confidence == 0.70
@@ -58,8 +54,27 @@ def test_nonvalidated_and_neutral_findings_do_not_enter_directional_bridge() -> 
         _record("bullish_crossover", "{'direction':'bullish'}", 0.70, EvidenceStatus.UNVALIDATED.value),
         _record("all_crossovers", "{}", 0.55, EvidenceStatus.VALIDATED.value),
     )
-
     assert market_memory_to_decision_evidence(report) == []
+
+
+def test_market_memory_provenance_is_preserved_in_decision_evidence() -> None:
+    provenance = {
+        "algorithm": "sha256",
+        "evidence_computation_digest": "digest-123",
+        "dataset_version_bound": "canonical-dataset-hash",
+        "dataset_identity": {
+            "dataset_id": "xauusd-d1",
+            "dataset_content_hash": "content-123",
+            "dataset_hash": "canonical-dataset-hash",
+        },
+    }
+    item = market_memory_to_decision_evidence(
+        _report(_record("bullish_crossover", "{'direction':'bullish'}", 0.70, uncertainty={"provenance": provenance}))
+    )[0]
+    assert item.provenance == provenance
+    assert item.to_dict()["provenance"] == provenance
+    restored = type(item).from_dict(item.to_dict())
+    assert restored.provenance == provenance
 
 
 def test_probability_calculator_consumes_market_memory_items() -> None:
@@ -68,12 +83,9 @@ def test_probability_calculator_consumes_market_memory_items() -> None:
         _record("bearish_crossover", "{'direction':'bearish'}", 0.40),
     )
     items = market_memory_to_decision_evidence(report)
-
     from researchos.decision_engine.evidence import EvidenceCollection
     from researchos.decision_engine.probability import ProbabilityCalculator
-
     collection = EvidenceCollection(decision_context_id="ctx-1", items=items)
     assessment = ProbabilityCalculator().calculate(collection)
-
     assert assessment.bullish_probability > assessment.bearish_probability
     assert assessment.bullish_probability + assessment.bearish_probability + assessment.neutral_probability == 1.0
