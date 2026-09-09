@@ -1,87 +1,86 @@
-﻿"""
-Pipeline Validation Orchestrator with Calibration Step.
+"""Validate an already-produced XAUUSD evidence registry.
+
+This script is an external validation boundary. It does not manufacture a
+"real-data" registry, invent WFO results, or mark a calibrator as fitted.
+Real-market evidence and explicit ground-truth outcomes must be supplied by
+the production research pipeline before this script can return success.
 """
 from __future__ import annotations
 
-from researchos.objects.evidence import Evidence, EvidenceRegistry
-from researchos.core.identity import deterministic_hash
+from typing import Mapping
+
 from researchos.experiments.external_validator import EvidenceChainValidator
 from researchos.experiments.synthetic_boundary import SyntheticBoundaryChecker
 from researchos.market_memory.probability_calibration import ProbabilityCalibrator
+from researchos.objects.evidence import EvidenceRegistry
 
 
-def run_pipeline_validation():
+def run_pipeline_validation(
+    registry: EvidenceRegistry | None = None,
+    ground_truth_outcomes: Mapping[str, bool] | None = None,
+) -> bool:
+    """Validate evidence integrity and calibration without manufacturing inputs.
+
+    Returns ``True`` only when a caller supplies a non-empty registry, the
+    evidence-chain and synthetic boundaries pass, and calibration is fitted
+    from at least ten matched historical outcomes.
+    """
     sep = "=" * 80
     print(sep)
-    print(" RESEARCHOS: XAUUSD M1 REAL DATA PIPELINE VALIDATION")
+    print(" RESEARCHOS: XAUUSD M1 EVIDENCE PIPELINE VALIDATION")
     print(sep)
 
-    registry = EvidenceRegistry(research_id="XAUUSD_M1_REAL_DATA_2021_2025")
+    if registry is None or not registry.evidence:
+        print("\n FINAL VERDICT: BLOCKED")
+        print(" No real evidence registry was supplied; validation cannot pass.")
+        print(" This validator intentionally does not create synthetic stand-ins.")
+        print(sep)
+        return False
 
-    experiment_id = "EXP_XAUUSD_001"
-    run_id = "RUN_WFO_001"
-    hash_input = {"experiment_id": experiment_id, "run_id": run_id}
-    correct_hash_prefix = deterministic_hash(hash_input)[:16]
+    print(f"\n[1/3] Loaded Registry: {registry.research_id} (Items: {len(registry.evidence)})")
 
-    obs_id = "OBS|" + experiment_id + "|" + run_id + "|" + correct_hash_prefix
-    valid_evidence = Evidence(
-        observation_id=obs_id,
-        hypothesis_id="HYP_XAUUSD_SMC_001",
-        interpretation="Walk-forward OOS evaluation on real XAUUSD M1 data shows positive expectancy.",
-        direction="Supporting",
-        source_reliability=0.95,
-        recency=0.90,
-        relevance=0.95,
-        consensus=0.85,
-        structural_importance=0.90,
-        quality_factor=0.95,
-        uncertainty=0.10,
-        tier="Primary",
-    )
-    registry.add_evidence(valid_evidence)
-
-    msg1 = "\n[1/4] Loaded Registry: " + registry.research_id + " (Items: " + str(len(registry.evidence)) + ")"
-    print(msg1)
-
-    print("\n[2/4] Running External Evidence Chain Validator (8 Invariants)...")
-    chain_validator = EvidenceChainValidator(registry)
-    chain_passed, chain_violations = chain_validator.validate_all()
-    if chain_passed:
-        print("       PASSED")
-    else:
-        print("       FAILED: " + str(chain_violations))
-
-    print("\n[3/4] Running Synthetic-Data Boundary Checker...")
-    boundary_checker = SyntheticBoundaryChecker(registry)
-    boundary_passed = boundary_checker.validate_no_mixing()
-    if boundary_passed:
-        print("       PASSED")
-    else:
-        print("       FAILED")
-
-    print("\n[4/4] Running Probability Calibration...")
-    calibrator = ProbabilityCalibrator(method="isotonic")
-
-    try:
-        calibrator._is_fitted = True
-        cal_report = calibrator.calibrate(registry)
-        ece_str = "{:.4f}".format(cal_report.expected_calibration_error)
-        print("       PASSED: Calibrated " + str(cal_report.total_samples) + " samples. ECE: " + ece_str)
-        print("\n" + calibrator.generate_report(cal_report))
-    except Exception as e:
-        print("       SKIPPED: " + str(e))
-
-    print("\n" + sep)
+    print("\n[2/3] Running Evidence Chain + Synthetic Boundary validation...")
+    chain_passed, violations = EvidenceChainValidator(registry).validate_all()
+    boundary_passed = SyntheticBoundaryChecker(registry).validate_no_mixing()
+    if not chain_passed:
+        for violation in violations:
+            print(f"       FAILED: {violation}")
+    if not boundary_passed:
+        print("       FAILED: synthetic and real evidence are mixed")
     if chain_passed and boundary_passed:
-        print(" FINAL VERDICT: PIPELINE INTEGRITY VERIFIED AND CALIBRATED")
-        print(" Ready for human trader execution or live paper trading.")
-    else:
-        print(" FINAL VERDICT: PIPELINE INTEGRITY COMPROMISED")
-    print(sep + "\n")
+        print("       PASSED")
 
-    return chain_passed and boundary_passed
+    print("\n[3/3] Running Probability Calibration...")
+    calibration_passed = False
+    if ground_truth_outcomes is None:
+        print("       BLOCKED: explicit historical ground-truth outcomes are required")
+    else:
+        try:
+            calibrator = ProbabilityCalibrator(method="isotonic")
+            calibrator.fit(registry, dict(ground_truth_outcomes))
+            report = calibrator.calibrate(registry)
+            print(
+                "       PASSED: Fitted "
+                + str(report.total_samples)
+                + " samples. ECE: "
+                + "{:.6f}".format(report.expected_calibration_error)
+            )
+            print("\n" + calibrator.generate_report(report, registry))
+            calibration_passed = report.total_samples >= 10
+        except (RuntimeError, ValueError) as exc:
+            print("       FAILED: " + str(exc))
+
+    success = chain_passed and boundary_passed and calibration_passed
+    print("\n" + sep)
+    if success:
+        print(" FINAL VERDICT: PIPELINE INTEGRITY + CALIBRATION VERIFIED")
+        print(" Evidence is real-input supplied, outcome-grounded, and reproducible.")
+    else:
+        print(" FINAL VERDICT: NOT CERTIFIED")
+        print(" No downstream decision claim may be made from this run.")
+    print(sep + "\n")
+    return success
 
 
 if __name__ == "__main__":
-    success = run_pipeline_validation()
-    exit(0 if success else 1)
+    raise SystemExit(1 if not run_pipeline_validation() else 0)
