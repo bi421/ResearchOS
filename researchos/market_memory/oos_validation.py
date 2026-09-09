@@ -42,6 +42,7 @@ class OOSValidationResult:
     validation_method: str = "walk_forward_expanding_purged"
     purge_days: int = 0
     embargo_days: int = 0
+    fit_mode: str = "fixed_matcher"
 
 
 def assert_label_boundaries(
@@ -85,11 +86,18 @@ def walk_forward_validate(
     embargo_days: int = 0,
     max_outcome_horizon_days: int | None = None,
     label_end_getter: Callable[[object], datetime | None] | None = None,
+    fit_callback: Callable[[Sequence[object]], Callable[[object], bool]] | None = None,
 ) -> OOSValidationResult:
-    """Evaluate a pre-specified condition with purged walk-forward folds.
+    """Evaluate a condition with chronological, purged walk-forward folds.
 
-    When ``label_end_getter`` is supplied, every fold performs an explicit
-    realized label-window boundary audit in addition to the purge check.
+    ``fit_callback`` is an optional train-only fitting hook. When supplied,
+    each fold calls it with the purged training events and expects a matcher
+    built from that training data. The fitted matcher is then applied to the
+    train, validation, and test partitions. The callback is never given
+    validation or test events, making the train-only fitting boundary explicit.
+
+    With ``fit_callback=None`` the legacy fixed ``matcher`` behavior is
+    preserved exactly.
     """
     if initial_train_size < 1 or validation_size < 1 or test_size < 1:
         raise ValueError("window sizes must be >= 1")
@@ -138,9 +146,15 @@ def walk_forward_validate(
         if label_end_getter is not None:
             assert_label_boundaries(train, validation, test, label_end_getter)
 
-        train_values = _matched_values(train, matcher, outcome_getter)
-        validation_values = _matched_values(validation, matcher, outcome_getter)
-        test_values = _matched_values(test, matcher, outcome_getter)
+        fold_matcher = matcher
+        if fit_callback is not None:
+            fold_matcher = fit_callback(tuple(train))
+            if not callable(fold_matcher):
+                raise TypeError("fit_callback must return a callable matcher")
+
+        train_values = _matched_values(train, fold_matcher, outcome_getter)
+        validation_values = _matched_values(validation, fold_matcher, outcome_getter)
+        test_values = _matched_values(test, fold_matcher, outcome_getter)
         test_successes = sum(v > 0.0 for v in test_values)
         ci = (
             wilson_proportion_ci(test_successes, len(test_values), confidence_level).confidence_interval
@@ -177,6 +191,7 @@ def walk_forward_validate(
     return OOSValidationResult(
         tuple(results), passed, len(results), stable, status, min_test_events,
         purge_days=purge_days, embargo_days=embargo_days,
+        fit_mode="train_only_fit" if fit_callback is not None else "fixed_matcher",
     )
 
 
