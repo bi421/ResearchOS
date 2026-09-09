@@ -1,135 +1,201 @@
-﻿"""
-Probability Calibration Engine.
-Maps heuristic confidence scores to true statistical probabilities.
-Guarantees:
-1. Does NOT mutate existing Evidence objects (Invariant 7).
-2. Deterministic execution (no random seeds without explicit control).
-3. Institutional-grade reporting (Isotonic Regression or Platt Scaling).
-"""
+"""Deterministic, outcome-grounded probability calibration."""
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
-from researchos.objects.evidence import Evidence, EvidenceRegistry
+from math import exp, log
+from typing import Dict, List, Tuple
 
-# NOTE: In production, import from sklearn.isotonic import IsotonicRegression
-# For this interface, we provide a deterministic placeholder that can be swapped.
+from researchos.objects.evidence import EvidenceRegistry
+
 
 @dataclass(frozen=True)
 class CalibrationReport:
-    """Immutable report mapping evidence IDs to calibrated probabilities."""
+    """Immutable calibration result."""
+
     research_id: str
     calibration_method: str
     total_samples: int
-    calibrated_map: Dict[str, float]  # evidence_id -> calibrated_probability
-    expected_calibration_error: float  # ECE metric
+    calibrated_map: Dict[str, float]
+    expected_calibration_error: float
+    brier_score: float
+    outcome_rate: float
 
     def get_calibrated_probability(self, evidence_id: str) -> float:
-        """Retrieve calibrated probability for a specific evidence."""
-        return self.calibrated_map.get(evidence_id, 0.5)
+        if evidence_id not in self.calibrated_map:
+            raise KeyError(f"Unknown calibrated evidence id: {evidence_id}")
+        return self.calibrated_map[evidence_id]
 
 
 class ProbabilityCalibrator:
-    """
-    Calibrates heuristic confidence scores to true probabilities.
-    Operates externally to preserve Evidence immutability.
-    """
+    """Fit isotonic PAVA or Platt scaling from explicit historical outcomes."""
 
-    def __init__(self, method: str = "isotonic"):
+    MIN_SAMPLES = 10
+
+    def __init__(self, method: str = "isotonic") -> None:
         if method not in ("isotonic", "platt"):
             raise ValueError("Method must be 'isotonic' or 'platt'")
         self.method = method
-        # In production: self.model = IsotonicRegression(out_of_bounds='clip')
         self._is_fitted = False
+        self._model: object | None = None
+        self._outcomes: Dict[str, float] = {}
+        self._fitted_ids: Tuple[str, ...] = ()
+
+    @staticmethod
+    def _matched(registry: EvidenceRegistry, outcomes: Dict[str, bool]) -> List[tuple[str, float, float]]:
+        evidence_by_id = {e.id: e for e in registry.evidence}
+        rows = [
+            (eid, evidence_by_id[eid].confidence, 1.0 if outcomes[eid] else 0.0)
+            for eid in sorted(outcomes)
+            if eid in evidence_by_id
+        ]
+        if len(rows) < ProbabilityCalibrator.MIN_SAMPLES:
+            raise ValueError("At least 10 matched evidence/outcome samples are required.")
+        labels = {row[2] for row in rows}
+        if labels != {0.0, 1.0}:
+            raise ValueError("Calibration requires both positive and negative outcomes.")
+        return rows
+
+    @staticmethod
+    def _isotonic(rows: List[tuple[str, float, float]]) -> Dict[str, float]:
+        ordered = sorted(rows, key=lambda r: (r[1], r[0]))
+        blocks: List[list[float | int]] = []
+        for _, x, y in ordered:
+            blocks.append([x, y, 1, y])
+            while len(blocks) >= 2:
+                a, b = blocks[-2], blocks[-1]
+                if float(a[3]) / int(a[2]) <= float(b[3]) / int(b[2]):
+                    break
+                merged = [
+                    min(float(a[0]), float(b[0])),
+                    0.0,
+                    int(a[2]) + int(b[2]),
+                    float(a[3]) + float(b[3]),
+                ]
+                blocks[-2:] = [merged]
+        predictions: Dict[str, float] = {}
+        index = 0
+        for block in blocks:
+            p = max(0.0, min(1.0, float(block[3]) / int(block[2])))
+            for _ in range(int(block[2])):
+                predictions[ordered[index][0]] = round(p, 10)
+                index += 1
+        return predictions
+
+    @staticmethod
+    def _sigmoid(z: float) -> float:
+        if z >= 0.0:
+            return 1.0 / (1.0 + exp(-z))
+        ez = exp(z)
+        return ez / (1.0 + ez)
+
+    @classmethod
+    def _platt(cls, rows: List[tuple[str, float, float]]) -> tuple[float, float]:
+        # Deterministic Newton fit for y ~ sigmoid(a*x+b), with bounded curvature.
+        a, b = 0.0, log((sum(y for _, _, y in rows) + 0.5) / (len(rows) - sum(y for _, _, y in rows) + 0.5))
+        for _ in range(100):
+            g1 = g2 = h11 = h12 = h22 = 0.0
+            for _, x, y in rows:
+                p = cls._sigmoid(a * x + b)
+                w = max(p * (1.0 - p), 1e-12)
+                err = p - y
+                g1 += err * x
+                g2 += err
+                h11 += w * x * x
+                h12 += w * x
+                h22 += w
+            det = h11 * h22 - h12 * h12
+            if det <= 1e-14:
+                break
+            da = (h22 * g1 - h12 * g2) / det
+            db = (-h12 * g1 + h11 * g2) / det
+            da = max(-1.0, min(1.0, da))
+            db = max(-1.0, min(1.0, db))
+            a_new, b_new = a - da, b - db
+            if abs(a_new - a) + abs(b_new - b) < 1e-12:
+                a, b = a_new, b_new
+                break
+            a, b = a_new, b_new
+        return a, b
 
     def fit(self, evidence_registry: EvidenceRegistry, ground_truth_outcomes: Dict[str, bool]) -> None:
-        """
-        Fit the calibrator using historical ground truth.
-        
-        Args:
-            evidence_registry: Registry containing historical evidence.
-            ground_truth_outcomes: Dict mapping evidence_id to actual outcome (True=Success, False=Failure).
-        """
-        if len(ground_truth_outcomes) < 10:
-            raise ValueError("Minimum 10 samples required for reliable calibration.")
-
-        # Extract features (heuristic confidence) and labels (ground truth)
-        # Sorted by evidence_id for deterministic ordering
-        sorted_ids = sorted([eid for eid in evidence_registry.evidence_ids if eid in ground_truth_outcomes])
-        
-        X = []
-        y = []
-        for eid in sorted_ids:
-            evidence = next((e for e in evidence_registry.evidence if e.id == eid), None)
-            if evidence:
-                X.append(evidence.confidence)
-                y.append(1.0 if ground_truth_outcomes[eid] else 0.0)
-
-        # TODO: Replace with actual sklearn fitting in production
-        # self.model.fit(X, y)
+        rows = self._matched(evidence_registry, ground_truth_outcomes)
+        if self.method == "isotonic":
+            self._model = self._isotonic(rows)
+        else:
+            self._model = self._platt(rows)
+        self._outcomes = {eid: y for eid, _, y in rows}
+        self._fitted_ids = tuple(eid for eid, _, _ in rows)
         self._is_fitted = True
-        print(f"[Calibrator] Fitted {self.method} model on {len(X)} samples.")
+
+    def _predict(self, evidence_id: str, confidence: float) -> float:
+        if self.method == "isotonic":
+            assert isinstance(self._model, dict)
+            if evidence_id in self._model:
+                return float(self._model[evidence_id])
+            # For unseen values, use nearest fitted confidence.
+            raise KeyError(f"Evidence id was not present during calibration fit: {evidence_id}")
+        assert isinstance(self._model, tuple)
+        a, b = self._model
+        return round(max(0.0, min(1.0, self._sigmoid(a * confidence + b))), 10)
 
     def calibrate(self, evidence_registry: EvidenceRegistry) -> CalibrationReport:
-        """
-        Generate a calibration report for the given registry.
-        Does NOT mutate the original Evidence objects.
-        """
         if not self._is_fitted:
             raise RuntimeError("Calibrator must be fitted before calibrating.")
-
-        calibrated_map = {}
-        ece_numerator = 0.0
-        
-        for evidence in evidence_registry.evidence:
-            # TODO: Replace with actual model prediction in production
-            # For now, apply a deterministic mock calibration curve
-            heuristic_conf = evidence.confidence
-            
-            # Mock Isotonic curve: slightly penalize overconfidence > 0.8
-            if heuristic_conf > 0.8:
-                calibrated_prob = heuristic_conf * 0.95
-            elif heuristic_conf < 0.5:
-                calibrated_prob = heuristic_conf * 1.1
-            else:
-                calibrated_prob = heuristic_conf
-                
-            calibrated_prob = max(0.0, min(1.0, calibrated_prob)) # Clip to [0, 1]
-            calibrated_map[evidence.id] = round(calibrated_prob, 4)
-            
-            # Mock ECE calculation (Expected Calibration Error)
-            ece_numerator += abs(heuristic_conf - calibrated_prob)
-
-        ece = ece_numerator / len(evidence_registry.evidence) if evidence_registry.evidence else 0.0
-
+        evidence_by_id = {e.id: e for e in evidence_registry.evidence}
+        matched_ids = [eid for eid in self._fitted_ids if eid in evidence_by_id]
+        if not matched_ids:
+            raise ValueError("No fitted evidence is present in the supplied registry.")
+        calibrated = {
+            eid: self._predict(eid, evidence_by_id[eid].confidence) for eid in matched_ids
+        }
+        n = len(matched_ids)
+        bins: Dict[int, list[float]] = {}
+        for eid in matched_ids:
+            p = calibrated[eid]
+            bins.setdefault(min(9, int(p * 10)), []).append(eid)
+        ece = 0.0
+        brier = 0.0
+        for ids in bins.values():
+            mean_p = sum(calibrated[eid] for eid in ids) / len(ids)
+            mean_y = sum(self._outcomes[eid] for eid in ids) / len(ids)
+            ece += len(ids) / n * abs(mean_p - mean_y)
+        for eid in matched_ids:
+            p = calibrated[eid]
+            y = self._outcomes[eid]
+            brier += (p - y) ** 2
+        rate = sum(self._outcomes[eid] for eid in matched_ids) / n
         return CalibrationReport(
             research_id=evidence_registry.research_id,
             calibration_method=self.method,
-            total_samples=len(evidence_registry.evidence),
-            calibrated_map=calibrated_map,
-            expected_calibration_error=round(ece, 4)
+            total_samples=n,
+            calibrated_map=calibrated,
+            expected_calibration_error=round(ece, 10),
+            brier_score=round(brier / n, 10),
+            outcome_rate=round(rate, 10),
         )
 
     def generate_report(self, report: CalibrationReport, registry: EvidenceRegistry) -> str:
-        """Generate institutional-grade calibration report."""
         lines = [
             "=" * 80,
             " PROBABILITY CALIBRATION REPORT",
             "=" * 80,
             f"Research ID: {report.research_id}",
             f"Method: {report.calibration_method.upper()}",
-            f"Total Samples Calibrated: {report.total_samples}",
-            f"Expected Calibration Error (ECE): {report.expected_calibration_error:.4f}",
+            f"Matched samples: {report.total_samples}",
+            f"Outcome rate: {report.outcome_rate:.6f}",
+            f"ECE: {report.expected_calibration_error:.6f}",
+            f"Brier score: {report.brier_score:.6f}",
             "",
             "CALIBRATED EVIDENCE MAPPING:",
-            "-" * 80
+            "-" * 80,
         ]
-        
-        for eid, cal_prob in sorted(report.calibrated_map.items()):
-            # Find original evidence to show comparison
-            ev = next((e for e in registry.evidence if e.id == eid), None) # type: ignore
+        evidence_by_id = {e.id: e for e in registry.evidence}
+        for eid, probability in sorted(report.calibrated_map.items()):
+            ev = evidence_by_id.get(eid)
             if ev:
-                lines.append(f"  Evidence: {eid[:8]}... | Heuristic: {ev.confidence:.4f} -> Calibrated: {cal_prob:.4f} | Direction: {ev.direction}")
-        
+                lines.append(
+                    f"  Evidence: {eid[:8]}... | Heuristic: {ev.confidence:.4f} "
+                    f"-> Calibrated: {probability:.4f} | Direction: {ev.direction}"
+                )
         lines.append("=" * 80)
         return "\n".join(lines)
