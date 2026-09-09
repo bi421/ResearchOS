@@ -68,7 +68,7 @@ def _result(source: Path, tmp_path: Path, *, label: int = 0) -> Path:
 
 def test_source_to_result_audit_rejects_tampered_label(tmp_path: Path):
     source = _source(tmp_path)
-    result = _result(source, tmp_path, label=0)
+    result = _result(source, tmp_path, label=1)
     output = audit(source, result)
     assert output["status"] == "FAIL"
     assert any("label mismatch" in failure for failure in output["failures"])
@@ -76,7 +76,7 @@ def test_source_to_result_audit_rejects_tampered_label(tmp_path: Path):
 
 def test_source_to_result_audit_rejects_tampered_training_membership(tmp_path: Path):
     source = _source(tmp_path)
-    result = _result(source, tmp_path, label=1)
+    result = _result(source, tmp_path, label=0)
     payload = json.loads(result.read_text(encoding="utf-8"))
     payload["folds"][0]["training_event_ids"][-1] = "E09"
     result.write_text(json.dumps(payload), encoding="utf-8")
@@ -87,7 +87,7 @@ def test_source_to_result_audit_rejects_tampered_training_membership(tmp_path: P
 
 def test_source_to_result_audit_rejects_wrong_source_hash(tmp_path: Path):
     source = _source(tmp_path)
-    result = _result(source, tmp_path, label=1)
+    result = _result(source, tmp_path, label=0)
     payload = json.loads(result.read_text(encoding="utf-8"))
     payload["source_artifact"]["sha256"] = "b" * 64
     result.write_text(json.dumps(payload), encoding="utf-8")
