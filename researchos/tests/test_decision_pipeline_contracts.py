@@ -3,8 +3,9 @@ from __future__ import annotations
 from researchos.action.report import build_pre_trade_report
 from researchos.decision_engine.probability import ProbabilityAssessment
 from researchos.decision_pipeline import DecisionPipelineInput, run_decision_pipeline
-from researchos.risk.contracts import TradeStatistics
 from researchos.risk.adapters import risk_input_from_probability
+from researchos.risk.contracts import RiskPolicy, TradeStatistics
+from researchos.risk.engine import calculate_risk
 
 
 def _assessment(status: str | None = None) -> ProbabilityAssessment:
@@ -85,21 +86,20 @@ def test_invalid_research_never_becomes_trade_ready() -> None:
 
 
 def test_zero_risk_budget_never_becomes_trade_ready() -> None:
-    assessment = _assessment()
     risk_input = risk_input_from_probability(
-        assessment,
+        _assessment(),
         asset="XAUUSD",
         direction="bullish",
         account_equity=10_000,
         trade_statistics=TradeStatistics(average_win=100, average_loss=100),
-    )
-    risk_input = type(risk_input)(
-        **{**risk_input.__dict__, "risk_policy": risk_input.risk_policy.__class__(
-            fractional_kelly=0.25, max_risk_fraction=0.0, max_position_fraction=1.0
-        )}
+        risk_policy=RiskPolicy(
+            fractional_kelly=0.25,
+            max_risk_fraction=0.0,
+            max_position_fraction=1.0,
+        ),
     )
     report = build_pre_trade_report(
-        __import__("researchos.risk.engine", fromlist=["calculate_risk"]).calculate_risk(risk_input),
+        calculate_risk(risk_input),
         research_valid=True,
     )
     assert report.status == "NO_POSITIVE_RISK_BUDGET"
