@@ -59,13 +59,20 @@ def _average_confidence(probs: Sequence[Mapping[int, float]]) -> float:
     return sum(max(p.values()) for p in probs) / len(probs)
 
 
-def _calibration_error(reliability: Mapping[str, Any]) -> float | None:
-    """Compute mean absolute bin-midpoint vs observed-frequency error."""
-    predicted = reliability.get("predicted_probabilities", [])
+def _calibration_error(reliability: Mapping[str, Any], num_bins: int) -> float | None:
+    """Compute mean absolute bin-midpoint vs observed-frequency error.
+
+    ``probability_calibration`` returns the integer index of each populated
+    bin. The constitutional metric is based on that bin's midpoint, not the
+    sample-average predicted probability inside the bin.
+    """
+    labels = reliability.get("bin_labels", [])
     observed = reliability.get("observed_frequencies", [])
-    if not predicted or len(predicted) != len(observed):
+    if not labels or len(labels) != len(observed) or num_bins <= 0:
         return None
-    return sum(abs(float(p) - float(a)) for p, a in zip(predicted, observed)) / len(predicted)
+
+    midpoints = [(int(label) + 0.5) / num_bins for label in labels]
+    return sum(abs(midpoint - float(actual)) for midpoint, actual in zip(midpoints, observed)) / len(observed)
 
 
 def _calibration_status(error: float | None) -> str:
@@ -107,7 +114,7 @@ def evaluate_calibration(
     except ValueError:
         reliability = {"bin_labels": [], "predicted_probabilities": [], "observed_frequencies": []}
 
-    calibration_error = _calibration_error(reliability)
+    calibration_error = _calibration_error(reliability, num_bins)
     status = _calibration_status(calibration_error)
 
     if model_brier is None:
