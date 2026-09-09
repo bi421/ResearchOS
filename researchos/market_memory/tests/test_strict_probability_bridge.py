@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 import polars as pl
@@ -16,8 +17,8 @@ def _sample_df() -> pl.DataFrame:
     return pl.DataFrame(
         {
             "timestamp": pl.datetime_range(
-                start=__import__("datetime").datetime(2025, 1, 1),
-                end=__import__("datetime").datetime(2025, 1, 3),
+                start=datetime(2025, 1, 1),
+                end=datetime(2025, 1, 3),
                 interval="1d",
                 eager=True,
             ),
