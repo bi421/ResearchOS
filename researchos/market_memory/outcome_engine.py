@@ -1,14 +1,10 @@
 """Outcome Engine — deterministic forward outcome calculation for market events.
 
-Forward horizons are interpreted as calendar days and located by timestamp,
-not row offsets. This prevents a 1-day horizon from becoming one M1/H1 bar.
-
-Directional semantics are explicit: bullish events are rewarded for positive
-forward returns, while bearish events are rewarded for negative forward
-returns. Threshold hits, MFE and MAE therefore describe the event direction,
-not an implicit long-only position.
+Forward horizons are calendar days and resolved to the first actual observation
+at or after the target timestamp. Threshold labels, MFE and MAE are explicitly
+directional so bullish and bearish events use the same contract from opposite
+market perspectives.
 """
-
 from __future__ import annotations
 
 from bisect import bisect_left
@@ -20,19 +16,18 @@ from researchos.market_memory.event_schema import EventOutcome, MarketEvent
 
 
 def _timeframe_minutes(timeframe: str) -> int:
-    normalized = timeframe.strip().lower()
     aliases = {
         "m1": 1, "1m": 1, "m5": 5, "5m": 5, "m15": 15, "15m": 15,
         "m30": 30, "30m": 30, "h1": 60, "1h": 60, "h4": 240, "4h": 240,
         "d1": 1440, "1d": 1440, "w1": 10080, "1w": 10080,
     }
+    normalized = timeframe.strip().lower()
     if normalized not in aliases:
         raise ValueError(f"Unsupported timeframe for forward outcome calculation: {timeframe}")
     return aliases[normalized]
 
 
 def _directional_return(event: MarketEvent, raw_return: float) -> float:
-    """Return the forward move expressed in the event's direction."""
     direction = event.direction.strip().lower()
     if direction in {"bullish", "long", "up"}:
         return raw_return
@@ -47,29 +42,19 @@ def compute_forward_outcomes(
     horizons: list[int] | None = None,
     threshold: float = 0.0,
 ) -> list[MarketEvent]:
-    """Compute forward outcomes at calendar-day horizons without lookahead.
-
-    Each realized outcome records the timestamp of the actual future
-    observation used for its return. This timestamp is authoritative for
-    label-window leakage audits; the requested horizon is only a target time.
-
-    ``hit_threshold_*`` is direction-aware: a bearish event is a hit when its
-    forward price move is sufficiently negative, just as a bullish event is a
-    hit when its move is sufficiently positive. MFE/MAE are also expressed
-    from the event direction's perspective.
-    """
+    """Compute leakage-safe calendar-day outcomes from actual future observations."""
     if horizons is None:
         horizons = [1, 2, 3, 5, 10, 20]
     if any(h < 1 for h in horizons):
         raise ValueError("horizons must contain positive day counts")
     if threshold < 0:
         raise ValueError("threshold must be non-negative")
-    if len(price_df) == 0:
-        return events
     required = {"timestamp", "open", "high", "low", "close"}
     missing = required.difference(price_df.columns)
     if missing:
         raise ValueError(f"price_df missing columns: {sorted(missing)}")
+    if len(price_df) == 0:
+        return events
 
     frame = price_df.sort("timestamp")
     timestamps = frame["timestamp"].to_list()
@@ -97,8 +82,6 @@ def compute_forward_outcomes(
             target = event.timestamp + timedelta(days=h)
             future_idx = bisect_left(timestamps, target, lo=idx + 1)
             if future_idx >= len(timestamps):
-                future_idx = None
-            if future_idx is None:
                 returns[f"return_{h}d"] = None
                 directions[f"direction_{h}d"] = None
                 mfe[f"mfe_{h}d"] = None
@@ -109,22 +92,21 @@ def compute_forward_outcomes(
             realized_end = timestamps[future_idx]
             realized_ends[f"realized_end_{h}d"] = realized_end.isoformat()
             future_close = closes[future_idx]
-            future_high = highs[future_idx]
-            future_low = lows[future_idx]
+            window_high = max(highs[idx + 1 : future_idx + 1])
+            window_low = min(lows[idx + 1 : future_idx + 1])
+
             if event_close == 0:
-                ret = 0.0
-                directional_ret = 0.0
-                favorable_excursion = 0.0
-                adverse_excursion = 0.0
+                ret = directional_ret = favorable_excursion = adverse_excursion = 0.0
             else:
                 ret = (future_close - event_close) / event_close
                 directional_ret = _directional_return(event, ret)
                 if event.direction.strip().lower() in {"bullish", "long", "up"}:
-                    favorable_excursion = (future_high - event_close) / event_close
-                    adverse_excursion = (future_low - event_close) / event_close
+                    favorable_excursion = (window_high - event_close) / event_close
+                    adverse_excursion = (window_low - event_close) / event_close
                 else:
-                    favorable_excursion = (event_close - future_low) / event_close
-                    adverse_excursion = (event_close - future_high) / event_close
+                    favorable_excursion = (event_close - window_low) / event_close
+                    adverse_excursion = (event_close - window_high) / event_close
+
             returns[f"return_{h}d"] = ret
             directions[f"direction_{h}d"] = "up" if ret > 0 else "down" if ret < 0 else "flat"
             mfe[f"mfe_{h}d"] = favorable_excursion
@@ -132,18 +114,30 @@ def compute_forward_outcomes(
             hits[f"hit_{h}d"] = directional_ret > threshold
 
         outcome = EventOutcome(
-            event_id=event.event_id, asset=event.asset, timeframe=event.timeframe,
+            event_id=event.event_id,
+            asset=event.asset,
+            timeframe=event.timeframe,
             event_timestamp=event.timestamp,
-            return_1d=returns.get("return_1d"), return_2d=returns.get("return_2d"),
-            return_3d=returns.get("return_3d"), return_5d=returns.get("return_5d"),
-            return_10d=returns.get("return_10d"), return_20d=returns.get("return_20d"),
-            direction_1d=directions.get("direction_1d"), direction_2d=directions.get("direction_2d"),
-            direction_3d=directions.get("direction_3d"), direction_5d=directions.get("direction_5d"),
-            direction_10d=directions.get("direction_10d"), direction_20d=directions.get("direction_20d"),
-            mfe_1d=mfe.get("mfe_1d"), mae_1d=mae.get("mae_1d"),
-            mfe_5d=mfe.get("mfe_5d"), mae_5d=mae.get("mae_5d"),
-            mfe_20d=mfe.get("mfe_20d"), mae_20d=mae.get("mae_20d"),
-            hit_threshold_1d=hits.get("hit_1d"), hit_threshold_5d=hits.get("hit_5d"),
+            return_1d=returns.get("return_1d"),
+            return_2d=returns.get("return_2d"),
+            return_3d=returns.get("return_3d"),
+            return_5d=returns.get("return_5d"),
+            return_10d=returns.get("return_10d"),
+            return_20d=returns.get("return_20d"),
+            direction_1d=directions.get("direction_1d"),
+            direction_2d=directions.get("direction_2d"),
+            direction_3d=directions.get("direction_3d"),
+            direction_5d=directions.get("direction_5d"),
+            direction_10d=directions.get("direction_10d"),
+            direction_20d=directions.get("direction_20d"),
+            mfe_1d=mfe.get("mfe_1d"),
+            mae_1d=mae.get("mae_1d"),
+            mfe_5d=mfe.get("mfe_5d"),
+            mae_5d=mae.get("mae_5d"),
+            mfe_20d=mfe.get("mfe_20d"),
+            mae_20d=mae.get("mae_20d"),
+            hit_threshold_1d=hits.get("hit_1d"),
+            hit_threshold_5d=hits.get("hit_5d"),
             hit_threshold_20d=hits.get("hit_20d"),
             outcome_calculation_method="direction_aware_forward_return_from_actual_future_observation_timestamp",
             data_availability={
@@ -153,10 +147,17 @@ def compute_forward_outcomes(
         )
         updated_events.append(
             MarketEvent(
-                event_id=event.event_id, asset=event.asset, timeframe=event.timeframe,
-                event_type=event.event_type, direction=event.direction, timestamp=event.timestamp,
-                event_price=event.event_price, context=event.context, outcome=outcome,
-                dataset_source=event.dataset_source, computation_method=event.computation_method,
+                event_id=event.event_id,
+                asset=event.asset,
+                timeframe=event.timeframe,
+                event_type=event.event_type,
+                direction=event.direction,
+                timestamp=event.timestamp,
+                event_price=event.event_price,
+                context=event.context,
+                outcome=outcome,
+                dataset_source=event.dataset_source,
+                computation_method=event.computation_method,
                 seed=event.seed,
             )
         )
