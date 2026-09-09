@@ -23,6 +23,7 @@ def risk_input_from_probability(
     trade_statistics: TradeStatistics,
     risk_policy: RiskPolicy = RiskPolicy(),
     risk_per_unit: float | None = None,
+    probability_calibration_status: str | None = None,
 ) -> RiskInput:
     """Translate one validated Block 2 assessment into the ``risk.v1`` input.
 
@@ -30,8 +31,15 @@ def risk_input_from_probability(
     outcome. Neutral is not silently converted into a trade direction, and the
     adapter does not alter, normalize, or manufacture the probability.
 
+    Calibration status is optional and must come from an external
+    evidence-backed calibration evaluation. It is therefore passed explicitly
+    at this boundary rather than inferred from probability magnitude.
+
     ``ProbabilityAssessment`` is accepted directly for in-process use or as a
-    serialized dictionary for an API-first boundary.
+    serialized dictionary for an API-first boundary. When a calibration status
+    is explicitly supplied, it takes precedence over serialized metadata;
+    otherwise the serialized ``probability_calibration_status`` value is
+    preserved.
     """
     data = assessment.to_dict() if isinstance(assessment, ProbabilityAssessment) else assessment
     normalized_direction = direction.strip().lower()
@@ -48,7 +56,14 @@ def risk_input_from_probability(
 
     probability = float(data[probability_field])
     probability_method = str(data.get("calculation_method", "")) or None
-    calibration_status = data.get("probability_calibration_status")
+    calibration_status = (
+        probability_calibration_status
+        if probability_calibration_status is not None
+        else data.get("probability_calibration_status")
+    )
+
+    if calibration_status is not None and not str(calibration_status).strip():
+        raise ValueError("probability_calibration_status must be non-empty when provided")
 
     request = RiskInput(
         asset=asset,
@@ -60,7 +75,9 @@ def risk_input_from_probability(
         risk_per_unit=risk_per_unit,
         research_id=str(data["decision_context_id"]),
         probability_method=probability_method,
-        probability_calibration_status=calibration_status,
+        probability_calibration_status=(
+            str(calibration_status) if calibration_status is not None else None
+        ),
     )
     request.validate()
     return request
