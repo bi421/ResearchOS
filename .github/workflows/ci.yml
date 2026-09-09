@@ -32,7 +32,7 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[dev] || pip install -e . || pip install pytest
+          pip install -e .[dev]
           pip install pytest pytest-cov
       - name: Test
         run: pytest researchos/tests/ -v --cov=researchos --cov-report=xml --cov-report=term
@@ -50,24 +50,31 @@ jobs:
           cache: 'pip'
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
+      - name: Install Python build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install nanobind scikit-build-core cmake
       - name: Cache build
         uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pip
             ~/.ccache
-            build
-          key: quant-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.h', '**/pyproject.toml') }}
+            cpp_quant_engine/build
+          key: quant-${{ runner.os }}-${{ hashFiles('cpp_quant_engine/CMakeLists.txt', 'cpp_quant_engine/**/*.cpp', 'cpp_quant_engine/**/*.h', 'pyproject.toml') }}
           restore-keys: quant-${{ runner.os }}-
-      - name: Build
+      - name: Configure C++ Quant Engine
         run: |
-          pip install nanobind scikit-build-core cmake
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache || echo "No CMake, skipping"
-          cmake --build build -j || echo "No C++ build"
-      - name: Test Quant
-        run: |
-          ctest --test-dir build -V || echo "No ctest"
-          pytest researchos/tests/ -k quant -v || echo "No quant tests"
+          cmake -S cpp_quant_engine -B cpp_quant_engine/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - name: Build C++ Quant Engine
+        run: cmake --build cpp_quant_engine/build -j
+      - name: Test C++ Quant Engine
+        run: ctest --test-dir cpp_quant_engine/build -V
+      - name: Test Python Quant Integration
+        run: pytest researchos/tests/ -k quant -v
 
   coverage:
     name: Coverage
@@ -80,5 +87,10 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - run: pip install -e .[dev] || pip install -e .; pip install pytest pytest-cov
-      - run: pytest researchos/tests/ --cov=researchos --cov-report=xml --cov-report=term
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install pytest pytest-cov
+      - name: Test coverage
+        run: pytest researchos/tests/ --cov=researchos --cov-report=xml --cov-report=term
