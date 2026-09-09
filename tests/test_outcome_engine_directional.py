@@ -58,7 +58,7 @@ def test_bearish_negative_move_is_a_hit() -> None:
     )[0].outcome
     assert result is not None
     assert result.return_1d == pytest.approx(-0.01)
-    assert result.hit_threshold_1d is False
+    assert result.hit_threshold_1d is True
     assert result.mfe_1d == pytest.approx(0.02)
     assert result.mae_1d == pytest.approx(0.0)
 
