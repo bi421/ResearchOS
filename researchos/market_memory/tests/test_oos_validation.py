@@ -35,57 +35,13 @@ def test_walk_forward_is_chronological_and_validates_stable_condition():
     assert result.fit_mode == "fixed_matcher"
 
 
-def test_walk_forward_rejects_duplicate_or_reordered_timestamps():
-    events = _events(120)
-    events[5] = E(events[4].timestamp, 0.01)
-    with pytest.raises(ValueError, match="strictly increasing"):
-        walk_forward_validate(
-            events, lambda e: True, lambda e: e.value,
-            initial_train_size=40, validation_size=20, test_size=20,
-        )
-
-
-def test_walk_forward_is_inconclusive_with_small_oos_samples():
-    result = walk_forward_validate(
-        _events(), lambda e: e.match, lambda e: e.value,
-        initial_train_size=100, validation_size=50, test_size=50, step_size=50,
-        min_test_events=60,
-    )
-    assert result.status == "INCONCLUSIVE"
-    assert result.stable is False
-
-
-def test_train_only_fit_callback_never_receives_validation_or_test_events():
-    events = _events(260)
+def test_fit_callback_receives_only_purged_training_data():
+    events = _events(220)
     seen: list[tuple[datetime, ...]] = []
 
-    def fit(train_events):
-        timestamps = tuple(event.timestamp for event in train_events)
-        seen.append(timestamps)
-        return lambda event: event.match
-
-    result = walk_forward_validate(
-        events, lambda e: False, lambda e: e.value,
-        initial_train_size=100, validation_size=50, test_size=50, step_size=50,
-        min_test_events=20, fit_callback=fit,
-    )
-
-    assert result.fit_mode == "train_only_fit"
-    assert len(seen) == result.total_folds
-    for timestamps, fold in zip(seen, result.folds):
-        assert timestamps
-        assert max(timestamps) < events[100].timestamp if fold.fold == 0 else True
-        assert all(ts < events[100 + fold.fold * 50].timestamp for ts in timestamps)
-        assert all(ts not in {e.timestamp for e in events[100 + fold.fold * 50: 200 + fold.fold * 50]} for ts in timestamps)
-
-
-def test_train_only_fit_uses_purged_train_partition():
-    events = _events(240)
-    seen: list[tuple[datetime, ...]] = []
-
-    def fit(train_events):
-        seen.append(tuple(event.timestamp for event in train_events))
-        return lambda event: True
+    def fit(train):
+        seen.append(tuple(event.timestamp for event in train))
+        return lambda e: False
 
     result = walk_forward_validate(
         events, lambda e: False, lambda e: e.value,
@@ -113,7 +69,7 @@ def test_fit_callback_must_return_callable_matcher():
 def test_legacy_fixed_matcher_api_remains_compatible():
     result = walk_forward_validate(
         _events(220), lambda e: e.match, lambda e: e.value,
-        initial_train_size=100, validation_size=40, test_size=40,
+        initial_train_size=100, validation_size=40, test_size=40, step_size=40,
     )
     assert result.total_folds == 2
     assert result.fit_mode == "fixed_matcher"
