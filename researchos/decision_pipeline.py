@@ -25,6 +25,7 @@ class DecisionPipelineInput:
     research_limitations: tuple[str, ...] = ()
     risk_policy: RiskPolicy = RiskPolicy()
     risk_per_unit: float | None = None
+    probability_calibration_status: str | None = None
 
 
 def run_decision_pipeline(request: DecisionPipelineInput) -> PreTradeReport:
@@ -37,6 +38,7 @@ def run_decision_pipeline(request: DecisionPipelineInput) -> PreTradeReport:
         trade_statistics=request.trade_statistics,
         risk_policy=request.risk_policy,
         risk_per_unit=request.risk_per_unit,
+        probability_calibration_status=request.probability_calibration_status,
     )
     risk = calculate_risk(risk_input)
     return build_pre_trade_report(
