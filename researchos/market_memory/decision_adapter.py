@@ -8,7 +8,6 @@ directional evidence items. No trading decision is made here.
 from __future__ import annotations
 
 import ast
-from typing import Iterable
 
 from researchos.decision_engine.contracts import (
     DecisionEvidenceItem,
