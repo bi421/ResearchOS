@@ -15,7 +15,6 @@ authors = [
 keywords = [
     "market-research",
     "institutional-trading",
-    "macro-research",
     "deterministic",
     "explainable-ai",
     "scientific-method",
@@ -63,7 +62,7 @@ Documentation = "docs/"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["researchos*"]
+include = ["researchos*", "cpp_quant_engine*"]
 
 [tool.pytest.ini_options]
 # Mirrors the CI suite (.github/workflows/test-python.yml).
