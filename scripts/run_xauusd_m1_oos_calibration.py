@@ -80,11 +80,17 @@ def _source_rows(source: dict) -> dict[str, dict]:
             continue
         if not isinstance(event_id, str) or not event_id:
             raise ValueError("Complete source event requires event_id")
+        if event_id in rows:
+            raise ValueError(f"Duplicate source event_id: {event_id}")
         if not isinstance(label, bool):
             raise ValueError(f"Source outcome label must be boolean: {event_id}")
+        timestamp = _time(event["timestamp"])
+        realized_end = _time(endpoint)
+        if realized_end <= timestamp:
+            raise ValueError(f"Source realized_end must be after event timestamp: {event_id}")
         rows[event_id] = {
-            "timestamp": _time(event["timestamp"]),
-            "realized_end": _time(endpoint),
+            "timestamp": timestamp,
+            "realized_end": realized_end,
             "label": int(label),
             "direction": event.get("direction"),
         }
@@ -120,7 +126,7 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
             if not isinstance(prediction.get("probability"), (int, float)):
                 raise ValueError(f"Invalid probability: {event_id}")
             p = float(prediction["probability"])
-            if not 0.0 <= p <= 1.0:
+            if not math.isfinite(p) or not 0.0 <= p <= 1.0:
                 raise ValueError(f"Probability outside [0,1]: {event_id}")
             source_row = source_rows[event_id]
             if source_row["timestamp"] != _time(prediction["timestamp"]):
@@ -140,22 +146,25 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
         raise ValueError("At least 11 OOS predictions are required for leakage-safe calibration")
 
     calibrated: list[float] = []
+    raw_eligible: list[float] = []
+    labels: list[int] = []
     records: list[dict] = []
+    warmup_count = 0
     for index, row in enumerate(predictions):
         prior = [
             item for item in predictions[:index]
             if item["timestamp"] < row["timestamp"]
             and source_rows[item["event_id"]]["realized_end"] < row["timestamp"]
         ]
-        labels = {item["label"] for item in prior}
-        if len(prior) < MIN_SAMPLES or labels != {0, 1}:
-            raise ValueError(
-                "Insufficient leakage-safe prior OOS calibration history for "
-                f"event {row['event_id']} (samples={len(prior)}, classes={sorted(labels)})"
-            )
+        classes = {item["label"] for item in prior}
+        if len(prior) < MIN_SAMPLES or classes != {0, 1}:
+            warmup_count += 1
+            continue
         breakpoints = _pava([(item["probability"], item["label"]) for item in prior])
         calibrated_probability = _predict(breakpoints, row["probability"])
+        raw_eligible.append(row["probability"])
         calibrated.append(calibrated_probability)
+        labels.append(row["label"])
         records.append({
             "event_id": row["event_id"],
             "timestamp": row["timestamp"].isoformat(),
@@ -165,8 +174,9 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
             "calibration_training_event_ids": [item["event_id"] for item in prior],
         })
 
-    labels = [row["label"] for row in predictions]
-    raw = [row["probability"] for row in predictions]
+    if len(records) < 1:
+        raise ValueError("No OOS predictions have sufficient leakage-safe calibration history")
+
     output = {
         "stage": "M1_OOS_ISOTONIC_CALIBRATION",
         "scientific_status": "OOS_CALIBRATION_ONLY_NO_EDGE_CLAIM",
@@ -179,8 +189,11 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
             "fit_uses_current_validation_label": False,
             "fit_uses_future_outcomes": False,
             "temporal_rule": "training realized_end < current validation timestamp",
+            "total_oos_predictions": len(predictions),
+            "eligible_oos_predictions": len(records),
+            "warmup_excluded_predictions": warmup_count,
         },
-        "raw_score": _score(raw, labels),
+        "raw_score": _score(raw_eligible, labels),
         "calibrated_score": _score(calibrated, labels),
         "predictions": records,
     }
