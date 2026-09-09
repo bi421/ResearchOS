@@ -1,15 +1,10 @@
-"""Runtime certification for the Experiment → Run → Result evidence chain.
+"""Runtime certification for the Experiment -> Run -> Result evidence chain.
 
-This module is intentionally a trust-layer adapter.  It does not execute
-research or change trading logic.  Given already-computed Experiment, Run and
-Result objects, it certifies their immutable evidence envelopes in dependency
-order and verifies the resulting lineage chain.
-
-Scientific evidence is restricted to non-synthetic experiment inputs.  Synthetic,
-demo, mock, and fixture sources remain valid for engineering tests but cannot be
-promoted into the certified Experiment → Run → Result evidence chain.
+This module is a trust-layer adapter. It does not execute research or change
+trading logic. Given already-computed Experiment, Run and Result objects, it
+certifies immutable evidence envelopes in dependency order and verifies the
+resulting lineage chain.
 """
-
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -23,39 +18,53 @@ from researchos.evidence.result_emission import build_result_envelope
 from researchos.evidence.run_emission import build_run_envelope
 
 
-_SYNTHETIC_SOURCES = frozenset({"synthetic", "demo", "mock", "fixture"})
+_SYNTHETIC_SOURCES = frozenset({"synthetic", "demo", "mock", "fixture", "test"})
+
+
+def _dataset_metadata(experiment: Any) -> Mapping[str, Any]:
+    dataset_config = getattr(experiment, "dataset_config", None)
+    if dataset_config is None:
+        return {}
+    to_dict = getattr(dataset_config, "to_dict", None)
+    if callable(to_dict):
+        value = to_dict()
+        return value if isinstance(value, Mapping) else {}
+    return {}
 
 
 def _is_synthetic_experiment(experiment: Any) -> bool:
     """Return whether an experiment is explicitly backed by synthetic data."""
     dataset_config = getattr(experiment, "dataset_config", None)
-    if dataset_config is None:
-        return False
-
-    source = getattr(dataset_config, "source", "")
+    source = getattr(dataset_config, "source", "") if dataset_config is not None else ""
+    metadata = _dataset_metadata(experiment)
+    if not source:
+        source = metadata.get("source", "")
     if isinstance(source, str) and source.strip().lower() in _SYNTHETIC_SOURCES:
         return True
 
-    parameters = getattr(dataset_config, "parameters", {})
+    parameters = getattr(dataset_config, "parameters", {}) if dataset_config is not None else {}
+    if not isinstance(parameters, Mapping):
+        parameters = metadata.get("parameters", {})
     if isinstance(parameters, Mapping):
         classification = parameters.get("data_classification", "")
         if isinstance(classification, str) and classification.strip().lower() == "synthetic":
             return True
-    return False
+    classification = metadata.get("data_classification", "")
+    return isinstance(classification, str) and classification.strip().lower() == "synthetic"
 
 
 def _assert_evidence_eligible(experiment: Any) -> None:
-    """Reject synthetic experiment inputs at the evidence-certification boundary."""
+    """Reject synthetic/demo/mock/fixture inputs at certification boundary."""
     if _is_synthetic_experiment(experiment):
         raise ValueError(
-            "Synthetic, demo, mock, and fixture datasets cannot be certified as "
-            "research evidence; use a validated real-market dataset."
+            "Synthetic, demo, mock, fixture, and test datasets cannot be certified "
+            "as research evidence; use a validated real-market dataset."
         )
 
 
 @dataclass(frozen=True)
 class RuntimeCertification:
-    """Immutable record of one certified Experiment → Run → Result chain."""
+    """Immutable record of one certified Experiment -> Run -> Result chain."""
 
     experiment: EvidenceEnvelope
     run: EvidenceEnvelope
@@ -77,24 +86,15 @@ class RuntimeCertification:
         """Verify stored artifacts and all expected lineage edges."""
         if not repository.verify_evidence():
             return False
-        stored_experiment = repository.get_artifact(self.experiment_hash)
-        stored_run = repository.get_artifact(self.run_hash)
-        stored_result = repository.get_artifact(self.result_hash)
-        if (stored_experiment, stored_run, stored_result) != (
-            self.experiment,
-            self.run,
-            self.result,
-        ):
+        stored = tuple(repository.get_artifact(h) for h in (self.experiment_hash, self.run_hash, self.result_hash))
+        if stored != (self.experiment, self.run, self.result):
             return False
-        if self.run_hash not in repository.get_children(self.experiment_hash):
-            return False
-        if self.experiment_hash not in repository.get_parents(self.run_hash):
-            return False
-        if self.result_hash not in repository.get_children(self.run_hash):
-            return False
-        if self.run_hash not in repository.get_parents(self.result_hash):
-            return False
-        return True
+        return (
+            self.run_hash in repository.get_children(self.experiment_hash)
+            and self.experiment_hash in repository.get_parents(self.run_hash)
+            and self.result_hash in repository.get_children(self.run_hash)
+            and self.run_hash in repository.get_parents(self.result_hash)
+        )
 
 
 def certify_runtime(
@@ -108,23 +108,9 @@ def certify_runtime(
     version: str = "1.0.0",
     created_at: str = "",
 ) -> RuntimeCertification:
-    """Certify an already-computed Experiment → Run → Result chain.
-
-    ``dataset_hash`` is optional because the runner can receive dataset
-    contracts whose evidence artifact is not available in the same repository.
-    When supplied, the dataset artifact must already exist; this prevents a
-    dangling Dataset → Experiment reference.
-
-    Synthetic/demo/mock/fixture experiment sources are rejected before any
-    evidence artifact is written. This gate keeps engineering fixtures out of
-    the scientific evidence store.
-
-    The three artifacts are emitted in dependency order. Existing identical
-    artifacts are deduplicated by ``EvidenceRepository`` and are never updated.
-    """
+    """Certify an already-computed Experiment -> Run -> Result chain."""
     if not isinstance(repository, EvidenceRepository):
         raise TypeError("repository must be an EvidenceRepository")
-
     _assert_evidence_eligible(experiment)
 
     if dataset_hash and repository.get_artifact(dataset_hash) is None:
@@ -159,11 +145,7 @@ def certify_runtime(
     )
     repository.append_artifact(result_envelope)
 
-    certification = RuntimeCertification(
-        experiment=experiment_envelope,
-        run=run_envelope,
-        result=result_envelope,
-    )
+    certification = RuntimeCertification(experiment_envelope, run_envelope, result_envelope)
     if not certification.verify(repository):
         raise RuntimeError("runtime evidence certification verification failed")
     return certification
