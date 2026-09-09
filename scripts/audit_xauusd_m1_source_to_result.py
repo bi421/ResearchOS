@@ -1,11 +1,4 @@
-"""Independent source-to-result audit for the XAUUSD M1 walk-forward artifact.
-
-This auditor takes BOTH the original event/outcome artifact and the derived
-walk-forward report. It reconstructs complete rows and fold membership itself,
-recomputes the producer's direction-conditioned probability rule from source
-labels, and verifies every emitted prediction, label, training id, embargo rule,
-and score. It deliberately does not import or call the walk-forward producer.
-"""
+"""Independent source-to-result audit for the XAUUSD M1 walk-forward artifact."""
 from __future__ import annotations
 
 import argparse
@@ -94,10 +87,22 @@ def audit(source_path: Path, result_path: Path) -> dict:
         failures.append("scientific boundary changed or missing")
 
     contract = source.get("contract", {})
-    if (contract.get("asset"), contract.get("timeframe"), contract.get("label")) != (
-        "XAUUSD", "M1", "hit_threshold_1d"
-    ):
+    required_contract = ("XAUUSD", "M1", "hit_threshold_1d")
+    if (contract.get("asset"), contract.get("timeframe"), contract.get("label")) != required_contract:
         failures.append("source research contract mismatch")
+    result_contract = result.get("contract") or {}
+    if (result_contract.get("asset"), result_contract.get("timeframe"), result_contract.get("label")) != required_contract:
+        failures.append("result research contract mismatch")
+    if result_contract != contract:
+        failures.append("result contract differs from source contract")
+
+    source_dataset = source.get("dataset") or {}
+    result_dataset = result.get("dataset") or {}
+    source_dataset_sha = source_dataset.get("sha256")
+    if not isinstance(source_dataset_sha, str) or len(source_dataset_sha) != 64:
+        failures.append("source dataset SHA-256 is missing or malformed")
+    if result_dataset.get("sha256") != source_dataset_sha:
+        failures.append("result dataset SHA-256 differs from source dataset identity")
 
     try:
         rows = _rows(source)
@@ -192,17 +197,13 @@ def audit(source_path: Path, result_path: Path) -> dict:
             if not isinstance(p, (int, float)) or isinstance(p, bool) or not math.isfinite(p) or not 0 <= p <= 1:
                 failures.append(f"fold {index+1}: invalid probability for {event_id}")
                 continue
-
             same_direction = [r for r in train if r["direction"] == source_row["direction"]]
             if not same_direction:
                 failures.append(f"fold {index+1}: no prior history for direction {source_row['direction']}")
                 continue
             expected_probability = sum(r["label"] for r in same_direction) / len(same_direction)
             if float(p) != round(expected_probability, 12):
-                failures.append(
-                    f"fold {index+1}: probability mismatch for {event_id}; "
-                    f"expected {round(expected_probability, 12)}, got {p}"
-                )
+                failures.append(f"fold {index+1}: probability mismatch for {event_id}; expected {round(expected_probability, 12)}, got {p}")
             if prediction.get("method") not in (None, "direction_conditional"):
                 failures.append(f"fold {index+1}: unexpected prediction method for {event_id}")
             fold_predictions.append(float(p))
@@ -218,11 +219,7 @@ def audit(source_path: Path, result_path: Path) -> dict:
             if actual.get("baseline") != expected_fold_baseline:
                 failures.append(f"fold {index+1}: baseline score does not recompute")
 
-    expected_oos_ids = {
-        row["event_id"]
-        for fold in expected_folds
-        for row in fold["validation"]
-    }
+    expected_oos_ids = {row["event_id"] for fold in expected_folds for row in fold["validation"]}
     if seen_prediction_ids != expected_oos_ids:
         failures.append("emitted prediction IDs do not exactly cover the reconstructed OOS validation set")
 
@@ -254,6 +251,8 @@ def audit(source_path: Path, result_path: Path) -> dict:
         "failures": failures,
         "checks": {
             "source_identity": not any("SHA-256" in f for f in failures),
+            "dataset_identity": not any("dataset SHA-256" in f for f in failures),
+            "contract_identity": not any("contract" in f for f in failures),
             "fold_membership": not any("membership" in f or "events mismatch" in f for f in failures),
             "embargo": not any("embargo" in f or "leakage" in f for f in failures),
             "source_linked_predictions": not any("prediction event" in f or "timestamp mismatch" in f or "direction mismatch" in f or "label mismatch" in f for f in failures),
