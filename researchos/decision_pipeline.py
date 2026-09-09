@@ -28,6 +28,19 @@ class DecisionPipelineInput:
     probability_calibration_status: str | None = None
 
 
+def _calibration_status(request: DecisionPipelineInput) -> str | None:
+    """Resolve explicit calibration evidence without inventing a status.
+
+    A pipeline-level value has precedence. Otherwise a status already attached
+    to the ProbabilityAssessment (or its serialized form) is preserved.
+    """
+    if request.probability_calibration_status is not None:
+        return request.probability_calibration_status
+    if isinstance(request.assessment, ProbabilityAssessment):
+        return request.assessment.probability_calibration_status
+    return request.assessment.get("probability_calibration_status")
+
+
 def run_decision_pipeline(request: DecisionPipelineInput) -> PreTradeReport:
     """Run probability -> risk -> human-review report deterministically."""
     risk_input = risk_input_from_probability(
@@ -38,7 +51,7 @@ def run_decision_pipeline(request: DecisionPipelineInput) -> PreTradeReport:
         trade_statistics=request.trade_statistics,
         risk_policy=request.risk_policy,
         risk_per_unit=request.risk_per_unit,
-        probability_calibration_status=request.probability_calibration_status,
+        probability_calibration_status=_calibration_status(request),
     )
     risk = calculate_risk(risk_input)
     return build_pre_trade_report(
