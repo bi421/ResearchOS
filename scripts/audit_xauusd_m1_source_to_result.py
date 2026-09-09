@@ -2,9 +2,9 @@
 
 This auditor takes BOTH the original event/outcome artifact and the derived
 walk-forward report. It reconstructs complete rows and fold membership itself,
-then verifies that every emitted prediction, label, training id, embargo rule,
-and score is consistent with the source. It deliberately does not import or
-call the walk-forward producer.
+recomputes the producer's direction-conditioned probability rule from source
+labels, and verifies every emitted prediction, label, training id, embargo rule,
+and score. It deliberately does not import or call the walk-forward producer.
 """
 from __future__ import annotations
 
@@ -61,6 +61,8 @@ def _rows(report: dict) -> list[dict]:
 def _score(predictions: list[float], labels: list[int]) -> dict[str, float | int]:
     if not labels or len(predictions) != len(labels):
         raise ValueError("score inputs are empty or misaligned")
+    if any(not math.isfinite(p) or not 0 <= p <= 1 for p in predictions):
+        raise ValueError("invalid probability in score inputs")
     brier = sum((p - y) ** 2 for p, y in zip(predictions, labels)) / len(labels)
     log_loss = 0.0
     for p, y in zip(predictions, labels):
@@ -133,8 +135,8 @@ def audit(source_path: Path, result_path: Path) -> dict:
     if len(actual_folds) != len(expected_folds):
         failures.append(f"fold count mismatch: expected {len(expected_folds)}, got {len(actual_folds)}")
 
-    expected_predictions: list[tuple[float, int]] = []
     actual_predictions: list[tuple[float, int]] = []
+    seen_prediction_ids: set[str] = set()
     for index, expected in enumerate(expected_folds):
         if index >= len(actual_folds):
             break
@@ -167,12 +169,19 @@ def audit(source_path: Path, result_path: Path) -> dict:
         predictions = actual.get("predictions") or []
         if len(predictions) != len(expected["validation"]):
             failures.append(f"fold {index+1}: prediction row count mismatch")
+
+        fold_predictions: list[float] = []
+        fold_labels: list[int] = []
+        fold_baseline: list[float] = []
         for prediction in predictions:
             event_id = prediction.get("event_id")
             source_row = source_by_id.get(event_id)
             if source_row is None:
                 failures.append(f"fold {index+1}: prediction event not in expected validation set: {event_id}")
                 continue
+            if event_id in seen_prediction_ids:
+                failures.append(f"fold {index+1}: validation event reused: {event_id}")
+            seen_prediction_ids.add(event_id)
             if prediction.get("timestamp") != source_row["timestamp"].isoformat():
                 failures.append(f"fold {index+1}: timestamp mismatch for {event_id}")
             if prediction.get("direction") != source_row["direction"]:
@@ -180,11 +189,42 @@ def audit(source_path: Path, result_path: Path) -> dict:
             if prediction.get("label") != source_row["label"]:
                 failures.append(f"fold {index+1}: label mismatch for {event_id}")
             p = prediction.get("probability")
-            if not isinstance(p, (int, float)) or not math.isfinite(p) or not 0 <= p <= 1:
+            if not isinstance(p, (int, float)) or isinstance(p, bool) or not math.isfinite(p) or not 0 <= p <= 1:
                 failures.append(f"fold {index+1}: invalid probability for {event_id}")
-            else:
-                actual_predictions.append((float(p), source_row["label"]))
-                expected_predictions.append((float(p), source_row["label"]))
+                continue
+
+            same_direction = [r for r in train if r["direction"] == source_row["direction"]]
+            if not same_direction:
+                failures.append(f"fold {index+1}: no prior history for direction {source_row['direction']}")
+                continue
+            expected_probability = sum(r["label"] for r in same_direction) / len(same_direction)
+            if float(p) != round(expected_probability, 12):
+                failures.append(
+                    f"fold {index+1}: probability mismatch for {event_id}; "
+                    f"expected {round(expected_probability, 12)}, got {p}"
+                )
+            if prediction.get("method") not in (None, "direction_conditional"):
+                failures.append(f"fold {index+1}: unexpected prediction method for {event_id}")
+            fold_predictions.append(float(p))
+            fold_labels.append(source_row["label"])
+            fold_baseline.append(rate)
+            actual_predictions.append((float(p), source_row["label"]))
+
+        if len(fold_predictions) == len(expected["validation"]):
+            expected_fold_model = _score(fold_predictions, fold_labels)
+            expected_fold_baseline = _score(fold_baseline, fold_labels)
+            if actual.get("model") != expected_fold_model:
+                failures.append(f"fold {index+1}: model score does not recompute")
+            if actual.get("baseline") != expected_fold_baseline:
+                failures.append(f"fold {index+1}: baseline score does not recompute")
+
+    expected_oos_ids = {
+        row["event_id"]
+        for fold in expected_folds
+        for row in fold["validation"]
+    }
+    if seen_prediction_ids != expected_oos_ids:
+        failures.append("emitted prediction IDs do not exactly cover the reconstructed OOS validation set")
 
     if actual_predictions:
         aggregate = result.get("aggregate") or {}
@@ -194,8 +234,11 @@ def audit(source_path: Path, result_path: Path) -> dict:
         for fold in actual_folds[:len(expected_folds)]:
             rate = float(fold["training_outcome_rate"])
             for prediction in fold.get("predictions", []):
+                label = prediction.get("label")
+                if isinstance(label, bool) or not isinstance(label, int):
+                    continue
                 expected_baseline_values.append(rate)
-                expected_baseline_labels.append(int(prediction["label"]))
+                expected_baseline_labels.append(label)
         if expected_model != aggregate.get("model"):
             failures.append("aggregate model score does not recompute from source-linked predictions")
         if expected_baseline_values and _score(expected_baseline_values, expected_baseline_labels) != aggregate.get("baseline"):
@@ -214,6 +257,7 @@ def audit(source_path: Path, result_path: Path) -> dict:
             "fold_membership": not any("membership" in f or "events mismatch" in f for f in failures),
             "embargo": not any("embargo" in f or "leakage" in f for f in failures),
             "source_linked_predictions": not any("prediction event" in f or "timestamp mismatch" in f or "direction mismatch" in f or "label mismatch" in f for f in failures),
+            "probability_recomputation": not any("probability mismatch" in f for f in failures),
             "score_recomputation": not any("score does not recompute" in f for f in failures),
         },
     }
