@@ -2,8 +2,9 @@
 
 This is an operator-facing entry point for the real-data milestone. It does not
 change the decision pipeline or trading logic. It runs the existing strict
-Market Memory pipeline, then writes a machine-readable evidence report and a
-small human-readable summary.
+Market Memory pipeline and requires the certified C++ numerical backend by
+default, then writes a machine-readable evidence report and a small
+human-readable summary.
 
 Example:
     python scripts/run_xauusd_production_evidence.py \
@@ -32,6 +33,9 @@ def _report_to_dict(report: Any) -> dict[str, Any]:
 
 def _summary(report: dict[str, Any], input_path: Path) -> str:
     outcomes = report.get("outcomes", {})
+    backend = outcomes.get("production_quant_backend", {})
+    returns_backend = backend.get("returns", {})
+    statistics_backend = backend.get("statistics", {})
     lines = [
         "# XAUUSD Production Evidence",
         "",
@@ -43,6 +47,15 @@ def _summary(report: dict[str, Any], input_path: Path) -> str:
         f"- Bullish events: **{outcomes.get('bullish_count', 0)}**",
         f"- Bearish events: **{outcomes.get('bearish_count', 0)}**",
         f"- Average 1D return: **{outcomes.get('avg_return_1d', 0.0):.8f}**",
+        "",
+        "## Production Quant Backend",
+        "",
+        f"- Returns backend: **{returns_backend.get('backend', 'UNKNOWN')} {returns_backend.get('version', '')}**",
+        f"- Returns validation: **{returns_backend.get('validation_status', 'UNKNOWN')}**",
+        f"- Returns fallback: **{returns_backend.get('fallback_used', 'UNKNOWN')}**",
+        f"- Statistics backend: **{statistics_backend.get('backend', 'UNKNOWN')} {statistics_backend.get('version', '')}**",
+        f"- Statistics validation: **{statistics_backend.get('validation_status', 'UNKNOWN')}**",
+        f"- Statistics fallback: **{statistics_backend.get('fallback_used', 'UNKNOWN')}**",
         "",
         "## Evidence records",
     ]
@@ -79,6 +92,11 @@ def main() -> int:
     parser.add_argument("--slow", type=int, default=100, help="Slow SMA period")
     parser.add_argument("--seed", type=int, default=42, help="Deterministic seed")
     parser.add_argument("--minimum-events", type=int, default=100)
+    parser.add_argument(
+        "--allow-python-fallback",
+        action="store_true",
+        help="Allow Python fallback for the production numerical boundary (not recommended for C++ certification).",
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input).expanduser().resolve()
@@ -98,6 +116,7 @@ def main() -> int:
         slow_period=args.slow,
         seed=args.seed,
         minimum_events=args.minimum_events,
+        require_cpp=not args.allow_python_fallback,
     )
     payload = _report_to_dict(report)
 
@@ -109,8 +128,16 @@ def main() -> int:
     )
     summary_path.write_text(_summary(payload, input_path), encoding="utf-8")
 
+    backend = payload.get("outcomes", {}).get("production_quant_backend", {})
+    returns_backend = backend.get("returns", {})
     print(f"Evidence status : {payload.get('overall_status', 'UNKNOWN')}")
     print(f"Events          : {payload.get('total_events', 0)}")
+    print(
+        "C++ backend     : "
+        f"{returns_backend.get('backend', 'UNKNOWN')} "
+        f"v{returns_backend.get('version', 'UNKNOWN')} "
+        f"fallback={returns_backend.get('fallback_used', 'UNKNOWN')}"
+    )
     print(f"JSON report     : {output_path}")
     print(f"Markdown report : {summary_path}")
     return 0
