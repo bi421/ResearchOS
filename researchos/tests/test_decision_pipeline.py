@@ -72,3 +72,20 @@ def test_pipeline_accepts_serialized_probability_boundary() -> None:
 
     assert report.direction == "bearish"
     assert report.probability == 0.25
+
+
+def test_pipeline_propagates_evidence_backed_calibration_status() -> None:
+    report = run_decision_pipeline(
+        DecisionPipelineInput(
+            assessment=_assessment(),
+            asset="XAUUSD",
+            direction="bullish",
+            account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=150, average_loss=100, sample_size=100),
+            research_valid=True,
+            probability_calibration_status="Well-Calibrated",
+        )
+    )
+
+    assert report.risk_valid is True
+    assert report.probability == 0.60
