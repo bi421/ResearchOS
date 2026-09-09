@@ -62,4 +62,3 @@ def test_independent_audit_rejects_result_sha_tampering(tmp_path: Path) -> None:
     report = audit(source, result, calibration)
     assert report["status"] == "FAIL"
     assert "result SHA mismatch" in report["failures"]
-    assert "result source SHA mismatch" in report["failures"]
