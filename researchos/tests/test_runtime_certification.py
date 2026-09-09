@@ -9,14 +9,14 @@ from researchos.evidence.repository import EvidenceRepository
 from researchos.evidence.runtime_certification import certify_runtime
 
 
-def _experiment() -> SimpleNamespace:
+def _experiment(source: str = "mt5") -> SimpleNamespace:
     return SimpleNamespace(
         experiment_hash="experiment-definition-hash",
         hypothesis_id="hypothesis-1",
         name="Certification test",
         description="Runtime certification",
         experiment_type="backtest",
-        dataset_config=SimpleNamespace(to_dict=lambda: {"source": "fixture"}),
+        dataset_config=SimpleNamespace(to_dict=lambda: {"source": source}),
         simulation_config=SimpleNamespace(to_dict=lambda: {"seed": 42}),
         metric_definitions=[],
         parameters={"window": 20},
@@ -33,7 +33,7 @@ def _run() -> SimpleNamespace:
         run_hash="run-definition-hash",
         experiment_id="experiment-1",
         run_number=1,
-        dataset_config=SimpleNamespace(to_dict=lambda: {"source": "fixture"}),
+        dataset_config=SimpleNamespace(to_dict=lambda: {"source": "mt5"}),
         simulation_config=SimpleNamespace(to_dict=lambda: {"seed": 42}),
         parameters={},
         status="Completed",
@@ -71,6 +71,14 @@ def test_certify_runtime_creates_and_verifies_three_node_chain() -> None:
     assert repo.count_edges() == 2
     assert repo.get_children(certification.experiment_hash) == [certification.run_hash]
     assert repo.get_children(certification.run_hash) == [certification.result_hash]
+
+
+def test_certify_runtime_rejects_synthetic_source_before_writes() -> None:
+    repo = EvidenceRepository()
+    with pytest.raises(ValueError, match="Synthetic"):
+        certify_runtime(_experiment("fixture"), _run(), _result(), repo)
+    assert repo.count_artifacts() == 0
+    assert repo.count_edges() == 0
 
 
 def test_certify_runtime_requires_existing_dataset_parent() -> None:
