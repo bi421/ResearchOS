@@ -1,6 +1,7 @@
 """Deterministic, outcome-grounded probability calibration."""
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import dataclass
 from math import exp, log
 from typing import Dict, List, Tuple
@@ -39,9 +40,12 @@ class ProbabilityCalibrator:
         self._model: object | None = None
         self._outcomes: Dict[str, float] = {}
         self._fitted_ids: Tuple[str, ...] = ()
+        self._isotonic_breakpoints: Tuple[tuple[float, float], ...] = ()
 
     @staticmethod
-    def _matched(registry: EvidenceRegistry, outcomes: Dict[str, bool]) -> List[tuple[str, float, float]]:
+    def _matched(
+        registry: EvidenceRegistry, outcomes: Dict[str, bool]
+    ) -> List[tuple[str, float, float]]:
         evidence_by_id = {e.id: e for e in registry.evidence}
         rows = [
             (eid, evidence_by_id[eid].confidence, 1.0 if outcomes[eid] else 0.0)
@@ -56,7 +60,10 @@ class ProbabilityCalibrator:
         return rows
 
     @staticmethod
-    def _isotonic(rows: List[tuple[str, float, float]]) -> Dict[str, float]:
+    def _isotonic(
+        rows: List[tuple[str, float, float]],
+    ) -> tuple[Dict[str, float], Tuple[tuple[float, float], ...]]:
+        """Fit PAVA and return both training predictions and confidence breakpoints."""
         ordered = sorted(rows, key=lambda r: (r[1], r[0]))
         blocks: List[list[float | int]] = []
         for _, x, y in ordered:
@@ -72,14 +79,18 @@ class ProbabilityCalibrator:
                     float(a[3]) + float(b[3]),
                 ]
                 blocks[-2:] = [merged]
+
+        breakpoints: List[tuple[float, float]] = []
         predictions: Dict[str, float] = {}
         index = 0
         for block in blocks:
             p = max(0.0, min(1.0, float(block[3]) / int(block[2])))
+            x = float(block[0])
+            breakpoints.append((x, round(p, 10)))
             for _ in range(int(block[2])):
                 predictions[ordered[index][0]] = round(p, 10)
                 index += 1
-        return predictions
+        return predictions, tuple(breakpoints)
 
     @staticmethod
     def _sigmoid(z: float) -> float:
@@ -90,8 +101,10 @@ class ProbabilityCalibrator:
 
     @classmethod
     def _platt(cls, rows: List[tuple[str, float, float]]) -> tuple[float, float]:
-        # Deterministic Newton fit for y ~ sigmoid(a*x+b), with bounded curvature.
-        a, b = 0.0, log((sum(y for _, _, y in rows) + 0.5) / (len(rows) - sum(y for _, _, y in rows) + 0.5))
+        """Deterministic Newton fit for y ~ sigmoid(a*x+b)."""
+        positives = sum(y for _, _, y in rows)
+        negatives = len(rows) - positives
+        a, b = 0.0, log((positives + 0.5) / (negatives + 0.5))
         for _ in range(100):
             g1 = g2 = h11 = h12 = h22 = 0.0
             for _, x, y in rows:
@@ -117,26 +130,49 @@ class ProbabilityCalibrator:
             a, b = a_new, b_new
         return a, b
 
-    def fit(self, evidence_registry: EvidenceRegistry, ground_truth_outcomes: Dict[str, bool]) -> None:
+    def fit(
+        self, evidence_registry: EvidenceRegistry, ground_truth_outcomes: Dict[str, bool]
+    ) -> None:
         rows = self._matched(evidence_registry, ground_truth_outcomes)
         if self.method == "isotonic":
-            self._model = self._isotonic(rows)
+            self._model, self._isotonic_breakpoints = self._isotonic(rows)
         else:
             self._model = self._platt(rows)
+            self._isotonic_breakpoints = ()
         self._outcomes = {eid: y for eid, _, y in rows}
         self._fitted_ids = tuple(eid for eid, _, _ in rows)
         self._is_fitted = True
 
-    def _predict(self, evidence_id: str, confidence: float) -> float:
+    def predict_probability(self, confidence: float) -> float:
+        """Predict calibrated probability for any confidence after fitting.
+
+        For isotonic calibration, unseen out-of-sample confidence values are mapped
+        using the fitted monotone step function with clipped out-of-range behavior.
+        This method never uses future outcome labels.
+        """
+        if not self._is_fitted:
+            raise RuntimeError("Calibrator must be fitted before predicting.")
+        if not 0.0 <= confidence <= 1.0:
+            raise ValueError("confidence must be between 0 and 1")
+
         if self.method == "isotonic":
-            assert isinstance(self._model, dict)
-            if evidence_id in self._model:
-                return float(self._model[evidence_id])
-            # For unseen values, use nearest fitted confidence.
-            raise KeyError(f"Evidence id was not present during calibration fit: {evidence_id}")
+            if not self._isotonic_breakpoints:
+                raise RuntimeError("Isotonic model has no fitted breakpoints.")
+            xs = tuple(x for x, _ in self._isotonic_breakpoints)
+            index = bisect_right(xs, confidence) - 1
+            if index < 0:
+                index = 0
+            return self._isotonic_breakpoints[index][1]
+
         assert isinstance(self._model, tuple)
         a, b = self._model
         return round(max(0.0, min(1.0, self._sigmoid(a * confidence + b))), 10)
+
+    def _predict(self, evidence_id: str, confidence: float) -> float:
+        """Backward-compatible internal prediction by evidence id."""
+        if self.method == "isotonic":
+            return self.predict_probability(confidence)
+        return self.predict_probability(confidence)
 
     def calibrate(self, evidence_registry: EvidenceRegistry) -> CalibrationReport:
         if not self._is_fitted:
@@ -149,7 +185,7 @@ class ProbabilityCalibrator:
             eid: self._predict(eid, evidence_by_id[eid].confidence) for eid in matched_ids
         }
         n = len(matched_ids)
-        bins: Dict[int, list[float]] = {}
+        bins: Dict[int, list[str]] = {}
         for eid in matched_ids:
             p = calibrated[eid]
             bins.setdefault(min(9, int(p * 10)), []).append(eid)
