@@ -1,16 +1,4 @@
-"""
-Contracts, enums, and dataclasses for the Decision Intelligence Engine.
-
-Based on Article XVII: Object Model — Decision Engine Layer.
-
-Defines the shared vocabulary used across all decision engine objects.
-
-Every decision must be:
-    - Deterministic: Same inputs → same outputs
-    - Auditable: Full lifecycle tracking
-    - Explainable: Every conclusion has a reasoning trace
-    - Versioned: Calculation versions for reproducibility
-"""
+"""Contracts, enums, and dataclasses for the Decision Intelligence Engine."""
 
 from __future__ import annotations
 
@@ -20,8 +8,6 @@ from typing import Any
 
 
 class EvidenceSource(str, Enum):
-    """Source modules that contribute evidence to a decision."""
-
     MARKET_MEMORY = "MarketMemory"
     EXPERIMENT = "Experiment"
     VALIDATION = "Validation"
@@ -31,24 +17,18 @@ class EvidenceSource(str, Enum):
 
 
 class ProbabilityDirection(str, Enum):
-    """Direction that a single evidence item supports."""
-
     BULLISH = "Bullish"
     BEARISH = "Bearish"
     NEUTRAL = "Neutral"
 
 
 class ProbabilityOutcome(str, Enum):
-    """The directional probability outcomes."""
-
     BULLISH = "Bullish"
     BEARISH = "Bearish"
     NEUTRAL = "Neutral"
 
 
 class CalculationMethod(str, Enum):
-    """Methods for computing probabilities from evidence scores."""
-
     WEIGHTED_EVIDENCE = "WeightedEvidence"
     BAYESIAN = "Bayesian"
     HISTORICAL_FREQUENCY = "HistoricalFrequency"
@@ -57,8 +37,6 @@ class CalculationMethod(str, Enum):
 
 
 class DecisionStatus(str, Enum):
-    """Lifecycle status of a decision process."""
-
     PENDING = "Pending"
     EVIDENCE_COLLECTED = "EvidenceCollected"
     SCORED = "Scored"
@@ -69,37 +47,12 @@ class DecisionStatus(str, Enum):
 
 
 class DecisionVersion(str, Enum):
-    """Explicit version identifier for decision methodology.
-
-    When formulas change, a new version is added.
-    Historical decisions remain reproducible under their original version.
-
-    DECISION_V1: Initial release — WeightedEvidence scoring, weighted probability.
-    """
-
     DECISION_V1 = "DECISION_V1"
-
-    # Future versions:
-    # DECISION_V2 = "DECISION_V2"
 
 
 @dataclass
 class DecisionEvidenceItem:
-    """
-    A single piece of evidence collected from any source module.
-
-    All evidence items are weighted and combined deterministically.
-
-    Attributes:
-        source: Which module produced this evidence.
-        source_id: Specific object ID that produced the evidence.
-        direction: Direction the evidence supports (Bullish, Bearish, Neutral).
-        strength: Evidence strength (0.0-1.0).
-        weight: Configurable weight factor for this evidence type.
-        confidence: Confidence in this specific evidence item (0.0-1.0).
-        description: Human-readable explanation.
-        supporting_ids: IDs of supporting objects (scenarios, experiments, etc.).
-    """
+    """Canonical decision evidence item with optional structured provenance."""
 
     source: EvidenceSource
     source_id: str
@@ -109,6 +62,7 @@ class DecisionEvidenceItem:
     confidence: float
     description: str
     supporting_ids: list[str] = field(default_factory=list)
+    provenance: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -120,6 +74,7 @@ class DecisionEvidenceItem:
             "confidence": self.confidence,
             "description": self.description,
             "supporting_ids": list(self.supporting_ids),
+            "provenance": self.provenance,
         }
 
     @classmethod
@@ -133,34 +88,15 @@ class DecisionEvidenceItem:
             confidence=float(data["confidence"]),
             description=data.get("description", ""),
             supporting_ids=list(data.get("supporting_ids", [])),
+            provenance=dict(data.get("provenance", {})),
         )
 
 
-# Deprecated compatibility alias — canonical name is ``DecisionEvidenceItem``
-# (renamed 2026-08-17 to end the collision with
-# ``researchos.reasoning_engine.contracts.EvidenceItem``; the schemas are
-# different bounded contexts and are NOT unified — see
-# docs/architecture/OWNERSHIP.md).
 EvidenceItem = DecisionEvidenceItem
 
 
 @dataclass
 class WeightConfiguration:
-    """
-    Configurable weights for evidence sources.
-
-    Stored separately so future research can compare different weighting models.
-    NOT hardcoded inside algorithms.
-
-    Attributes:
-        macro_weight: Weight for Macro Intelligence evidence.
-        market_memory_weight: Weight for Market Memory evidence.
-        experiment_weight: Weight for Experiment Results evidence.
-        validation_weight: Weight for Validation evidence.
-        quant_weight: Weight for Quant Statistics evidence.
-        weighting_version: Version identifier for this weight configuration.
-    """
-
     macro_weight: float = 0.25
     market_memory_weight: float = 0.25
     experiment_weight: float = 0.20
@@ -190,5 +126,4 @@ class WeightConfiguration:
         )
 
     def total_weight(self) -> float:
-        """Sum of all weights (should be 1.0)."""
         return self.macro_weight + self.market_memory_weight + self.experiment_weight + self.validation_weight + self.quant_weight
