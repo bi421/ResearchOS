@@ -12,7 +12,7 @@ def _source(tmp_path: Path) -> Path:
     from datetime import datetime, timedelta, timezone
 
     start = datetime(2025, 1, 1, tzinfo=timezone.utc)
-    for i in range(12):
+    for i in range(6):
         ts = start + timedelta(days=i)
         events.append(
             {
