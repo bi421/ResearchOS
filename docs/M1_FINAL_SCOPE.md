@@ -1,0 +1,1 @@
+Foundational M1 scope is complete: deterministic event extraction, explicit immutable outcome semantics, regression coverage, and real-data-only promotion gates. Predictive validity remains unproven until real MT5 M1 OOS validation passes.
