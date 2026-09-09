@@ -1,0 +1,1 @@
+Source-to-result audit implementation is covered by `scripts/audit_xauusd_m1_source_to_result.py` and its regression tests.
