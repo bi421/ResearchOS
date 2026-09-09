@@ -1,7 +1,8 @@
 """Strict Market Memory execution with canonical dataset provenance binding.
 
 This module keeps the existing statistical pipeline unchanged while enforcing
-strict dataset identity at the evidence publication boundary.
+strict dataset identity at the evidence publication boundary.  It also binds
+the real-data production report to an explicit, validated numerical backend.
 """
 
 from __future__ import annotations
@@ -14,6 +15,9 @@ from researchos.data_engine.dataset import HistoricalDataset
 from researchos.market_memory.evidence import create_evidence_record
 from researchos.market_memory.event_schema import EvidenceRecord, MarketMemoryReport
 from researchos.market_memory.pipeline_v1 import run_market_memory_pipeline
+from researchos.market_memory.production_quant_backend import (
+    run_production_quant_backend_audit,
+)
 from researchos.research_identity import DatasetIdentity
 
 
@@ -63,9 +67,6 @@ def _build_dataset_identity(
     dataset.mark_ready()
     dataset.mark_validated()
 
-    # The dataset_id remains tied to the exact source artifact used by the
-    # legacy Market Memory event provenance, while the two canonical hashes
-    # come from normalized typed records rather than raw CSV bytes.
     dataset_id = f"{asset}_{timeframe}_{_file_sha256(data_path)}"
     return DatasetIdentity(
         dataset_id=dataset_id,
@@ -109,8 +110,16 @@ def run_strict_market_memory_pipeline(
     slow_period: int = 100,
     seed: int = 42,
     minimum_events: int = 100,
+    require_cpp: bool = True,
 ) -> MarketMemoryReport:
-    """Run Market Memory and return evidence strictly bound to dataset identity."""
+    """Run Market Memory with strict provenance and certified C++ quant execution.
+
+    Event extraction and evidence methodology remain unchanged.  The production
+    numerical boundary independently computes daily returns and descriptive
+    statistics through BackendRouter -> CppQuantAdapter and records the exact
+    backend metadata in the report.  With ``require_cpp=True`` the boundary
+    fails closed rather than silently falling back to Python.
+    """
     from researchos.market_memory.event_extractor import load_xauusd_d1
 
     df = load_xauusd_d1(data_path)
@@ -120,6 +129,13 @@ def run_strict_market_memory_pipeline(
         asset=asset,
         timeframe=timeframe,
     )
+
+    closes = [float(value) for value in df.get_column("close").to_list()]
+    quant_audit = run_production_quant_backend_audit(
+        closes,
+        require_cpp=require_cpp,
+    )
+
     report = run_market_memory_pipeline(
         data_path=data_path,
         asset=asset,
@@ -130,8 +146,31 @@ def run_strict_market_memory_pipeline(
         enforce_production_gate=True,
         minimum_events=minimum_events,
     )
+
+    outcomes = dict(report.outcomes)
+    outcomes["production_quant_backend"] = quant_audit.to_dict()
+
     if not report.evidence_records:
-        return report
+        return MarketMemoryReport(
+            report_id=report.report_id,
+            asset=report.asset,
+            timeframe=report.timeframe,
+            event_type=report.event_type,
+            generated_at=report.generated_at,
+            total_events=report.total_events,
+            date_range=report.date_range,
+            outcomes=outcomes,
+            conditional_results=report.conditional_results,
+            validation_results=report.validation_results,
+            evidence_records=[],
+            self_audit=report.self_audit,
+            overall_status=report.overall_status,
+            notes=(
+                report.notes
+                + f" Strict dataset identity bound: {identity.to_dict()}"
+                + f" Production quant backend: {quant_audit.to_dict()}"
+            ),
+        )
 
     strict_records = [_strict_record(record, identity) for record in report.evidence_records]
     return MarketMemoryReport(
@@ -142,13 +181,17 @@ def run_strict_market_memory_pipeline(
         generated_at=report.generated_at,
         total_events=report.total_events,
         date_range=report.date_range,
-        outcomes=report.outcomes,
+        outcomes=outcomes,
         conditional_results=report.conditional_results,
         validation_results=report.validation_results,
         evidence_records=strict_records,
         self_audit=report.self_audit,
         overall_status=report.overall_status,
-        notes=report.notes + f" Strict dataset identity bound: {identity.to_dict()}",
+        notes=(
+            report.notes
+            + f" Strict dataset identity bound: {identity.to_dict()}"
+            + f" Production quant backend: {quant_audit.to_dict()}"
+        ),
     )
 
 
