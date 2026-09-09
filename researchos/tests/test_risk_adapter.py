@@ -31,6 +31,7 @@ def test_probability_assessment_maps_to_risk_input() -> None:
     assert request.direction == "bullish"
     assert request.research_id == "ctx-xauusd-001"
     assert request.probability_method == "WeightedEvidence"
+    assert request.probability_calibration_status is None
     assert request.to_dict()["schema_version"] == "risk.v1"
 
 
@@ -47,6 +48,36 @@ def test_serialized_probability_assessment_crosses_same_boundary() -> None:
     assert request.probability == 0.25
     assert request.direction == "bearish"
     assert request.research_id == "ctx-xauusd-001"
+
+
+def test_explicit_calibration_status_crosses_probability_to_risk_boundary() -> None:
+    request = risk_input_from_probability(
+        _assessment(),
+        asset="XAUUSD",
+        direction="bullish",
+        account_equity=10_000,
+        trade_statistics=TradeStatistics(average_win=150, average_loss=100, sample_size=100),
+        probability_calibration_status="Well-Calibrated",
+    )
+
+    assert request.probability_calibration_status == "Well-Calibrated"
+    assert request.to_dict()["probability_calibration_status"] == "Well-Calibrated"
+
+
+def test_empty_calibration_status_is_rejected() -> None:
+    try:
+        risk_input_from_probability(
+            _assessment(),
+            asset="XAUUSD",
+            direction="bullish",
+            account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=150, average_loss=100),
+            probability_calibration_status="   ",
+        )
+    except ValueError as exc:
+        assert "probability_calibration_status" in str(exc)
+    else:
+        raise AssertionError("blank calibration status must be rejected")
 
 
 def test_neutral_probability_cannot_be_silently_traded() -> None:
