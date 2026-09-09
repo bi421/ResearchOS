@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from researchos.decision_engine.contracts import ProbabilityOutcome
 from researchos.decision_pipeline import DecisionPipelineInput, run_decision_pipeline
 from researchos.market_memory.decision_adapter import (
@@ -86,8 +88,7 @@ def test_market_memory_to_probability_to_risk_to_pretrade_is_end_to_end() -> Non
         assessment.bullish_probability
         + assessment.bearish_probability
         + assessment.neutral_probability
-        == 1.0
-    )
+    ) == pytest.approx(1.0)
     assert assessment.assessment_hash
 
     assert pretrade.schema_version == "pretrade.v1"
