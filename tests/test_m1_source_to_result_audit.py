@@ -38,9 +38,21 @@ def _result(source: Path, tmp_path: Path, *, label: int = 0) -> Path:
     raw = source.read_bytes()
     source_sha = hashlib.sha256(raw).hexdigest()
     predictions = [
-        {"event_id": "E04", "timestamp": "2025-01-05T00:00:00+00:00", "direction": "bullish", "probability": 0.4, "label": label},
-        {"event_id": "E05", "timestamp": "2025-01-06T00:00:00+00:00", "direction": "bearish", "probability": 0.6, "label": 1},
+        {"event_id": "E04", "timestamp": "2025-01-05T00:00:00+00:00", "direction": "bullish", "probability": 0.0, "label": label},
+        {"event_id": "E05", "timestamp": "2025-01-06T00:00:00+00:00", "direction": "bearish", "probability": 1.0, "label": 1},
     ]
+    fold_model = {
+        "sample_count": 2,
+        "brier_score": 0.0,
+        "log_loss": 0.0,
+        "observed_rate": 0.5,
+    }
+    fold_baseline = {
+        "sample_count": 2,
+        "brier_score": 0.25,
+        "log_loss": 0.6931471806,
+        "observed_rate": 0.5,
+    }
     result = {
         "stage": "M1_WALK_FORWARD_RAW_PROBABILITY",
         "scientific_status": "OOS_RAW_PROBABILITY_ONLY_NO_EDGE_CLAIM",
@@ -58,12 +70,23 @@ def _result(source: Path, tmp_path: Path, *, label: int = 0) -> Path:
             "training_event_ids": ["E00", "E01", "E02", "E03"],
             "training_outcome_rate": 0.5,
             "predictions": predictions,
+            "model": fold_model,
+            "baseline": fold_baseline,
         }],
-        "aggregate": {},
+        "aggregate": {"model": fold_model, "baseline": fold_baseline},
     }
     path = tmp_path / "result.json"
     path.write_text(json.dumps(result), encoding="utf-8")
     return path
+
+
+def test_source_to_result_audit_accepts_valid_result(tmp_path: Path):
+    source = _source(tmp_path)
+    result = _result(source, tmp_path, label=0)
+    output = audit(source, result)
+    assert output["status"] == "PASS"
+    assert output["checks"]["probability_recomputation"] is True
+    assert output["checks"]["score_recomputation"] is True
 
 
 def test_source_to_result_audit_rejects_tampered_label(tmp_path: Path):
