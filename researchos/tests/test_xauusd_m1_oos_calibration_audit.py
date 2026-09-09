@@ -62,3 +62,14 @@ def test_independent_audit_rejects_result_sha_tampering(tmp_path: Path) -> None:
     report = audit(source, result, calibration)
     assert report["status"] == "FAIL"
     assert "result SHA mismatch" in report["failures"]
+
+
+def test_independent_audit_rejects_result_source_binding_tampering(tmp_path: Path) -> None:
+    source, result, calibration = _fixture(tmp_path)
+    data = json.loads(result.read_text(encoding="utf-8"))
+    data["source_artifact"]["sha256"] = "b" * 64
+    result.write_text(json.dumps(data), encoding="utf-8")
+    report = audit(source, result, calibration)
+    assert report["status"] == "FAIL"
+    assert "result SHA mismatch" in report["failures"]
+    assert "result source SHA mismatch" in report["failures"]
