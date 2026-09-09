@@ -1,9 +1,4 @@
-"""Run the first real XAUUSD M1 Market Memory stage on an audited MT5 CSV.
-
-This runner stops on integrity problems and never falls back to synthetic data.
-It produces a deterministic event/outcome artifact suitable for the next
-walk-forward and evidence stages.
-"""
+"""Run the first real XAUUSD M1 Market Memory stage on an audited MT5 CSV."""
 from __future__ import annotations
 
 import argparse
@@ -24,7 +19,11 @@ def _load(path: Path) -> tuple[pl.DataFrame, str]:
     if not path.exists():
         raise FileNotFoundError(f"MT5 XAUUSD M1 dataset not found: {path}")
     if path.suffix.lower() != ".csv":
-        raise ValueError("The first real-M1 gate requires the audited CSV, not another gold instrument or synthetic data.")
+        raise ValueError("The first real-M1 gate requires the audited CSV.")
+    identity = path.name.lower()
+    if "xauusd" not in identity or "mt5" not in identity or "m1" not in identity:
+        raise ValueError("Dataset identity gate failed: filename must identify XAUUSD + M1 + MT5")
+
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     df = pl.read_csv(path, try_parse_dates=False)
     rename = {}
@@ -49,11 +48,12 @@ def _load(path: Path) -> tuple[pl.DataFrame, str]:
         raise ValueError("Null values detected in required real-data columns")
     if (df["high"] < df["low"]).any():
         raise ValueError("Invalid OHLC: high < low")
+    if (df["close"] <= 0).any() or (df["open"] <= 0).any() or (df["high"] <= 0).any() or (df["low"] <= 0).any():
+        raise ValueError("Non-positive OHLC values detected")
     return df, digest
 
 
 def _event_dict(event) -> dict:
-    outcome = event.outcome.to_dict() if event.outcome else None
     return {
         "event_id": event.event_id,
         "timestamp": event.timestamp.isoformat(),
@@ -62,7 +62,7 @@ def _event_dict(event) -> dict:
         "dataset_source": event.dataset_source,
         "computation_method": event.computation_method,
         "context": event.context.to_dict(),
-        "outcome": outcome,
+        "outcome": event.outcome.to_dict() if event.outcome else None,
     }
 
 
@@ -71,45 +71,36 @@ def run(input_path: Path, output_path: Path, threshold: float) -> dict:
     frame, sha256 = _load(input_path)
     events = extract_xauusd_m1_sma_crossover_events(frame, dataset_source="xauusd_m1_mt5")
     realized = compute_forward_outcomes(events, frame, horizons=[1], threshold=threshold)
-
     complete = [e for e in realized if e.outcome and e.outcome.hit_threshold_1d is not None]
     if not complete:
         raise RuntimeError("No complete 1-day outcomes were produced")
+
     leakage_violations = []
     for event in complete:
         end = event.outcome.data_availability.get("realized_end_1d")
         if end is None or end <= event.timestamp.isoformat():
             leakage_violations.append(event.event_id)
     if leakage_violations:
-        raise RuntimeError(f"Forward-label leakage/endpoint violations: {len(leakage_violations)}")
+        raise RuntimeError(f"Forward-label endpoint violations: {len(leakage_violations)}")
 
     wins = sum(bool(e.outcome.hit_threshold_1d) for e in complete)
     report = {
         "contract": {
-            "asset": "XAUUSD",
-            "timeframe": "M1",
-            "event": "SMA20/100 crossover",
-            "label": contract.label_name,
-            "horizon_days": contract.horizon_days,
-            "threshold_return": contract.threshold_return,
-            "price_field": contract.price_field,
+            "asset": "XAUUSD", "timeframe": "M1", "event": "SMA20/100 crossover",
+            "label": contract.label_name, "horizon_days": contract.horizon_days,
+            "threshold_return": contract.threshold_return, "price_field": contract.price_field,
             "direction_aware": contract.direction_aware,
         },
         "dataset": {
-            "path": str(input_path),
-            "sha256": sha256,
-            "rows": len(frame),
-            "start": frame["timestamp"][0].isoformat(),
-            "end": frame["timestamp"][-1].isoformat(),
+            "path": str(input_path), "sha256": sha256, "rows": len(frame),
+            "start": frame["timestamp"][0].isoformat(), "end": frame["timestamp"][-1].isoformat(),
             "columns": frame.columns,
         },
         "events": {
-            "extracted": len(events),
-            "complete_1d_outcomes": len(complete),
+            "extracted": len(events), "complete_1d_outcomes": len(complete),
             "bullish": sum(e.direction == "bullish" for e in complete),
             "bearish": sum(e.direction == "bearish" for e in complete),
-            "positive_labels": wins,
-            "negative_labels": len(complete) - wins,
+            "positive_labels": wins, "negative_labels": len(complete) - wins,
         },
         "scientific_status": "FOUNDATION_ONLY_NO_PREDICTIVE_EDGE_CLAIM",
         "events_data": [_event_dict(e) for e in complete],
