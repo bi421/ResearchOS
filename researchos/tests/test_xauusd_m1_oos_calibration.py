@@ -58,22 +58,26 @@ def test_oos_calibration_uses_prior_realized_outcomes_only(tmp_path: Path) -> No
     source, result = _fixture(tmp_path)
     output = run(source, result, tmp_path / "calibrated.json")
     assert output["scientific_status"] == "OOS_CALIBRATION_ONLY_NO_EDGE_CLAIM"
-    assert len(output["predictions"]) == 12 - 10
-    assert all(
-        set(record["calibration_training_event_ids"]).issubset({f"e{i}" for i in range(1, 11)})
-        for record in output["predictions"]
-    )
-    assert all(
-        "e11" not in record["calibration_training_event_ids"]
-        for record in output["predictions"]
-    )
+    assert len(output["predictions"]) == 2
+    assert set(output["predictions"][0]["calibration_training_event_ids"]) == {
+        f"e{i}" for i in range(1, 11)
+    }
+    assert set(output["predictions"][1]["calibration_training_event_ids"]) == {
+        f"e{i}" for i in range(1, 12)
+    }
 
 
 def test_oos_calibration_fails_without_both_prior_classes(tmp_path: Path) -> None:
     source, result = _fixture(tmp_path)
-    data = json.loads(result.read_text(encoding="utf-8"))
-    for prediction in data["folds"][0]["predictions"][:10]:
+    source_data = json.loads(source.read_text(encoding="utf-8"))
+    result_data = json.loads(result.read_text(encoding="utf-8"))
+    for event in source_data["events_data"][:10]:
+        event["outcome"]["hit_threshold_1d"] = True
+    for prediction in result_data["folds"][0]["predictions"][:10]:
         prediction["label"] = 1
-    result.write_text(json.dumps(data), encoding="utf-8")
+    source.write_text(json.dumps(source_data), encoding="utf-8")
+    source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
+    result_data["source_artifact"]["sha256"] = source_sha
+    result.write_text(json.dumps(result_data), encoding="utf-8")
     with pytest.raises(ValueError, match="classes"):
         run(source, result, tmp_path / "calibrated.json")
