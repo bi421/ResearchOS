@@ -50,6 +50,11 @@ jobs:
           cache: 'pip'
       - name: Install system deps
         run: |
+          # Chrome is preinstalled on the hosted runner but is not a ResearchOS CI dependency.
+          # Disable only its external APT source so a transient Google CDN index mismatch
+          # cannot block installation of the actual C++ build dependencies.
+          sudo grep -RIl 'dl.google.com/linux/chrome' /etc/apt/sources.list.d 2>/dev/null \
+            | while read -r source; do sudo mv "$source" "$source.disabled"; done
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
           sudo apt-get update -o Acquire::Retries=5
