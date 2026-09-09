@@ -1,1 +1,0 @@
-Temporary CI verification marker: the hosted runner's preinstalled Google Chrome APT source is not a ResearchOS dependency and is disabled only within the ephemeral Quant Engine job.
