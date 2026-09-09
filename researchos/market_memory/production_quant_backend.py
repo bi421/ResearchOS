@@ -105,7 +105,7 @@ def run_production_quant_backend_audit(
             **statistics_metadata,
             "count": int(statistics.get("count", len(returns_result.output))),
             "mean": float(statistics.get("mean", 0.0)),
-            "std": float(statistics.get("std", 0.0)),
+            "stddev": float(statistics.get("stddev", statistics.get("std", 0.0))),
         },
     )
 
