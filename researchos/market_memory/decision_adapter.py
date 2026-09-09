@@ -15,6 +15,8 @@ from researchos.decision_engine.contracts import (
     EvidenceSource,
     ProbabilityOutcome,
 )
+from researchos.decision_engine.evidence import EvidenceCollection
+from researchos.decision_engine.probability import ProbabilityAssessment, ProbabilityCalculator
 from researchos.market_memory.event_schema import EvidenceRecord, EvidenceStatus, MarketMemoryReport
 
 
@@ -96,7 +98,19 @@ def market_memory_to_decision_evidence(
     return items
 
 
+def market_memory_to_probability(
+    report: MarketMemoryReport,
+    *,
+    decision_context_id: str,
+) -> ProbabilityAssessment:
+    """Compute the canonical ProbabilityAssessment directly from Market Memory."""
+    items = market_memory_to_decision_evidence(report, directional_only=True)
+    collection = EvidenceCollection(decision_context_id=decision_context_id, items=items)
+    return ProbabilityCalculator().calculate(collection)
+
+
 __all__ = [
     "evidence_record_to_decision_item",
     "market_memory_to_decision_evidence",
+    "market_memory_to_probability",
 ]
