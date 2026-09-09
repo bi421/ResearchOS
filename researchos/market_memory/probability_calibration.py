@@ -1,7 +1,7 @@
 """Deterministic probability calibration for interpreted evidence.
 
 Calibration is a statistical transformation of heuristic confidence into an
-estimate derived from historical outcomes.  It never mutates Evidence objects.
+estimate derived from historical outcomes. It never mutates Evidence objects.
 The implementation is dependency-free so the research result is reproducible
 across environments.
 """
@@ -35,40 +35,44 @@ def _clip_probability(value: float) -> float:
 
 
 def _isotonic_fit(scores: List[float], labels: List[float]) -> List[float]:
-    """Fit isotonic regression with the deterministic pool-adjacent-violators algorithm."""
+    """Fit isotonic regression with deterministic pool-adjacent-violators."""
     order = sorted(range(len(scores)), key=lambda i: (scores[i], i))
+    # Each block is [sum_y, count, start_position, end_position].
     blocks: List[List[float]] = []
-    for i in order:
-        blocks.append([labels[i], 1.0, float(i)])
+    for position, i in enumerate(order):
+        blocks.append([labels[i], 1.0, float(position), float(position)])
         while len(blocks) >= 2:
             left, right = blocks[-2], blocks[-1]
             if left[0] / left[1] <= right[0] / right[1]:
                 break
-            total_weight = left[1] + right[1]
-            total_value = left[0] + right[0]
-            merged = [total_value, total_weight, right[2]]
+            merged = [
+                left[0] + right[0],
+                left[1] + right[1],
+                left[2],
+                right[3],
+            ]
             blocks[-2:] = [merged]
 
     fitted = [0.0] * len(scores)
-    cursor = 0
     for block in blocks:
         value = _clip_probability(block[0] / block[1])
-        count = int(block[1])
-        for i in order[cursor:cursor + count]:
-            fitted[i] = value
-        cursor += count
+        start, end = int(block[2]), int(block[3]) + 1
+        for position in range(start, end):
+            fitted[order[position]] = value
     return fitted
 
 
 def _platt_fit(scores: List[float], labels: List[float]) -> Tuple[float, float]:
     """Fit sigmoid(a*x+b) using deterministic Newton iterations."""
+    import math
+
     a, b = 0.0, 0.0
     for _ in range(100):
         g_a = g_b = 0.0
         h_aa = h_ab = h_bb = 1e-9
         for x, y in zip(scores, labels):
             z = max(-35.0, min(35.0, a * x + b))
-            p = 1.0 / (1.0 + __import__("math").exp(-z))
+            p = 1.0 / (1.0 + math.exp(-z))
             w = max(p * (1.0 - p), 1e-9)
             error = p - y
             g_a += error * x
@@ -106,22 +110,19 @@ class ProbabilityCalibrator:
         matched = sorted(eid for eid in evidence_registry.evidence_ids if eid in ground_truth_outcomes)
         if len(matched) < 10:
             raise ValueError("Minimum 10 matched samples required for calibration")
-        labels = [1.0 if ground_truth_outcomes[eid] else 0.0 for eid in matched]
-        if len(set(labels)) < 2:
-            raise ValueError("Calibration requires both positive and negative outcomes")
 
         evidence_by_id = {e.id: e for e in evidence_registry.evidence}
-        scores = [_clip_probability(evidence_by_id[eid].confidence) for eid in matched if eid in evidence_by_id]
         matched = [eid for eid in matched if eid in evidence_by_id]
         labels = [1.0 if ground_truth_outcomes[eid] else 0.0 for eid in matched]
         if len(matched) < 10 or len(set(labels)) < 2:
             raise ValueError("Calibration requires at least 10 existing samples and both outcome classes")
+        scores = [_clip_probability(evidence_by_id[eid].confidence) for eid in matched]
 
         if self.method == "isotonic":
             calibrated = _isotonic_fit(scores, labels)
         else:
-            a, b = _platt_fit(scores, labels)
             import math
+            a, b = _platt_fit(scores, labels)
             calibrated = [1.0 / (1.0 + math.exp(-max(-35.0, min(35.0, a * x + b)))) for x in scores]
 
         self._fitted_ids = matched
@@ -136,7 +137,10 @@ class ProbabilityCalibrator:
         total = len(self._fitted_ids)
         error = 0.0
         for bin_index in range(num_bins):
-            members = [eid for eid in self._fitted_ids if min(int(self._calibrated[eid] * num_bins), num_bins - 1) == bin_index]
+            members = [
+                eid for eid in self._fitted_ids
+                if min(int(self._calibrated[eid] * num_bins), num_bins - 1) == bin_index
+            ]
             if not members:
                 continue
             confidence = sum(self._calibrated[eid] for eid in members) / len(members)
@@ -145,7 +149,7 @@ class ProbabilityCalibrator:
         return round(error, 6)
 
     def calibrate(self, evidence_registry: EvidenceRegistry) -> CalibrationReport:
-        """Return fitted probabilities for the evidence used during fitting."""
+        """Return fitted probabilities for evidence used during fitting."""
         if not self._is_fitted:
             raise RuntimeError("Calibrator must be fitted before calibrating")
         available = [eid for eid in self._fitted_ids if eid in evidence_registry.evidence_ids]
