@@ -53,8 +53,7 @@ class ProbabilityAssessment(BaseObject):
         probability_calibration_status: str | None = None,
     ):
         if id is None:
-            seed = f"ProbabilityAssessment|{decision_context_id}|{evidence_collection_id}"
-            id = generate_id(seed)
+            id = generate_id(f"ProbabilityAssessment|{decision_context_id}|{evidence_collection_id}")
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.decision_context_id = decision_context_id
         self.evidence_collection_id = evidence_collection_id
@@ -68,16 +67,22 @@ class ProbabilityAssessment(BaseObject):
         self.sample_size = int(sample_size)
         self.calculation_method = calculation_method
         self.calculation_version = calculation_version
-        self.limitations: list[str] = list(limitations) if limitations else []
+        self.limitations = list(limitations) if limitations else []
         self.timestamp = timestamp or utc_now()
         self.probability_calibration_status = (
-            str(probability_calibration_status).strip() if probability_calibration_status is not None else None
+            str(probability_calibration_status).strip()
+            if probability_calibration_status is not None
+            else None
         ) or None
         self._assessment_hash = ""
         self._update_hash()
         self.lifecycle.transition(
             LifecycleStage.ANALYZED,
-            reason=(f"Probability assessed: B={self.bullish_probability:.4f}, Be={self.bearish_probability:.4f}, N={self.neutral_probability:.4f}, confidence={self.confidence:.4f}, sample_size={self.sample_size}"),
+            reason=(
+                f"Probability assessed: B={self.bullish_probability:.4f}, "
+                f"Be={self.bearish_probability:.4f}, N={self.neutral_probability:.4f}, "
+                f"confidence={self.confidence:.4f}, sample_size={self.sample_size}"
+            ),
         )
 
     @property
@@ -110,23 +115,25 @@ class ProbabilityAssessment(BaseObject):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "decision_context_id": self.decision_context_id,
-            "evidence_collection_id": self.evidence_collection_id,
-            "bullish_probability": self.bullish_probability,
-            "bearish_probability": self.bearish_probability,
-            "neutral_probability": self.neutral_probability,
-            "confidence": self.confidence,
-            "uncertainty": self.uncertainty,
-            "evidence_strength": self.evidence_strength,
-            "historical_consistency": self.historical_consistency,
-            "sample_size": self.sample_size,
-            "calculation_method": self.calculation_method.value,
-            "calculation_version": self.calculation_version,
-            "limitations": self.limitations,
-            "timestamp": self.timestamp.isoformat(),
-            "assessment_hash": self._assessment_hash,
-        })
+        base.update(
+            {
+                "decision_context_id": self.decision_context_id,
+                "evidence_collection_id": self.evidence_collection_id,
+                "bullish_probability": self.bullish_probability,
+                "bearish_probability": self.bearish_probability,
+                "neutral_probability": self.neutral_probability,
+                "confidence": self.confidence,
+                "uncertainty": self.uncertainty,
+                "evidence_strength": self.evidence_strength,
+                "historical_consistency": self.historical_consistency,
+                "sample_size": self.sample_size,
+                "calculation_method": self.calculation_method.value,
+                "calculation_version": self.calculation_version,
+                "limitations": self.limitations,
+                "timestamp": self.timestamp.isoformat(),
+                "assessment_hash": self._assessment_hash,
+            }
+        )
         if self.probability_calibration_status is not None:
             base["probability_calibration_status"] = self.probability_calibration_status
         return base
@@ -144,7 +151,9 @@ class ProbabilityAssessment(BaseObject):
         obj.evidence_strength = float(data.get("evidence_strength", 0.0))
         obj.historical_consistency = float(data.get("historical_consistency", 0.0))
         obj.sample_size = int(data.get("sample_size", 0))
-        obj.calculation_method = CalculationMethod(data.get("calculation_method", CalculationMethod.WEIGHTED_EVIDENCE.value))
+        obj.calculation_method = CalculationMethod(
+            data.get("calculation_method", CalculationMethod.WEIGHTED_EVIDENCE.value)
+        )
         obj.calculation_version = data.get("calculation_version", CALCULATION_VERSION)
         obj.limitations = list(data.get("limitations", []))
         ts = data.get("timestamp")
@@ -161,12 +170,29 @@ class ProbabilityCalculator:
         self.calculation_version = calculation_version
 
     def calculate(self, collection: EvidenceCollection) -> ProbabilityAssessment:
-        return self._aggregate(collection.decision_context_id, collection.id, collection.items, collection.collection_timestamp)
+        return self._aggregate(
+            collection.decision_context_id,
+            collection.id,
+            collection.items,
+            collection.collection_timestamp,
+        )
 
-    def compute(self, decision_context_id: str, evidence_collection_id: str, items: list[DecisionEvidenceItem], timestamp: datetime | None = None) -> ProbabilityAssessment:
+    def compute(
+        self,
+        decision_context_id: str,
+        evidence_collection_id: str,
+        items: list[DecisionEvidenceItem],
+        timestamp: datetime | None = None,
+    ) -> ProbabilityAssessment:
         return self._aggregate(decision_context_id, evidence_collection_id, items, timestamp)
 
-    def _aggregate(self, decision_context_id: str, evidence_collection_id: str, items: list[DecisionEvidenceItem], timestamp: datetime | None = None) -> ProbabilityAssessment:
+    def _aggregate(
+        self,
+        decision_context_id: str,
+        evidence_collection_id: str,
+        items: list[DecisionEvidenceItem],
+        timestamp: datetime | None = None,
+    ) -> ProbabilityAssessment:
         bullish_weight = bearish_weight = neutral_weight = 0.0
         confidences: list[float] = []
         weighted_contributions: list[float] = []
@@ -175,7 +201,9 @@ class ProbabilityCalculator:
             contribution = confidence * float(item.weight)
             confidences.append(confidence)
             weighted_contributions.append(contribution)
-            direction = _normalize_direction(item.direction.value if isinstance(item.direction, ProbabilityOutcome) else item.direction)
+            direction = _normalize_direction(
+                item.direction.value if isinstance(item.direction, ProbabilityOutcome) else item.direction
+            )
             if direction == _DIRECTION_BULLISH:
                 bullish_weight += contribution
             elif direction == _DIRECTION_BEARISH:
@@ -191,7 +219,11 @@ class ProbabilityCalculator:
             bullish_probability = bearish_probability = neutral_probability = _UNIFORM_PROBABILITY
         neutral_probability = 1.0 - bullish_probability - bearish_probability
         confidence = sum(confidences) / len(confidences) if confidences else 0.0
-        evidence_strength = sum(weighted_contributions) / len(weighted_contributions) if weighted_contributions else 0.0
+        evidence_strength = (
+            sum(weighted_contributions) / len(weighted_contributions)
+            if weighted_contributions
+            else 0.0
+        )
         sample_size = len(items)
         historical_consistency = max(bullish_probability, bearish_probability, neutral_probability)
         uncertainty = 1.0 - historical_consistency
@@ -214,7 +246,13 @@ class ProbabilityCalculator:
         )
 
     @staticmethod
-    def _derive_limitations(items: list[DecisionEvidenceItem], sample_size: int, total: float, confidence: float, uncertainty: float) -> list[str]:
+    def _derive_limitations(
+        items: list[DecisionEvidenceItem],
+        sample_size: int,
+        total: float,
+        confidence: float,
+        uncertainty: float,
+    ) -> list[str]:
         limitations: list[str] = []
         if sample_size == 0:
             limitations.append("No evidence items available for probability assessment")
@@ -231,21 +269,37 @@ class ProbabilityCalculator:
 
 
 class ProbabilityValidator:
-    """Validates probability assessment invariants."""
+    """Validates probability assessment invariants with legacy-compatible APIs."""
 
-    def validate(self, assessment: ProbabilityAssessment) -> bool:
-        probabilities = [assessment.bullish_probability, assessment.bearish_probability, assessment.neutral_probability]
+    def validate(self, assessment: ProbabilityAssessment) -> list[str]:
+        """Return validation errors; an empty list means the assessment is valid."""
+        errors: list[str] = []
+        probabilities = [
+            assessment.bullish_probability,
+            assessment.bearish_probability,
+            assessment.neutral_probability,
+        ]
         if any(p < 0.0 or p > 1.0 for p in probabilities):
-            raise ValueError("probabilities must be in [0, 1]")
+            errors.append("probabilities must be in [0, 1]")
         if abs(sum(probabilities) - 1.0) > FLOAT_TOLERANCE:
-            raise ValueError("probabilities must sum to 1.0")
+            errors.append("probabilities must sum to 1.0")
         if not 0.0 <= assessment.confidence <= 1.0:
-            raise ValueError("confidence must be in [0, 1]")
+            errors.append("confidence must be in [0, 1]")
         if not 0.0 <= assessment.uncertainty <= 1.0:
-            raise ValueError("uncertainty must be in [0, 1]")
+            errors.append("uncertainty must be in [0, 1]")
         if assessment.sample_size < 0:
-            raise ValueError("sample_size must be non-negative")
-        return True
+            errors.append("sample_size must be non-negative")
+        return errors
+
+    def is_valid(self, assessment: ProbabilityAssessment) -> bool:
+        """Return True when no probability assessment invariant is violated."""
+        return self.validate(assessment) == []
 
 
-__all__ = ["CALCULATION_VERSION", "FLOAT_TOLERANCE", "ProbabilityAssessment", "ProbabilityCalculator", "ProbabilityValidator"]
+__all__ = [
+    "CALCULATION_VERSION",
+    "FLOAT_TOLERANCE",
+    "ProbabilityAssessment",
+    "ProbabilityCalculator",
+    "ProbabilityValidator",
+]
