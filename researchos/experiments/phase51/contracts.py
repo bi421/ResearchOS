@@ -158,6 +158,12 @@ class CalibrationResult:
     avg_confidence: float
     avg_accuracy: float
 
+    @property
+    def calibration_status(self) -> str | None:
+        """Return the evidence-derived calibration status, if present."""
+        status = self.reliability_table.get("calibration_status")
+        return status if isinstance(status, str) else None
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "num_bins": self.num_bins,
