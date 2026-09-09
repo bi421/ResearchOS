@@ -2,6 +2,11 @@
 
 Forward horizons are interpreted as calendar days and located by timestamp,
 not row offsets. This prevents a 1-day horizon from becoming one M1/H1 bar.
+
+Directional semantics are explicit: bullish events are rewarded for positive
+forward returns, while bearish events are rewarded for negative forward
+returns. Threshold hits, MFE and MAE therefore describe the event direction,
+not an implicit long-only position.
 """
 
 from __future__ import annotations
@@ -26,6 +31,16 @@ def _timeframe_minutes(timeframe: str) -> int:
     return aliases[normalized]
 
 
+def _directional_return(event: MarketEvent, raw_return: float) -> float:
+    """Return the forward move expressed in the event's direction."""
+    direction = event.direction.strip().lower()
+    if direction in {"bullish", "long", "up"}:
+        return raw_return
+    if direction in {"bearish", "short", "down"}:
+        return -raw_return
+    raise ValueError(f"Unsupported event direction for outcome calculation: {event.direction}")
+
+
 def compute_forward_outcomes(
     events: list[MarketEvent],
     price_df: pl.DataFrame,
@@ -37,11 +52,18 @@ def compute_forward_outcomes(
     Each realized outcome records the timestamp of the actual future
     observation used for its return. This timestamp is authoritative for
     label-window leakage audits; the requested horizon is only a target time.
+
+    ``hit_threshold_*`` is direction-aware: a bearish event is a hit when its
+    forward price move is sufficiently negative, just as a bullish event is a
+    hit when its move is sufficiently positive. MFE/MAE are also expressed
+    from the event direction's perspective.
     """
     if horizons is None:
         horizons = [1, 2, 3, 5, 10, 20]
     if any(h < 1 for h in horizons):
         raise ValueError("horizons must contain positive day counts")
+    if threshold < 0:
+        raise ValueError("threshold must be non-negative")
     if len(price_df) == 0:
         return events
     required = {"timestamp", "open", "high", "low", "close"}
@@ -91,17 +113,23 @@ def compute_forward_outcomes(
             future_low = lows[future_idx]
             if event_close == 0:
                 ret = 0.0
-                mfe_val = 0.0
-                mae_val = 0.0
+                directional_ret = 0.0
+                favorable_excursion = 0.0
+                adverse_excursion = 0.0
             else:
                 ret = (future_close - event_close) / event_close
-                mfe_val = (future_high - event_close) / event_close
-                mae_val = (future_low - event_close) / event_close
+                directional_ret = _directional_return(event, ret)
+                if event.direction.strip().lower() in {"bullish", "long", "up"}:
+                    favorable_excursion = (future_high - event_close) / event_close
+                    adverse_excursion = (future_low - event_close) / event_close
+                else:
+                    favorable_excursion = (event_close - future_low) / event_close
+                    adverse_excursion = (event_close - future_high) / event_close
             returns[f"return_{h}d"] = ret
             directions[f"direction_{h}d"] = "up" if ret > 0 else "down" if ret < 0 else "flat"
-            mfe[f"mfe_{h}d"] = mfe_val
-            mae[f"mae_{h}d"] = mae_val
-            hits[f"hit_{h}d"] = ret > threshold
+            mfe[f"mfe_{h}d"] = favorable_excursion
+            mae[f"mae_{h}d"] = adverse_excursion
+            hits[f"hit_{h}d"] = directional_ret > threshold
 
         outcome = EventOutcome(
             event_id=event.event_id, asset=event.asset, timeframe=event.timeframe,
@@ -117,7 +145,7 @@ def compute_forward_outcomes(
             mfe_20d=mfe.get("mfe_20d"), mae_20d=mae.get("mae_20d"),
             hit_threshold_1d=hits.get("hit_1d"), hit_threshold_5d=hits.get("hit_5d"),
             hit_threshold_20d=hits.get("hit_20d"),
-            outcome_calculation_method="forward_return_from_actual_future_observation_timestamp",
+            outcome_calculation_method="direction_aware_forward_return_from_actual_future_observation_timestamp",
             data_availability={
                 f"return_{h}d": "available" if returns.get(f"return_{h}d") is not None else "unavailable"
                 for h in horizons
