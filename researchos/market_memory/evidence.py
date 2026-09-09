@@ -43,13 +43,7 @@ def compute_evidence_provenance_digest(
     random_seed: int | None,
     result: dict[str, Any],
 ) -> str:
-    """Return a deterministic SHA-256 identity for an evidence computation.
-
-    The digest binds the finding identity to the dataset content/version and
-    to the exact research inputs/results represented by the record. Callers
-    should supply a content hash as ``dataset_version`` when certifying real
-    evidence; the function itself never invents a data identity.
-    """
+    """Return a deterministic SHA-256 identity for an evidence computation."""
     payload = {
         "dataset_id": dataset_id,
         "dataset_version": dataset_version,
@@ -86,20 +80,25 @@ def create_evidence_record(
     status: str = EvidenceStatus.EXPLORATORY.value,
     *,
     dataset_identity: DatasetIdentity | None = None,
+    dataset_content_hash: str | None = None,
+    dataset_hash: str | None = None,
 ) -> EvidenceRecord:
-    """Create an evidence record with a content-bound provenance identity.
+    """Create an evidence record with an optional strict dataset binding.
 
-    When ``dataset_identity`` is supplied, all canonical dataset identity
-    fields are checked against the record and persisted in the provenance
-    envelope. This provides a strict bridge from the validated-data boundary
-    without breaking legacy exploratory callers that only provide
-    ``dataset_version``.
+    Legacy callers may continue to provide ``dataset_version`` only. New
+    validated-data callers should provide ``dataset_identity`` together with
+    the two explicit hashes; the identity is then checked before evidence is
+    emitted and all canonical fields are persisted in the provenance envelope.
     """
     if dataset_identity is not None:
+        if dataset_content_hash is None or dataset_hash is None:
+            raise ValueError(
+                "dataset_content_hash and dataset_hash are required when dataset_identity is supplied"
+            )
         dataset_identity.assert_matches(
             dataset_id=dataset_id,
-            dataset_content_hash=dataset_identity.dataset_content_hash,
-            dataset_hash=dataset_identity.dataset_hash,
+            dataset_content_hash=dataset_content_hash,
+            dataset_hash=dataset_hash,
         )
 
     provenance_digest = compute_evidence_provenance_digest(
@@ -118,7 +117,7 @@ def create_evidence_record(
     )
     finding_id = f"EVIDENCE|{dataset_id}|{finding_name}|{condition_definition}|{time_range[0]}|{provenance_digest[:16]}"
     record_uncertainty = dict(uncertainty or {})
-    provenance = {
+    provenance: dict[str, Any] = {
         "algorithm": "sha256",
         "evidence_computation_digest": provenance_digest,
         "dataset_version_bound": dataset_version,
