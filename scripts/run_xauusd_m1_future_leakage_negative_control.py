@@ -1,19 +1,17 @@
 """Deliberately inject future validation data into training metadata.
 
-This control is intentionally invalid: it must be rejected by the independent
-source-to-result auditor. It is a structural negative control, not evidence.
+This control is intentionally invalid: the independent source-to-result
+auditor must reject the emitted result. It is not evidence.
 """
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 
 
 def run(result_path: Path, output_path: Path) -> dict:
-    raw = result_path.read_bytes()
-    result = json.loads(raw.decode("utf-8"))
+    result = json.loads(result_path.read_text(encoding="utf-8"))
     folds = result.get("folds") or []
     if not folds:
         raise ValueError("result contains no folds")
@@ -34,21 +32,20 @@ def run(result_path: Path, output_path: Path) -> dict:
         raise ValueError("selected validation event is already in training set")
     training_ids.append(future_event_id)
 
-    payload = {
+    corrupted["negative_control"] = {
         "stage": "XAUUSD_M1_FUTURE_LEAKAGE_NEGATIVE_CONTROL",
         "scientific_status": "NEGATIVE_CONTROL_ONLY_EXPECT_AUDIT_FAIL",
-        "source_result_sha256": hashlib.sha256(raw).hexdigest(),
+        "violation": "validation_event_injected_into_training_membership",
         "injected_fold": 1,
         "injected_future_event_id": future_event_id,
-        "control": {
-            "violation": "validation_event_injected_into_training_membership",
-            "expected_audit_status": "FAIL",
-        },
-        "corrupted_result": corrupted,
+        "expected_audit_status": "FAIL",
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return payload
+    output_path.write_text(
+        json.dumps(corrupted, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return corrupted
 
 
 def main() -> int:
@@ -56,8 +53,7 @@ def main() -> int:
     parser.add_argument("result", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    output = run(args.result, args.output)
-    print(json.dumps(output, ensure_ascii=False, indent=2))
+    run(args.result, args.output)
     return 0
 
 
