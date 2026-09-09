@@ -110,7 +110,7 @@ class ProbabilityCalibrator:
             expected_calibration_error=round(ece, 4)
         )
 
-    def generate_report(self, report: CalibrationReport) -> str:
+    def generate_report(self, report: CalibrationReport, registry: EvidenceRegistry) -> str:
         """Generate institutional-grade calibration report."""
         lines = [
             "=" * 80,
@@ -127,7 +127,7 @@ class ProbabilityCalibrator:
         
         for eid, cal_prob in sorted(report.calibrated_map.items()):
             # Find original evidence to show comparison
-            ev = next((e for e in self.registry.evidence if e.id == eid), None) # type: ignore
+            ev = next((e for e in registry.evidence if e.id == eid), None) # type: ignore
             if ev:
                 lines.append(f"  Evidence: {eid[:8]}... | Heuristic: {ev.confidence:.4f} -> Calibrated: {cal_prob:.4f} | Direction: {ev.direction}")
         
