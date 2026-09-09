@@ -21,16 +21,11 @@ def _assessment() -> ProbabilityAssessment:
 def test_pipeline_produces_human_review_report() -> None:
     report = run_decision_pipeline(
         DecisionPipelineInput(
-            assessment=_assessment(),
-            asset="XAUUSD",
-            direction="bullish",
-            account_equity=10_000,
+            assessment=_assessment(), asset="XAUUSD", direction="bullish", account_equity=10_000,
             trade_statistics=TradeStatistics(average_win=150, average_loss=100, sample_size=100),
-            research_valid=True,
-            risk_per_unit=20,
+            research_valid=True, risk_per_unit=20,
         )
     )
-
     assert report.schema_version == "pretrade.v1"
     assert report.status == "READY_FOR_HUMAN_REVIEW"
     assert report.probability == 0.60
@@ -42,16 +37,11 @@ def test_pipeline_produces_human_review_report() -> None:
 def test_pipeline_blocks_invalid_research() -> None:
     report = run_decision_pipeline(
         DecisionPipelineInput(
-            assessment=_assessment(),
-            asset="XAUUSD",
-            direction="bullish",
-            account_equity=10_000,
+            assessment=_assessment(), asset="XAUUSD", direction="bullish", account_equity=10_000,
             trade_statistics=TradeStatistics(average_win=150, average_loss=100),
-            research_valid=False,
-            research_limitations=("validation pending",),
+            research_valid=False, research_limitations=("validation pending",),
         )
     )
-
     assert report.status == "BLOCKED_RESEARCH_VALIDATION"
     assert report.risk_valid is True
     assert report.limitations == ("validation pending",)
@@ -61,31 +51,37 @@ def test_pipeline_accepts_serialized_probability_boundary() -> None:
     data = _assessment().to_dict()
     report = run_decision_pipeline(
         DecisionPipelineInput(
-            assessment=data,
-            asset="XAUUSD",
-            direction="bearish",
-            account_equity=10_000,
-            trade_statistics=TradeStatistics(average_win=100, average_loss=100),
-            research_valid=True,
+            assessment=data, asset="XAUUSD", direction="bearish", account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=100, average_loss=100), research_valid=True,
         )
     )
-
     assert report.direction == "bearish"
     assert report.probability == 0.25
 
 
 def test_pipeline_propagates_evidence_backed_calibration_status() -> None:
+    assessment = _assessment()
+    assessment.probability_calibration_status = "Well-Calibrated"
     report = run_decision_pipeline(
         DecisionPipelineInput(
-            assessment=_assessment(),
-            asset="XAUUSD",
-            direction="bullish",
-            account_equity=10_000,
+            assessment=assessment, asset="XAUUSD", direction="bullish", account_equity=10_000,
             trade_statistics=TradeStatistics(average_win=150, average_loss=100, sample_size=100),
             research_valid=True,
-            probability_calibration_status="Well-Calibrated",
         )
     )
-
     assert report.risk_valid is True
+    assert report.probability == 0.60
+
+
+def test_probability_calibration_status_round_trips_through_serialization() -> None:
+    assessment = _assessment()
+    assessment.probability_calibration_status = "Poorly Calibrated"
+    restored = ProbabilityAssessment.from_dict(assessment.to_dict())
+    assert restored.probability_calibration_status == "Poorly Calibrated"
+    report = run_decision_pipeline(
+        DecisionPipelineInput(
+            assessment=restored, asset="XAUUSD", direction="bullish", account_equity=10_000,
+            trade_statistics=TradeStatistics(average_win=150, average_loss=100), research_valid=True,
+        )
+    )
     assert report.probability == 0.60
