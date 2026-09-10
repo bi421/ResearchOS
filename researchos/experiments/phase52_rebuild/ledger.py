@@ -18,7 +18,10 @@ EXPECTED_MACRO = ("DXY", "US10Y", "VIX")
 
 @dataclass(frozen=True)
 class LedgerConfig:
-    feature_warmup: int = 20
+    # Current ResearchOS FeatureBuilder has its longest price lookback at 60
+    # observations (volatility regime). Macro z-score needs 20. The ledger
+    # therefore uses the actual feature contract, not an arbitrary warm-up.
+    feature_warmup: int = 60
     label_horizon: int = 5
 
 
@@ -34,6 +37,7 @@ class SourceAudit:
     first_timestamp: str | None
     last_timestamp: str | None
     invalid_rows: int
+    unsorted_timestamps: bool
 
 
 @dataclass(frozen=True)
@@ -85,6 +89,17 @@ def _utc_iso(value: str) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _audit(name: str, path: Path, rows_read: int, rows_valid: int, ts: list[str], invalid: int) -> SourceAudit:
+    unique = set(ts)
+    return SourceAudit(
+        name=name, path=str(path), sha256=_sha256(path), rows_read=rows_read,
+        rows_valid=rows_valid, unique_timestamps=len(unique),
+        duplicate_timestamps=rows_valid - len(unique),
+        first_timestamp=min(ts) if ts else None, last_timestamp=max(ts) if ts else None,
+        invalid_rows=invalid, unsorted_timestamps=ts != sorted(ts),
+    )
+
+
 def _read_xau(path: Path) -> tuple[list[str], SourceAudit]:
     timestamps: list[str] = []
     rows_read = rows_valid = invalid = 0
@@ -129,17 +144,6 @@ def _read_macro(path: Path, name: str) -> tuple[list[str], SourceAudit]:
     return timestamps, _audit(name, path, rows_read, rows_valid, timestamps, invalid)
 
 
-def _audit(name: str, path: Path, rows_read: int, rows_valid: int, ts: list[str], invalid: int) -> SourceAudit:
-    unique = set(ts)
-    return SourceAudit(
-        name=name, path=str(path), sha256=_sha256(path), rows_read=rows_read,
-        rows_valid=rows_valid, unique_timestamps=len(unique),
-        duplicate_timestamps=rows_valid - len(unique),
-        first_timestamp=min(ts) if ts else None, last_timestamp=max(ts) if ts else None,
-        invalid_rows=invalid,
-    )
-
-
 def _intersection(named: Iterable[tuple[str, list[str]]]) -> list[str]:
     sets = [set(ts) for _, ts in named]
     if not sets:
@@ -153,6 +157,8 @@ def _hash_timestamps(ts: list[str]) -> str:
 
 def build_data_ledger(xau_path: str | Path, dxy_path: str | Path, us10y_path: str | Path, vix_path: str | Path, config: LedgerConfig | None = None) -> Phase52DataLedger:
     cfg = config or LedgerConfig()
+    if cfg.feature_warmup < 0 or cfg.label_horizon < 0:
+        raise ValueError("feature_warmup and label_horizon must be >= 0")
     paths = [Path(xau_path), Path(dxy_path), Path(us10y_path), Path(vix_path)]
     if not all(p.is_file() for p in paths):
         missing = [str(p) for p in paths if not p.is_file()]
@@ -164,9 +170,8 @@ def build_data_ledger(xau_path: str | Path, dxy_path: str | Path, us10y_path: st
     vix, av = _read_macro(paths[3], "VIX")
 
     common = _intersection((("XAUUSD", xau), ("DXY", dxy), ("US10Y", us10y), ("VIX", vix)))
+    xau_unique = set(xau)
     common_set = set(common)
-    # Feature warm-up is accounted for on the common calendar only. We do not
-    # silently inspect or drop rows based on model feature implementation.
     after_feature = max(0, len(common) - cfg.feature_warmup)
     final = max(0, after_feature - cfg.label_horizon)
     usable = common[cfg.feature_warmup : len(common) - cfg.label_horizon] if final else []
@@ -177,12 +182,18 @@ def build_data_ledger(xau_path: str | Path, dxy_path: str | Path, us10y_path: st
             errors.append(f"{audit.name}: duplicate timestamps={audit.duplicate_timestamps}")
         if audit.invalid_rows:
             errors.append(f"{audit.name}: invalid rows={audit.invalid_rows}")
-    if len(common) + (len(set(xau)) - len(common_set)) != len(set(xau)):
-        errors.append("XAU/common accounting identity failed")
+        if audit.unsorted_timestamps:
+            errors.append(f"{audit.name}: timestamps are not sorted")
+    # XAU source rows may contain duplicate timestamps; accounting is done on
+    # valid source rows, while the common calendar is a unique timestamp set.
+    if len(xau) - len(common) != len(xau) - len(common_set):
+        errors.append("XAU/common duplicate-aware accounting failed")
     if final != len(usable):
         errors.append("final usable row accounting failed")
     if common and common != sorted(common):
         errors.append("common timestamps are not sorted")
+    if not common_set.issubset(xau_unique):
+        errors.append("common timestamp exists outside XAU source")
 
     return Phase52DataLedger(
         sources=(ax, ad, au, av),
