@@ -17,12 +17,10 @@ OUT = ROOT / "reports/phase52_rebuild/context_continuity_audit.json"
 
 def _utc_day(value: str) -> str:
     n = int(value.strip())
-    dt = datetime.fromtimestamp(n / 1000, tz=timezone.utc)
-    return dt.date().isoformat()
+    return datetime.fromtimestamp(n / 1000, tz=timezone.utc).date().isoformat()
 
 
 def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
-    """Aggregate Dukascopy XAUUSD M1 using the same OHLC daily rule as research data."""
     groups: dict[str, list[dict[str, float | str]]] = {}
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
@@ -34,8 +32,7 @@ def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             ts = str(row["timestamp"]).strip()
-            day = _utc_day(ts)
-            groups.setdefault(day, []).append(
+            groups.setdefault(_utc_day(ts), []).append(
                 {
                     "timestamp": ts,
                     "open": float(row["open"]),
@@ -45,7 +42,6 @@ def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
                     "volume": float(row["volume"]) if has_volume and row.get("volume") not in (None, "") else 0.0,
                 }
             )
-
     output: dict[str, dict[str, float]] = {}
     for day in sorted(groups):
         rows = sorted(groups[day], key=lambda x: str(x["timestamp"]))
@@ -60,7 +56,6 @@ def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
 
 
 def _load_dukascopy_daily(path: Path) -> dict[str, dict[str, float]]:
-    """Load one-row-per-day Dukascopy OHLC data; volume is optional."""
     out: dict[str, dict[str, float]] = {}
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
@@ -85,8 +80,22 @@ def _load_dukascopy_daily(path: Path) -> dict[str, dict[str, float]]:
 
 
 def _rel_diff(a: float, b: float) -> float:
-    scale = max(abs(a), abs(b), 1e-12)
-    return abs(a - b) / scale
+    return abs(a - b) / max(abs(a), abs(b), 1e-12)
+
+
+def _diff_summary(days: list[str], left: dict[str, float], right: dict[str, float]) -> dict[str, object]:
+    diffs = [_rel_diff(left[d], right[d]) for d in days]
+    return {
+        "days": len(days),
+        "first": days[0] if days else None,
+        "last": days[-1] if days else None,
+        "max_close_relative_difference": max(diffs) if diffs else None,
+        "mean_close_relative_difference": (sum(diffs) / len(diffs)) if diffs else None,
+        "close_relative_differences": [
+            {"day": d, "relative_difference": diff}
+            for d, diff in zip(days, diffs)
+        ],
+    }
 
 
 def main() -> int:
@@ -99,27 +108,22 @@ def main() -> int:
     context_dxy = _load_dukascopy_daily(CONTEXT_DXY)
     research_dxy = load_dxy_daily(RESEARCH_DXY)
 
-    xau_overlap = sorted(set(context_xau) & set(research_xau))
-    dxy_overlap = sorted(set(context_dxy) & set(research_dxy))
-
-    xau_close_diffs = [_rel_diff(context_xau[d]["close"], research_xau[d].close) for d in xau_overlap]
-    dxy_close_diffs = [_rel_diff(context_dxy[d]["close"], research_dxy[d]) for d in dxy_overlap]
+    xau_days = sorted(set(context_xau) & set(research_xau))
+    dxy_days = sorted(set(context_dxy) & set(research_dxy))
+    xau_left = {d: context_xau[d]["close"] for d in xau_days}
+    xau_right = {d: research_xau[d].close for d in xau_days}
+    dxy_left = {d: context_dxy[d]["close"] for d in dxy_days}
+    dxy_right = {d: research_dxy[d] for d in dxy_days}
 
     payload = {
         "context_xau_rows": len(context_xau),
         "context_dxy_rows": len(context_dxy),
         "research_xau_rows": len(research_xau),
         "research_dxy_rows": len(research_dxy),
-        "xau_overlap_days": len(xau_overlap),
-        "xau_overlap_first": xau_overlap[0] if xau_overlap else None,
-        "xau_overlap_last": xau_overlap[-1] if xau_overlap else None,
-        "xau_max_close_relative_difference": max(xau_close_diffs) if xau_close_diffs else None,
-        "dxy_overlap_days": len(dxy_overlap),
-        "dxy_overlap_first": dxy_overlap[0] if dxy_overlap else None,
-        "dxy_overlap_last": dxy_overlap[-1] if dxy_overlap else None,
-        "dxy_max_close_relative_difference": max(dxy_close_diffs) if dxy_close_diffs else None,
+        "xau": _diff_summary(xau_days, xau_left, xau_right),
+        "dxy": _diff_summary(dxy_days, dxy_left, dxy_right),
         "status": "REVIEW_REQUIRED",
-        "acceptance_policy": "No automatic source equivalence claim; overlap statistics require scientific review before context is accepted.",
+        "acceptance_policy": "No automatic source equivalence claim. Source acceptance requires adequate multi-day overlap and scientific review of the full continuity statistics.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -129,12 +133,14 @@ def main() -> int:
     print("=" * 70)
     print(f"CONTEXT XAU DAYS             : {len(context_xau)}")
     print(f"CONTEXT DXY DAYS             : {len(context_dxy)}")
-    print(f"XAU OVERLAP DAYS             : {len(xau_overlap)}")
-    print(f"XAU OVERLAP FIRST/LAST       : {xau_overlap[0] if xau_overlap else None} / {xau_overlap[-1] if xau_overlap else None}")
-    print(f"XAU MAX CLOSE REL DIFF       : {max(xau_close_diffs) if xau_close_diffs else None}")
-    print(f"DXY OVERLAP DAYS              : {len(dxy_overlap)}")
-    print(f"DXY OVERLAP FIRST/LAST        : {dxy_overlap[0] if dxy_overlap else None} / {dxy_overlap[-1] if dxy_overlap else None}")
-    print(f"DXY MAX CLOSE REL DIFF        : {max(dxy_close_diffs) if dxy_close_diffs else None}")
+    print(f"XAU OVERLAP DAYS             : {len(xau_days)}")
+    print(f"XAU OVERLAP FIRST/LAST       : {xau_days[0] if xau_days else None} / {xau_days[-1] if xau_days else None}")
+    print(f"XAU MAX CLOSE REL DIFF       : {payload['xau']['max_close_relative_difference']}")
+    print(f"XAU MEAN CLOSE REL DIFF      : {payload['xau']['mean_close_relative_difference']}")
+    print(f"DXY OVERLAP DAYS              : {len(dxy_days)}")
+    print(f"DXY OVERLAP FIRST/LAST        : {dxy_days[0] if dxy_days else None} / {dxy_days[-1] if dxy_days else None}")
+    print(f"DXY MAX CLOSE REL DIFF        : {payload['dxy']['max_close_relative_difference']}")
+    print(f"DXY MEAN CLOSE REL DIFF       : {payload['dxy']['mean_close_relative_difference']}")
     print("STATUS                        : REVIEW_REQUIRED")
     print(f"OUTPUT                        : {OUT.relative_to(ROOT)}")
     print("=" * 70)
