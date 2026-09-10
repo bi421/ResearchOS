@@ -1,4 +1,4 @@
-"""Phase 5.2 rebuild: auditable data-ledger and daily dataset foundation."""
+"""Phase 5.2 rebuild: auditable data ledger, daily data, and features."""
 
 from .daily_dataset import (
     DailyMacroObservation,
@@ -9,6 +9,8 @@ from .daily_dataset import (
     load_dxy_daily,
     load_macro_daily,
 )
+from .feature_contract import Phase52FeatureContract
+from .feature_dataset import FeatureDataset, build_all_feature_datasets, build_feature_dataset
 from .ledger import (
     LedgerConfig,
     Phase52DataLedger,
@@ -30,4 +32,8 @@ __all__ = [
     "load_dxy_daily",
     "load_macro_daily",
     "build_daily_common_dataset",
+    "Phase52FeatureContract",
+    "FeatureDataset",
+    "build_feature_dataset",
+    "build_all_feature_datasets",
 ]
