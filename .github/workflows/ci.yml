@@ -10,9 +10,11 @@ on:
       - '**.md'
       - 'examples/**'
 
+# Keep main-branch CI runs alive. Rapid commits to main must not cancel
+# an already-running verification run before it can report its result.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   python-tests:
