@@ -1,16 +1,17 @@
-"""Audit feature convergence as pre-research context depth increases.
+"""Audit feature initialization sensitivity against a fixed long-context reference.
 
-This is a scientific initialization audit, not a model-performance test.  It
-compares the same research-period source days under multiple strictly
-pre-research context depths and records per-feature convergence.  It does not
-judge Dukascopy/MT5 source equivalence and does not make predictive claims.
+This is a scientific initialization audit, not a model-performance test. It compares
+identical research-period source days under multiple strictly pre-research context
+depths. The longest requested depth is treated as the reference so convergence can
+be assessed against a fixed target rather than by potentially misleading adjacent
+pair comparisons. It does not judge Dukascopy/MT5 source equivalence and does not
+make predictive claims.
 """
 from __future__ import annotations
 
 import argparse
 import csv
 import json
-import math
 from pathlib import Path
 
 from researchos.experiments.phase52_rebuild.context_dataset import load_context_daily_observations
@@ -76,8 +77,14 @@ def _compare(
             item["sum_absolute_difference"] += abs_diff
             item["sum_relative_difference"] += rel_diff
             if abs_diff > 1e-12:
-                top.append({"day": day, "feature": name, "left": a, "right": b,
-                            "absolute_difference": abs_diff, "relative_difference": rel_diff})
+                top.append({
+                    "day": day,
+                    "feature": name,
+                    "left": a,
+                    "right": b,
+                    "absolute_difference": abs_diff,
+                    "relative_difference": rel_diff,
+                })
     for item in by_feature.values():
         count = int(item["count"])
         item["mean_absolute_difference"] = float(item["sum_absolute_difference"]) / count
@@ -97,6 +104,22 @@ def _compare(
     }
 
 
+def _supports_monotone_improvement(
+    diagnostics: list[tuple[int, float, float]],
+) -> bool:
+    """Return True when reference-relative max and mean errors do not increase with depth."""
+    if len(diagnostics) < 2:
+        return False
+    previous_max = float("inf")
+    previous_mean = float("inf")
+    for _, max_diff, mean_diff in diagnostics:
+        if max_diff > previous_max + 1e-12 or mean_diff > previous_mean + 1e-12:
+            return False
+        previous_max = max_diff
+        previous_mean = mean_diff
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--context-xau", default=str(DEFAULT_CONTEXT_XAU))
@@ -105,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--vix", default=str(DEFAULT_VIX))
     p.add_argument("--research", default=str(DEFAULT_RESEARCH))
     p.add_argument("--output", default=str(DEFAULT_OUTPUT))
-    p.add_argument("--depths", default="60,70,83")
+    p.add_argument("--depths", default="60,70,83,120,180,240")
     args = p.parse_args(argv)
 
     research = _load_research(Path(args.research))
@@ -113,25 +136,36 @@ def main(argv: list[str] | None = None) -> int:
     pre = tuple(obs for obs in all_context if obs.day < research[0].day)
     contract = Phase52FeatureContract()
     depths = tuple(sorted({int(x.strip()) for x in args.depths.split(",") if x.strip()}))
+    if len(depths) < 2:
+        raise ValueError("at least two context depths are required")
     if any(d < contract.warmup for d in depths):
         raise ValueError(f"all context depths must be >= {contract.warmup}: {depths}")
     if max(depths) > len(pre):
-        raise ValueError(f"requested context depth {max(depths)} exceeds available pre-research rows {len(pre)}")
+        raise ValueError(
+            f"requested context depth {max(depths)} exceeds available pre-research rows {len(pre)}"
+        )
 
+    reference_depth = max(depths)
     payload: dict[str, object] = {
         "status": "PASS",
+        "scientific_convergence_status": "NOT_PROVEN",
         "research_rows": len(research),
         "research_start": research[0].day,
         "available_pre_research_context_rows": len(pre),
         "depths": list(depths),
+        "reference_depth": reference_depth,
         "source_equivalence_proven": False,
         "feature_sets": {},
         "interpretation": (
-            "This audit measures initialization sensitivity only. Smaller differences as context depth grows "
-            "support convergence of the feature initialization, but do not prove source equivalence, leakage safety, "
+            "Each shorter context depth is compared against the fixed longest-context reference. "
+            "A structural PASS means the audit executed and dataset invariants held. "
+            "Scientific convergence is supported only when reference-relative maximum and mean errors "
+            "do not increase as context depth grows; this does not prove source equivalence, leakage safety, "
             "or predictive value."
         ),
     }
+
+    all_scientifically_monotone = True
 
     for feature_set in FEATURE_SET_NAMES:
         datasets: dict[int, object] = {}
@@ -142,7 +176,13 @@ def main(argv: list[str] | None = None) -> int:
                 payload["status"] = "FAIL"
             datasets[depth] = dataset
 
-        fs: dict[str, object] = {"depths": {}}
+        reference = datasets[reference_depth]
+        ref_map = dict(zip(reference.source_days, reference.rows))
+        fs: dict[str, object] = {
+            "reference_depth": reference_depth,
+            "depths": {},
+            "reference_relative_convergence": {},
+        }
         for depth in depths:
             ds = datasets[depth]
             fs["depths"][str(depth)] = {
@@ -151,24 +191,41 @@ def main(argv: list[str] | None = None) -> int:
                 "last_source_day": ds.source_days[-1] if ds.source_days else None,
             }
 
-        pairwise: dict[str, object] = {}
-        for left_depth, right_depth in zip(depths, depths[1:]):
-            left = datasets[left_depth]
-            right = datasets[right_depth]
-            left_map = dict(zip(left.source_days, left.rows))
-            right_map = dict(zip(right.source_days, right.rows))
-            common_days = tuple(d for d in left.source_days if d in right_map)
-            pairwise[f"{left_depth}_vs_{right_depth}"] = {
+        diagnostics: list[tuple[int, float, float]] = []
+        for depth in depths:
+            ds = datasets[depth]
+            left_map = dict(zip(ds.source_days, ds.rows))
+            common_days = tuple(d for d in ds.source_days if d in ref_map)
+            compared = _compare(
+                tuple(left_map[d] for d in common_days),
+                tuple(ref_map[d] for d in common_days),
+                ds.feature_names,
+                common_days,
+            )
+            fs["reference_relative_convergence"][str(depth)] = {
                 "comparison_rows": len(common_days),
-                **_compare(
-                    tuple(left_map[d] for d in common_days),
-                    tuple(right_map[d] for d in common_days),
-                    left.feature_names,
-                    common_days,
-                ),
+                **compared,
             }
-        fs["pairwise_convergence"] = pairwise
+            by_feature = compared["by_feature"]
+            max_abs = max(
+                (float(v["max_absolute_difference"]) for v in by_feature.values()),
+                default=0.0,
+            )
+            mean_abs = (
+                sum(float(v["mean_absolute_difference"]) for v in by_feature.values())
+                / len(by_feature)
+                if by_feature else 0.0
+            )
+            diagnostics.append((depth, max_abs, mean_abs))
+
+        monotone = _supports_monotone_improvement(diagnostics)
+        fs["reference_convergence_monotone"] = monotone
+        if not monotone:
+            all_scientifically_monotone = False
         payload["feature_sets"][feature_set] = fs
+
+    if payload["status"] == "PASS" and all_scientifically_monotone:
+        payload["scientific_convergence_status"] = "SUPPORTED"
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -180,11 +237,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"RESEARCH ROWS        : {len(research)}")
     print(f"PRE-RESEARCH CONTEXT : {len(pre)}")
     print(f"DEPTHS               : {','.join(map(str, depths))}")
+    print(f"REFERENCE DEPTH      : {reference_depth}")
     for feature_set, result in payload["feature_sets"].items():
         print(f"{feature_set:20s}")
-        for pair, audit in result["pairwise_convergence"].items():
+        for depth in depths:
+            audit = result["reference_relative_convergence"][str(depth)]
             print(
-                f"  {pair:14s}: affected_days={audit['affected_days']} | "
+                f"  depth={depth:3d} vs ref : affected_days={audit['affected_days']} | "
                 f"differing={audit['differing_feature_values']}/{audit['total_feature_values']}"
             )
             if audit["top_differences"]:
@@ -194,7 +253,9 @@ def main(argv: list[str] | None = None) -> int:
                     f"abs_diff={top['absolute_difference']:.12g} / "
                     f"rel_diff={top['relative_difference']:.12g}"
                 )
-    print(f"STATUS               : {payload['status']}")
+        print(f"  MONOTONE           : {result['reference_convergence_monotone']}")
+    print(f"STRUCTURAL STATUS    : {payload['status']}")
+    print(f"SCIENTIFIC STATUS    : {payload['scientific_convergence_status']}")
     print(f"OUTPUT               : {output}")
     print("=" * 70)
     return 0 if payload["status"] == "PASS" else 1
