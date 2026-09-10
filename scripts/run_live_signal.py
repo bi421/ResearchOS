@@ -1,6 +1,6 @@
 """Research-only live-data diagnostic for XAUUSD.
 
-This script is intentionally non-trading.  It may inspect a public engineering
+This script is intentionally non-trading. It may inspect a public engineering
 proxy for a live-data sanity check, but it must not present an unvalidated
 rule-based score as a trading decision or use a gold-futures ticker as XAUUSD.
 Canonical historical evidence remains the MT5 XAUUSD dataset used by the
@@ -32,6 +32,7 @@ class LiveTradingSignal:
         """Fetch a live engineering proxy; never use GC=F futures data."""
         if self.symbol.strip().upper().replace("/", "") != "XAUUSD":
             raise ValueError("This diagnostic only supports XAUUSD")
+        assert_xauusd_identity(self.symbol, self.yf_symbol)
         ticker = yf.Ticker(self.yf_symbol)
         data = ticker.history(period=period, interval=interval, auto_adjust=False)
         if data.empty:
@@ -101,8 +102,9 @@ class LiveTradingSignal:
         df = self.data
         last = df.iloc[-1]
         prev = df.iloc[-2]
-        if pd.isna(last[["SMA_10", "SMA_30", "RSI", "MACD_Hist", "BB_low", "BB_high", "ATR"]]).any():
-            raise ValueError("Latest indicator row is incomplete")
+        indicator_names = ["SMA_10", "SMA_30", "RSI", "MACD_Hist", "BB_low", "BB_high", "ATR"]
+        if pd.isna(last[indicator_names]).any() or pd.isna(prev[indicator_names]).any():
+            raise ValueError("Latest indicator rows are incomplete")
 
         score = 0
         if last["SMA_10"] > last["SMA_30"] and prev["SMA_10"] <= prev["SMA_30"]:
