@@ -6,7 +6,6 @@ acceptance remains a separate gate and is never implied by successful parsing.
 from __future__ import annotations
 
 import csv
-import math
 from pathlib import Path
 
 from .daily_dataset import DailyObservation, _float, _load_fred_daily, _utc_iso
