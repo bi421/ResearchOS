@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from researchos.experiments.phase52_rebuild.daily_dataset import (
     build_daily_common_dataset,
     load_daily_xau_from_m1,
@@ -30,6 +32,37 @@ def test_m1_is_aggregated_deterministically_by_utc_day(tmp_path: Path) -> None:
     assert first.real_volume == 8.0
     assert first.spread == 2.0
     assert first.m1_rows == 2
+
+
+def test_m1_duplicate_timestamp_is_rejected(tmp_path: Path) -> None:
+    xau = tmp_path / "xau.csv"
+    _write(
+        xau,
+        "time,open,high,low,close,tick_volume,spread,real_volume\n"
+        "2021-01-04T00:01:00Z,10,12,9,11,2,1,3\n"
+        "2021-01-04T00:01:00Z,10,13,8,12,4,2,5\n",
+    )
+    with pytest.raises(ValueError, match="duplicate timestamp"):
+        load_daily_xau_from_m1(xau)
+
+
+def test_m1_non_finite_or_invalid_ohlc_is_rejected(tmp_path: Path) -> None:
+    xau = tmp_path / "xau.csv"
+    _write(
+        xau,
+        "time,open,high,low,close,tick_volume,spread,real_volume\n"
+        "2021-01-04T00:01:00Z,10,nan,9,11,2,1,3\n",
+    )
+    with pytest.raises(ValueError, match="non-finite numeric field"):
+        load_daily_xau_from_m1(xau)
+
+    _write(
+        xau,
+        "time,open,high,low,close,tick_volume,spread,real_volume\n"
+        "2021-01-04T00:01:00Z,10,10,11,11,2,1,3\n",
+    )
+    with pytest.raises(ValueError, match="invalid OHLC relationship"):
+        load_daily_xau_from_m1(xau)
 
 
 def test_common_daily_dataset_never_fills_missing_macro_days(tmp_path: Path) -> None:
