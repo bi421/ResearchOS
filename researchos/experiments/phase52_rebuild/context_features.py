@@ -1,6 +1,7 @@
 """Leakage-safe feature construction with pre-research context."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -94,10 +95,12 @@ def build_context_feature_dataset(
 
     for i in range(first_research_index, len(combined)):
         row = tuple(price_features.data[i]) + tuple(macro_rows[i])
+        if len(row) != len(combined_names):
+            raise AssertionError("feature row shape mismatch")
         label = labels[i]
         if label is None:
             continue
-        if any(v is None or (isinstance(v, float) and v != v) for v in row):
+        if any(v is None or (isinstance(v, float) and not math.isfinite(v)) for v in row):
             continue
         rows.append(tuple(float(v) for v in row))
         aligned_labels.append(int(label))
