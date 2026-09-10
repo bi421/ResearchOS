@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from researchos.data.engine.loader import CsvLoader
+from researchos.data_engine.loader import CsvLoader
 from researchos.experiments.phase52 import FEATURE_SET_NAMES, Phase52Config, run_phase52, run_phase52_comparison
 from researchos.experiments.phase52.alignment import validate_exact_timestamp_alignment
 
