@@ -1,14 +1,4 @@
-"""Run the complete Phase 5.2 five-way comparison and emit audit evidence.
-
-This runner is intentionally a thin orchestration layer over the existing
-Phase 5.2 experiment. It does not change the frozen Phase 5.1 primitives.
-It computes the explicit common observation sample, records input hashes and
-sample membership, runs all five feature sets with identical configuration,
-and writes machine-readable JSON plus a concise Markdown verdict report.
-
-The real-data CSVs must be supplied locally. No data is fabricated, repaired,
-or downloaded by this script.
-"""
+"""Run the complete Phase 5.2 five-way comparison and emit audit evidence."""
 from __future__ import annotations
 
 import argparse
@@ -128,11 +118,8 @@ def _write_report(path: Path, payload: dict) -> None:
         "",
         "## Scientific boundary",
         "",
-        "This artifact is evidence for the configured ResearchOS experiment and its explicit data sources. "
-        "It is not evidence of live trading profitability or an investable edge.",
-        "The DXY input is the Dukascopy `dollaridxusd` series; equivalence to the official ICE DXY benchmark "
-        "has not been independently established. Any conclusion must therefore be stated as a result conditioned "
-        "on this secondary DXY source, not as a claim about ICE DXY.",
+        "This artifact is evidence for the configured ResearchOS experiment and its explicit data sources. It is not evidence of live trading profitability or an investable edge.",
+        "The DXY input is the Dukascopy `dollaridxusd` series; equivalence to the official ICE DXY benchmark has not been independently established. Any conclusion must therefore be stated as a result conditioned on this secondary DXY source, not as a claim about ICE DXY.",
         "",
         f"Reproducibility hashes: `{json.dumps(payload['reproducibility_hashes'], sort_keys=True)}`",
     ]
@@ -174,64 +161,28 @@ def main(argv: list[str] | None = None) -> int:
         macro[symbol], macro_timestamps[symbol] = values, factor_timestamps
 
     original_counts = {"XAUUSD": len(timestamps), **{symbol: len(macro_timestamps[symbol]) for symbol in macro_timestamps}}
-    close, high, low, volume, common_ts, macro, macro_timestamps = _build_common_observation_sample(
-        close, high, low, volume, timestamps, macro, macro_timestamps, ("DXY", "US10Y", "VIX")
-    )
+    close, high, low, volume, common_ts, macro, macro_timestamps = _build_common_observation_sample(close, high, low, volume, timestamps, macro, macro_timestamps, ("DXY", "US10Y", "VIX"))
     if len(common_ts) < args.train + args.valid:
         print(f"BLOCKED: common sample has {len(common_ts)} rows; requires at least {args.train + args.valid}")
         return 2
 
-    cfg = Phase52Config(
-        symbol=args.symbol,
-        timeframe=args.timeframe,
-        horizon=args.horizon,
-        threshold=args.threshold,
-        train_size=args.train,
-        validation_size=args.valid,
-        step_size=args.step,
-        n_neighbors=args.neighbors,
-        spread_spec=args.spread,
-        slippage_spec=args.slippage,
-        commission_spec=args.commission,
-    )
-    results = run_phase52_comparison(
-        close, high, low, volume, macro, config=cfg, timestamps=common_ts, macro_timestamps=macro_timestamps
-    )
+    cfg = Phase52Config(symbol=args.symbol, timeframe=args.timeframe, horizon=args.horizon, threshold=args.threshold, train_size=args.train, validation_size=args.valid, step_size=args.step, n_neighbors=args.neighbors, spread_spec=args.spread, slippage_spec=args.slippage, commission_spec=args.commission)
+    results = run_phase52_comparison(close, high, low, volume, macro, config=cfg, timestamps=common_ts, macro_timestamps=macro_timestamps)
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     result_dict = {name: result.to_dict() for name, result in results.items()}
     payload = {
-        "schema": "researchos/phase52/evidence/v1",
-        "repository_commit": args.repository_commit,
-        "configuration": {
-            "symbol": args.symbol,
-            "timeframe": args.timeframe,
-            "horizon": args.horizon,
-            "threshold": args.threshold,
-            "train_size": args.train,
-            "validation_size": args.valid,
-            "step_size": args.step,
-            "n_neighbors": args.neighbors,
-            "spread": args.spread,
-            "slippage": args.slippage,
-            "commission": args.commission,
-        },
+        "schema": "researchos/phase52/evidence/v1", "repository_commit": args.repository_commit,
+        "configuration": {"symbol": args.symbol, "timeframe": args.timeframe, "horizon": args.horizon, "threshold": args.threshold, "train_size": args.train, "validation_size": args.valid, "step_size": args.step, "n_neighbors": args.neighbors, "spread": args.spread, "slippage": args.slippage, "commission": args.commission},
         "sources": {
             "XAUUSD": {"path": str(paths["XAUUSD"]), "sha256": _sha256(paths["XAUUSD"]), "rows": original_counts["XAUUSD"]},
             "DXY": {"path": str(paths["DXY"]), "sha256": _sha256(paths["DXY"]), "rows": original_counts["DXY"], "identity": "Dukascopy dollaridxusd; secondary DXY series"},
             "US10Y": {"path": str(paths["US10Y"]), "sha256": _sha256(paths["US10Y"]), "rows": original_counts["US10Y"], "identity": "FRED DGS10"},
             "VIX": {"path": str(paths["VIX"]), "sha256": _sha256(paths["VIX"]), "rows": original_counts["VIX"], "identity": "FRED VIXCLS"},
         },
-        "common_sample": {
-            "count": len(common_ts),
-            "first": _date_key(common_ts[0]),
-            "last": _date_key(common_ts[-1]),
-            "dropped_from_xauusd": original_counts["XAUUSD"] - len(common_ts),
-            "timestamps_sha256": hashlib.sha256(json.dumps([str(x) for x in common_ts], separators=(",", ":")).encode()).hexdigest(),
-        },
-        "results": result_dict,
-        "reproducibility_hashes": {name: result.reproducibility_hash for name, result in results.items()},
+        "common_sample": {"count": len(common_ts), "first": _date_key(common_ts[0]), "last": _date_key(common_ts[-1]), "dropped_from_xauusd": original_counts["XAUUSD"] - len(common_ts), "timestamps_sha256": hashlib.sha256(json.dumps([str(x) for x in common_ts], separators=(",", ":")).encode()).hexdigest()},
+        "results": result_dict, "reproducibility_hashes": {name: result.reproducibility_hash for name, result in results.items()},
     }
     json_path = out_dir / "phase52_evidence.json"
     md_path = out_dir / "phase52_evidence.md"
@@ -244,7 +195,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"FIRST / LAST  : {_date_key(common_ts[0])} / {_date_key(common_ts[-1])}")
     for name in FEATURE_SET_NAMES:
         result = results[name]
-        print(f"{name:18} | {result.outcome:10} | folds={result.num_folds:3d} | accuracy={result.model.accuracy:.6f} | brier={result.model.brier_score:.6f} | p={result.significance.p_value:.6g}")
+        model = result.model.to_dict() if result.model else None
+        sig = result.significance.to_dict() if result.significance else None
+        print(f"{name:18} | {result.outcome:10} | folds={result.num_folds:3d} | accuracy={_fmt_float(model.get('accuracy') if model else None)} | brier={_fmt_float(model.get('brier_score') if model else None)} | p={_fmt_p(sig.get('p_value') if sig else None)}")
     print(f"JSON            : {json_path}")
     print(f"REPORT          : {md_path}")
     print("DXY BOUNDARY    : Dukascopy secondary series; ICE equivalence NOT PROVEN")
