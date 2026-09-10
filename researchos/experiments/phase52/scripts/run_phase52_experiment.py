@@ -28,14 +28,13 @@ def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
     return close, high, low, volume, timestamps
 
 
-def _load_macro_series_exact(
+def _load_macro_series(
     csv_path: str,
     fmt: str,
     symbol: str,
     timeframe: str,
-    target_timestamps: list[object],
 ):
-    """Load a macro series only after exact timestamp validation."""
+    """Load a macro series without repairing or fabricating observations."""
     loader = CsvLoader()
     if fmt == "mt5":
         candles = loader.load_mt5_candles(csv_path, symbol=symbol, timeframe=timeframe)
@@ -43,9 +42,90 @@ def _load_macro_series_exact(
         candles = loader.load_tradingview_candles(csv_path, symbol=symbol, timeframe=timeframe)
     else:
         candles = loader.load_candles_auto(csv_path, symbol=symbol, timeframe=timeframe)
-    factor_timestamps = [c.timestamp for c in candles]
-    validate_exact_timestamp_alignment(target_timestamps, factor_timestamps, symbol)
-    return [c.close for c in candles], factor_timestamps
+    return [c.close for c in candles], [c.timestamp for c in candles]
+
+
+def _build_common_observation_sample(
+    close: list[float],
+    high: list[float],
+    low: list[float],
+    volume: list[float],
+    timestamps: list[object],
+    macro: dict[str, list[float | None]],
+    macro_timestamps: dict[str, list[object]],
+    required_symbols: tuple[str, ...],
+):
+    """Build the explicit common-observation sample across all required series.
+
+    Market calendars are allowed to differ. Only observations that actually
+    exist in XAUUSD and every required macro source are retained. No
+    interpolation, forward-fill, resampling, or synthetic holiday value is
+    introduced. The resulting arrays share one exact timestamp sequence, so
+    ``run_phase52`` still enforces its strict core timestamp contract.
+    """
+    if len({*timestamps}) != len(timestamps):
+        raise ValueError("XAUUSD: duplicate timestamps")
+
+    macro_maps: dict[str, dict[object, int]] = {}
+    for symbol in required_symbols:
+        values = macro.get(symbol)
+        factor_ts = macro_timestamps.get(symbol)
+        if values is None or factor_ts is None:
+            raise ValueError(f"{symbol}: missing macro series")
+        if len(values) != len(factor_ts):
+            raise ValueError(f"{symbol}: value/timestamp length mismatch")
+        if len({*factor_ts}) != len(factor_ts):
+            raise ValueError(f"{symbol}: duplicate timestamps")
+        macro_maps[symbol] = {ts: i for i, ts in enumerate(factor_ts)}
+
+    selected_price_indices: list[int] = []
+    selected_macro_indices: dict[str, list[int]] = {s: [] for s in required_symbols}
+    common_timestamps: list[object] = []
+
+    for i, ts in enumerate(timestamps):
+        indices = []
+        for symbol in required_symbols:
+            index = macro_maps[symbol].get(ts)
+            if index is None:
+                break
+            indices.append(index)
+        else:
+            selected_price_indices.append(i)
+            common_timestamps.append(ts)
+            for symbol, index in zip(required_symbols, indices):
+                selected_macro_indices[symbol].append(index)
+
+    if not common_timestamps:
+        raise ValueError("NO COMMON OBSERVATIONS ACROSS XAUUSD AND REQUIRED MACRO SERIES")
+
+    filtered_close = [close[i] for i in selected_price_indices]
+    filtered_high = [high[i] for i in selected_price_indices]
+    filtered_low = [low[i] for i in selected_price_indices]
+    filtered_volume = [volume[i] for i in selected_price_indices]
+    filtered_macro = {
+        symbol: [macro[symbol][i] for i in selected_macro_indices[symbol]]
+        for symbol in required_symbols
+    }
+    filtered_macro_timestamps = {
+        symbol: common_timestamps[:] for symbol in required_symbols
+    }
+
+    for symbol in required_symbols:
+        validate_exact_timestamp_alignment(
+            common_timestamps,
+            filtered_macro_timestamps[symbol],
+            symbol,
+        )
+
+    return (
+        filtered_close,
+        filtered_high,
+        filtered_low,
+        filtered_volume,
+        common_timestamps,
+        filtered_macro,
+        filtered_macro_timestamps,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -93,13 +173,32 @@ def main(argv: list[str] | None = None) -> int:
         macro = {}
         macro_timestamps = {}
         for symbol, path in (("DXY", args.dxy), ("US10Y", args.us10y), ("VIX", args.vix)):
-            values, factor_timestamps = _load_macro_series_exact(
-                path, args.format, symbol, args.timeframe, timestamps
+            values, factor_timestamps = _load_macro_series(
+                path, args.format, symbol, args.timeframe
             )
             macro[symbol] = values
             macro_timestamps[symbol] = factor_timestamps
+
+        (
+            close,
+            high,
+            low,
+            volume,
+            timestamps,
+            macro,
+            macro_timestamps,
+        ) = _build_common_observation_sample(
+            close,
+            high,
+            low,
+            volume,
+            timestamps,
+            macro,
+            macro_timestamps,
+            ("DXY", "US10Y", "VIX"),
+        )
     except Exception as e:  # noqa: BLE001
-        print(f"BLOCKED — exact data alignment failed: {e}")
+        print(f"BLOCKED — common observation sample construction failed: {e}")
         return 2
 
     cfg = Phase52Config(

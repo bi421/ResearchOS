@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from researchos.experiments.phase52.alignment import validate_exact_timestamp_alignment
+from researchos.experiments.phase52.scripts.run_phase52_experiment import _build_common_observation_sample
 
 
 def ts(*values: str) -> list[pd.Timestamp]:
@@ -48,4 +49,59 @@ def test_reordered_timestamp_blocks() -> None:
             ts("2025-01-02 00:00", "2025-01-03 00:00"),
             ts("2025-01-03 00:00", "2025-01-02 00:00"),
             "DXY",
+        )
+
+
+def test_common_observation_sample_excludes_calendar_gaps_without_repair() -> None:
+    timestamps = ts("2025-01-02 00:00", "2025-01-03 00:00", "2025-01-06 00:00")
+    macro_ts = {
+        "DXY": ts("2025-01-02 00:00", "2025-01-03 00:00", "2025-01-06 00:00"),
+        "US10Y": ts("2025-01-02 00:00", "2025-01-06 00:00"),
+        "VIX": ts("2025-01-02 00:00", "2025-01-03 00:00", "2025-01-06 00:00"),
+    }
+    macro = {
+        "DXY": [100.0, 101.0, 102.0],
+        "US10Y": [4.0, 4.2],
+        "VIX": [15.0, 16.0, 17.0],
+    }
+
+    result = _build_common_observation_sample(
+        [1900.0, 1910.0, 1920.0],
+        [1910.0, 1920.0, 1930.0],
+        [1890.0, 1900.0, 1910.0],
+        [100.0, 110.0, 120.0],
+        timestamps,
+        macro,
+        macro_ts,
+        ("DXY", "US10Y", "VIX"),
+    )
+
+    close, _, _, _, common_ts, filtered_macro, filtered_macro_ts = result
+    assert close == [1900.0, 1920.0]
+    assert common_ts == timestamps[::2]
+    assert filtered_macro["DXY"] == [100.0, 102.0]
+    assert filtered_macro["US10Y"] == [4.0, 4.2]
+    assert filtered_macro["VIX"] == [15.0, 17.0]
+    assert filtered_macro_ts["US10Y"] == common_ts
+
+
+def test_common_observation_sample_rejects_duplicate_macro_timestamps() -> None:
+    timestamps = ts("2025-01-02 00:00", "2025-01-03 00:00")
+    macro_ts = {
+        "DXY": timestamps,
+        "US10Y": ts("2025-01-02 00:00", "2025-01-02 00:00"),
+        "VIX": timestamps,
+    }
+    macro = {"DXY": [100.0, 101.0], "US10Y": [4.0, 4.1], "VIX": [15.0, 16.0]}
+
+    with pytest.raises(ValueError, match="US10Y: duplicate timestamps"):
+        _build_common_observation_sample(
+            [1900.0, 1910.0],
+            [1910.0, 1920.0],
+            [1890.0, 1900.0],
+            [100.0, 110.0],
+            timestamps,
+            macro,
+            macro_ts,
+            ("DXY", "US10Y", "VIX"),
         )
