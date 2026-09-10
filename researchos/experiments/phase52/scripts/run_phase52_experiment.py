@@ -29,11 +29,14 @@ def _load_macro_series(csv_path: str, fmt: str, symbol: str, timeframe: str):
     loader = CsvLoader()
     if fmt == "mt5":
         candles = loader.load_mt5_candles(csv_path, symbol=symbol, timeframe=timeframe)
-    elif fmt == "tradingview":
+    elif fmt in {"tradingview", "auto"}:
         with open(csv_path, encoding="utf-8-sig") as f:
             text = f.read()
         normalized = normalize_epoch_timestamp_csv(text)
-        candles = loader.load_tradingview_candles_from_text(normalized, symbol=symbol, timeframe=timeframe)
+        if fmt == "tradingview":
+            candles = loader.load_tradingview_candles_from_text(normalized, symbol=symbol, timeframe=timeframe)
+        else:
+            candles = loader.load_candles_auto_from_text(normalized, symbol=symbol, timeframe=timeframe)
     else:
         candles = loader.load_candles_auto(csv_path, symbol=symbol, timeframe=timeframe)
     return [c.close for c in candles], [c.timestamp for c in candles]
