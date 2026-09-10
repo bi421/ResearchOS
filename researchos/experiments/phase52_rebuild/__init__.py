@@ -18,6 +18,7 @@ from .ledger import (
     build_data_ledger,
     write_ledger_report,
 )
+from .warmup_audit import WarmupCoverageAudit, audit_warmup_coverage
 
 __all__ = [
     "LedgerConfig",
@@ -36,4 +37,6 @@ __all__ = [
     "FeatureDataset",
     "build_feature_dataset",
     "build_all_feature_datasets",
+    "WarmupCoverageAudit",
+    "audit_warmup_coverage",
 ]
