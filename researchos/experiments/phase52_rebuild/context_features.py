@@ -1,28 +1,20 @@
-"""Leakage-safe feature construction with pre-research context.
-
-The context boundary is explicit: observations before the research start may
-initialize rolling features, but they are never emitted as research samples.
-Research samples keep their original labels, while feature state is computed
-from the combined chronological context + research sequence.
-"""
+"""Leakage-safe feature construction with pre-research context."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
+from researchos.experiments.phase52.macro_features import MacroFeatureBuilder
 from researchos.quant_engine.machine_learning.features import FeatureBuilder
 from researchos.quant_engine.machine_learning.labels import multiclass_label
 
 from .daily_dataset import DailyObservation
 from .feature_contract import Phase52FeatureContract, PRICE_FEATURE_NAMES
 from .feature_dataset import FeatureDataset, _selected_macro_columns
-from researchos.experiments.phase52.macro_features import MacroFeatureBuilder
 
 
 @dataclass(frozen=True)
 class ContextFeatureAudit:
-    """Accounting for context rows versus emitted research rows."""
-
     context_rows: int
     research_rows: int
     warmup_rows: int
@@ -60,21 +52,16 @@ def build_context_feature_dataset(
     feature_set: str,
     contract: Phase52FeatureContract | None = None,
 ) -> tuple[FeatureDataset, ContextFeatureAudit]:
-    """Build research samples using context only to initialize feature state.
-
-    Context observations are strictly pre-research and are never emitted.  The
-    research portion is still subject to the forward label horizon, but it does
-    not lose the first ``warmup`` research rows when sufficient context exists.
-    """
+    """Build research samples using pre-research context only for feature state."""
     contract = contract or Phase52FeatureContract()
     _validate_boundaries(context_observations, research_observations)
-    combined = context_observations + research_observations
     if len(context_observations) < contract.warmup:
         raise ValueError(
             f"context has {len(context_observations)} rows; "
             f"{contract.warmup} warm-up rows are required"
         )
 
+    combined = context_observations + research_observations
     close = [o.close for o in combined]
     high = [o.high for o in combined]
     low = [o.low for o in combined]
@@ -116,7 +103,7 @@ def build_context_feature_dataset(
         source_days.append(day)
         dt = datetime.fromisoformat(day).replace(tzinfo=timezone.utc)
         prediction_timestamps.append(
-            (dt + __import__("datetime").timedelta(days=1)).isoformat().replace("+00:00", "Z")
+            (dt + timedelta(days=1)).isoformat().replace("+00:00", "Z")
         )
 
     expected = max(0, len(research_observations) - contract.horizon)
@@ -155,7 +142,7 @@ def build_context_feature_dataset(
         "source_days": list(source_days),
         "prediction_timestamps": list(prediction_timestamps),
     }
-    dataset = FeatureDataset(
+    return FeatureDataset(
         feature_set=feature_set,
         feature_names=combined_names,
         rows=tuple(rows),
@@ -163,8 +150,7 @@ def build_context_feature_dataset(
         source_days=tuple(source_days),
         prediction_timestamps=tuple(prediction_timestamps),
         metadata=metadata,
-    )
-    return dataset, audit
+    ), audit
 
 
 __all__ = ["ContextFeatureAudit", "build_context_feature_dataset"]
