@@ -59,33 +59,56 @@ result and a Phase 5.2 result are directly comparable.
 - [x] Register `researchos/experiments/phase52/tests` in `pyproject.toml`
       `[tool.pytest.ini_options].testpaths` and in the CI pytest invocations
       (`test-python.yml`, `coverage.yml`) alongside phase51/tests.
-- [ ] Verify the common-observation sample on real XAUUSD + DGS10 + VIX + DXY
+- [x] Verify the common-observation sample on real XAUUSD + DGS10 + VIX + DXY
       inputs and record exact retained-row counts/provenance.
+- [x] Add canonical `scripts/audit_phase52_macro_calendar.py` so the calendar
+      audit uses one date-normalization rule and reports source SHA-256 values.
 - [ ] Resolve and document a defensible DXY source identity before empirical
       execution; do not silently substitute a different dollar index.
 - [ ] Run full CI on the common-observation-sample branch and review all tests.
 
+## Verified real-data calendar audit
+
+Canonical date normalization produced the following local result:
+
+```text
+XAUUSD       : 1290
+DXY          : 1291
+DGS10        : 16876 raw rows / 1290 usable 2021-2025 dates
+VIX          : 9571 raw rows / 1290 usable 2021-2025 dates
+XAU ∩ DXY    : 1289
+XAU ∩ DGS10  : 1290
+XAU ∩ VIX    : 1290
+4-WAY COMMON : 1289
+Dropped      : 1 XAUUSD date
+First common : 2021-01-04
+Last common  : 2025-12-30
+```
+
+The earlier audit values of 1,247 DGS10 matches and 1,282 VIX matches are
+superseded. They came from the previous audit's date-handling logic and are
+not valid coverage figures.
+
+The DXY source is explicitly labeled:
+- provider: Dukascopy
+- instrument: `dollaridxusd`
+- source type: secondary
+- ICE DXY equivalence: NOT PROVEN
+
+Therefore the 1,289-row intersection is a verified calendar intersection,
+not proof that the DXY observations are identical to the official ICE DXY
+benchmark.
+
 ## Current empirical status
 
-```
+```text
 EMPIRICAL STATUS = BLOCKED
-REAL XAUUSD + DXY + US10Y + VIX HISTORICAL DATA REQUIRED
+REASON = DXY SOURCE IDENTITY / BENCHMARK EQUIVALENCE NOT YET VALIDATED
 ```
 
-Real XAUUSD, DGS10 and VIX data are now available locally, but DXY has not
-yet been acquired from a defensible source. The current local calendar audit
-shows 1,290 XAUUSD 2021–2025 dates, with 1,247 DGS10 matches and 1,282 VIX
-matches. The missing observations are primarily US market holidays. These
-are calendar differences, not evidence that the macro series should be
-forward-filled.
-
-Once all four real datasets are supplied, run:
-
-```
-python -m researchos.experiments.phase52.scripts.run_phase52_experiment \
-    --csv <xauusd.csv> --dxy <dxy.csv> --us10y <dgs10.csv> --vix <vix.csv> \
-    --format mt5 --symbol XAUUSD --timeframe 1d
-```
+No predictive, profitability, or trading-validity claim may be made from the
+Phase 5.2 experiment until the DXY provenance boundary is resolved and the
+real-data experiment itself passes all scientific gates.
 
 Execution precondition checklist (verify all before treating a result as
 empirical evidence):
