@@ -18,8 +18,6 @@ EXPECTED_MACRO = ("DXY", "US10Y", "VIX")
 
 @dataclass(frozen=True)
 class LedgerConfig:
-    # ResearchOS features have a longest price lookback of 60 observations.
-    # Macro z-score features may require 20, so 60 is the controlling warm-up.
     feature_warmup: int = 60
     label_horizon: int = 5
 
@@ -46,6 +44,13 @@ class Phase52DataLedger:
     dxy_rows: int
     us10y_rows: int
     vix_rows: int
+    xau_calendar_days: int
+    dxy_calendar_days: int
+    us10y_calendar_days: int
+    vix_calendar_days: int
+    xau_dxy_common_days: int
+    xau_us10y_common_days: int
+    xau_vix_common_days: int
     common_rows: int
     common_first: str | None
     common_last: str | None
@@ -89,12 +94,6 @@ def _utc_iso(value: str) -> str:
 
 
 def _calendar_key(timestamp: str) -> str:
-    """Map an observation timestamp to its UTC calendar date.
-
-    Phase 5.2 combines M1 XAUUSD with daily macro observations. The canonical
-    common-observation audit is therefore a calendar-day intersection, not an
-    exact intraday timestamp intersection.
-    """
     return timestamp[:10]
 
 
@@ -114,15 +113,6 @@ def _audit(name: str, path: Path, rows_read: int, rows_valid: int, ts: list[str]
 
 
 def _read_xau(path: Path) -> tuple[list[str], SourceAudit]:
-    """Read the canonical raw XAUUSD MT5 export without transforming the source.
-
-    Supported canonical schema:
-    time,open,high,low,close,tick_volume,spread,real_volume
-
-    The older Date/Time/Open/... schema is retained for deterministic unit fixtures
-    and backward compatibility, but the real dataset's canonical lowercase schema
-    is the primary contract.
-    """
     timestamps: list[str] = []
     rows_read = rows_valid = invalid = 0
     with path.open(encoding="utf-8-sig", newline="") as f:
@@ -185,9 +175,12 @@ def _read_macro(path: Path, name: str) -> tuple[list[str], SourceAudit]:
     return timestamps, _audit(name, path, rows_read, rows_valid, timestamps, invalid)
 
 
+def _calendar_set(ts_list: list[str]) -> set[str]:
+    return {_calendar_key(ts) for ts in ts_list}
+
+
 def _intersection(named: Iterable[tuple[str, list[str]]]) -> list[str]:
-    """Return the exact common UTC calendar days across all sources."""
-    calendar_sets = [set(_calendar_key(ts) for ts in ts_list) for _, ts_list in named]
+    calendar_sets = [_calendar_set(ts_list) for _, ts_list in named]
     if not calendar_sets:
         return []
     return sorted(set.intersection(*calendar_sets))
@@ -211,9 +204,11 @@ def build_data_ledger(xau_path: str | Path, dxy_path: str | Path, us10y_path: st
     us10y, au = _read_macro(paths[2], "US10Y")
     vix, av = _read_macro(paths[3], "VIX")
 
-    common_days = _intersection((("XAUUSD", xau), ("DXY", dxy), ("US10Y", us10y), ("VIX", vix)))
-    common_set = set(common_days)
-    xau_calendar = {_calendar_key(ts) for ts in xau}
+    xau_days = _calendar_set(xau)
+    dxy_days = _calendar_set(dxy)
+    us10y_days = _calendar_set(us10y)
+    vix_days = _calendar_set(vix)
+    common_days = sorted(xau_days & dxy_days & us10y_days & vix_days)
 
     after_feature = max(0, len(common_days) - cfg.feature_warmup)
     final = max(0, after_feature - cfg.label_horizon)
@@ -227,20 +222,25 @@ def build_data_ledger(xau_path: str | Path, dxy_path: str | Path, us10y_path: st
             errors.append(f"{audit.name}: invalid rows={audit.invalid_rows}")
         if audit.unsorted_timestamps:
             errors.append(f"{audit.name}: timestamps are not sorted")
-    if not common_set.issubset(xau_calendar):
+    if not set(common_days).issubset(xau_days):
         errors.append("common calendar day exists outside XAU source")
     if final != len(usable_days):
         errors.append("final usable row accounting failed")
-    if common_days and common_days != sorted(common_days):
+    if common_days != sorted(common_days):
         errors.append("common calendar days are not sorted")
 
     return Phase52DataLedger(
         sources=(ax, ad, au, av),
         xau_rows=len(xau), dxy_rows=len(dxy), us10y_rows=len(us10y), vix_rows=len(vix),
+        xau_calendar_days=len(xau_days), dxy_calendar_days=len(dxy_days),
+        us10y_calendar_days=len(us10y_days), vix_calendar_days=len(vix_days),
+        xau_dxy_common_days=len(xau_days & dxy_days),
+        xau_us10y_common_days=len(xau_days & us10y_days),
+        xau_vix_common_days=len(xau_days & vix_days),
         common_rows=len(common_days),
         common_first=_calendar_iso(common_days[0]) if common_days else None,
         common_last=_calendar_iso(common_days[-1]) if common_days else None,
-        xau_minus_common=len(xau) - len(common_days),
+        xau_minus_common=len(xau_days) - len(common_days),
         feature_warmup_rows=min(cfg.feature_warmup, len(common_days)),
         after_feature_warmup=after_feature,
         label_horizon_rows=min(cfg.label_horizon, after_feature),
@@ -261,10 +261,17 @@ def write_ledger_report(ledger: Phase52DataLedger, json_path: str | Path, md_pat
     lines = [
         "# Phase 5.2 Rebuild — Data Ledger", "",
         f"- Ledger invariant: **{'PASS' if ledger.invariant_ok else 'FAIL'}**",
-        f"- XAUUSD rows: **{ledger.xau_rows}**", f"- DXY rows: **{ledger.dxy_rows}**",
-        f"- US10Y rows: **{ledger.us10y_rows}**", f"- VIX rows: **{ledger.vix_rows}**",
+        f"- XAUUSD raw rows: **{ledger.xau_rows}**", f"- DXY valid rows: **{ledger.dxy_rows}**",
+        f"- US10Y valid rows: **{ledger.us10y_rows}**", f"- VIX valid rows: **{ledger.vix_rows}**",
+        f"- XAUUSD unique calendar days: **{ledger.xau_calendar_days}**",
+        f"- DXY unique calendar days: **{ledger.dxy_calendar_days}**",
+        f"- US10Y unique calendar days: **{ledger.us10y_calendar_days}**",
+        f"- VIX unique calendar days: **{ledger.vix_calendar_days}**",
+        f"- XAU ∩ DXY calendar days: **{ledger.xau_dxy_common_days}**",
+        f"- XAU ∩ US10Y calendar days: **{ledger.xau_us10y_common_days}**",
+        f"- XAU ∩ VIX calendar days: **{ledger.xau_vix_common_days}**",
         f"- Exact four-way calendar intersection: **{ledger.common_rows}**",
-        f"- Calendar drop from XAUUSD source rows: **{ledger.xau_minus_common}**",
+        f"- Calendar-day drop from XAUUSD: **{ledger.xau_minus_common}**",
         f"- Feature warm-up rows: **{ledger.feature_warmup_rows}**",
         f"- After feature warm-up: **{ledger.after_feature_warmup}**",
         f"- Label horizon rows: **{ledger.label_horizon_rows}**",
@@ -273,7 +280,7 @@ def write_ledger_report(ledger: Phase52DataLedger, json_path: str | Path, md_pat
         f"- Final usable first/last: `{ledger.final_usable_first}` / `{ledger.final_usable_last}`",
         f"- Common calendar SHA-256: `{ledger.timestamp_hash}`", "",
         "## Row-loss ledger", "",
-        "`XAU source rows → exact 4-way calendar days → feature warm-up → label horizon → final usable`", "",
+        "`XAU raw rows → unique XAU calendar days → exact 4-way calendar days → feature warm-up → label horizon → final usable`", "",
     ]
     if ledger.invariant_errors:
         lines += ["## Invariant errors", ""] + [f"- {e}" for e in ledger.invariant_errors]
