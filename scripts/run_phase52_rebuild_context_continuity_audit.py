@@ -26,10 +26,11 @@ def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
     groups: dict[str, list[dict[str, float | str]]] = {}
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
-        required = {"timestamp", "open", "high", "low", "close", "volume"}
+        required = {"timestamp", "open", "high", "low", "close"}
         fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
         if not required.issubset(fields):
             raise ValueError(f"unexpected Dukascopy XAU schema: {sorted(fields)}")
+        has_volume = "volume" in fields
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             ts = str(row["timestamp"]).strip()
@@ -41,7 +42,7 @@ def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
                     "high": float(row["high"]),
                     "low": float(row["low"]),
                     "close": float(row["close"]),
-                    "volume": float(row["volume"]),
+                    "volume": float(row["volume"]) if has_volume and row.get("volume") not in (None, "") else 0.0,
                 }
             )
 
@@ -85,8 +86,6 @@ def main() -> int:
     if missing:
         raise FileNotFoundError("Missing required files:\n" + "\n".join(missing))
 
-    # Context XAU uses Dukascopy's schema, so parse and aggregate it independently.
-    # The aggregation rule is intentionally identical to the research-period daily rule.
     context_xau = _load_dukascopy_xau_daily(CONTEXT_XAU)
     research_xau = {bar.day: bar for bar in load_daily_xau_from_m1(RESEARCH_XAU)}
     context_dxy = _load_dukascopy_daily(CONTEXT_DXY)
