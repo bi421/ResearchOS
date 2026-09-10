@@ -29,9 +29,6 @@ DEFAULT_VIX = ROOT / "data/macro/raw/VIXCLS_fred.csv"
 DEFAULT_RESEARCH = ROOT / "reports/phase52_rebuild/daily_common_dataset.csv"
 DEFAULT_OUTPUT = ROOT / "reports/phase52_rebuild/context_initialization_convergence.json"
 
-# Scientific acceptance is based on the final non-reference depth being very close
-# to the fixed long-context reference. These tolerances are deliberately explicit
-# and are applied to every feature value, not only the worst feature aggregate.
 TERMINAL_MAX_RELATIVE_TOLERANCE = 1e-5
 TERMINAL_MEAN_RELATIVE_TOLERANCE = 1e-6
 
@@ -72,6 +69,8 @@ def _compare(
     total_rel = 0.0
     total_count = 0
     for day, left_row, right_row in zip(days, left, right):
+        if len(left_row) != len(right_row) or len(left_row) != len(names):
+            raise AssertionError("feature comparison shape mismatch")
         for name, a, b in zip(names, left_row, right_row):
             abs_diff = abs(a - b)
             rel_diff = _relative_difference(a, b)
@@ -134,6 +133,12 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     research = _load_research(Path(args.research))
+    if not research:
+        raise ValueError("research dataset cannot be empty")
+    research_days = [row.day for row in research]
+    if research_days != sorted(research_days) or len(research_days) != len(set(research_days)):
+        raise ValueError("research dataset days must be unique and chronological")
+
     all_context = load_context_daily_observations(args.context_xau, args.context_dxy, args.us10y, args.vix)
     pre = tuple(obs for obs in all_context if obs.day < research[0].day)
     contract = Phase52FeatureContract()
@@ -148,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     reference_depth = max(depths)
+    terminal_depth = depths[-2]
     payload: dict[str, object] = {
         "status": "PASS",
         "scientific_convergence_status": "NOT_PROVEN",
@@ -156,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         "available_pre_research_context_rows": len(pre),
         "depths": list(depths),
         "reference_depth": reference_depth,
-        "terminal_depth": depths[-2],
+        "terminal_depth": terminal_depth,
         "acceptance_criteria": {
             "terminal_max_relative_difference_lte": TERMINAL_MAX_RELATIVE_TOLERANCE,
             "terminal_mean_relative_difference_lte": TERMINAL_MEAN_RELATIVE_TOLERANCE,
@@ -189,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
         ref_map = dict(zip(reference.source_days, reference.rows))
         fs: dict[str, object] = {
             "reference_depth": reference_depth,
-            "terminal_depth": depths[-2],
+            "terminal_depth": terminal_depth,
             "depths": {},
             "reference_relative_convergence": {},
         }
@@ -216,7 +222,7 @@ def main(argv: list[str] | None = None) -> int:
                 **compared,
             }
 
-        terminal = fs["reference_relative_convergence"][str(depths[-2])]
+        terminal = fs["reference_relative_convergence"][str(terminal_depth)]
         terminal_ok = (
             float(terminal["max_relative_difference"]) <= TERMINAL_MAX_RELATIVE_TOLERANCE
             and float(terminal["mean_relative_difference"]) <= TERMINAL_MEAN_RELATIVE_TOLERANCE
@@ -240,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"PRE-RESEARCH CONTEXT : {len(pre)}")
     print(f"DEPTHS               : {','.join(map(str, depths))}")
     print(f"REFERENCE DEPTH      : {reference_depth}")
-    print(f"TERMINAL DEPTH       : {depths[-2]}")
+    print(f"TERMINAL DEPTH       : {terminal_depth}")
     print(f"MAX REL TOLERANCE    : {TERMINAL_MAX_RELATIVE_TOLERANCE:g}")
     print(f"MEAN REL TOLERANCE   : {TERMINAL_MEAN_RELATIVE_TOLERANCE:g}")
     for feature_set, result in payload["feature_sets"].items():
@@ -265,7 +271,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"SCIENTIFIC STATUS    : {payload['scientific_convergence_status']}")
     print(f"OUTPUT               : {output}")
     print("=" * 70)
-    return 0 if payload["status"] == "PASS" else 1
+    return 0 if payload["status"] == "PASS" and payload["scientific_convergence_status"] == "SUPPORTED" else 1
 
 
 if __name__ == "__main__":
