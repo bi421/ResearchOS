@@ -55,7 +55,30 @@ def test_context_initializes_features_without_being_emitted() -> None:
     assert dataset.metadata["context_rows_emitted"] is False
 
 
-def test_future_research_changes_only_future_features() -> None:
+def test_feature_causality_is_prefix_stable() -> None:
+    """Changing day t must not change any feature row strictly before t."""
+    context = tuple(_obs(i, 100.0 + i * 0.1) for i in range(60))
+    research = tuple(_obs(60 + i, 106.0 + i * 0.2) for i in range(10))
+    changed = research[:2] + (_obs(62, 999.0),) + research[3:]
+
+    first, _ = build_context_feature_dataset(
+        context, research, "PRICE_ONLY", _contract()
+    )
+    second, _ = build_context_feature_dataset(
+        context, changed, "PRICE_ONLY", _contract()
+    )
+
+    # Research row index 0 (day 60) and 1 (day 61) precede the mutation at
+    # day 62, so their feature vectors must be byte-for-byte equivalent.
+    assert first.rows[:2] == second.rows[:2]
+    # The mutation itself must affect its own feature row for a causal feature
+    # set; this prevents a false-positive test where features are accidentally
+    # detached from the current observation.
+    assert first.rows[2] != second.rows[2]
+
+
+def test_future_research_changes_only_affected_label_boundary() -> None:
+    """A future close may change only labels whose horizon reaches that close."""
     context = tuple(_obs(i, 100.0 + i * 0.1) for i in range(60))
     research = tuple(_obs(60 + i, 106.0 + i * 0.2) for i in range(10))
     changed = research[:-1] + (_obs(69, 999.0),)
@@ -67,8 +90,13 @@ def test_future_research_changes_only_future_features() -> None:
         context, changed, "PRICE_ONLY", _contract()
     )
 
-    assert first.rows[:-1] == second.rows[:-1]
-    assert first.source_days[:-1] == second.source_days[:-1]
+    # The changed close is day 69. With horizon=5, only the emitted sample at
+    # day 64 (the fifth emitted row) can have a label reaching day 69. Earlier
+    # feature rows remain unchanged and earlier labels remain unchanged.
+    assert first.rows[:4] == second.rows[:4]
+    assert first.labels[:4] == second.labels[:4]
+    assert first.labels[4] != second.labels[4]
+    assert first.source_days == second.source_days
 
 
 def test_context_must_end_before_research() -> None:
