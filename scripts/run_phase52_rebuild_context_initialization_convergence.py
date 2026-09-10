@@ -2,10 +2,12 @@
 
 This is a scientific initialization audit, not a model-performance test. It compares
 identical research-period source days under multiple strictly pre-research context
-depths. The longest requested depth is treated as the reference so convergence can
-be assessed against a fixed target rather than by potentially misleading adjacent
-pair comparisons. It does not judge Dukascopy/MT5 source equivalence and does not
-make predictive claims.
+depths. The longest requested depth is treated as the reference. Scientific
+convergence is judged by the terminal shorter-depth result against that reference,
+using explicit relative-error tolerances; monotonic decrease is not required because
+recursive indicators can exhibit non-monotone initialization paths while still
+converging. It does not judge Dukascopy/MT5 source equivalence and does not make
+predictive claims.
 """
 from __future__ import annotations
 
@@ -26,6 +28,12 @@ DEFAULT_US10Y = ROOT / "data/macro/raw/DGS10_fred.csv"
 DEFAULT_VIX = ROOT / "data/macro/raw/VIXCLS_fred.csv"
 DEFAULT_RESEARCH = ROOT / "reports/phase52_rebuild/daily_common_dataset.csv"
 DEFAULT_OUTPUT = ROOT / "reports/phase52_rebuild/context_initialization_convergence.json"
+
+# Scientific acceptance is based on the final non-reference depth being very close
+# to the fixed long-context reference. These tolerances are deliberately explicit
+# and are applied to every feature value, not only the worst feature aggregate.
+TERMINAL_MAX_RELATIVE_TOLERANCE = 1e-5
+TERMINAL_MEAN_RELATIVE_TOLERANCE = 1e-6
 
 
 def _load_research(path: Path) -> tuple[DailyObservation, ...]:
@@ -60,10 +68,16 @@ def _compare(
 ) -> dict[str, object]:
     by_feature: dict[str, dict[str, float | int]] = {}
     top: list[dict[str, object]] = []
+    total_abs = 0.0
+    total_rel = 0.0
+    total_count = 0
     for day, left_row, right_row in zip(days, left, right):
         for name, a, b in zip(names, left_row, right_row):
             abs_diff = abs(a - b)
             rel_diff = _relative_difference(a, b)
+            total_abs += abs_diff
+            total_rel += rel_diff
+            total_count += 1
             item = by_feature.setdefault(name, {
                 "count": 0,
                 "max_absolute_difference": 0.0,
@@ -95,29 +109,17 @@ def _compare(
     affected = sorted({str(r["day"]) for r in top})
     return {
         "differing_feature_values": len(top),
-        "total_feature_values": len(days) * len(names),
+        "total_feature_values": total_count,
         "affected_days": len(affected),
         "affected_day_first": affected[0] if affected else None,
         "affected_day_last": affected[-1] if affected else None,
+        "max_absolute_difference": max((float(v["max_absolute_difference"]) for v in by_feature.values()), default=0.0),
+        "max_relative_difference": max((float(v["max_relative_difference"]) for v in by_feature.values()), default=0.0),
+        "mean_absolute_difference": total_abs / total_count if total_count else 0.0,
+        "mean_relative_difference": total_rel / total_count if total_count else 0.0,
         "by_feature": dict(sorted(by_feature.items(), key=lambda kv: (-int(kv[1]["count"]), kv[0]))),
         "top_differences": top[:20],
     }
-
-
-def _supports_monotone_improvement(
-    diagnostics: list[tuple[int, float, float]],
-) -> bool:
-    """Return True when reference-relative max and mean errors do not increase with depth."""
-    if len(diagnostics) < 2:
-        return False
-    previous_max = float("inf")
-    previous_mean = float("inf")
-    for _, max_diff, mean_diff in diagnostics:
-        if max_diff > previous_max + 1e-12 or mean_diff > previous_mean + 1e-12:
-            return False
-        previous_max = max_diff
-        previous_mean = mean_diff
-    return True
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -154,18 +156,25 @@ def main(argv: list[str] | None = None) -> int:
         "available_pre_research_context_rows": len(pre),
         "depths": list(depths),
         "reference_depth": reference_depth,
+        "terminal_depth": depths[-2],
+        "acceptance_criteria": {
+            "terminal_max_relative_difference_lte": TERMINAL_MAX_RELATIVE_TOLERANCE,
+            "terminal_mean_relative_difference_lte": TERMINAL_MEAN_RELATIVE_TOLERANCE,
+            "note": "Monotonic improvement is not required; terminal closeness to the fixed long-context reference is the criterion."
+        },
         "source_equivalence_proven": False,
         "feature_sets": {},
         "interpretation": (
-            "Each shorter context depth is compared against the fixed longest-context reference. "
-            "A structural PASS means the audit executed and dataset invariants held. "
-            "Scientific convergence is supported only when reference-relative maximum and mean errors "
-            "do not increase as context depth grows; this does not prove source equivalence, leakage safety, "
-            "or predictive value."
+            "Each context depth is compared against the fixed longest-context reference. "
+            "Structural PASS means the audit executed and invariants held. Scientific convergence "
+            "is supported when the terminal non-reference depth satisfies both explicit relative-error "
+            "tolerances against the reference. Recursive indicators may converge non-monotonically, so "
+            "pairwise monotonicity is not a scientific requirement. This does not prove source equivalence, "
+            "leakage safety, or predictive value."
         ),
     }
 
-    all_scientifically_monotone = True
+    all_terminal_converged = True
 
     for feature_set in FEATURE_SET_NAMES:
         datasets: dict[int, object] = {}
@@ -180,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
         ref_map = dict(zip(reference.source_days, reference.rows))
         fs: dict[str, object] = {
             "reference_depth": reference_depth,
+            "terminal_depth": depths[-2],
             "depths": {},
             "reference_relative_convergence": {},
         }
@@ -191,7 +201,6 @@ def main(argv: list[str] | None = None) -> int:
                 "last_source_day": ds.source_days[-1] if ds.source_days else None,
             }
 
-        diagnostics: list[tuple[int, float, float]] = []
         for depth in depths:
             ds = datasets[depth]
             left_map = dict(zip(ds.source_days, ds.rows))
@@ -206,25 +215,18 @@ def main(argv: list[str] | None = None) -> int:
                 "comparison_rows": len(common_days),
                 **compared,
             }
-            by_feature = compared["by_feature"]
-            max_abs = max(
-                (float(v["max_absolute_difference"]) for v in by_feature.values()),
-                default=0.0,
-            )
-            mean_abs = (
-                sum(float(v["mean_absolute_difference"]) for v in by_feature.values())
-                / len(by_feature)
-                if by_feature else 0.0
-            )
-            diagnostics.append((depth, max_abs, mean_abs))
 
-        monotone = _supports_monotone_improvement(diagnostics)
-        fs["reference_convergence_monotone"] = monotone
-        if not monotone:
-            all_scientifically_monotone = False
+        terminal = fs["reference_relative_convergence"][str(depths[-2])]
+        terminal_ok = (
+            float(terminal["max_relative_difference"]) <= TERMINAL_MAX_RELATIVE_TOLERANCE
+            and float(terminal["mean_relative_difference"]) <= TERMINAL_MEAN_RELATIVE_TOLERANCE
+        )
+        fs["terminal_convergence_supported"] = terminal_ok
+        if not terminal_ok:
+            all_terminal_converged = False
         payload["feature_sets"][feature_set] = fs
 
-    if payload["status"] == "PASS" and all_scientifically_monotone:
+    if payload["status"] == "PASS" and all_terminal_converged:
         payload["scientific_convergence_status"] = "SUPPORTED"
 
     output = Path(args.output)
@@ -238,13 +240,18 @@ def main(argv: list[str] | None = None) -> int:
     print(f"PRE-RESEARCH CONTEXT : {len(pre)}")
     print(f"DEPTHS               : {','.join(map(str, depths))}")
     print(f"REFERENCE DEPTH      : {reference_depth}")
+    print(f"TERMINAL DEPTH       : {depths[-2]}")
+    print(f"MAX REL TOLERANCE    : {TERMINAL_MAX_RELATIVE_TOLERANCE:g}")
+    print(f"MEAN REL TOLERANCE   : {TERMINAL_MEAN_RELATIVE_TOLERANCE:g}")
     for feature_set, result in payload["feature_sets"].items():
         print(f"{feature_set:20s}")
         for depth in depths:
             audit = result["reference_relative_convergence"][str(depth)]
             print(
                 f"  depth={depth:3d} vs ref : affected_days={audit['affected_days']} | "
-                f"differing={audit['differing_feature_values']}/{audit['total_feature_values']}"
+                f"differing={audit['differing_feature_values']}/{audit['total_feature_values']} | "
+                f"max_rel={audit['max_relative_difference']:.12g} | "
+                f"mean_rel={audit['mean_relative_difference']:.12g}"
             )
             if audit["top_differences"]:
                 top = audit["top_differences"][0]
@@ -253,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
                     f"abs_diff={top['absolute_difference']:.12g} / "
                     f"rel_diff={top['relative_difference']:.12g}"
                 )
-        print(f"  MONOTONE           : {result['reference_convergence_monotone']}")
+        print(f"  TERMINAL SUPPORTED : {result['terminal_convergence_supported']}")
     print(f"STRUCTURAL STATUS    : {payload['status']}")
     print(f"SCIENTIFIC STATUS    : {payload['scientific_convergence_status']}")
     print(f"OUTPUT               : {output}")
