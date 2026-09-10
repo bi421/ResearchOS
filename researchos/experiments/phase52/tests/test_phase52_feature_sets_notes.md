@@ -1,0 +1,1 @@
+Verification scope: deterministic multivariate estimator, explicit five feature-set contract, identical walk-forward fold geometry, and reproducibility. Real-data empirical claims remain gated on DXY benchmark identity validation.
