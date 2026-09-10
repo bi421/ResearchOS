@@ -9,11 +9,11 @@ from researchos.experiments.phase52_rebuild import LedgerConfig, build_data_ledg
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Phase 5.2 rebuild: source/alignment/eligibility ledger")
-    p.add_argument("--csv", required=True, help="XAUUSD daily CSV")
+    p.add_argument("--csv", required=True, help="XAUUSD daily/raw CSV")
     p.add_argument("--dxy", required=True, help="Dukascopy DXY CSV")
     p.add_argument("--us10y", required=True, help="FRED DGS10 CSV")
     p.add_argument("--vix", required=True, help="FRED VIXCLS CSV")
-    p.add_argument("--feature-warmup", type=int, default=20)
+    p.add_argument("--feature-warmup", type=int, default=60)
     p.add_argument("--label-horizon", type=int, default=5)
     p.add_argument("--out-dir", default="reports/phase52_rebuild")
     args = p.parse_args(argv)
