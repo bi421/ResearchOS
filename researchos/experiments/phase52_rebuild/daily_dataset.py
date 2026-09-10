@@ -18,6 +18,7 @@ or future-label eligibility.
 from __future__ import annotations
 
 import csv
+import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -90,13 +91,22 @@ def _float(row: dict[str, str | None], key: str) -> float:
     value = row.get(key)
     if value is None or value.strip() == "":
         raise ValueError(f"missing numeric field: {key}")
-    return float(value)
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError(f"non-finite numeric field: {key}")
+    return number
 
 
 def load_daily_xau_from_m1(path: str | Path) -> tuple[DailyXAUBar, ...]:
-    """Aggregate canonical MT5 XAUUSD M1 CSV into UTC daily OHLCV bars."""
+    """Aggregate canonical MT5 XAUUSD M1 CSV into UTC daily OHLCV bars.
+
+    Duplicate raw timestamps are rejected rather than silently aggregated.
+    Keeping an unknown duplicate is scientifically unsafe because it can
+    change OHLC/volume values without a deterministic deduplication rule.
+    """
     path = Path(path)
     groups: dict[str, list[tuple[str, float, float, float, float, float, float | None, float]]] = {}
+    seen_timestamps: set[str] = set()
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
@@ -106,12 +116,21 @@ def load_daily_xau_from_m1(path: str | Path) -> tuple[DailyXAUBar, ...]:
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             ts = _utc_iso(str(row["time"]))
+            if ts in seen_timestamps:
+                raise ValueError(f"XAUUSD duplicate timestamp: {ts}")
+            seen_timestamps.add(ts)
+            open_ = _float(row, "open")
+            high = _float(row, "high")
+            low = _float(row, "low")
+            close = _float(row, "close")
+            if high < max(open_, close) or low > min(open_, close) or high < low:
+                raise ValueError(f"invalid OHLC relationship at timestamp: {ts}")
             values = (
                 ts,
-                _float(row, "open"),
-                _float(row, "high"),
-                _float(row, "low"),
-                _float(row, "close"),
+                open_,
+                high,
+                low,
+                close,
                 _float(row, "tick_volume"),
                 _float(row, "spread"),
                 _float(row, "real_volume"),
@@ -145,6 +164,10 @@ def load_dxy_daily(path: str | Path) -> dict[str, float]:
     out: dict[str, float] = {}
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
+        fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
+        required = {"timestamp", "close"}
+        if not required.issubset(fields):
+            raise ValueError("DXY source must contain timestamp and close columns")
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             ts = _utc_iso(str(row["timestamp"]))
@@ -160,6 +183,10 @@ def _load_fred_daily(path: str | Path, value_key: str, symbol: str) -> dict[str,
     out: dict[str, float] = {}
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
+        fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
+        required = {"observation_date", value_key}
+        if not required.issubset(fields):
+            raise ValueError(f"{symbol} source must contain observation_date and {value_key} columns")
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             raw_value = row.get(value_key)
@@ -169,7 +196,7 @@ def _load_fred_daily(path: str | Path, value_key: str, symbol: str) -> dict[str,
             day = _day(ts)
             if day in out:
                 raise ValueError(f"{symbol} duplicate calendar day: {day}")
-            out[day] = float(raw_value)
+            out[day] = _float(row, value_key)
     return out
 
 
