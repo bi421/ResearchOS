@@ -9,9 +9,9 @@ Write-Host ('=' * 70)
 Write-Host 'PHASE 5.2 REBUILD — PRE-2021 CONTEXT DOWNLOAD'
 Write-Host ('=' * 70)
 Write-Host 'Source      : Dukascopy public historical feed'
-Write-Host 'XAUUSD      : 2020-09-01 through 2021-04-30, M1'
-Write-Host 'DXY         : 2020-09-01 through 2021-04-30, D1'
-Write-Host 'Purpose     : feature warm-up context + source continuity audit'
+Write-Host 'XAUUSD      : 2020-01-01 through 2021-04-30, M1'
+Write-Host 'DXY         : 2020-01-01 through 2021-04-30, D1'
+Write-Host 'Purpose     : extended feature warm-up context + source continuity audit'
 Write-Host 'Research    : 2021-01-01 onward remains unchanged'
 Write-Host ''
 
@@ -22,11 +22,11 @@ if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
 Push-Location $TempDir
 try {
     Write-Host '[1/2] Downloading XAUUSD M1 context...'
-    npx --yes dukascopy-node -i xauusd -from 2020-09-01 -to 2021-04-30 -t m1 -f csv
+    npx --yes dukascopy-node -i xauusd -from 2020-01-01 -to 2021-04-30 -t m1 -f csv
     if ($LASTEXITCODE -ne 0) { throw "XAUUSD download failed with exit code $LASTEXITCODE" }
 
     Write-Host '[2/2] Downloading DXY D1 context...'
-    npx --yes dukascopy-node -i dollaridxusd -from 2020-09-01 -to 2021-04-30 -t d1 -f csv
+    npx --yes dukascopy-node -i dollaridxusd -from 2020-01-01 -to 2021-04-30 -t d1 -f csv
     if ($LASTEXITCODE -ne 0) { throw "DXY download failed with exit code $LASTEXITCODE" }
 } finally {
     Pop-Location
@@ -51,4 +51,4 @@ Write-Host 'DOWNLOAD COMPLETE — NOT YET SCIENTIFICALLY ACCEPTED'
 Write-Host "XAUUSD : $XauOut"
 Write-Host "DXY    : $DxyOut"
 Write-Host ''
-Write-Host 'Next step: run the context continuity/coverage audit before using these files.'
+Write-Host 'Next step: run the context continuity/coverage audit, then the initialization convergence audit.'
