@@ -56,8 +56,6 @@ def test_win_rate_uses_net_pnl_including_entry_and_exit_costs():
         slippage=0.001,
     ).run([100.0, 100.1], strategy)
 
-    # A 0.1% price gain is smaller than the combined entry/exit costs,
-    # so this trade must be classified as a loss.
     assert result.num_trades == 1
     assert result.win_rate == pytest.approx(0.0)
 
@@ -73,3 +71,27 @@ def test_open_position_is_counted_when_forced_closed_at_last_price():
 
     assert result.num_trades == 1
     assert result.win_rate == pytest.approx(1.0)
+
+
+def test_forced_close_is_included_in_equity_drawdown():
+    strategy = _FixedStrategy([_Signal("BUY", 100.0)])
+
+    result = BacktestEngine(
+        initial_capital=10_000.0,
+        commission=0.0,
+        slippage=0.0,
+    ).run([100.0, 90.0], strategy)
+
+    assert result.total_return == pytest.approx(-0.10)
+    assert result.max_drawdown == pytest.approx(-0.10)
+
+
+def test_invalid_cost_configuration_is_rejected():
+    with pytest.raises(ValueError):
+        BacktestEngine(initial_capital=0.0)
+
+    with pytest.raises(ValueError):
+        BacktestEngine(commission=-0.001)
+
+    with pytest.raises(ValueError):
+        BacktestEngine(commission=0.6, slippage=0.4)
