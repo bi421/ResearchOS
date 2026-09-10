@@ -1,10 +1,13 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
-# CI is temporarily manual-only while Phase 5.2 rebuild is being repaired.
-# Re-enable push/pull_request triggers after the code-level blocker is resolved.
+# Automatic verification is enabled for main pushes and all pull requests.
+# workflow_dispatch remains available for explicit manual runs.
 
 jobs:
   python-tests:
