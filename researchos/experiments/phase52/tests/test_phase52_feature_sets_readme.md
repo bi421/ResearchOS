@@ -1,0 +1,1 @@
+Phase 5.2 feature-set verification remains blocked from real empirical interpretation until DXY source identity is validated.
