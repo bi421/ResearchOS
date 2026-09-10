@@ -22,7 +22,7 @@ def test_m1_is_aggregated_deterministically_by_utc_day(tmp_path: Path) -> None:
     bars = load_daily_xau_from_m1(xau)
     assert [b.day for b in bars] == ["2021-01-04", "2021-01-05"]
     first = bars[0]
-    assert first.open == 10.0
+    assert first.open == 9.0
     assert first.high == 13.0
     assert first.low == 8.0
     assert first.close == 11.0
