@@ -32,11 +32,15 @@ try {
     Pop-Location
 }
 
-$xau = Get-ChildItem $TempDir -Filter 'xauusd-*.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$dxy = Get-ChildItem $TempDir -Filter 'dollaridxusd-*.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# dukascopy-node writes CSV files under a nested .\download directory.
+# Resolve that actual output location explicitly instead of assuming the files
+# are written directly into $TempDir.
+$DownloadDir = Join-Path $TempDir 'download'
+$xau = Get-ChildItem $DownloadDir -Filter 'xauusd-*.csv' -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$dxy = Get-ChildItem $DownloadDir -Filter 'dollaridxusd-*.csv' -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-if (-not $xau) { throw 'Downloaded XAUUSD CSV was not found.' }
-if (-not $dxy) { throw 'Downloaded DXY CSV was not found.' }
+if (-not $xau) { throw "Downloaded XAUUSD CSV was not found under $DownloadDir" }
+if (-not $dxy) { throw "Downloaded DXY CSV was not found under $DownloadDir" }
 
 $XauOut = Join-Path $OutDir 'XAUUSD_Dukascopy_M1_2020_context.csv'
 $DxyOut = Join-Path $OutDir 'DXY_Dukascopy_D1_2020_context.csv'
