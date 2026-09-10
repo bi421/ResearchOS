@@ -9,9 +9,9 @@ Write-Host ('=' * 70)
 Write-Host 'PHASE 5.2 REBUILD — PRE-2021 CONTEXT DOWNLOAD'
 Write-Host ('=' * 70)
 Write-Host 'Source      : Dukascopy public historical feed'
-Write-Host 'XAUUSD      : 2020-09-01 through 2021-01-05, M1'
-Write-Host 'DXY         : 2020-09-01 through 2021-01-05, D1'
-Write-Host 'Purpose     : feature warm-up context only'
+Write-Host 'XAUUSD      : 2020-09-01 through 2021-01-15, M1'
+Write-Host 'DXY         : 2020-09-01 through 2021-01-15, D1'
+Write-Host 'Purpose     : feature warm-up context + source continuity audit'
 Write-Host 'Research    : 2021-01-01 onward remains unchanged'
 Write-Host ''
 
@@ -22,19 +22,17 @@ if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
 Push-Location $TempDir
 try {
     Write-Host '[1/2] Downloading XAUUSD M1 context...'
-    npx --yes dukascopy-node -i xauusd -from 2020-09-01 -to 2021-01-05 -t m1 -f csv
+    npx --yes dukascopy-node -i xauusd -from 2020-09-01 -to 2021-01-15 -t m1 -f csv
     if ($LASTEXITCODE -ne 0) { throw "XAUUSD download failed with exit code $LASTEXITCODE" }
 
     Write-Host '[2/2] Downloading DXY D1 context...'
-    npx --yes dukascopy-node -i dollaridxusd -from 2020-09-01 -to 2021-01-05 -t d1 -f csv
+    npx --yes dukascopy-node -i dollaridxusd -from 2020-09-01 -to 2021-01-15 -t d1 -f csv
     if ($LASTEXITCODE -ne 0) { throw "DXY download failed with exit code $LASTEXITCODE" }
 } finally {
     Pop-Location
 }
 
 # dukascopy-node writes CSV files under a nested .\download directory.
-# Resolve that actual output location explicitly instead of assuming the files
-# are written directly into $TempDir.
 $DownloadDir = Join-Path $TempDir 'download'
 $xau = Get-ChildItem $DownloadDir -Filter 'xauusd-*.csv' -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $dxy = Get-ChildItem $DownloadDir -Filter 'dollaridxusd-*.csv' -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
