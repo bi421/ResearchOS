@@ -69,10 +69,21 @@ def main(argv: list[str] | None = None) -> int:
         print("BLOCKED: pass --source-validated only after reviewing context_continuity_audit.json")
         return 2
 
-    context = load_context_daily_observations(
+    research = _load_research_daily(Path(args.research))
+    all_context = load_context_daily_observations(
         args.context_xau, args.context_dxy, args.us10y, args.vix
     )
-    research = _load_research_daily(Path(args.research))
+
+    # The downloaded context intentionally extends into the research period so
+    # that source continuity can be validated. Only strictly pre-research days
+    # may seed rolling feature state; overlap/future context must never enter the
+    # feature builder as warm-up data.
+    research_start = research[0].day
+    context = tuple(obs for obs in all_context if obs.day < research_start)
+    leaked_context = tuple(obs for obs in all_context if obs.day >= research_start)
+    if leaked_context and context and context[-1].day >= research_start:
+        raise AssertionError("context partition crossed the research boundary")
+
     contract = Phase52FeatureContract()
 
     results: dict[str, object] = {}
@@ -95,8 +106,11 @@ def main(argv: list[str] | None = None) -> int:
     payload = {
         "status": "PASS" if all(r["gate"] == "PASS" for r in results.values()) else "BLOCKED",
         "source_validated_acknowledged": True,
-        "context_rows": len(context),
+        "all_context_rows": len(all_context),
+        "context_rows_used_for_feature_state": len(context),
+        "context_rows_excluded_at_research_boundary": len(leaked_context),
         "research_rows": len(research),
+        "research_start_day": research_start,
         "label_horizon": contract.horizon,
         "warmup_required": contract.warmup,
         "minimum_required": contract.minimum_samples,
@@ -104,6 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         "feature_sets": results,
         "context_is_feature_state_only": True,
         "context_rows_emitted": False,
+        "overlap_context_excluded_from_feature_state": True,
         "no_interpolation_or_forward_fill": True,
     }
 
@@ -114,14 +129,16 @@ def main(argv: list[str] | None = None) -> int:
     print("=" * 70)
     print("PHASE 5.2 REBUILD — CONTEXT FEATURE AUDIT")
     print("=" * 70)
-    print(f"CONTEXT ROWS         : {len(context)}")
-    print(f"RESEARCH ROWS        : {len(research)}")
-    print(f"EXPECTED RESEARCH    : {len(research) - contract.horizon}")
-    print(f"MINIMUM REQUIRED     : {contract.minimum_samples}")
+    print(f"ALL CONTEXT ROWS      : {len(all_context)}")
+    print(f"CONTEXT STATE ROWS    : {len(context)}")
+    print(f"OVERLAP EXCLUDED      : {len(leaked_context)}")
+    print(f"RESEARCH ROWS         : {len(research)}")
+    print(f"EXPECTED RESEARCH     : {len(research) - contract.horizon}")
+    print(f"MINIMUM REQUIRED      : {contract.minimum_samples}")
     for name, result in results.items():
         print(f"{name:20s}: {result['sample_count']} rows / {result['feature_count']} features / {result['gate']}")
-    print(f"STATUS               : {payload['status']}")
-    print(f"OUTPUT               : {output}")
+    print(f"STATUS                : {payload['status']}")
+    print(f"OUTPUT                : {output}")
     print("=" * 70)
     return 0 if payload["status"] == "PASS" else 2
 
