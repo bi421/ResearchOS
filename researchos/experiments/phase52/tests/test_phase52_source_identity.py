@@ -5,14 +5,14 @@ from researchos.experiments.phase52.dataset import build_macro_augmented_dataset
 
 
 def _inputs():
-    close = [100.0 + i for i in range(30)]
+    close = [100.0 + i for i in range(150)]
     high = [c + 1.0 for c in close]
     low = [c - 1.0 for c in close]
     volume = [1000.0] * len(close)
     macro = {
-        "DXY": [100.0 + i for i in range(30)],
-        "US10Y": [4.0 + i * 0.01 for i in range(30)],
-        "VIX": [18.0 + i * 0.1 for i in range(30)],
+        "DXY": [100.0 + i for i in range(150)],
+        "US10Y": [4.0 + i * 0.01 for i in range(150)],
+        "VIX": [18.0 + i * 0.1 for i in range(150)],
     }
     return close, high, low, volume, macro
 
@@ -30,6 +30,7 @@ def test_source_indices_reveal_dropped_warmup_and_tail_rows():
     inputs = _inputs()
     dataset, _ = build_macro_augmented_dataset(*inputs, horizon=5, threshold=0.0)
     retained = dataset.metadata["source_indices"]
+    assert retained
     assert retained[0] > 0
     assert retained[-1] < len(inputs[0]) - 1
 
