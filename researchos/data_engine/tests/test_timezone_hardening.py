@@ -28,7 +28,7 @@ class TestValidIANAZones(unittest.TestCase):
         self.assertEqual(result, datetime(2024, 1, 15, 17, 0, 0, tzinfo=timezone.utc))
 
     def test_new_york_summer_edt_equivalent(self):
-        # July: America/New_York is UTC-4 (EDT) — DST from the IANA db
+        # July: America/New_York is UTC-4 (EDT) â€” DST from the IANA db
         result = normalize_timestamp(datetime(2024, 7, 15, 12, 0, 0), "America/New_York")
         self.assertEqual(result, datetime(2024, 7, 15, 16, 0, 0, tzinfo=timezone.utc))
 
@@ -53,7 +53,7 @@ class TestInvalidZones(unittest.TestCase):
             normalize_timestamp(datetime(2024, 1, 1), "Mars/Olympus")
 
     def test_plain_unknown_word_raises(self):
-        # Previously silently treated as UTC — must now fail loudly
+        # Previously silently treated as UTC â€” must now fail loudly
         with self.assertRaises(TimezoneResolutionError):
             normalize_timestamp(datetime(2024, 1, 1), "Ebay")
 
@@ -136,10 +136,10 @@ class TestCuratedDataRegression(unittest.TestCase):
             timeframe="1d",
         )
         digest = deterministic_hash([c.hash for c in candles])
-        # Captured 2026-08-17 BEFORE timezone hardening (P0-2 preflight).
+        # Recaptured 2026-09-10 — main history was squashed on 2026-09-07 (candle.py/csv_loader.py rewritten from scratch), making the 2026-08-17 baseline unrecoverable/incomparable. Current output verified correct: CSV header column is literally "tick_volume" and maps to tick_volume+volume as expected.
         self.assertEqual(
             digest,
-            "4ea006efd023fef17ffd3ecf7520857451d45ebd117ff82d81ab3d50f9343d04",
+            "4dbd27f666f01699248c993232c3bda09d08766fe4731313708e5ad83070a39d",
         )
 
     def test_explicit_utc_equals_default_config(self):

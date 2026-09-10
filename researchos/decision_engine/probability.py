@@ -15,7 +15,11 @@ from researchos.core.base_object import BaseObject
 from researchos.core.identity import deterministic_hash, generate_id
 from researchos.core.lifecycle import LifecycleStage
 from researchos.core.timestamp import parse_timestamp, utc_now
-from researchos.decision_engine.contracts import CalculationMethod, DecisionEvidenceItem, ProbabilityOutcome
+from researchos.decision_engine.contracts import (
+    CalculationMethod,
+    DecisionEvidenceItem,
+    ProbabilityOutcome,
+)
 from researchos.decision_engine.evidence import EvidenceCollection
 
 CALCULATION_VERSION = "PROBABILITY_V1"
@@ -53,7 +57,9 @@ class ProbabilityAssessment(BaseObject):
         probability_calibration_status: str | None = None,
     ):
         if id is None:
-            id = generate_id(f"ProbabilityAssessment|{decision_context_id}|{evidence_collection_id}")
+            id = generate_id(
+                f"ProbabilityAssessment|{decision_context_id}|{evidence_collection_id}"
+            )
         super().__init__(id=id, ontology_tags=ontology_tags)
         self.decision_context_id = decision_context_id
         self.evidence_collection_id = evidence_collection_id
@@ -202,7 +208,9 @@ class ProbabilityCalculator:
             confidences.append(confidence)
             weighted_contributions.append(contribution)
             direction = _normalize_direction(
-                item.direction.value if isinstance(item.direction, ProbabilityOutcome) else item.direction
+                item.direction.value
+                if isinstance(item.direction, ProbabilityOutcome)
+                else item.direction
             )
             if direction == _DIRECTION_BULLISH:
                 bullish_weight += contribution
@@ -217,7 +225,7 @@ class ProbabilityCalculator:
             neutral_probability = neutral_weight / total
         else:
             bullish_probability = bearish_probability = neutral_probability = _UNIFORM_PROBABILITY
-        neutral_probability = 1.0 - bullish_probability - bearish_probability
+        neutral_probability = max(0.0, 1.0 - bullish_probability - bearish_probability)
         confidence = sum(confidences) / len(confidences) if confidences else 0.0
         evidence_strength = (
             sum(weighted_contributions) / len(weighted_contributions)
@@ -260,7 +268,9 @@ class ProbabilityCalculator:
         if sample_size < 3:
             limitations.append(f"Low evidence sample size: {sample_size} items")
         if total == 0:
-            limitations.append("All evidence items have zero effective weight (confidence * weight = 0)")
+            limitations.append(
+                "All evidence items have zero effective weight (confidence * weight = 0)"
+            )
         if confidence == 0.0:
             limitations.append("No confident evidence; all items have zero confidence")
         if uncertainty > 0.6:
