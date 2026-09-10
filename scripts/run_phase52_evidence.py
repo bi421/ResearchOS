@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 from pathlib import Path
 
 from researchos.experiments.phase52 import FEATURE_SET_NAMES, Phase52Config, run_phase52_comparison
@@ -39,6 +38,31 @@ def _date_key(value: object) -> str:
     return str(value)[:10]
 
 
+def _metric(result: dict, section: str, key: str, default: object = None) -> object:
+    value = result.get(section)
+    if not isinstance(value, dict):
+        return default
+    return value.get(key, default)
+
+
+def _fmt_float(value: object, digits: int = 6) -> str:
+    if value is None:
+        return "—"
+    try:
+        return f"{float(value):.{digits}f}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _fmt_p(value: object) -> str:
+    if value is None:
+        return "—"
+    try:
+        return f"{float(value):.6g}"
+    except (TypeError, ValueError):
+        return "—"
+
+
 def _write_report(path: Path, payload: dict) -> None:
     lines = [
         "# ResearchOS Phase 5.2 — Five-Way Empirical Evidence",
@@ -55,17 +79,27 @@ def _write_report(path: Path, payload: dict) -> None:
         "| Feature set | Outcome | OOS n | Accuracy | Brier | Net accuracy | p-value | Significant |",
         "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
-    price_accuracy = payload["results"]["PRICE_ONLY"]["model"]["accuracy"]
-    price_brier = payload["results"]["PRICE_ONLY"]["model"]["brier_score"]
+    price_result = payload["results"].get("PRICE_ONLY", {})
+    price_accuracy = _metric(price_result, "model", "accuracy")
+    price_brier = _metric(price_result, "model", "brier_score")
+    price_net_accuracy = _metric(price_result, "cost", "net_accuracy_all")
     for name in FEATURE_SET_NAMES:
-        result = payload["results"][name]
-        model = result["model"]
-        cost = result["cost"]
-        sig = result["significance"]
+        result = payload["results"].get(name, {})
+        model = result.get("model") if isinstance(result.get("model"), dict) else None
+        cost = result.get("cost") if isinstance(result.get("cost"), dict) else None
+        sig = result.get("significance") if isinstance(result.get("significance"), dict) else None
+        outcome = result.get("outcome", "UNKNOWN")
+        model_n = model.get("sample_count") if model else None
+        accuracy = model.get("accuracy") if model else None
+        brier = model.get("brier_score") if model else None
+        net_accuracy = cost.get("net_accuracy_all") if cost else None
+        p_value = sig.get("p_value") if sig else None
+        significant = sig.get("significant") if sig else None
         lines.append(
-            f"| {name} | {result['outcome']} | {model['sample_count']} | "
-            f"{model['accuracy']:.6f} | {model['brier_score']:.6f} | "
-            f"{cost['net_accuracy_all']:.6f} | {sig['p_value']:.6g} | {sig['significant']} |"
+            f"| {name} | {outcome} | {model_n if model_n is not None else '—'} | "
+            f"{_fmt_float(accuracy)} | {_fmt_float(brier)} | "
+            f"{_fmt_float(net_accuracy)} | {_fmt_p(p_value)} | "
+            f"{significant if significant is not None else '—'} |"
         )
     lines += [
         "",
@@ -75,11 +109,20 @@ def _write_report(path: Path, payload: dict) -> None:
         "|---|---:|---:|---:|",
     ]
     for name in FEATURE_SET_NAMES:
-        result = payload["results"][name]
+        result = payload["results"].get(name, {})
+        accuracy = _metric(result, "model", "accuracy")
+        brier = _metric(result, "model", "brier_score")
+        net_accuracy = _metric(result, "cost", "net_accuracy_all")
+        def delta(value: object, baseline: object) -> str:
+            if value is None or baseline is None:
+                return "—"
+            try:
+                return f"{float(value) - float(baseline):+.6f}"
+            except (TypeError, ValueError):
+                return "—"
         lines.append(
-            f"| {name} | {result['model']['accuracy'] - price_accuracy:+.6f} | "
-            f"{result['model']['brier_score'] - price_brier:+.6f} | "
-            f"{result['cost']['net_accuracy_all'] - payload['results']['PRICE_ONLY']['cost']['net_accuracy_all']:+.6f} |"
+            f"| {name} | {delta(accuracy, price_accuracy)} | "
+            f"{delta(brier, price_brier)} | {delta(net_accuracy, price_net_accuracy)} |"
         )
     lines += [
         "",
