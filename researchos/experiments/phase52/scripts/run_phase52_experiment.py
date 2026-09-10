@@ -10,6 +10,7 @@ import sys
 from researchos.data_engine.loader import CsvLoader
 from researchos.experiments.phase52 import FEATURE_SET_NAMES, Phase52Config, run_phase52, run_phase52_comparison
 from researchos.experiments.phase52.alignment import validate_exact_timestamp_alignment
+from researchos.experiments.phase52.timestamp_adapter import normalize_epoch_timestamp_csv
 
 
 def _load_candles(csv_path: str, fmt: str, symbol: str, timeframe: str):
@@ -29,7 +30,10 @@ def _load_macro_series(csv_path: str, fmt: str, symbol: str, timeframe: str):
     if fmt == "mt5":
         candles = loader.load_mt5_candles(csv_path, symbol=symbol, timeframe=timeframe)
     elif fmt == "tradingview":
-        candles = loader.load_tradingview_candles(csv_path, symbol=symbol, timeframe=timeframe)
+        with open(csv_path, encoding="utf-8-sig") as f:
+            text = f.read()
+        normalized = normalize_epoch_timestamp_csv(text)
+        candles = loader.load_tradingview_candles_from_text(normalized, symbol=symbol, timeframe=timeframe)
     else:
         candles = loader.load_candles_auto(csv_path, symbol=symbol, timeframe=timeframe)
     return [c.close for c in candles], [c.timestamp for c in candles]
