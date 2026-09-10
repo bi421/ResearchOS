@@ -1,13 +1,16 @@
+from datetime import date, timedelta
+
 from researchos.experiments.phase52_rebuild.daily_dataset import DailyObservation
 from researchos.experiments.phase52_rebuild.feature_contract import Phase52FeatureContract
 from researchos.experiments.phase52_rebuild.feature_dataset import build_feature_dataset
 
 
 def _observations(n: int = 70) -> tuple[DailyObservation, ...]:
+    start = date(2021, 1, 1)
     return tuple(
         DailyObservation(
-            day=f"2021-01-{i + 1:02d}",
-            timestamp=f"2021-01-{i + 1:02d}T00:00:00Z",
+            day=(start + timedelta(days=i)).isoformat(),
+            timestamp=f"{(start + timedelta(days=i)).isoformat()}T00:00:00Z",
             open=100.0 + i,
             high=101.0 + i,
             low=99.0 + i,
