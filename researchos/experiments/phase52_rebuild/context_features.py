@@ -9,7 +9,7 @@ from researchos.quant_engine.machine_learning.features import FeatureBuilder
 from researchos.quant_engine.machine_learning.labels import multiclass_label
 
 from .daily_dataset import DailyObservation
-from .feature_contract import Phase52FeatureContract, PRICE_FEATURE_NAMES
+from .feature_contract import FEATURE_SET_NAMES, Phase52FeatureContract, PRICE_FEATURE_NAMES
 from .feature_dataset import FeatureDataset, _selected_macro_columns
 
 
@@ -54,6 +54,8 @@ def build_context_feature_dataset(
 ) -> tuple[FeatureDataset, ContextFeatureAudit]:
     """Build research samples using pre-research context only for feature state."""
     contract = contract or Phase52FeatureContract()
+    if feature_set not in FEATURE_SET_NAMES:
+        raise ValueError(f"unsupported feature set: {feature_set}")
     _validate_boundaries(context_observations, research_observations)
     if len(context_observations) < contract.warmup:
         raise ValueError(
