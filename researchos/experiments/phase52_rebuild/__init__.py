@@ -1,5 +1,7 @@
 """Phase 5.2 rebuild: auditable data ledger, daily data, and features."""
 
+from .context_dataset import load_context_daily_observations
+from .context_features import ContextFeatureAudit, build_context_feature_dataset
 from .daily_dataset import (
     DailyMacroObservation,
     DailyObservation,
@@ -39,4 +41,7 @@ __all__ = [
     "build_all_feature_datasets",
     "WarmupCoverageAudit",
     "audit_warmup_coverage",
+    "load_context_daily_observations",
+    "ContextFeatureAudit",
+    "build_context_feature_dataset",
 ]
