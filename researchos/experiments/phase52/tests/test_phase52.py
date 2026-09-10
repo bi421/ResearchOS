@@ -117,7 +117,9 @@ def test_run_phase52_all_macro_symbols_present_and_used_when_available():
     r = run_phase52(close, high, low, volume, macro, Phase52Config(train_size=400, validation_size=100, step_size=100), timestamps=ts, macro_timestamps=macro_ts)
     assert set(r.macro_symbols_present) == set(MACRO_SYMBOLS)
     assert r.macro_symbols_missing == ()
-    assert r.estimator_feature_name.startswith("macro_")
+    assert r.metadata["feature_set"] == "PRICE + DXY"
+    assert len(r.metadata["selected_feature_indices"]) == 22
+    assert r.metadata["estimator"] == "MultivariateEmpiricalProbabilityEstimator"
 
 
 def test_run_phase52_produces_multiple_folds():
