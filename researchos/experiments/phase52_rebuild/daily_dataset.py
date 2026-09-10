@@ -177,8 +177,8 @@ def load_macro_daily(
     dxy_path: str | Path,
     us10y_path: str | Path,
     vix_path: str | Path,
-) -> DailyMacroObservation | tuple[DailyMacroObservation, ...]:
-    """Return the exact four-way daily intersection as immutable observations."""
+) -> tuple[DailyMacroObservation, ...]:
+    """Return the exact four-way macro daily intersection as immutable observations."""
     dxy = load_dxy_daily(dxy_path)
     us10y = _load_fred_daily(us10y_path, "dgs10", "US10Y")
     vix = _load_fred_daily(vix_path, "vixcls", "VIX")
