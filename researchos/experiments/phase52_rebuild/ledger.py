@@ -19,8 +19,7 @@ EXPECTED_MACRO = ("DXY", "US10Y", "VIX")
 @dataclass(frozen=True)
 class LedgerConfig:
     # Current ResearchOS FeatureBuilder has its longest price lookback at 60
-    # observations (volatility regime). Macro z-score needs 20. The ledger
-    # therefore uses the actual feature contract, not an arbitrary warm-up.
+    # observations (volatility regime). Macro z-score needs 20.
     feature_warmup: int = 60
     label_horizon: int = 5
 
@@ -101,18 +100,45 @@ def _audit(name: str, path: Path, rows_read: int, rows_valid: int, ts: list[str]
 
 
 def _read_xau(path: Path) -> tuple[list[str], SourceAudit]:
+    """Read the canonical raw XAUUSD MT5 export without transforming the source.
+
+    Supported canonical schema:
+    time,open,high,low,close,tick_volume,spread,real_volume
+
+    The older Date/Time/Open/... schema is retained for deterministic unit fixtures
+    and backward compatibility, but the real dataset's canonical lowercase schema
+    is the primary contract.
+    """
     timestamps: list[str] = []
     rows_read = rows_valid = invalid = 0
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
+        fieldnames = {name.strip().lower() for name in (reader.fieldnames or [])}
+        canonical = {"time", "open", "high", "low", "close", "tick_volume", "spread", "real_volume"}
+        legacy = {"date", "time", "open", "high", "low", "close", "volume"}
+        if canonical.issubset(fieldnames):
+            schema = "canonical"
+        elif legacy.issubset(fieldnames):
+            schema = "legacy"
+        else:
+            schema = "unknown"
+
         for row in reader:
             rows_read += 1
             try:
-                date = (row.get("Date") or "").strip().replace(".", "-")
-                time = (row.get("Time") or "00:00:00").strip()
-                ts = _utc_iso(f"{date}T{time}:00" if len(time) == 5 else f"{date}T{time}")
-                for key in ("Open", "High", "Low", "Close", "Volume"):
-                    float(row[key])
+                normalized = {str(k).strip().lower(): v for k, v in row.items() if k is not None}
+                if schema == "canonical":
+                    ts = _utc_iso(normalized["time"])
+                    for key in ("open", "high", "low", "close", "tick_volume", "spread", "real_volume"):
+                        float(normalized[key])
+                elif schema == "legacy":
+                    date = (normalized.get("date") or "").strip().replace(".", "-")
+                    time = (normalized.get("time") or "00:00:00").strip()
+                    ts = _utc_iso(f"{date}T{time}:00" if len(time) == 5 else f"{date}T{time}")
+                    for key in ("open", "high", "low", "close", "volume"):
+                        float(normalized[key])
+                else:
+                    raise ValueError("unsupported XAUUSD CSV schema")
                 timestamps.append(ts)
                 rows_valid += 1
             except (KeyError, TypeError, ValueError, OverflowError):
@@ -128,12 +154,13 @@ def _read_macro(path: Path, name: str) -> tuple[list[str], SourceAudit]:
         for row in reader:
             rows_read += 1
             try:
+                normalized = {str(k).strip().lower(): v for k, v in row.items() if k is not None}
                 if name == "DXY":
-                    raw_ts = row["timestamp"]
-                    float(row["close"])
+                    raw_ts = normalized["timestamp"]
+                    float(normalized["close"])
                 else:
-                    raw_ts = row["observation_date"]
-                    value = row.get("DGS10" if name == "US10Y" else "VIXCLS")
+                    raw_ts = normalized["observation_date"]
+                    value = normalized.get("dgs10" if name == "US10Y" else "vixcls")
                     if value in (None, ".", ""):
                         continue
                     float(value)
@@ -184,8 +211,6 @@ def build_data_ledger(xau_path: str | Path, dxy_path: str | Path, us10y_path: st
             errors.append(f"{audit.name}: invalid rows={audit.invalid_rows}")
         if audit.unsorted_timestamps:
             errors.append(f"{audit.name}: timestamps are not sorted")
-    # XAU source rows may contain duplicate timestamps; accounting is done on
-    # valid source rows, while the common calendar is a unique timestamp set.
     if len(xau) - len(common) != len(xau) - len(common_set):
         errors.append("XAU/common duplicate-aware accounting failed")
     if final != len(usable):
@@ -219,13 +244,10 @@ def write_ledger_report(ledger: Phase52DataLedger, json_path: str | Path, md_pat
     mp.parent.mkdir(parents=True, exist_ok=True)
     jp.write_text(json.dumps(ledger.to_dict(), indent=2), encoding="utf-8")
     lines = [
-        "# Phase 5.2 Rebuild — Data Ledger",
-        "",
+        "# Phase 5.2 Rebuild — Data Ledger", "",
         f"- Ledger invariant: **{'PASS' if ledger.invariant_ok else 'FAIL'}**",
-        f"- XAUUSD rows: **{ledger.xau_rows}**",
-        f"- DXY rows: **{ledger.dxy_rows}**",
-        f"- US10Y rows: **{ledger.us10y_rows}**",
-        f"- VIX rows: **{ledger.vix_rows}**",
+        f"- XAUUSD rows: **{ledger.xau_rows}**", f"- DXY rows: **{ledger.dxy_rows}**",
+        f"- US10Y rows: **{ledger.us10y_rows}**", f"- VIX rows: **{ledger.vix_rows}**",
         f"- Exact four-way calendar intersection: **{ledger.common_rows}**",
         f"- Calendar drop from XAUUSD: **{ledger.xau_minus_common}**",
         f"- Feature warm-up rows: **{ledger.feature_warmup_rows}**",
@@ -234,12 +256,9 @@ def write_ledger_report(ledger: Phase52DataLedger, json_path: str | Path, md_pat
         f"- Final usable rows: **{ledger.final_usable_rows}**",
         f"- Common first/last: `{ledger.common_first}` / `{ledger.common_last}`",
         f"- Final usable first/last: `{ledger.final_usable_first}` / `{ledger.final_usable_last}`",
-        f"- Common timestamp SHA-256: `{ledger.timestamp_hash}`",
-        "",
-        "## Row-loss ledger",
-        "",
-        "`XAU source → exact 4-way calendar → feature warm-up → label horizon → final usable`",
-        "",
+        f"- Common timestamp SHA-256: `{ledger.timestamp_hash}`", "",
+        "## Row-loss ledger", "",
+        "`XAU source → exact 4-way calendar → feature warm-up → label horizon → final usable`", "",
     ]
     if ledger.invariant_errors:
         lines += ["## Invariant errors", ""] + [f"- {e}" for e in ledger.invariant_errors]
