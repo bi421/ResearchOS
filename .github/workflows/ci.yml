@@ -35,7 +35,7 @@ jobs:
           pip install -e .[dev]
           pip install pytest pytest-cov
       - name: Test
-        run: pytest researchos/tests/ -v --cov=researchos --cov-report=xml --cov-report=term
+        run: pytest -v --cov=researchos --cov-report=xml --cov-report=term
 
   quant-engine:
     name: Quant Engine (C++ / nanobind)
@@ -102,4 +102,4 @@ jobs:
           pip install -e .[dev]
           pip install pytest pytest-cov
       - name: Test coverage
-        run: pytest researchos/tests/ --cov=researchos --cov-report=xml --cov-report=term
+        run: pytest --cov=researchos --cov-report=xml --cov-report=term
