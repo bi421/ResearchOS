@@ -63,6 +63,8 @@ def _compare(
     names: tuple[str, ...],
     days: tuple[str, ...],
 ) -> dict[str, object]:
+    if not days:
+        raise AssertionError("initialization comparison has no common research days")
     by_feature: dict[str, dict[str, float | int]] = {}
     top: list[dict[str, object]] = []
     total_abs = 0.0
@@ -98,6 +100,8 @@ def _compare(
                     "absolute_difference": abs_diff,
                     "relative_difference": rel_diff,
                 })
+    if total_count == 0:
+        raise AssertionError("initialization comparison has zero feature values")
     for item in by_feature.values():
         count = int(item["count"])
         item["mean_absolute_difference"] = float(item["sum_absolute_difference"]) / count
@@ -114,8 +118,8 @@ def _compare(
         "affected_day_last": affected[-1] if affected else None,
         "max_absolute_difference": max((float(v["max_absolute_difference"]) for v in by_feature.values()), default=0.0),
         "max_relative_difference": max((float(v["max_relative_difference"]) for v in by_feature.values()), default=0.0),
-        "mean_absolute_difference": total_abs / total_count if total_count else 0.0,
-        "mean_relative_difference": total_rel / total_count if total_count else 0.0,
+        "mean_absolute_difference": total_abs / total_count,
+        "mean_relative_difference": total_rel / total_count,
         "by_feature": dict(sorted(by_feature.items(), key=lambda kv: (-int(kv[1]["count"]), kv[0]))),
         "top_differences": top[:20],
     }
@@ -140,7 +144,15 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError("research dataset days must be unique and chronological")
 
     all_context = load_context_daily_observations(args.context_xau, args.context_dxy, args.us10y, args.vix)
+    context_days = [row.day for row in all_context]
+    if context_days != sorted(context_days) or len(context_days) != len(set(context_days)):
+        raise ValueError("context dataset days must be unique and chronological")
     pre = tuple(obs for obs in all_context if obs.day < research[0].day)
+    if not pre:
+        raise ValueError("no pre-research context observations are available")
+    if pre[-1].day >= research[0].day:
+        raise ValueError("context boundary overlaps research start")
+
     contract = Phase52FeatureContract()
     depths = tuple(sorted({int(x.strip()) for x in args.depths.split(",") if x.strip()}))
     if len(depths) < 2:
@@ -192,6 +204,12 @@ def main(argv: list[str] | None = None) -> int:
             datasets[depth] = dataset
 
         reference = datasets[reference_depth]
+        reference_days = tuple(reference.source_days)
+        if reference_days != tuple(research_days[:-contract.horizon]):
+            raise AssertionError(
+                f"reference emitted research-day set mismatch for {feature_set}: "
+                f"expected {len(research_days[:-contract.horizon])}, got {len(reference_days)}"
+            )
         ref_map = dict(zip(reference.source_days, reference.rows))
         fs: dict[str, object] = {
             "reference_depth": reference_depth,
@@ -201,6 +219,15 @@ def main(argv: list[str] | None = None) -> int:
         }
         for depth in depths:
             ds = datasets[depth]
+            ds_days = tuple(ds.source_days)
+            if ds_days != reference_days:
+                raise AssertionError(
+                    f"context depth {depth} changed the research source-day sample for {feature_set}"
+                )
+            if len(ds.rows) != len(reference.rows):
+                raise AssertionError(
+                    f"context depth {depth} changed emitted row count for {feature_set}"
+                )
             fs["depths"][str(depth)] = {
                 "rows": len(ds.source_days),
                 "first_source_day": ds.source_days[0] if ds.source_days else None,
@@ -210,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
         for depth in depths:
             ds = datasets[depth]
             left_map = dict(zip(ds.source_days, ds.rows))
-            common_days = tuple(d for d in ds.source_days if d in ref_map)
+            common_days = tuple(ds.source_days)
             compared = _compare(
                 tuple(left_map[d] for d in common_days),
                 tuple(ref_map[d] for d in common_days),
