@@ -14,7 +14,7 @@ class BacktestResult:
     sharpe_ratio: float  # Sharpe харьцаа
     max_drawdown: float  # Хамгийн их уналт (жишээ нь -0.25 → -25%)
     win_rate: float  # Ялалтын хувь (0-1)
-    num_trades: int  # Нийт арилжааны тоо
+    num_trades: int  # Нийт хаагдсан арилжааны тоо
     signals: list[Any]  # Дохионууд
 
 
@@ -41,7 +41,8 @@ class BacktestEngine:
 
         capital = self.initial_capital
         position = 0.0
-        trades = []  # (action, price, timestamp, size, net_value)
+        entry_price = 0.0
+        trades = []  # (action, price, timestamp, size, net_value, pnl)
         equity_curve = [capital]  # Хөрөнгийн өөрчлөлтийн график
 
         for signal in signals:
@@ -56,15 +57,19 @@ class BacktestEngine:
                     cost_total = size * cost_per_unit
                     capital -= cost_total
                     position = size
-                    trades.append(("BUY", price, timestamp, size, cost_total))
+                    entry_price = price
+                    trades.append(("BUY", price, timestamp, size, cost_total, 0.0))
 
             elif signal.action == "SELL" and position > 0:
                 # Зарах: шимтгэл + гулсалтыг хасах
                 revenue_per_unit = price * (1 - self.commission - self.slippage)
                 revenue_total = position * revenue_per_unit
+                entry_cost_total = position * entry_price * (1 + self.commission + self.slippage)
+                pnl = revenue_total - entry_cost_total
                 capital += revenue_total
-                trades.append(("SELL", price, timestamp, position, revenue_total))
+                trades.append(("SELL", price, timestamp, position, revenue_total, pnl))
                 position = 0.0
+                entry_price = 0.0
 
             # Хөрөнгийн үнэлгээг (equity) хадгалах
             current_equity = capital + position * price
@@ -74,9 +79,13 @@ class BacktestEngine:
         if position > 0 and prices:
             closing_price = prices[-1]
             revenue_per_unit = closing_price * (1 - self.commission - self.slippage)
-            capital += position * revenue_per_unit
-            trades.append(("CLOSE", closing_price, None, position, position * revenue_per_unit))
+            revenue_total = position * revenue_per_unit
+            entry_cost_total = position * entry_price * (1 + self.commission + self.slippage)
+            pnl = revenue_total - entry_cost_total
+            capital += revenue_total
+            trades.append(("CLOSE", closing_price, None, position, revenue_total, pnl))
             position = 0.0
+            entry_price = 0.0
 
         final_value = capital
         total_return = (final_value - self.initial_capital) / self.initial_capital
@@ -94,24 +103,16 @@ class BacktestEngine:
         drawdown = (peak - equity) / peak
         max_drawdown = -np.max(drawdown) if len(drawdown) > 0 else 0.0
 
-        # 📈 Win rate (зөвхөн BUY-SELL хосууд)
-        buy_trades = [t for t in trades if t[0] == "BUY"]
-        sell_trades = [t for t in trades if t[0] == "SELL"]
-        # Хослох (BUY-ийн дараа SELL, эсвэл эсрэгээр)
-        profit_trades = 0
-        total_pairs = min(len(buy_trades), len(sell_trades))
-        for i in range(total_pairs):
-            buy_price = buy_trades[i][1]
-            sell_price = sell_trades[i][1] if i < len(sell_trades) else prices[-1]
-            if sell_price > buy_price:
-                profit_trades += 1
-        win_rate = profit_trades / total_pairs if total_pairs > 0 else 0.0
+        # 📈 Win rate — зөвхөн хаагдсан трейдүүд (SELL эсвэл CLOSE), net pnl-ээр тооцно
+        closed_trades = [t for t in trades if t[0] in ("SELL", "CLOSE")]
+        winning_trades = [t for t in closed_trades if t[5] > 0]
+        win_rate = len(winning_trades) / len(closed_trades) if closed_trades else 0.0
 
         return BacktestResult(
             total_return=total_return,
             sharpe_ratio=sharpe,
             max_drawdown=max_drawdown,
             win_rate=win_rate,
-            num_trades=total_pairs,
+            num_trades=len(closed_trades),
             signals=signals,
         )
