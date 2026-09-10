@@ -60,19 +60,27 @@ def _load_dukascopy_xau_daily(path: Path) -> dict[str, dict[str, float]]:
 
 
 def _load_dukascopy_daily(path: Path) -> dict[str, dict[str, float]]:
+    """Load one-row-per-day Dukascopy OHLC data; volume is optional."""
     out: dict[str, dict[str, float]] = {}
     with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
-        required = {"timestamp", "open", "high", "low", "close", "volume"}
+        required = {"timestamp", "open", "high", "low", "close"}
         fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
         if not required.issubset(fields):
             raise ValueError(f"unexpected Dukascopy schema: {sorted(fields)}")
+        has_volume = "volume" in fields
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             day = _utc_day(str(row["timestamp"]))
             if day in out:
                 raise ValueError(f"duplicate Dukascopy calendar day: {day}")
-            out[day] = {k: float(row[k]) for k in ("open", "high", "low", "close", "volume")}
+            out[day] = {
+                "open": float(row["open"]),
+                "high": float(row["high"]),
+                "low": float(row["low"]),
+                "close": float(row["close"]),
+                "volume": float(row["volume"]) if has_volume and row.get("volume") not in (None, "") else 0.0,
+            }
     return out
 
 
