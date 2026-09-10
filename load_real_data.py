@@ -1,6 +1,6 @@
 """Strict real-data loader used by legacy analysis entry points.
 
-This module is deliberately fail-closed.  Missing market data, synthetic
+This module is deliberately fail-closed. Missing market data, synthetic
 fallbacks, random macro factors, and forward-filled macro observations are
 not acceptable inputs to ResearchOS evidence.
 """
@@ -38,18 +38,34 @@ def _value_column(df: pd.DataFrame, path: Path) -> str:
     raise ValueError(f"no supported scalar/close column in {path}")
 
 
+def _parse_utc_dates(values: pd.Series, path: Path) -> pd.Series:
+    """Parse ISO dates or Unix epoch seconds/milliseconds without ambiguity."""
+    numeric = pd.to_numeric(values, errors="coerce")
+    numeric_fraction = numeric.notna().mean()
+    if numeric_fraction == 1.0:
+        magnitude = numeric.abs().median()
+        if magnitude >= 1e11:
+            return pd.to_datetime(numeric, unit="ms", utc=True, errors="raise").dt.normalize()
+        if magnitude >= 1e9:
+            return pd.to_datetime(numeric, unit="s", utc=True, errors="raise").dt.normalize()
+        raise ValueError(f"unsupported numeric timestamp scale in {path}")
+    if numeric_fraction > 0:
+        raise ValueError(f"mixed numeric/non-numeric timestamps in {path}")
+    return pd.to_datetime(values, utc=True, errors="raise").dt.normalize()
+
+
 def _normalise_daily_scalar(path: Path, output_name: str) -> pd.DataFrame:
     df = _read_table(path)
     date_col = _date_column(df, path)
     value_col = _value_column(df, path)
     out = df[[date_col, value_col]].copy()
-    out["date"] = pd.to_datetime(out[date_col], utc=True, errors="raise").dt.normalize()
+    out["date"] = _parse_utc_dates(out[date_col], path)
     out[output_name] = pd.to_numeric(out[value_col], errors="raise")
     out = out[["date", output_name]]
     if out["date"].duplicated().any():
         raise ValueError(f"duplicate daily observations in {path}")
-    if not out[output_name].map(pd.api.types.is_number).all():
-        raise ValueError(f"non-numeric values in {path}")
+    if not out[output_name].notna().all():
+        raise ValueError(f"missing numeric values in {path}")
     return out
 
 
@@ -60,7 +76,7 @@ def load_and_merge_real_data(
     """Load real XAUUSD and macro data with exact daily inner alignment.
 
     No synthetic fallback, random data, interpolation, or forward-fill is
-    performed.  Missing sources or duplicate dates fail immediately.
+    performed. Missing sources or duplicate dates fail immediately.
     """
     macro_paths = macro_paths or DEFAULT_MACRO_PATHS
     required = {"dxy", "us10y", "vix"}
@@ -75,11 +91,13 @@ def load_and_merge_real_data(
         raise ValueError(f"XAUUSD source missing columns: {sorted(missing)}")
 
     xau = xau.copy()
-    xau["date"] = pd.to_datetime(xau[date_col], utc=True, errors="raise").dt.normalize()
+    xau["date"] = _parse_utc_dates(xau[date_col], xauusd_path)
     if xau["date"].duplicated().any():
         raise ValueError(f"duplicate daily XAUUSD observations in {xauusd_path}")
     for column in ("open", "high", "low", "close"):
         xau[column] = pd.to_numeric(xau[column], errors="raise")
+        if not xau[column].notna().all() or (xau[column] <= 0).any():
+            raise ValueError(f"invalid {column} values in {xauusd_path}")
     xau = xau[["date", "open", "high", "low", "close"]]
 
     merged = xau
@@ -92,13 +110,13 @@ def load_and_merge_real_data(
     if merged["date"].duplicated().any():
         raise ValueError("merged real-data intersection contains duplicate dates")
 
-    print(f"✅ Real aligned data: {len(merged)} rows")
-    print(f"   First day: {merged['date'].iloc[0].date()}")
-    print(f"   Last day : {merged['date'].iloc[-1].date()}")
+    print(f"Real aligned data: {len(merged)} rows")
+    print(f"First day: {merged['date'].iloc[0].date()}")
+    print(f"Last day : {merged['date'].iloc[-1].date()}")
     return merged
 
 
 if __name__ == "__main__":
     real_df = load_and_merge_real_data()
-    print("\n📊 Эхний 5 мөр:")
+    print("\nFirst 5 rows:")
     print(real_df.head())
