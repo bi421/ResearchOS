@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 MIN_SAMPLES = 10
+REQUIRED_CONTRACT = {"asset": "XAUUSD", "timeframe": "M1", "label": "hit_threshold_1d"}
 
 
 def _time(value: str) -> datetime:
@@ -108,7 +109,7 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
     result_contract = result.get("contract", {})
     if source_contract != result_contract:
         raise ValueError("Source and result contracts differ")
-    if source_contract != {"asset": "XAUUSD", "timeframe": "M1", "label": "hit_threshold_1d"}:
+    if any(source_contract.get(key) != value for key, value in REQUIRED_CONTRACT.items()):
         raise ValueError("Unexpected XAUUSD M1 contract")
     if result.get("source_artifact", {}).get("sha256") != hashlib.sha256(source_raw).hexdigest():
         raise ValueError("Result source artifact SHA-256 does not match supplied source")
