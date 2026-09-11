@@ -3,6 +3,7 @@
 This module only parses and aligns downloaded context sources. Scientific source
 acceptance remains a separate gate and is never implied by successful parsing.
 """
+
 from __future__ import annotations
 
 import csv
@@ -17,9 +18,10 @@ def _dukascopy_xau_daily(path: str | Path) -> dict[str, dict[str, float]]:
     with Path(path).open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
-        required = {"timestamp", "open", "high", "low", "close", "volume"}
+        required = {"timestamp", "open", "high", "low", "close"}
         if not required.issubset(fields):
-            raise ValueError("Dukascopy XAU context must contain timestamp, OHLC, and volume columns")
+            raise ValueError("Dukascopy XAU context must contain timestamp and OHLC columns")
+        has_volume = "volume" in fields
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             ts = _utc_iso(str(row["timestamp"]))
@@ -39,7 +41,7 @@ def _dukascopy_xau_daily(path: str | Path) -> dict[str, dict[str, float]]:
                     "high": high,
                     "low": low,
                     "close": close,
-                    "volume": _float(row, "volume"),
+                    "volume": _float(row, "volume") if has_volume else 0.0,
                 }
             )
 
