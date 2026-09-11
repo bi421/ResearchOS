@@ -42,9 +42,7 @@ def test_context_initializes_features_without_being_emitted() -> None:
     context = tuple(_obs(i, 100.0 + i * 0.1) for i in range(60))
     research = tuple(_obs(60 + i, 106.0 + i * 0.2) for i in range(10))
 
-    dataset, audit = build_context_feature_dataset(
-        context, research, "PRICE_ONLY", _contract()
-    )
+    dataset, audit = build_context_feature_dataset(context, research, "PRICE_ONLY", _contract())
 
     assert audit.invariant_ok
     assert audit.context_rows == 60
@@ -61,12 +59,8 @@ def test_feature_causality_is_prefix_stable() -> None:
     research = tuple(_obs(60 + i, 106.0 + i * 0.2) for i in range(10))
     changed = research[:2] + (_obs(62, 999.0),) + research[3:]
 
-    first, _ = build_context_feature_dataset(
-        context, research, "PRICE_ONLY", _contract()
-    )
-    second, _ = build_context_feature_dataset(
-        context, changed, "PRICE_ONLY", _contract()
-    )
+    first, _ = build_context_feature_dataset(context, research, "PRICE_ONLY", _contract())
+    second, _ = build_context_feature_dataset(context, changed, "PRICE_ONLY", _contract())
 
     # Research row index 0 (day 60) and 1 (day 61) precede the mutation at
     # day 62, so their feature vectors must be byte-for-byte equivalent.
@@ -80,15 +74,11 @@ def test_feature_causality_is_prefix_stable() -> None:
 def test_future_research_changes_only_affected_label_boundary() -> None:
     """A future close may change only labels whose horizon reaches that close."""
     context = tuple(_obs(i, 100.0 + i * 0.1) for i in range(60))
-    research = tuple(_obs(60 + i, 106.0 + i * 0.2) for i in range(10))
+    research = tuple(_obs(60 + i, 107.0 - i * 0.1) for i in range(10))
     changed = research[:-1] + (_obs(69, 999.0),)
 
-    first, _ = build_context_feature_dataset(
-        context, research, "PRICE_ONLY", _contract()
-    )
-    second, _ = build_context_feature_dataset(
-        context, changed, "PRICE_ONLY", _contract()
-    )
+    first, _ = build_context_feature_dataset(context, research, "PRICE_ONLY", _contract())
+    second, _ = build_context_feature_dataset(context, changed, "PRICE_ONLY", _contract())
 
     # The changed close is day 69. With horizon=5, only the emitted sample at
     # day 64 (the fifth emitted row) can have a label reaching day 69. Earlier
