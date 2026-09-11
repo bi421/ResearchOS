@@ -21,10 +21,19 @@ def _time(value: str) -> datetime:
 
 
 def _pava(rows: list[tuple[float, int]]) -> tuple[tuple[float, float], ...]:
+    """Match the production isotonic fit, including duplicate-x aggregation."""
     ordered = sorted(rows, key=lambda item: (item[0], item[1]))
-    blocks: list[list[float | int]] = []
+    grouped: list[list[float | int]] = []
     for x, y in ordered:
-        blocks.append([x, y, 1, y])
+        if grouped and float(grouped[-1][0]) == float(x):
+            grouped[-1][1] = int(grouped[-1][1]) + 1
+            grouped[-1][2] = int(grouped[-1][2]) + int(y)
+        else:
+            grouped.append([float(x), 1, int(y)])
+
+    blocks: list[list[float | int]] = []
+    for x, count, positives in grouped:
+        blocks.append([x, float(positives) / int(count), int(count), int(positives)])
         while len(blocks) >= 2:
             a, b = blocks[-2], blocks[-1]
             if float(a[3]) / int(a[2]) <= float(b[3]) / int(b[2]):
@@ -80,11 +89,7 @@ def _source_rows(source: dict) -> dict[str, dict]:
         realized_end = _time(endpoint)
         if realized_end <= timestamp:
             raise ValueError(f"Invalid realized_end: {event_id}")
-        rows[event_id] = {
-            "timestamp": timestamp,
-            "realized_end": realized_end,
-            "label": int(label),
-        }
+        rows[event_id] = {"timestamp": timestamp, "realized_end": realized_end, "label": int(label)}
     return rows
 
 
@@ -133,13 +138,7 @@ def audit(source_path: Path, result_path: Path, calibration_path: Path) -> dict:
             if prediction_time != source_row["timestamp"] or int(prediction.get("label", -1)) != source_row["label"]:
                 failures.append(f"prediction/source mismatch: {event_id}")
                 continue
-            predictions.append({
-                "event_id": event_id,
-                "timestamp": prediction_time,
-                "probability": float(probability),
-                "label": source_row["label"],
-                "realized_end": source_row["realized_end"],
-            })
+            predictions.append({"event_id": event_id, "timestamp": prediction_time, "probability": float(probability), "label": source_row["label"], "realized_end": source_row["realized_end"]})
             seen.add(event_id)
     predictions.sort(key=lambda row: (row["timestamp"], row["event_id"]))
 
@@ -153,10 +152,7 @@ def audit(source_path: Path, result_path: Path, calibration_path: Path) -> dict:
     if metadata.get("total_oos_predictions") != len(predictions):
         failures.append("total OOS prediction count mismatch")
 
-    completion_order = sorted(
-        range(len(predictions)),
-        key=lambda index: (predictions[index]["realized_end"], predictions[index]["event_id"]),
-    )
+    completion_order = sorted(range(len(predictions)), key=lambda index: (predictions[index]["realized_end"], predictions[index]["event_id"]))
     completion_cursor = 0
     eligible_indices: list[int] = []
     expected: list[dict] = []
@@ -173,10 +169,11 @@ def audit(source_path: Path, result_path: Path, calibration_path: Path) -> dict:
 
     for row in predictions:
         while completion_cursor < len(completion_order):
-            completed = predictions[completion_order[completion_cursor]]
+            completed_index = completion_order[completion_cursor]
+            completed = predictions[completed_index]
             if completed["realized_end"] >= row["timestamp"]:
                 break
-            eligible_indices.append(completion_order[completion_cursor])
+            eligible_indices.append(completed_index)
             completion_cursor += 1
 
         prior = [predictions[index] for index in eligible_indices]
@@ -192,28 +189,13 @@ def audit(source_path: Path, result_path: Path, calibration_path: Path) -> dict:
             refit_count += 1
             fit_id += 1
             fit_cutoff_timestamp = row["timestamp"]
-            fit_summaries.append({
-                "fit_id": fit_id,
-                "fit_cutoff_timestamp": row["timestamp"].isoformat(),
-                "training_event_count": len(prior),
-                "training_positive_count": sum(item["label"] for item in prior),
-                "training_negative_count": sum(1 - item["label"] for item in prior),
-            })
+            fit_summaries.append({"fit_id": fit_id, "fit_cutoff_timestamp": row["timestamp"].isoformat(), "training_event_count": len(prior), "training_positive_count": sum(item["label"] for item in prior), "training_negative_count": sum(1 - item["label"] for item in prior)})
 
         calibrated = _predict(breakpoints, row["probability"])
         raw_scores.append(row["probability"])
         calibrated_scores.append(calibrated)
         labels.append(row["label"])
-        expected.append({
-            "event_id": row["event_id"],
-            "timestamp": row["timestamp"].isoformat(),
-            "raw_probability": round(row["probability"], 12),
-            "calibrated_probability": round(calibrated, 12),
-            "label": row["label"],
-            "calibration_fit_id": fit_id,
-            "calibration_fit_cutoff_timestamp": fit_cutoff_timestamp.isoformat() if fit_cutoff_timestamp else None,
-            "calibration_training_event_count": len(prior),
-        })
+        expected.append({"event_id": row["event_id"], "timestamp": row["timestamp"].isoformat(), "raw_probability": round(row["probability"], 12), "calibrated_probability": round(calibrated, 12), "label": row["label"], "calibration_fit_id": fit_id, "calibration_fit_cutoff_timestamp": fit_cutoff_timestamp.isoformat() if fit_cutoff_timestamp else None, "calibration_training_event_count": len(prior)})
 
     if calibration.get("predictions") != expected:
         failures.append("calibration predictions differ from independent reconstruction")
@@ -231,20 +213,12 @@ def audit(source_path: Path, result_path: Path, calibration_path: Path) -> dict:
         failures.append("refit count mismatch")
     if metadata.get("fit_summaries") != fit_summaries:
         failures.append("fit summaries differ from independent reconstruction")
-
     for record in calibration.get("predictions", []):
         probability = record.get("calibrated_probability")
         if not isinstance(probability, (int, float)) or not math.isfinite(float(probability)) or not 0.0 <= float(probability) <= 1.0:
             failures.append(f"invalid calibrated probability: {record.get('event_id')}")
 
-    return {
-        "status": "PASS" if not failures else "FAIL",
-        "stage": "M1_OOS_ISOTONIC_CALIBRATION_INDEPENDENT_AUDIT",
-        "source_sha256": source_sha,
-        "result_sha256": result_sha,
-        "calibration_sha256": hashlib.sha256(calibration_raw).hexdigest(),
-        "failures": failures,
-    }
+    return {"status": "PASS" if not failures else "FAIL", "stage": "M1_OOS_ISOTONIC_CALIBRATION_INDEPENDENT_AUDIT", "source_sha256": source_sha, "result_sha256": result_sha, "calibration_sha256": hashlib.sha256(calibration_raw).hexdigest(), "failures": failures}
 
 
 def main() -> int:
