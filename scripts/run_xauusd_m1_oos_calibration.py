@@ -151,6 +151,7 @@ def run(
                 "timestamp": source_row["timestamp"],
                 "probability": p,
                 "label": source_row["label"],
+                "realized_end": source_row["realized_end"],
             })
             seen.add(event_id)
 
@@ -158,22 +159,42 @@ def run(
     if len(predictions) < MIN_SAMPLES + 1:
         raise ValueError("At least 11 OOS predictions are required for leakage-safe calibration")
 
+    # Build the causal eligibility stream once.  For a prediction at time T,
+    # an earlier OOS outcome is eligible exactly when realized_end < T.  Because
+    # every realized_end is strictly after its own event timestamp, this also
+    # guarantees timestamp < T.  Maintaining this stream avoids rebuilding a
+    # full `prior` list for every validation row.
+    completion_order = sorted(
+        range(len(predictions)),
+        key=lambda index: (predictions[index]["realized_end"], predictions[index]["event_id"]),
+    )
+    completion_cursor = 0
+    eligible_indices: list[int] = []
+
     calibrated: list[float] = []
     raw_eligible: list[float] = []
     labels: list[int] = []
     records: list[dict] = []
+    fit_summaries: list[dict] = []
     warmup_count = 0
     refit_count = 0
     last_fit_eligible_count = -1
     breakpoints: tuple[tuple[float, float], ...] | None = None
-    training_event_ids: tuple[str, ...] = ()
+    fit_id = 0
+    fit_cutoff_timestamp: datetime | None = None
 
     for index, row in enumerate(predictions):
-        prior = [
-            item for item in predictions[:index]
-            if item["timestamp"] < row["timestamp"]
-            and source_rows[item["event_id"]]["realized_end"] < row["timestamp"]
-        ]
+        while completion_cursor < len(completion_order):
+            completed_index = completion_order[completion_cursor]
+            completed = predictions[completed_index]
+            if completed["realized_end"] >= row["timestamp"]:
+                break
+            eligible_indices.append(completed_index)
+            completion_cursor += 1
+
+        # The current row cannot be eligible because realized_end > timestamp,
+        # and the strict endpoint rule is enforced above.
+        prior = [predictions[item] for item in eligible_indices]
         classes = {item["label"] for item in prior}
         if len(prior) < MIN_SAMPLES or classes != {0, 1}:
             warmup_count += 1
@@ -182,9 +203,17 @@ def run(
         should_refit = breakpoints is None or len(prior) - last_fit_eligible_count >= refit_interval
         if should_refit:
             breakpoints = _pava([(item["probability"], item["label"]) for item in prior])
-            training_event_ids = tuple(item["event_id"] for item in prior)
             last_fit_eligible_count = len(prior)
             refit_count += 1
+            fit_id += 1
+            fit_cutoff_timestamp = row["timestamp"]
+            fit_summaries.append({
+                "fit_id": fit_id,
+                "fit_cutoff_timestamp": row["timestamp"].isoformat(),
+                "training_event_count": len(prior),
+                "training_positive_count": sum(item["label"] for item in prior),
+                "training_negative_count": sum(1 - item["label"] for item in prior),
+            })
 
         calibrated_probability = _predict(breakpoints, row["probability"])
         raw_eligible.append(row["probability"])
@@ -196,7 +225,9 @@ def run(
             "raw_probability": round(row["probability"], 12),
             "calibrated_probability": round(calibrated_probability, 12),
             "label": row["label"],
-            "calibration_training_event_ids": list(training_event_ids),
+            "calibration_fit_id": fit_id,
+            "calibration_fit_cutoff_timestamp": fit_cutoff_timestamp.isoformat() if fit_cutoff_timestamp else None,
+            "calibration_training_event_count": len(prior),
         })
 
     if len(records) < 1:
@@ -220,6 +251,7 @@ def run(
             "eligible_oos_predictions": len(records),
             "warmup_excluded_predictions": warmup_count,
             "refit_count": refit_count,
+            "fit_summaries": fit_summaries,
         },
         "raw_score": _score(raw_eligible, labels),
         "calibrated_score": _score(calibrated, labels),
