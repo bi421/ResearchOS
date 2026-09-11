@@ -535,7 +535,7 @@ class TestDependencyAudit(unittest.TestCase):
 
     def _module_sources(self):
         base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        pkg = os.path.join(base, "pipeline_repository")
+        pkg = os.path.join(base, "researchos", "pipeline_repository")
         for name in ("__init__.py", "contracts.py", "repository.py"):
             path = os.path.join(pkg, name)
             with open(path, encoding="utf-8") as handle:
@@ -566,6 +566,7 @@ class TestDependencyAudit(unittest.TestCase):
             "typing",
             "dataclasses",
             "types",
+            "collections",
             "researchos",
         }
         import re
