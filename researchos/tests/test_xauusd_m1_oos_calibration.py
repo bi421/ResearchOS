@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.run_xauusd_m1_oos_calibration import run
+from scripts.run_xauusd_m1_oos_calibration import _pava, run
 
 
 def _fixture(tmp_path: Path) -> tuple[Path, Path]:
@@ -54,6 +54,13 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path]:
     return source_path, result_path
 
 
+def test_pava_returns_monotone_block_rates() -> None:
+    breakpoints = _pava([(0.1, 1), (0.2, 0), (0.3, 0), (0.4, 1)])
+    values = [value for _, value in breakpoints]
+    assert values == sorted(values)
+    assert all(0.0 <= value <= 1.0 for value in values)
+
+
 def test_oos_calibration_uses_prior_realized_outcomes_only(tmp_path: Path) -> None:
     source, result = _fixture(tmp_path)
     output = run(source, result, tmp_path / "calibrated.json")
@@ -62,12 +69,14 @@ def test_oos_calibration_uses_prior_realized_outcomes_only(tmp_path: Path) -> No
     assert output["calibration"]["warmup_excluded_predictions"] == 10
     assert output["calibration"]["eligible_oos_predictions"] == 2
     assert output["raw_score"]["sample_count"] == output["calibrated_score"]["sample_count"] == 2
-    assert set(output["predictions"][0]["calibration_training_event_ids"]) == {
-        f"e{i}" for i in range(1, 11)
-    }
-    assert set(output["predictions"][1]["calibration_training_event_ids"]) == {
-        f"e{i}" for i in range(1, 12)
-    }
+    assert output["calibration"]["refit_count"] == 1
+    assert len(output["calibration"]["fit_summaries"]) == 1
+    assert output["calibration"]["fit_summaries"][0]["training_event_count"] == 10
+    assert output["predictions"][0]["calibration_fit_id"] == 1
+    assert output["predictions"][0]["calibration_training_event_count"] == 10
+    assert output["predictions"][1]["calibration_fit_id"] == 1
+    assert output["predictions"][1]["calibration_training_event_count"] == 11
+    assert "calibration_training_event_ids" not in output["predictions"][0]
 
 
 def test_oos_calibration_fails_without_both_prior_classes(tmp_path: Path) -> None:
