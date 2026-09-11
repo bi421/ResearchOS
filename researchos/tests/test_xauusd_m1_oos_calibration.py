@@ -61,6 +61,12 @@ def test_pava_returns_monotone_block_rates() -> None:
     assert all(0.0 <= value <= 1.0 for value in values)
 
 
+def test_pava_aggregates_duplicate_probabilities() -> None:
+    breakpoints = _pava([(0.5, 0), (0.5, 1), (0.5, 1), (0.6, 1)])
+    assert breakpoints[0] == (0.5, round(2 / 3, 12))
+    assert all(x != 0.5 for x, _ in breakpoints[1:])
+
+
 def test_oos_calibration_uses_prior_realized_outcomes_only(tmp_path: Path) -> None:
     source, result = _fixture(tmp_path)
     output = run(source, result, tmp_path / "calibrated.json")
