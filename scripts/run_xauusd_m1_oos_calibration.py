@@ -3,6 +3,10 @@
 This stage is deliberately separate from the in-sample ProbabilityCalibrator.
 Each validation prediction is calibrated only from earlier OOS predictions whose
 realized outcome endpoint is strictly before the prediction timestamp.
+
+Calibration is fit with a causal expanding window and periodic refits. Reusing a
+mapping between refits is safe because the mapping was fitted only from outcomes
+that were already realized before the fit timestamp.
 """
 from __future__ import annotations
 
@@ -15,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 MIN_SAMPLES = 10
+REFIT_INTERVAL = 250
 REQUIRED_CONTRACT = {"asset": "XAUUSD", "timeframe": "M1", "label": "hit_threshold_1d"}
 
 
@@ -98,7 +103,14 @@ def _source_rows(source: dict) -> dict[str, dict]:
     return rows
 
 
-def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
+def run(
+    source_path: Path,
+    result_path: Path,
+    output_path: Path,
+    refit_interval: int = REFIT_INTERVAL,
+) -> dict:
+    if refit_interval < 1:
+        raise ValueError("refit_interval must be >= 1")
     source_raw = source_path.read_bytes()
     result_raw = result_path.read_bytes()
     source = json.loads(source_raw.decode("utf-8"))
@@ -151,6 +163,11 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
     labels: list[int] = []
     records: list[dict] = []
     warmup_count = 0
+    refit_count = 0
+    last_fit_eligible_count = -1
+    breakpoints: tuple[tuple[float, float], ...] | None = None
+    training_event_ids: tuple[str, ...] = ()
+
     for index, row in enumerate(predictions):
         prior = [
             item for item in predictions[:index]
@@ -161,7 +178,14 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
         if len(prior) < MIN_SAMPLES or classes != {0, 1}:
             warmup_count += 1
             continue
-        breakpoints = _pava([(item["probability"], item["label"]) for item in prior])
+
+        should_refit = breakpoints is None or len(prior) - last_fit_eligible_count >= refit_interval
+        if should_refit:
+            breakpoints = _pava([(item["probability"], item["label"]) for item in prior])
+            training_event_ids = tuple(item["event_id"] for item in prior)
+            last_fit_eligible_count = len(prior)
+            refit_count += 1
+
         calibrated_probability = _predict(breakpoints, row["probability"])
         raw_eligible.append(row["probability"])
         calibrated.append(calibrated_probability)
@@ -172,7 +196,7 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
             "raw_probability": round(row["probability"], 12),
             "calibrated_probability": round(calibrated_probability, 12),
             "label": row["label"],
-            "calibration_training_event_ids": [item["event_id"] for item in prior],
+            "calibration_training_event_ids": list(training_event_ids),
         })
 
     if len(records) < 1:
@@ -187,12 +211,15 @@ def run(source_path: Path, result_path: Path, output_path: Path) -> dict:
         "calibration": {
             "method": "isotonic_pava",
             "minimum_prior_samples": MIN_SAMPLES,
+            "refit_interval": refit_interval,
+            "refit_policy": "causal_expanding_window_periodic_refit",
             "fit_uses_current_validation_label": False,
             "fit_uses_future_outcomes": False,
-            "temporal_rule": "training realized_end < current validation timestamp",
+            "temporal_rule": "training realized_end < calibration fit/current validation timestamp",
             "total_oos_predictions": len(predictions),
             "eligible_oos_predictions": len(records),
             "warmup_excluded_predictions": warmup_count,
+            "refit_count": refit_count,
         },
         "raw_score": _score(raw_eligible, labels),
         "calibrated_score": _score(calibrated, labels),
@@ -208,11 +235,13 @@ def main() -> int:
     parser.add_argument("source", type=Path)
     parser.add_argument("result", type=Path)
     parser.add_argument("--output", type=Path, default=Path("artifacts/xauusd_m1_oos_calibration.json"))
+    parser.add_argument("--refit-interval", type=int, default=REFIT_INTERVAL)
     args = parser.parse_args()
-    output = run(args.source, args.result, args.output)
+    output = run(args.source, args.result, args.output, args.refit_interval)
     print(f"OOS samples: {len(output['predictions'])}")
     print(f"Raw Brier: {output['raw_score']['brier_score']}")
     print(f"Calibrated Brier: {output['calibrated_score']['brier_score']}")
+    print(f"Refits: {output['calibration']['refit_count']}")
     print(f"Artifact: {args.output}")
     return 0
 
