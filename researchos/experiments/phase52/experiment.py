@@ -84,8 +84,15 @@ def _evaluate_model(
     preds: list[int] = []
     probs: list[dict[int, float]] = []
     for row in val_features:
-        preds.append(est.predict_class(row))
-        probs.append(est.predict_proba(row))
+        row_probs = est.predict_proba(row)
+        probs.append(row_probs)
+        best = 1
+        best_prob = -1.0
+        for cls in (1, 0, -1):
+            if row_probs[cls] > best_prob:
+                best_prob = row_probs[cls]
+                best = cls
+        preds.append(best)
     acc = (
         sum(1 for p, a in zip(preds, val_labels) if int(p) == int(a)) / len(val_labels)
         if val_labels
