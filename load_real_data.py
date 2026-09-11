@@ -51,7 +51,11 @@ def _parse_utc_dates(values: pd.Series, path: Path) -> pd.Series:
         raise ValueError(f"unsupported numeric timestamp scale in {path}")
     if numeric_fraction > 0:
         raise ValueError(f"mixed numeric/non-numeric timestamps in {path}")
-    return pd.to_datetime(values, utc=True, errors="raise").dt.normalize()
+    # Pandas 2.x format inference can infer the first element's exact format
+    # and then reject a valid date-only value later in the same ISO series.
+    # `format='mixed'` preserves strict parsing while allowing valid ISO-8601
+    # representations (for example, offset datetime + date-only) to coexist.
+    return pd.to_datetime(values, format="mixed", utc=True, errors="raise").dt.normalize()
 
 
 def _normalise_daily_scalar(path: Path, output_name: str) -> pd.DataFrame:
