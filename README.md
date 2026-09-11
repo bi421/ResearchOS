@@ -131,6 +131,17 @@ ResearchOS/
 └── pyproject.toml
 ```
 
+## Repository Hygiene
+
+- Canonical runtime code belongs under `researchos/`.
+- Reproducible operational entry points belong under `scripts/`.
+- Automated tests belong under the relevant `researchos/*/tests/` package.
+- Historical reports and completed audit material belong under `docs/archive/`.
+- One-off exploratory, repair, manual-test, and scratch scripts must not be added to the repository root.
+- Credentials and API keys must never be committed; use environment variables or local secret configuration.
+
+See `docs/architecture/hardening/CLEANUP_PLAN.md` for the staged architecture cleanup plan.
+
 ## Running Tests
 
 ```bash
