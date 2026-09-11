@@ -65,8 +65,11 @@ def test_non_futures_not_flagged(ok):
 
 
 def test_gc_f_rejected_as_xauusd():
-    with pytest.raises(DataIdentityError, match="COMEX gold FUTURES"):
+    with pytest.raises(DataIdentityError) as exc_info:
         assert_xauusd_identity("XAUUSD", "GC=F")
+
+    assert exc_info.value.offending_ticker == "GC=F"
+    assert exc_info.value.declared_symbol == "XAUUSD"
 
 
 def test_gc1_rejected_as_xauusd():

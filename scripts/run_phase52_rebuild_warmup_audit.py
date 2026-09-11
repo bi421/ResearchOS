@@ -23,10 +23,6 @@ def main() -> int:
     xau_days = {bar.day for bar in load_daily_xau_from_m1(XAU)}
     dxy_days = set(load_dxy_daily(DXY))
     macro = load_macro_daily(DXY, US10Y, VIX)
-    us10y_days = set()
-    vix_days = set()
-    # load_macro_daily only returns the exact DXY/US10Y/VIX intersection;
-    # use the source loaders below so the audit reports each source boundary.
     from researchos.experiments.phase52_rebuild.daily_dataset import _load_fred_daily
 
     us10y_days = set(_load_fred_daily(US10Y, "dgs10", "US10Y"))

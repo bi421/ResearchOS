@@ -59,7 +59,10 @@ def returns_feature(prices) -> list[float]:
     prices = list(prices)
     if len(prices) < 2:
         return []
-    return [(prices[i] - prices[i - 1]) / prices[i - 1] if prices[i - 1] != 0 else 0.0 for i in range(1, len(prices))]
+    return [
+        (prices[i] - prices[i - 1]) / prices[i - 1] if prices[i - 1] != 0 else 0.0
+        for i in range(1, len(prices))
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +205,9 @@ def atr_feature(high, low, close, period: int = 14) -> list[float | None]:
     return _rolling_apply(tr, period, _mean)
 
 
-def bollinger_feature(prices, period: int = 20, std_factor: float = 2.0) -> dict[str, list[float | None]]:
+def bollinger_feature(
+    prices, period: int = 20, std_factor: float = 2.0
+) -> dict[str, list[float | None]]:
     prices = list(prices)
     mid = rolling_mean(prices, period)
     std = rolling_std(prices, period)
@@ -225,7 +230,9 @@ def bollinger_feature(prices, period: int = 20, std_factor: float = 2.0) -> dict
     }
 
 
-def stochastic_feature(high, low, close, period: int = 14, smooth: int = 3) -> dict[str, list[float | None]]:
+def stochastic_feature(
+    high, low, close, period: int = 14, smooth: int = 3
+) -> dict[str, list[float | None]]:
     high, low, close = list(high), list(low), list(close)
     n = len(close)
     k: list[float | None] = [None] * n
@@ -429,6 +436,7 @@ class FeatureBuilder:
     low: list[float]
     volume: list[float]
     labels: list[float] | None = None
+    vwap_values: list[float | None] | None = None
 
     def build(self, drop_na: bool = False) -> FeatureSet:
         close, high, low, volume = self.close, self.high, self.low, self.volume
@@ -456,7 +464,12 @@ class FeatureBuilder:
 
         columns["cci_20"] = cci_feature(high, low, close, 20)
         columns["mfi_14"] = mfi_feature(high, low, close, volume, 14)
-        columns["vwap"] = vwap_feature(high, low, close, volume)
+        if self.vwap_values is not None:
+            if len(self.vwap_values) != n:
+                raise ValueError("vwap_values length must match observations")
+            columns["vwap"] = list(self.vwap_values)
+        else:
+            columns["vwap"] = vwap_feature(high, low, close, volume)
         columns["hist_vol_20"] = historical_volatility(close, 20)
         columns["vol_ratio"] = volatility_ratio(close, 10, 30)
         columns["trend_state"] = trend_state(close, 20, 50)

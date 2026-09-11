@@ -8,6 +8,7 @@ external ML library is used.
 """
 from __future__ import annotations
 
+from heapq import nsmallest
 from collections.abc import Sequence
 
 
@@ -55,7 +56,10 @@ class MultivariateEmpiricalProbabilityEstimator:
         return self
 
     def _normalize(self, row: Sequence[float]) -> tuple[float, ...]:
-        return tuple((float(row[j]) - self._mins[j]) / self._spans[j] for j in range(len(self.feature_indices)))
+        return tuple(
+            (float(row[j]) - self._mins[j]) / self._spans[j]
+            for j in range(len(self.feature_indices))
+        )
 
     def _nearest_indices(self, feature_row: Sequence[float | None]) -> list[int]:
         if not self._trained:
@@ -64,14 +68,15 @@ class MultivariateEmpiricalProbabilityEstimator:
         if any(v != v for v in values):
             raise ValueError("Selected prediction features must be finite")
         normalized = self._normalize(values)
-        ranked = sorted(
-            range(len(self._train_rows)),
-            key=lambda i: (
-                sum((normalized[j] - self._train_rows[i][j]) ** 2 for j in range(len(normalized))),
-                i,
-            ),
-        )
-        return ranked[: min(self.n_neighbors, len(ranked))]
+        k = min(self.n_neighbors, len(self._train_rows))
+
+        def distance_key(i: int) -> tuple[float, int]:
+            distance = sum(
+                (normalized[j] - self._train_rows[i][j]) ** 2 for j in range(len(normalized))
+            )
+            return distance, i
+
+        return nsmallest(k, range(len(self._train_rows)), key=distance_key)
 
     def predict_proba(self, feature_row: Sequence[float | None]) -> dict[int, float]:
         indices = self._nearest_indices(feature_row)

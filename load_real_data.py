@@ -1,49 +1,126 @@
-import pathlib
+"""Strict real-data loader used by legacy analysis entry points.
 
-import numpy as np
+This module is deliberately fail-closed. Missing market data, synthetic
+fallbacks, random macro factors, and forward-filled macro observations are
+not acceptable inputs to ResearchOS evidence.
+"""
+
+from pathlib import Path
+
 import pandas as pd
 
 
-def load_and_merge_real_data():
-    print("🔄 Бодит өгөгдөл ачаалж байна...")
+DEFAULT_XAUUSD_PATH = Path("data/curated/xauusd/xauusd_daily.csv")
+DEFAULT_MACRO_PATHS = {
+    "dxy": Path("data/macro/raw/DXY_Dukascopy_2021_2025.csv"),
+    "us10y": Path("data/macro/raw/DGS10_fred.csv"),
+    "vix": Path("data/macro/raw/VIXCLS_fred.csv"),
+}
 
-    # 1. XAUUSD өгөгдөл (Танд байгаа замыг тохируулна уу)
-    # Жишээ: 'data/curated/xauusd/xauusd_daily.csv'
-    xauusd_path = pathlib.Path("data/curated/xauusd/xauusd_daily.csv")
 
-    if not xauusd_path.exists():
-        print("⚠️  XAUUSD CSV файл олдсонгүй. Зохиомол өгөгдөл үүсгэж байна ( жишээ болгож)...")
-        # fallback to synthetic if real data is missing
-        dates = pd.date_range("2021-01-01", periods=1000, freq="D")
-        df = pd.DataFrame({"close": 1800 + np.cumsum(np.random.normal(0, 5, 1000)), "open": 1800 + np.cumsum(np.random.normal(0, 5, 1000)), "high": 1800 + np.cumsum(np.random.normal(0, 5, 1000)) + 10, "low": 1800 + np.cumsum(np.random.normal(0, 5, 1000)) - 10, "volume": np.random.uniform(50000, 200000, 1000)}, index=dates)
-        df.index.name = "date"
-    else:
-        df = pd.read_csv(xauusd_path, parse_dates=["date"], index_col="date")
-        print(f"✅ XAUUSD ачаалагдлаа: {len(df)} мөр")
+def _read_table(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"required real-data source not found: {path}")
+    return pd.read_csv(path)
 
-    # 2. Macro Factor-уудыг нэмэх (Жишээ баганууд)
-    # Бодит төсөлд та эдгээрийг тусдаа CSV-ээс эсвэл yfinance-аас татаж merge хийнэ.
-    np.random.seed(42)
-    df["real_yield_10y"] = np.random.normal(0.5, 0.5, len(df))
-    df["dxy"] = np.random.normal(95, 5, len(df))
-    df["vix"] = np.random.normal(18, 5, len(df))
-    df["breakeven_inflation_10y"] = np.random.normal(2.0, 0.3, len(df))
-    df["fed_balance_sheet_change"] = np.random.normal(0, 2, len(df))
-    df["geopolitical_risk_index"] = np.random.normal(50, 20, len(df))
-    df["gold_silver_ratio"] = np.random.normal(75, 5, len(df))
-    df["gold_oil_ratio"] = np.random.normal(25, 3, len(df))
-    df["gold_btc_correlation"] = np.random.normal(0.2, 0.3, len(df))
 
-    # 3. Цэвэрлэгээ: NaN утгуудыг forward-fill хийх
-    df = df.ffill().dropna()
+def _date_column(df: pd.DataFrame, path: Path) -> str:
+    for name in ("date", "timestamp", "observation_date", "time"):
+        if name in df.columns:
+            return name
+    raise ValueError(f"no supported date column in {path}")
 
-    print(f"✅ Нэгтгэсэн өгөгдөл бэлэн: {len(df)} мөр, {len(df.columns)} багана")
-    return df
+
+def _value_column(df: pd.DataFrame, path: Path) -> str:
+    for name in ("close", "value", "DGS10", "VIXCLS"):
+        if name in df.columns:
+            return name
+    raise ValueError(f"no supported scalar/close column in {path}")
+
+
+def _parse_utc_dates(values: pd.Series, path: Path) -> pd.Series:
+    """Parse ISO dates or Unix epoch seconds/milliseconds without ambiguity."""
+    numeric = pd.to_numeric(values, errors="coerce")
+    numeric_fraction = numeric.notna().mean()
+    if numeric_fraction == 1.0:
+        magnitude = numeric.abs().median()
+        if magnitude >= 1e11:
+            return pd.to_datetime(numeric, unit="ms", utc=True, errors="raise").dt.normalize()
+        if magnitude >= 1e9:
+            return pd.to_datetime(numeric, unit="s", utc=True, errors="raise").dt.normalize()
+        raise ValueError(f"unsupported numeric timestamp scale in {path}")
+    if numeric_fraction > 0:
+        raise ValueError(f"mixed numeric/non-numeric timestamps in {path}")
+    # Pandas 2.x format inference can infer the first element's exact format
+    # and then reject a valid date-only value later in the same ISO series.
+    # `format='mixed'` preserves strict parsing while allowing valid ISO-8601
+    # representations (for example, offset datetime + date-only) to coexist.
+    return pd.to_datetime(values, format="mixed", utc=True, errors="raise").dt.normalize()
+
+
+def _normalise_daily_scalar(path: Path, output_name: str) -> pd.DataFrame:
+    df = _read_table(path)
+    date_col = _date_column(df, path)
+    value_col = _value_column(df, path)
+    out = df[[date_col, value_col]].copy()
+    out["date"] = _parse_utc_dates(out[date_col], path)
+    out[output_name] = pd.to_numeric(out[value_col], errors="raise")
+    out = out[["date", output_name]]
+    if out["date"].duplicated().any():
+        raise ValueError(f"duplicate daily observations in {path}")
+    if not out[output_name].notna().all():
+        raise ValueError(f"missing numeric values in {path}")
+    return out
+
+
+def load_and_merge_real_data(
+    xauusd_path: Path = DEFAULT_XAUUSD_PATH,
+    macro_paths: dict[str, Path] | None = None,
+) -> pd.DataFrame:
+    """Load real XAUUSD and macro data with exact daily inner alignment.
+
+    No synthetic fallback, random data, interpolation, or forward-fill is
+    performed. Missing sources or duplicate dates fail immediately.
+    """
+    macro_paths = macro_paths or DEFAULT_MACRO_PATHS
+    required = {"dxy", "us10y", "vix"}
+    if set(macro_paths) != required:
+        raise ValueError(f"macro_paths must contain exactly {sorted(required)}")
+
+    xau = _read_table(xauusd_path)
+    date_col = _date_column(xau, xauusd_path)
+    required_xau = {"open", "high", "low", "close"}
+    missing = required_xau - set(xau.columns)
+    if missing:
+        raise ValueError(f"XAUUSD source missing columns: {sorted(missing)}")
+
+    xau = xau.copy()
+    xau["date"] = _parse_utc_dates(xau[date_col], xauusd_path)
+    if xau["date"].duplicated().any():
+        raise ValueError(f"duplicate daily XAUUSD observations in {xauusd_path}")
+    for column in ("open", "high", "low", "close"):
+        xau[column] = pd.to_numeric(xau[column], errors="raise")
+        if not xau[column].notna().all() or (xau[column] <= 0).any():
+            raise ValueError(f"invalid {column} values in {xauusd_path}")
+    xau = xau[["date", "open", "high", "low", "close"]]
+
+    merged = xau
+    for name in ("dxy", "us10y", "vix"):
+        merged = merged.merge(_normalise_daily_scalar(macro_paths[name], name), on="date", how="inner")
+
+    merged = merged.sort_values("date").reset_index(drop=True)
+    if merged.empty:
+        raise ValueError("real-data intersection is empty")
+    if merged["date"].duplicated().any():
+        raise ValueError("merged real-data intersection contains duplicate dates")
+
+    print(f"Real aligned data: {len(merged)} rows")
+    print(f"First day: {merged['date'].iloc[0].date()}")
+    print(f"Last day : {merged['date'].iloc[-1].date()}")
+    return merged
 
 
 if __name__ == "__main__":
     real_df = load_and_merge_real_data()
-    print("\n📊 Эхний 5 мөр:")
+    print("\nFirst 5 rows:")
     print(real_df.head())
-    real_df.to_csv("data/curated/xauusd/real_merged_data.csv", index=True)
-    print("\n💾 'data/curated/xauusd/real_merged_data.csv' болж хадгалагдлаа.")

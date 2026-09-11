@@ -1,5 +1,18 @@
-"""Phase 5.2 rebuild: auditable data-ledger foundation."""
+"""Phase 5.2 rebuild: auditable data ledger, daily data, and features."""
 
+from .context_dataset import load_context_daily_observations
+from .context_features import ContextFeatureAudit, build_context_feature_dataset
+from .daily_dataset import (
+    DailyMacroObservation,
+    DailyObservation,
+    DailyXAUBar,
+    build_daily_common_dataset,
+    load_daily_xau_from_m1,
+    load_dxy_daily,
+    load_macro_daily,
+)
+from .feature_contract import Phase52FeatureContract
+from .feature_dataset import FeatureDataset, build_all_feature_datasets, build_feature_dataset
 from .ledger import (
     LedgerConfig,
     Phase52DataLedger,
@@ -7,6 +20,7 @@ from .ledger import (
     build_data_ledger,
     write_ledger_report,
 )
+from .warmup_audit import WarmupCoverageAudit, audit_warmup_coverage
 
 __all__ = [
     "LedgerConfig",
@@ -14,4 +28,20 @@ __all__ = [
     "SourceAudit",
     "build_data_ledger",
     "write_ledger_report",
+    "DailyXAUBar",
+    "DailyMacroObservation",
+    "DailyObservation",
+    "load_daily_xau_from_m1",
+    "load_dxy_daily",
+    "load_macro_daily",
+    "build_daily_common_dataset",
+    "Phase52FeatureContract",
+    "FeatureDataset",
+    "build_feature_dataset",
+    "build_all_feature_datasets",
+    "WarmupCoverageAudit",
+    "audit_warmup_coverage",
+    "load_context_daily_observations",
+    "ContextFeatureAudit",
+    "build_context_feature_dataset",
 ]

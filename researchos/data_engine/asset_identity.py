@@ -1,136 +1,88 @@
 """
-Data Identity — canonical asset/symbol identity boundaries for ResearchOS.
+Data Identity - canonical asset/symbol identity boundaries for ResearchOS.
 
-REPAIR (forensic audit, data-identity boundary):
-    The repository shipped several ad-hoc analytics scripts that mapped the
-    XAUUSD (gold) asset to Yahoo Finance ticker ``GC=F`` -- the COMEX gold
-    *futures* contract -- and treated that as canonical XAUUSD *spot* data.
-
-    GC=F is NOT XAUUSD spot:
-
-        * GC=F  -> COMEX Gold Futures (CME/COMEX, front-month, roll-adjusted).
-                   The futures price embeds cost-of-carry, roll timing, and
-                   futures-basis effects relative to spot.
-        * XAUUSD -> the OTC gold *spot* rate (London / OTC fix vs USD).
-                   It is a different instrument with different dynamics and a
-                   different publication/availability schedule.
-
-    Mapping XAUUSD -> GC=F corrupts the primary research asset: every
-    measurement, return, correlation, and label downstream is computed on the
-    wrong instrument.  This module enforces the boundary with a single,
-    tested contract so the contamination cannot silently recur.
-
-YFinance is NOT canonical real XAUUSD data:
-    yfinance returns delayed/aggregated Yahoo data with no guaranteed
-    availability time, publication time, or revision semantics, and is NOT a
-    verified historical OHLCV source for scientific research.  Canonical real
-    XAUUSD historical OHLCV MUST be loaded via
-    ``researchos.data_engine.csv_loader.CsvLoader`` from curated historical CSVs
-    (e.g. ``data/curated/xauusd/xauusd_d1_2021_2025_mt5_final.csv``), which
-    carry dataset identity, source provenance, and content hashing.
-
-    Delayed/synthetic data (including yfinance) may be used for engineering,
-    deterministic, integration, and benchmark tests ONLY.  It MUST NEVER be
-    treated as evidence for real-market predictive value.
-
-Public API:
-    XAUUSD_SYMBOLS            - canonical XAUUSD symbol family.
-    COMEX_GOLD_FUTURES        - gold futures tickers that are NOT XAUUSD spot.
-    DataIdentityError         - raised when a futures contract is mislabeled.
-    is_gold_futures_symbol    - predicate for COMEX gold futures tickers.
-    resolve_xauusd_spot_proxy - canonical Yahoo spot proxy for XAUUSD.
-    assert_xauusd_identity    - guard: rejects gold futures as XAUUSD spot.
-    assert_not_gold_futures   - general guard: rejects gold futures as spot.
+This module prevents instrument substitution at data-ingestion boundaries.
+XAUUSD spot and COMEX gold futures are distinct instruments. Yahoo Finance
+tickers may be used only as explicitly named engineering references, never as
+canonical historical evidence.
 """
 
 from __future__ import annotations
 
-# ---------------------------------------------------------------------------
-# Symbol families
-# ---------------------------------------------------------------------------
+import re
 
-#: Canonical symbol spellings for the XAUUSD (gold/USD) spot asset.
 XAUUSD_SYMBOLS: frozenset[str] = frozenset({"XAUUSD", "XAU/USD", "GOLD"})
-
-#: COMEX gold *futures* tickers.  These carry futures roll/carry dynamics and
-#: are NEVER acceptable as a representation of XAUUSD spot.
 COMEX_GOLD_FUTURES: frozenset[str] = frozenset(
-    {
-        "GC=F",  # COMEX Gold Futures (Yahoo front-month)
-        "GC1!",  # front-month continuous
-        "GC2!",
-        "GC3!",
-        "GC4!",
-        "GC=",  # Bloomberg-style COMEX gold futures root
-        "/GC",  # CME ticker root
-        "HGC!",  # alternate gold front-month
-    }
+    {"GC=F", "GC1!", "GC2!", "GC3!", "GC4!", "GC=", "/GC", "HGC!"}
 )
-
-#: Canonical Yahoo Finance spot proxy for XAUUSD.  ``XAUUSD=X`` is Yahoo's
-#: aggregated OTC XAU/USD spot index -- the only Yahoo ticker the analytics
-#: surface may use for XAUUSD, and never as a substitute for real curated data.
-XAUUSD_SPOT_YFINANCE: str = "XAUUSD=X"
+XAUUSD_SPOT_YFINANCE = "XAUUSD=X"
 
 
 class DataIdentityError(ValueError):
-    """Raised when a futures contract or wrong instrument is mislabeled as XAUUSD spot."""
+    """Raised when an instrument is used under an incompatible identity.
+
+    ``str(error)`` is human-readable prose and is not a stable API contract.
+    Callers/tests should use the structured attributes instead.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        offending_ticker: str,
+        declared_symbol: str,
+    ) -> None:
+        super().__init__(message)
+        self.offending_ticker = offending_ticker
+        self.declared_symbol = declared_symbol
 
 
-# ---------------------------------------------------------------------------
-# Predicates
-# ---------------------------------------------------------------------------
+def _normalise(value: str) -> str:
+    return value.strip().upper()
 
 
 def is_gold_futures_symbol(yf_symbol: str) -> bool:
-    """Return True if *yf_symbol* is a COMEX gold futures contract (= NOT spot)."""
+    """Return True when a ticker identifies a COMEX gold futures contract."""
     if not isinstance(yf_symbol, str):
         return False
-    candidate = yf_symbol.strip()
-    if candidate in COMEX_GOLD_FUTURES:
+    candidate = _normalise(yf_symbol)
+    if candidate in COMEX_GOLD_FUTURES or candidate == "GC":
         return True
-    # Catch un-suffixed futures roots (e.g. "GC") while never flagging the
-    # XAUUSD spot proxy.
-    if candidate.upper() == "GC":
+    if re.fullmatch(r"GC[A-Z]\d{2,4}", candidate):
+        return True
+    if re.fullmatch(r"GC\d+!", candidate):
         return True
     return False
 
 
 def resolve_xauusd_spot_proxy() -> str:
-    """Return the canonical Yahoo spot proxy for XAUUSD.
-
-    This is the ONLY Yahoo ticker the analytics surface may use for XAUUSD,
-    and only as a delayed engineering reference -- never as canonical
-    real-market evidence (use CsvLoader on curated CSVs for that).
-    """
+    """Return the explicitly declared Yahoo XAU/USD spot engineering proxy."""
     return XAUUSD_SPOT_YFINANCE
 
 
-# ---------------------------------------------------------------------------
-# Guards
-# ---------------------------------------------------------------------------
-
-
 def assert_not_gold_futures(symbol: str, yf_symbol: str) -> None:
-    """Reject gold futures being represented as a spot gold instrument.
-
-    Args:
-        symbol: The logical asset symbol (e.g. "XAUUSD").
-        yf_symbol: The Yahoo Finance ticker actually fetched.
-
-    Raises:
-        DataIdentityError: if *yf_symbol* is a COMEX gold futures contract.
-    """
+    """Reject a gold futures ticker when the logical instrument is spot."""
     if is_gold_futures_symbol(yf_symbol):
-        raise DataIdentityError(f"Data-identity violation: '{yf_symbol}' is a COMEX gold FUTURES contract and must NEVER be treated as {symbol} spot. XAUUSD spot must use the curated historical dataset loaded via researchos.data_engine.csv_loader.CsvLoader, or the spot proxy '{XAUUSD_SPOT_YFINANCE}' for a delayed engineering reference only.")
+        raise DataIdentityError(
+            f"Data-identity violation: '{yf_symbol}' is a gold futures contract "
+            f"and must never be treated as {symbol} spot.",
+            offending_ticker=yf_symbol,
+            declared_symbol=symbol,
+        )
 
 
 def assert_xauusd_identity(symbol: str, yf_symbol: str) -> None:
-    """Guard: XAUUSD must never resolve to a COMEX gold futures contract.
+    """Require XAUUSD Yahoo lookups to use the declared spot proxy exactly."""
+    logical = _normalise(symbol).replace("/", "")
+    xauusd_family = {_normalise(s).replace("/", "") for s in XAUUSD_SYMBOLS}
+    if logical not in xauusd_family:
+        return
 
-    For non-XAUUSD symbols this is a no-op (callers may legitimately fetch
-    other futures for other assets).  For XAUUSD-family symbols it delegates
-    to :func:`assert_not_gold_futures`.
-    """
-    if symbol.upper().replace("/", "") in {s.upper().replace("/", "") for s in XAUUSD_SYMBOLS}:
-        assert_not_gold_futures(symbol, yf_symbol)
+    assert_not_gold_futures(symbol, yf_symbol)
+    if _normalise(yf_symbol) != XAUUSD_SPOT_YFINANCE:
+        raise DataIdentityError(
+            f"Data-identity violation: '{yf_symbol}' is not the declared XAUUSD "
+            f"spot engineering proxy '{XAUUSD_SPOT_YFINANCE}'.",
+            offending_ticker=yf_symbol,
+            declared_symbol=symbol,
+        )

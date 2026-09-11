@@ -14,7 +14,7 @@ class BacktestResult:
     sharpe_ratio: float  # Sharpe харьцаа
     max_drawdown: float  # Хамгийн их уналт (жишээ нь -0.25 → -25%)
     win_rate: float  # Ялалтын хувь (0-1)
-    num_trades: int  # Нийт арилжааны тоо
+    num_trades: int  # Нийт хаагдсан арилжааны тоо
     signals: list[Any]  # Дохионууд
 
 
@@ -25,6 +25,12 @@ class BacktestEngine:
         :param commission: Нэг арилжааны шимтгэл (хувь, 0.001 = 0.1%)
         :param slippage: Нэг арилжааны гулсалт (хувь, 0.0005 = 0.05%)
         """
+        if initial_capital <= 0:
+            raise ValueError("initial_capital must be positive")
+        if commission < 0 or slippage < 0:
+            raise ValueError("commission and slippage must be non-negative")
+        if commission + slippage >= 1:
+            raise ValueError("commission + slippage must be less than 1")
         self.initial_capital = initial_capital
         self.commission = commission
         self.slippage = slippage
@@ -35,83 +41,87 @@ class BacktestEngine:
         :param prices: Үнийн жагсаалт (жишээ нь өдрийн хаалтын үнэ)
         :param strategy: Стратегийн обьект, `.generate_signals(prices)` методтой
         """
+        if not prices:
+            return BacktestResult(0.0, 0.0, 0.0, 0.0, 0, [])
+        if any(not np.isfinite(price) or price <= 0 for price in prices):
+            raise ValueError("prices must contain only finite positive values")
+
         signals = strategy.generate_signals(prices)
         if not signals:
             return BacktestResult(0.0, 0.0, 0.0, 0.0, 0, signals)
 
         capital = self.initial_capital
         position = 0.0
-        trades = []  # (action, price, timestamp, size, net_value)
-        equity_curve = [capital]  # Хөрөнгийн өөрчлөлтийн график
+        entry_price = 0.0
+        trades = []  # (action, price, timestamp, size, net_value, pnl)
+        equity_curve = [capital]
 
         for signal in signals:
-            price = signal.price
+            price = float(signal.price)
+            if not np.isfinite(price) or price <= 0:
+                raise ValueError("signal prices must be finite and positive")
             timestamp = getattr(signal, "timestamp", None)
 
             if signal.action == "BUY" and position == 0:
-                # Худалдан авах: шимтгэл + гулсалтыг харгалзан
                 cost_per_unit = price * (1 + self.commission + self.slippage)
                 size = capital / cost_per_unit
                 if size > 0:
                     cost_total = size * cost_per_unit
                     capital -= cost_total
                     position = size
-                    trades.append(("BUY", price, timestamp, size, cost_total))
+                    entry_price = price
+                    trades.append(("BUY", price, timestamp, size, cost_total, 0.0))
 
             elif signal.action == "SELL" and position > 0:
-                # Зарах: шимтгэл + гулсалтыг хасах
                 revenue_per_unit = price * (1 - self.commission - self.slippage)
                 revenue_total = position * revenue_per_unit
+                entry_cost_total = position * entry_price * (1 + self.commission + self.slippage)
+                pnl = revenue_total - entry_cost_total
                 capital += revenue_total
-                trades.append(("SELL", price, timestamp, position, revenue_total))
+                trades.append(("SELL", price, timestamp, position, revenue_total, pnl))
                 position = 0.0
+                entry_price = 0.0
+            elif signal.action not in {"BUY", "SELL"}:
+                raise ValueError(f"unsupported signal action: {signal.action!r}")
 
-            # Хөрөнгийн үнэлгээг (equity) хадгалах
             current_equity = capital + position * price
             equity_curve.append(current_equity)
 
-        # Хэрэв позиц үлдсэн бол эцсийн үнээр хаах
-        if position > 0 and prices:
-            closing_price = prices[-1]
+        if position > 0:
+            closing_price = float(prices[-1])
             revenue_per_unit = closing_price * (1 - self.commission - self.slippage)
-            capital += position * revenue_per_unit
-            trades.append(("CLOSE", closing_price, None, position, position * revenue_per_unit))
+            revenue_total = position * revenue_per_unit
+            entry_cost_total = position * entry_price * (1 + self.commission + self.slippage)
+            pnl = revenue_total - entry_cost_total
+            capital += revenue_total
+            trades.append(("CLOSE", closing_price, None, position, revenue_total, pnl))
             position = 0.0
+            entry_price = 0.0
+            equity_curve.append(capital)
 
         final_value = capital
         total_return = (final_value - self.initial_capital) / self.initial_capital
 
-        # 📊 Sharpe ratio (жилийнжүүлээгүй, өдрийн өгөөжөөр)
-        equity = np.array(equity_curve)
+        equity = np.asarray(equity_curve, dtype=float)
         returns = np.diff(equity) / equity[:-1]
-        if len(returns) > 1:
-            sharpe = np.mean(returns) / (np.std(returns) + 1e-8) * np.sqrt(252)  # өдөр тутмын
+        if len(returns) > 1 and np.std(returns) > 0:
+            sharpe = np.mean(returns) / np.std(returns) * np.sqrt(252)
         else:
             sharpe = 0.0
 
-        # 📉 Max drawdown
         peak = np.maximum.accumulate(equity)
         drawdown = (peak - equity) / peak
         max_drawdown = -np.max(drawdown) if len(drawdown) > 0 else 0.0
 
-        # 📈 Win rate (зөвхөн BUY-SELL хосууд)
-        buy_trades = [t for t in trades if t[0] == "BUY"]
-        sell_trades = [t for t in trades if t[0] == "SELL"]
-        # Хослох (BUY-ийн дараа SELL, эсвэл эсрэгээр)
-        profit_trades = 0
-        total_pairs = min(len(buy_trades), len(sell_trades))
-        for i in range(total_pairs):
-            buy_price = buy_trades[i][1]
-            sell_price = sell_trades[i][1] if i < len(sell_trades) else prices[-1]
-            if sell_price > buy_price:
-                profit_trades += 1
-        win_rate = profit_trades / total_pairs if total_pairs > 0 else 0.0
+        closed_trades = [t for t in trades if t[0] in ("SELL", "CLOSE")]
+        winning_trades = [t for t in closed_trades if t[5] > 0]
+        win_rate = len(winning_trades) / len(closed_trades) if closed_trades else 0.0
 
         return BacktestResult(
             total_return=total_return,
             sharpe_ratio=sharpe,
             max_drawdown=max_drawdown,
             win_rate=win_rate,
-            num_trades=total_pairs,
+            num_trades=len(closed_trades),
             signals=signals,
         )
