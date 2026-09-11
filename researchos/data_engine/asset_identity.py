@@ -1,5 +1,5 @@
 """
-Data Identity — canonical asset/symbol identity boundaries for ResearchOS.
+Data Identity - canonical asset/symbol identity boundaries for ResearchOS.
 
 This module prevents instrument substitution at data-ingestion boundaries.
 XAUUSD spot and COMEX gold futures are distinct instruments. Yahoo Finance
@@ -19,7 +19,22 @@ XAUUSD_SPOT_YFINANCE = "XAUUSD=X"
 
 
 class DataIdentityError(ValueError):
-    """Raised when an instrument is used under an incompatible identity."""
+    """Raised when an instrument is used under an incompatible identity.
+
+    ``str(error)`` is human-readable prose and is not a stable API contract.
+    Callers/tests should use the structured attributes instead.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        offending_ticker: str,
+        declared_symbol: str,
+    ) -> None:
+        super().__init__(message)
+        self.offending_ticker = offending_ticker
+        self.declared_symbol = declared_symbol
 
 
 def _normalise(value: str) -> str:
@@ -50,7 +65,9 @@ def assert_not_gold_futures(symbol: str, yf_symbol: str) -> None:
     if is_gold_futures_symbol(yf_symbol):
         raise DataIdentityError(
             f"Data-identity violation: '{yf_symbol}' is a gold futures contract "
-            f"and must never be treated as {symbol} spot."
+            f"and must never be treated as {symbol} spot.",
+            offending_ticker=yf_symbol,
+            declared_symbol=symbol,
         )
 
 
@@ -65,5 +82,7 @@ def assert_xauusd_identity(symbol: str, yf_symbol: str) -> None:
     if _normalise(yf_symbol) != XAUUSD_SPOT_YFINANCE:
         raise DataIdentityError(
             f"Data-identity violation: '{yf_symbol}' is not the declared XAUUSD "
-            f"spot engineering proxy '{XAUUSD_SPOT_YFINANCE}'."
+            f"spot engineering proxy '{XAUUSD_SPOT_YFINANCE}'.",
+            offending_ticker=yf_symbol,
+            declared_symbol=symbol,
         )
