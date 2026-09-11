@@ -18,6 +18,7 @@ def _observations(n: int = 70) -> tuple[DailyObservation, ...]:
             tick_volume=1000.0 + i,
             spread=1.0,
             real_volume=2000.0 + i,
+            vwap=100.0 + i + 0.25,
             dxy=90.0 + i * 0.1,
             us10y=1.0 + i * 0.01,
             vix=20.0 + i * 0.05,
@@ -38,7 +39,11 @@ def test_feature_dataset_accounting_and_prediction_timing() -> None:
     assert dataset.prediction_timestamps[0] == "2021-03-03T00:00:00Z"
     assert dataset.prediction_timestamps[-1] == "2021-03-07T00:00:00Z"
     assert dataset.metadata["prediction_timing"] == "after_utc_day_close"
-    assert dataset.metadata["macro_timing_contract"] == "same_day_eod_observation_consumed_after_day_close"
+    assert (
+        dataset.metadata["macro_timing_contract"]
+        == "same_day_eod_observation_consumed_after_day_close"
+    )
+    assert dataset.rows[0][13] == 160.25
 
 
 def test_future_observation_cannot_change_an_earlier_feature_row() -> None:

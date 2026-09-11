@@ -22,6 +22,7 @@ def _obs(day_index: int, close: float) -> DailyObservation:
         tick_volume=100.0 + day_index,
         spread=1.0,
         real_volume=0.0,
+        vwap=close - 0.1,
         dxy=100.0 + day_index * 0.01,
         us10y=1.0 + day_index * 0.001,
         vix=20.0 + day_index * 0.01,

@@ -12,19 +12,21 @@ from pathlib import Path
 from .daily_dataset import DailyObservation, _float, _load_fred_daily, _utc_iso
 
 
-def _dukascopy_xau_daily(path: str | Path) -> dict[str, dict[str, float]]:
+def _mt5_xau_daily(path: str | Path) -> dict[str, dict[str, float]]:
     groups: dict[str, list[dict[str, float | str]]] = {}
     seen_timestamps: set[str] = set()
     with Path(path).open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
-        required = {"timestamp", "open", "high", "low", "close"}
+        required = {"time", "open", "high", "low", "close", "tick_volume", "spread", "real_volume"}
         if not required.issubset(fields):
-            raise ValueError("Dukascopy XAU context must contain timestamp and OHLC columns")
-        has_volume = "volume" in fields
+            raise ValueError(
+                "MT5 XAU context must contain time, OHLC, tick_volume, spread, and real_volume columns"
+            )
+        has_volume = "tick_volume" in fields
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
-            ts = _utc_iso(str(row["timestamp"]))
+            ts = _utc_iso(str(row["time"]))
             if ts in seen_timestamps:
                 raise ValueError(f"context XAU duplicate timestamp: {ts}")
             seen_timestamps.add(ts)
@@ -41,7 +43,7 @@ def _dukascopy_xau_daily(path: str | Path) -> dict[str, dict[str, float]]:
                     "high": high,
                     "low": low,
                     "close": close,
-                    "volume": _float(row, "volume") if has_volume else 0.0,
+                    "volume": _float(row, "tick_volume") if has_volume else 0.0,
                 }
             )
 
@@ -56,6 +58,17 @@ def _dukascopy_xau_daily(path: str | Path) -> dict[str, dict[str, float]]:
             "tick_volume": sum(float(r["volume"]) for r in rows),
             "real_volume": 0.0,
             "m1_rows": float(len(rows)),
+            "vwap": (
+                sum(
+                    ((float(r["high"]) + float(r["low"]) + float(r["close"])) / 3.0)
+                    * float(r["volume"])
+                    for r in rows
+                )
+                / sum(float(r["volume"]) for r in rows)
+                if sum(float(r["volume"]) for r in rows) != 0.0
+                else (float(rows[-1]["high"]) + float(rows[-1]["low"]) + float(rows[-1]["close"]))
+                / 3.0
+            ),
         }
     return out
 
@@ -83,8 +96,8 @@ def load_context_daily_observations(
     us10y_path: str | Path,
     vix_path: str | Path,
 ) -> tuple[DailyObservation, ...]:
-    """Build exact four-way context observations from parsed source files."""
-    xau = _dukascopy_xau_daily(xau_context_path)
+    """Build exact four-way context observations from same-feed MT5 XAU context and macro sources."""
+    xau = _mt5_xau_daily(xau_context_path)
     dxy = _dukascopy_daily_close(dxy_context_path)
     us10y = _load_fred_daily(us10y_path, "dgs10", "US10Y")
     vix = _load_fred_daily(vix_path, "vixcls", "VIX")
@@ -103,6 +116,7 @@ def load_context_daily_observations(
                 tick_volume=bar["tick_volume"],
                 spread=None,
                 real_volume=bar["real_volume"],
+                vwap=bar["vwap"],
                 dxy=dxy[day],
                 us10y=us10y[day],
                 vix=vix[day],

@@ -100,7 +100,14 @@ def build_feature_dataset(
     high = [o.high for o in observations]
     low = [o.low for o in observations]
     volume = [o.tick_volume for o in observations]
-    price_features = FeatureBuilder(close, high, low, volume).build(drop_na=False)
+    vwap_values = [o.vwap for o in observations]
+    price_features = FeatureBuilder(
+        close,
+        high,
+        low,
+        volume,
+        vwap_values=vwap_values,
+    ).build(drop_na=False)
 
     price_names = tuple(price_features.feature_names)
     if price_names != PRICE_FEATURE_NAMES:
@@ -183,10 +190,7 @@ def build_all_feature_datasets(
     contract: Phase52FeatureContract | None = None,
 ) -> dict[str, FeatureDataset]:
     """Build all five isolated Phase 5.2 feature-set variants."""
-    return {
-        name: build_feature_dataset(observations, name, contract)
-        for name in FEATURE_SET_NAMES
-    }
+    return {name: build_feature_dataset(observations, name, contract) for name in FEATURE_SET_NAMES}
 
 
 __all__ = ["FeatureDataset", "build_feature_dataset", "build_all_feature_datasets"]

@@ -14,10 +14,13 @@ from pathlib import Path
 from researchos.experiments.phase52_rebuild.context_dataset import load_context_daily_observations
 from researchos.experiments.phase52_rebuild.context_features import build_context_feature_dataset
 from researchos.experiments.phase52_rebuild.daily_dataset import DailyObservation
-from researchos.experiments.phase52_rebuild.feature_contract import FEATURE_SET_NAMES, Phase52FeatureContract
+from researchos.experiments.phase52_rebuild.feature_contract import (
+    FEATURE_SET_NAMES,
+    Phase52FeatureContract,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONTEXT_XAU = ROOT / "data/macro/context/dukascopy_2020/XAUUSD_Dukascopy_M1_2020_context.csv"
+DEFAULT_CONTEXT_XAU = ROOT / "data/mt5/xauusd/XAUUSD_M1_2020_context_MT5.csv"
 DEFAULT_CONTEXT_DXY = ROOT / "data/macro/context/dukascopy_2020/DXY_Dukascopy_D1_2020_context.csv"
 DEFAULT_US10Y = ROOT / "data/macro/raw/DGS10_fred.csv"
 DEFAULT_VIX = ROOT / "data/macro/raw/VIXCLS_fred.csv"
@@ -39,8 +42,11 @@ def _load_research_daily(path: Path) -> tuple[DailyObservation, ...]:
                     low=float(raw["low"]),
                     close=float(raw["close"]),
                     tick_volume=float(raw["tick_volume"]),
-                    spread=None if raw.get("spread") in (None, "", "None") else float(raw["spread"]),
+                    spread=None
+                    if raw.get("spread") in (None, "", "None")
+                    else float(raw["spread"]),
                     real_volume=float(raw["real_volume"]),
+                    vwap=float(raw["vwap"]),
                     dxy=float(raw["dxy"]),
                     us10y=float(raw["us10y"]),
                     vix=float(raw["vix"]),
@@ -88,17 +94,19 @@ def main(argv: list[str] | None = None) -> int:
 
     results: dict[str, object] = {}
     for feature_set in FEATURE_SET_NAMES:
-        dataset, audit = build_context_feature_dataset(
-            context, research, feature_set, contract
-        )
+        dataset, audit = build_context_feature_dataset(context, research, feature_set, contract)
         results[feature_set] = {
             "feature_count": dataset.feature_count,
             "sample_count": dataset.sample_count,
             "expected_sample_count": len(research) - contract.horizon,
             "first_source_day": dataset.source_days[0] if dataset.source_days else None,
             "last_source_day": dataset.source_days[-1] if dataset.source_days else None,
-            "first_prediction_timestamp": dataset.prediction_timestamps[0] if dataset.prediction_timestamps else None,
-            "last_prediction_timestamp": dataset.prediction_timestamps[-1] if dataset.prediction_timestamps else None,
+            "first_prediction_timestamp": dataset.prediction_timestamps[0]
+            if dataset.prediction_timestamps
+            else None,
+            "last_prediction_timestamp": dataset.prediction_timestamps[-1]
+            if dataset.prediction_timestamps
+            else None,
             "audit": audit.__dict__,
             "gate": "PASS" if dataset.sample_count >= contract.minimum_samples else "BLOCKED",
         }
@@ -136,7 +144,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"EXPECTED RESEARCH     : {len(research) - contract.horizon}")
     print(f"MINIMUM REQUIRED      : {contract.minimum_samples}")
     for name, result in results.items():
-        print(f"{name:20s}: {result['sample_count']} rows / {result['feature_count']} features / {result['gate']}")
+        print(
+            f"{name:20s}: {result['sample_count']} rows / {result['feature_count']} features / {result['gate']}"
+        )
     print(f"STATUS                : {payload['status']}")
     print(f"OUTPUT                : {output}")
     print("=" * 70)

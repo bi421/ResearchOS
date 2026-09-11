@@ -36,6 +36,7 @@ class DailyXAUBar:
     spread: float | None
     real_volume: float
     m1_rows: int
+    vwap: float | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class DailyObservation:
     us10y: float
     vix: float
     m1_rows: int
+    vwap: float | None = None
 
 
 def _utc_iso(value: str) -> str:
@@ -153,6 +155,11 @@ def load_daily_xau_from_m1(path: str | Path) -> tuple[DailyXAUBar, ...]:
                 spread=sum(spreads) / len(spreads) if spreads else None,
                 real_volume=sum(r[7] for r in rows),
                 m1_rows=len(rows),
+                vwap=(
+                    sum(((r[2] + r[3] + r[4]) / 3.0) * r[5] for r in rows) / sum(r[5] for r in rows)
+                    if sum(r[5] for r in rows) != 0
+                    else ((rows[-1][2] + rows[-1][3] + rows[-1][4]) / 3.0)
+                ),
             )
         )
     return tuple(output)
@@ -186,7 +193,9 @@ def _load_fred_daily(path: str | Path, value_key: str, symbol: str) -> dict[str,
         fields = {str(x).strip().lower() for x in (reader.fieldnames or [])}
         required = {"observation_date", value_key}
         if not required.issubset(fields):
-            raise ValueError(f"{symbol} source must contain observation_date and {value_key} columns")
+            raise ValueError(
+                f"{symbol} source must contain observation_date and {value_key} columns"
+            )
         for raw in reader:
             row = {str(k).strip().lower(): v for k, v in raw.items() if k is not None}
             raw_value = row.get(value_key)
@@ -242,6 +251,7 @@ def build_daily_common_dataset(
                 us10y=m.us10y,
                 vix=m.vix,
                 m1_rows=bar.m1_rows,
+                vwap=bar.vwap,
             )
         )
     return tuple(observations)

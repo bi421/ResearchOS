@@ -19,10 +19,13 @@ from pathlib import Path
 from researchos.experiments.phase52_rebuild.context_dataset import load_context_daily_observations
 from researchos.experiments.phase52_rebuild.context_features import build_context_feature_dataset
 from researchos.experiments.phase52_rebuild.daily_dataset import DailyObservation
-from researchos.experiments.phase52_rebuild.feature_contract import FEATURE_SET_NAMES, Phase52FeatureContract
+from researchos.experiments.phase52_rebuild.feature_contract import (
+    FEATURE_SET_NAMES,
+    Phase52FeatureContract,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONTEXT_XAU = ROOT / "data/macro/context/dukascopy_2020/XAUUSD_Dukascopy_M1_2020_context.csv"
+DEFAULT_CONTEXT_XAU = ROOT / "data/mt5/xauusd/XAUUSD_M1_2020_context_MT5.csv"
 DEFAULT_CONTEXT_DXY = ROOT / "data/macro/context/dukascopy_2020/DXY_Dukascopy_D1_2020_context.csv"
 DEFAULT_US10Y = ROOT / "data/macro/raw/DGS10_fred.csv"
 DEFAULT_VIX = ROOT / "data/macro/raw/VIXCLS_fred.csv"
@@ -36,16 +39,46 @@ TERMINAL_MEAN_RELATIVE_TOLERANCE = 1e-6
 def _load_research(path: Path) -> tuple[DailyObservation, ...]:
     rows: list[DailyObservation] = []
     with path.open(encoding="utf-8-sig", newline="") as f:
-        for raw in csv.DictReader(f):
+        reader = csv.DictReader(f)
+        required = {
+            "day",
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "tick_volume",
+            "spread",
+            "real_volume",
+            "vwap",
+            "dxy",
+            "us10y",
+            "vix",
+            "m1_rows",
+        }
+        missing = required - set(reader.fieldnames or [])
+        if missing:
+            raise ValueError(
+                "research daily dataset missing required fields: " + ", ".join(sorted(missing))
+            )
+        for raw in reader:
             rows.append(
                 DailyObservation(
-                    day=str(raw["day"]), timestamp=str(raw["timestamp"]),
-                    open=float(raw["open"]), high=float(raw["high"]),
-                    low=float(raw["low"]), close=float(raw["close"]),
+                    day=str(raw["day"]),
+                    timestamp=str(raw["timestamp"]),
+                    open=float(raw["open"]),
+                    high=float(raw["high"]),
+                    low=float(raw["low"]),
+                    close=float(raw["close"]),
                     tick_volume=float(raw["tick_volume"]),
-                    spread=None if raw.get("spread") in (None, "", "None") else float(raw["spread"]),
-                    real_volume=float(raw["real_volume"]), dxy=float(raw["dxy"]),
-                    us10y=float(raw["us10y"]), vix=float(raw["vix"]),
+                    spread=None
+                    if raw.get("spread") in (None, "", "None")
+                    else float(raw["spread"]),
+                    real_volume=float(raw["real_volume"]),
+                    vwap=float(raw["vwap"]),
+                    dxy=float(raw["dxy"]),
+                    us10y=float(raw["us10y"]),
+                    vix=float(raw["vix"]),
                     m1_rows=int(float(raw["m1_rows"])),
                 )
             )
@@ -79,27 +112,32 @@ def _compare(
             total_abs += abs_diff
             total_rel += rel_diff
             total_count += 1
-            item = by_feature.setdefault(name, {
-                "count": 0,
-                "max_absolute_difference": 0.0,
-                "max_relative_difference": 0.0,
-                "sum_absolute_difference": 0.0,
-                "sum_relative_difference": 0.0,
-            })
+            item = by_feature.setdefault(
+                name,
+                {
+                    "count": 0,
+                    "max_absolute_difference": 0.0,
+                    "max_relative_difference": 0.0,
+                    "sum_absolute_difference": 0.0,
+                    "sum_relative_difference": 0.0,
+                },
+            )
             item["count"] += 1
             item["max_absolute_difference"] = max(float(item["max_absolute_difference"]), abs_diff)
             item["max_relative_difference"] = max(float(item["max_relative_difference"]), rel_diff)
             item["sum_absolute_difference"] += abs_diff
             item["sum_relative_difference"] += rel_diff
             if abs_diff > 1e-12:
-                top.append({
-                    "day": day,
-                    "feature": name,
-                    "left": a,
-                    "right": b,
-                    "absolute_difference": abs_diff,
-                    "relative_difference": rel_diff,
-                })
+                top.append(
+                    {
+                        "day": day,
+                        "feature": name,
+                        "left": a,
+                        "right": b,
+                        "absolute_difference": abs_diff,
+                        "relative_difference": rel_diff,
+                    }
+                )
     if total_count == 0:
         raise AssertionError("initialization comparison has zero feature values")
     for item in by_feature.values():
@@ -116,11 +154,17 @@ def _compare(
         "affected_days": len(affected),
         "affected_day_first": affected[0] if affected else None,
         "affected_day_last": affected[-1] if affected else None,
-        "max_absolute_difference": max((float(v["max_absolute_difference"]) for v in by_feature.values()), default=0.0),
-        "max_relative_difference": max((float(v["max_relative_difference"]) for v in by_feature.values()), default=0.0),
+        "max_absolute_difference": max(
+            (float(v["max_absolute_difference"]) for v in by_feature.values()), default=0.0
+        ),
+        "max_relative_difference": max(
+            (float(v["max_relative_difference"]) for v in by_feature.values()), default=0.0
+        ),
         "mean_absolute_difference": total_abs / total_count,
         "mean_relative_difference": total_rel / total_count,
-        "by_feature": dict(sorted(by_feature.items(), key=lambda kv: (-int(kv[1]["count"]), kv[0]))),
+        "by_feature": dict(
+            sorted(by_feature.items(), key=lambda kv: (-int(kv[1]["count"]), kv[0]))
+        ),
         "top_differences": top[:20],
     }
 
@@ -143,7 +187,9 @@ def main(argv: list[str] | None = None) -> int:
     if research_days != sorted(research_days) or len(research_days) != len(set(research_days)):
         raise ValueError("research dataset days must be unique and chronological")
 
-    all_context = load_context_daily_observations(args.context_xau, args.context_dxy, args.us10y, args.vix)
+    all_context = load_context_daily_observations(
+        args.context_xau, args.context_dxy, args.us10y, args.vix
+    )
     context_days = [row.day for row in all_context]
     if context_days != sorted(context_days) or len(context_days) != len(set(context_days)):
         raise ValueError("context dataset days must be unique and chronological")
@@ -178,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
         "acceptance_criteria": {
             "terminal_max_relative_difference_lte": TERMINAL_MAX_RELATIVE_TOLERANCE,
             "terminal_mean_relative_difference_lte": TERMINAL_MEAN_RELATIVE_TOLERANCE,
-            "note": "Monotonic improvement is not required; terminal closeness to the fixed long-context reference is the criterion."
+            "note": "Monotonic improvement is not required; terminal closeness to the fixed long-context reference is the criterion.",
         },
         "source_equivalence_proven": False,
         "feature_sets": {},
@@ -205,7 +251,7 @@ def main(argv: list[str] | None = None) -> int:
 
         reference = datasets[reference_depth]
         reference_days = tuple(reference.source_days)
-        if reference_days != tuple(research_days[:-contract.horizon]):
+        if reference_days != tuple(research_days[: -contract.horizon]):
             raise AssertionError(
                 f"reference emitted research-day set mismatch for {feature_set}: "
                 f"expected {len(research_days[:-contract.horizon])}, got {len(reference_days)}"
@@ -267,8 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     print("=" * 70)
-    print("PHASE 5.2 REBUILD — CONTEXT INITIALIZATION CONVERGENCE")
-    print("=" * 70)
+    print("PHASE 5.2 REBUILD - CONTEXT INITIALIZATION CONVERGENCE")
     print(f"RESEARCH ROWS        : {len(research)}")
     print(f"PRE-RESEARCH CONTEXT : {len(pre)}")
     print(f"DEPTHS               : {','.join(map(str, depths))}")
@@ -298,7 +343,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"SCIENTIFIC STATUS    : {payload['scientific_convergence_status']}")
     print(f"OUTPUT               : {output}")
     print("=" * 70)
-    return 0 if payload["status"] == "PASS" and payload["scientific_convergence_status"] == "SUPPORTED" else 1
+    return (
+        0
+        if payload["status"] == "PASS" and payload["scientific_convergence_status"] == "SUPPORTED"
+        else 1
+    )
 
 
 if __name__ == "__main__":

@@ -1,121 +1,175 @@
 from __future__ import annotations
 
-import csv
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
-from researchos.experiments.phase52_rebuild.daily_dataset import _load_fred_daily
-
 ROOT = Path(__file__).resolve().parents[1]
-CONTEXT_XAU = ROOT / "data/macro/context/dukascopy_2020/XAUUSD_Dukascopy_M1_2020_context.csv"
-CONTEXT_DXY = ROOT / "data/macro/context/dukascopy_2020/DXY_Dukascopy_D1_2020_context.csv"
-US10Y = ROOT / "data/macro/raw/DGS10_fred.csv"
-VIX = ROOT / "data/macro/raw/VIXCLS_fred.csv"
+
 CONTINUITY = ROOT / "reports/phase52_rebuild/context_continuity_audit.json"
+FEATURE = ROOT / "reports/phase52_rebuild/context_feature_audit.json"
+BOUNDARY = ROOT / "reports/phase52_rebuild/context_boundary_sensitivity.json"
+CONVERGENCE = ROOT / "reports/phase52_rebuild/context_initialization_convergence.json"
 OUT = ROOT / "reports/phase52_rebuild/context_gate.json"
 
-RESEARCH_START = "2021-01-01"
-WARMUP_REQUIRED = 60
-MIN_SOURCE_OVERLAP_DAYS = 30
+REQUIRED_XAU_CONTEXT_DAYS = 240
+REQUIRED_DXY_OVERLAP_DAYS = 60
+REQUIRED_RESEARCH_ROWS = 1200
 
 
-def _day(value: str) -> str:
-    value = value.strip()
-    if value.isdigit():
-        n = int(value)
-        if abs(n) >= 100_000_000_000:
-            dt = datetime.fromtimestamp(n / 1000, tz=timezone.utc)
-        else:
-            dt = datetime.fromtimestamp(n, tz=timezone.utc)
-        return dt.date().isoformat()
-    if value.endswith("Z"):
-        value = value[:-1] + "+00:00"
-    dt = datetime.fromisoformat(value)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc).date().isoformat()
-
-
-def _xau_days(path: Path) -> set[str]:
-    days: set[str] = set()
-    with path.open(encoding="utf-8-sig", newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            days.add(_day(str(row["timestamp"])))
-    return days
-
-
-def _dxy_days(path: Path) -> set[str]:
-    days: set[str] = set()
-    with path.open(encoding="utf-8-sig", newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            days.add(_day(str(row["timestamp"])))
-    return days
+def _load(path: Path) -> dict:
+    if not path.exists():
+        raise SystemExit(f"missing report: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def main() -> int:
-    if not CONTINUITY.exists():
-        raise SystemExit(f"missing continuity audit: {CONTINUITY}")
-    if not CONTEXT_XAU.exists() or not CONTEXT_DXY.exists():
-        raise SystemExit("missing Dukascopy context files; run the context download first")
+    continuity = _load(CONTINUITY)
+    feature = _load(FEATURE)
+    boundary = _load(BOUNDARY)
+    convergence = _load(CONVERGENCE)
 
-    continuity = json.loads(CONTINUITY.read_text(encoding="utf-8"))
-    xau = _xau_days(CONTEXT_XAU)
-    dxy = _dxy_days(CONTEXT_DXY)
-    us10y = set(_load_fred_daily(US10Y, "dgs10", "US10Y"))
-    vix = set(_load_fred_daily(VIX, "vixcls", "VIX"))
+    continuity_status = continuity.get("status")
+    feature_status = feature.get("status")
+    boundary_status = boundary.get("status")
+    convergence_status = convergence.get(
+        "scientific_convergence_status",
+        "NOT_PROVEN",
+    )
 
-    pre_research = sorted(d for d in (xau & dxy & us10y & vix) if d < RESEARCH_START)
-    xau_overlap = int(continuity.get("xau", {}).get("days", 0))
-    dxy_overlap = int(continuity.get("dxy", {}).get("days", 0))
-    max_xau_diff = continuity.get("xau", {}).get("max_close_relative_difference")
-    mean_xau_diff = continuity.get("xau", {}).get("mean_close_relative_difference")
-    overlap_sufficient = min(xau_overlap, dxy_overlap) >= MIN_SOURCE_OVERLAP_DAYS
+    acceptance = continuity.get("acceptance", {})
+    xau_pre_context_days = int(acceptance.get("xau_available_pre_context_days", 0))
+    xau_boundary_ok = bool(acceptance.get("xau_pre_context_boundary_ok", False))
+    xau_depth_ok = bool(acceptance.get("xau_pre_context_depth_ok", False))
+    dxy_overlap_ok = bool(acceptance.get("dxy_overlap_ok", False))
+    dxy_overlap_days = int(acceptance.get("dxy_actual_overlap_days", 0))
 
-    source_status = "REVIEW_REQUIRED" if overlap_sufficient else "INSUFFICIENT_OVERLAP"
+    feature_research_rows = int(feature.get("research_rows", 0))
+    feature_minimum_required = int(feature.get("minimum_required", 0))
+    feature_ok = (
+        feature_status == "PASS"
+        and feature_research_rows >= REQUIRED_RESEARCH_ROWS
+        and feature_minimum_required >= REQUIRED_RESEARCH_ROWS
+    )
+
+    boundary_results = boundary.get("feature_sets", {})
+    boundary_structural_ok = (
+        boundary_status == "PASS"
+        and bool(boundary_results)
+        and all(
+            bool(result.get("context_audit_invariant_ok", False))
+            and bool(result.get("label_identity", False))
+            for result in boundary_results.values()
+        )
+    )
+
+    continuity_ok = (
+        continuity_status == "PASS"
+        and xau_boundary_ok
+        and xau_depth_ok
+        and xau_pre_context_days >= REQUIRED_XAU_CONTEXT_DAYS
+        and dxy_overlap_ok
+        and dxy_overlap_days >= REQUIRED_DXY_OVERLAP_DAYS
+    )
+
+    convergence_proven = convergence_status == "SUPPORTED"
+
+    structural_ok = continuity_ok and feature_ok and boundary_structural_ok
+
+    if structural_ok and convergence_proven:
+        overall_status = "PASS"
+        exit_code = 0
+        reason = (
+            "All context structural gates pass and initialization "
+            "convergence is scientifically supported."
+        )
+    elif structural_ok:
+        overall_status = "BLOCKED"
+        exit_code = 2
+        reason = (
+            "Structural context gates pass, but initialization convergence "
+            "remains NOT_PROVEN. Predictive/evidence execution is blocked."
+        )
+    else:
+        overall_status = "BLOCKED"
+        exit_code = 2
+        reason = (
+            "One or more structural context gates failed. "
+            "Predictive/evidence execution is blocked."
+        )
+
     payload = {
-        "research_start_day": RESEARCH_START,
-        "warmup_required": WARMUP_REQUIRED,
-        "minimum_source_overlap_days": MIN_SOURCE_OVERLAP_DAYS,
-        "source_validation": {
-            "status": source_status,
-            "overlap_sufficient": overlap_sufficient,
-            "xau_overlap_days": xau_overlap,
-            "dxy_overlap_days": dxy_overlap,
-            "xau_max_close_relative_difference": max_xau_diff,
-            "xau_mean_close_relative_difference": mean_xau_diff,
-            "dxy_max_close_relative_difference": continuity.get("dxy", {}).get("max_close_relative_difference"),
-            "acceptance_rule": "At least 30 overlapping days are required before scientific review; no automatic source equivalence claim is made.",
+        "overall_status": overall_status,
+        "reason": reason,
+        "structural_gate": {
+            "continuity_ok": continuity_ok,
+            "feature_ok": feature_ok,
+            "boundary_structural_ok": boundary_structural_ok,
+            "structural_ok": structural_ok,
         },
-        "warmup_context": {
-            "four_way_pre_research_days": len(pre_research),
-            "first_day": pre_research[0] if pre_research else None,
-            "last_day": pre_research[-1] if pre_research else None,
-            "status": "PASS" if len(pre_research) >= WARMUP_REQUIRED else "BLOCKED",
+        "continuity": {
+            "status": continuity_status,
+            "xau_pre_context_days": xau_pre_context_days,
+            "xau_required_context_days": REQUIRED_XAU_CONTEXT_DAYS,
+            "xau_boundary_ok": xau_boundary_ok,
+            "xau_depth_ok": xau_depth_ok,
+            "dxy_overlap_days": dxy_overlap_days,
+            "dxy_required_overlap_days": REQUIRED_DXY_OVERLAP_DAYS,
+            "dxy_overlap_ok": dxy_overlap_ok,
         },
-        "overall_status": "BLOCKED",
-        "reason": "Cross-source context requires explicit scientific review even when overlap and warm-up coverage are sufficient.",
+        "feature_audit": {
+            "status": feature_status,
+            "research_rows": feature_research_rows,
+            "minimum_required_rows": feature_minimum_required,
+            "required_research_rows": REQUIRED_RESEARCH_ROWS,
+        },
+        "boundary_sensitivity": {
+            "status": boundary_status,
+            "structural_ok": boundary_structural_ok,
+            "interpretation": (
+                "Sensitivity is measured, not treated as equivalence "
+                "or zero-difference stability."
+            ),
+        },
+        "initialization_convergence": {
+            "scientific_status": convergence_status,
+            "supported": convergence_proven,
+        },
+        "acceptance_policy": (
+            "Same-feed MT5 XAU pre-research context is required. "
+            "XAU overlap with research is not required. "
+            "Boundary sensitivity is descriptive/structural and does not "
+            "imply feature equality. Initialization convergence must be "
+            "scientifically supported before predictive/evidence execution."
+        ),
     }
+
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    OUT.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     print("=" * 70)
-    print("PHASE 5.2 REBUILD — CONTEXT ACCEPTANCE GATE")
+    print("PHASE 5.2 REBUILD - CONTEXT ACCEPTANCE GATE")
     print("=" * 70)
-    print(f"XAU SOURCE OVERLAP   : {xau_overlap} days")
-    print(f"DXY SOURCE OVERLAP   : {dxy_overlap} days")
-    print(f"XAU MAX REL DIFF     : {max_xau_diff}")
-    print(f"XAU MEAN REL DIFF    : {mean_xau_diff}")
-    print(f"4-WAY PRE-RESEARCH   : {len(pre_research)} days")
-    print(f"WARMUP REQUIRED      : {WARMUP_REQUIRED}")
-    print(f"SOURCE STATUS        : {source_status}")
-    print(f"WARMUP STATUS        : {payload['warmup_context']['status']}")
-    print("OVERALL STATUS       : BLOCKED")
-    print(f"OUTPUT               : {OUT.relative_to(ROOT)}")
+    print(f"XAU PRE-CONTEXT DAYS   : {xau_pre_context_days}")
+    print(f"XAU REQUIRED DAYS      : {REQUIRED_XAU_CONTEXT_DAYS}")
+    print(f"XAU BOUNDARY OK        : {xau_boundary_ok}")
+    print(f"XAU DEPTH OK            : {xau_depth_ok}")
+    print(f"DXY OVERLAP DAYS        : {dxy_overlap_days}")
+    print(f"DXY REQUIRED DAYS       : {REQUIRED_DXY_OVERLAP_DAYS}")
+    print(f"DXY OVERLAP OK          : {dxy_overlap_ok}")
+    print(f"CONTINUITY              : {continuity_status}")
+    print(f"FEATURE AUDIT           : {feature_status}")
+    print(f"BOUNDARY STRUCTURAL     : {boundary_structural_ok}")
+    print(f"CONVERGENCE             : {convergence_status}")
+    print(f"STRUCTURAL GATE         : {structural_ok}")
+    print(f"OVERALL STATUS          : {overall_status}")
+    print(f"OUTPUT                  : {OUT.relative_to(ROOT)}")
+    print(f"REASON                  : {reason}")
     print("=" * 70)
-    return 2
+
+    return exit_code
 
 
 if __name__ == "__main__":

@@ -15,11 +15,14 @@ from pathlib import Path
 from researchos.experiments.phase52_rebuild.context_dataset import load_context_daily_observations
 from researchos.experiments.phase52_rebuild.context_features import build_context_feature_dataset
 from researchos.experiments.phase52_rebuild.daily_dataset import DailyObservation
-from researchos.experiments.phase52_rebuild.feature_contract import FEATURE_SET_NAMES, Phase52FeatureContract
+from researchos.experiments.phase52_rebuild.feature_contract import (
+    FEATURE_SET_NAMES,
+    Phase52FeatureContract,
+)
 from researchos.experiments.phase52_rebuild.feature_dataset import build_feature_dataset
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONTEXT_XAU = ROOT / "data/macro/context/dukascopy_2020/XAUUSD_Dukascopy_M1_2020_context.csv"
+DEFAULT_CONTEXT_XAU = ROOT / "data/mt5/xauusd/XAUUSD_M1_2020_context_MT5.csv"
 DEFAULT_CONTEXT_DXY = ROOT / "data/macro/context/dukascopy_2020/DXY_Dukascopy_D1_2020_context.csv"
 DEFAULT_US10Y = ROOT / "data/macro/raw/DGS10_fred.csv"
 DEFAULT_VIX = ROOT / "data/macro/raw/VIXCLS_fred.csv"
@@ -41,8 +44,11 @@ def _load_research_daily(path: Path) -> tuple[DailyObservation, ...]:
                     low=float(raw["low"]),
                     close=float(raw["close"]),
                     tick_volume=float(raw["tick_volume"]),
-                    spread=None if raw.get("spread") in (None, "", "None") else float(raw["spread"]),
+                    spread=None
+                    if raw.get("spread") in (None, "", "None")
+                    else float(raw["spread"]),
                     real_volume=float(raw["real_volume"]),
+                    vwap=float(raw["vwap"]),
                     dxy=float(raw["dxy"]),
                     us10y=float(raw["us10y"]),
                     vix=float(raw["vix"]),
@@ -52,7 +58,9 @@ def _load_research_daily(path: Path) -> tuple[DailyObservation, ...]:
     return tuple(rows)
 
 
-def _max_mean_abs_diff(context_rows: tuple[tuple[float, ...], ...], cold_rows: tuple[tuple[float, ...], ...]) -> tuple[float, float]:
+def _max_mean_abs_diff(
+    context_rows: tuple[tuple[float, ...], ...], cold_rows: tuple[tuple[float, ...], ...]
+) -> tuple[float, float]:
     if len(context_rows) != len(cold_rows) or not context_rows:
         raise ValueError("comparison datasets must have equal non-zero length")
     diffs = [

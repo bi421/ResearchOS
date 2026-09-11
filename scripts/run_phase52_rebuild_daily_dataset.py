@@ -30,6 +30,7 @@ def _dataset_hash(rows) -> str:
             "tick_volume": r.tick_volume,
             "spread": r.spread,
             "real_volume": r.real_volume,
+            "vwap": r.vwap,
             "dxy": r.dxy,
             "us10y": r.us10y,
             "vix": r.vix,
@@ -78,8 +79,20 @@ def main(argv: list[str] | None = None) -> int:
     meta.parent.mkdir(parents=True, exist_ok=True)
 
     fields = [
-        "day", "timestamp", "open", "high", "low", "close", "tick_volume",
-        "spread", "real_volume", "dxy", "us10y", "vix", "m1_rows",
+        "day",
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "tick_volume",
+        "spread",
+        "real_volume",
+        "vwap",
+        "dxy",
+        "us10y",
+        "vix",
+        "m1_rows",
     ]
     with out.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)

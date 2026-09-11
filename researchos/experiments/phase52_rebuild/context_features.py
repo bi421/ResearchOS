@@ -69,7 +69,14 @@ def build_context_feature_dataset(
     high = [o.high for o in combined]
     low = [o.low for o in combined]
     volume = [o.tick_volume for o in combined]
-    price_features = FeatureBuilder(close, high, low, volume).build(drop_na=False)
+    vwap_values = [o.vwap for o in combined]
+    price_features = FeatureBuilder(
+        close,
+        high,
+        low,
+        volume,
+        vwap_values=vwap_values,
+    ).build(drop_na=False)
     if tuple(price_features.feature_names) != PRICE_FEATURE_NAMES:
         raise AssertionError("frozen price feature contract changed unexpectedly")
 
@@ -107,9 +114,7 @@ def build_context_feature_dataset(
         day = combined[i].day
         source_days.append(day)
         dt = datetime.fromisoformat(day).replace(tzinfo=timezone.utc)
-        prediction_timestamps.append(
-            (dt + timedelta(days=1)).isoformat().replace("+00:00", "Z")
-        )
+        prediction_timestamps.append((dt + timedelta(days=1)).isoformat().replace("+00:00", "Z"))
 
     expected = max(0, len(research_observations) - contract.horizon)
     audit = ContextFeatureAudit(
@@ -123,8 +128,7 @@ def build_context_feature_dataset(
     )
     if not audit.invariant_ok:
         raise AssertionError(
-            "context feature accounting mismatch: "
-            f"expected {expected}, got {len(rows)}"
+            "context feature accounting mismatch: " f"expected {expected}, got {len(rows)}"
         )
 
     metadata: dict[str, object] = {
