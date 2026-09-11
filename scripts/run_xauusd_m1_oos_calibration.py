@@ -31,10 +31,24 @@ def _time(value: str) -> datetime:
 
 
 def _pava(rows: list[tuple[float, int]]) -> tuple[tuple[float, float], ...]:
+    """Fit isotonic regression after aggregating duplicate x values.
+
+    Duplicate probabilities must be one weighted observation at a single x.
+    Keeping separate 0/1 blocks at the same x can make bisect_right select an
+    arbitrary extreme block, producing spurious 0/1 calibrated probabilities.
+    """
     ordered = sorted(rows, key=lambda item: (item[0], item[1]))
-    blocks: list[list[float | int]] = []
+    grouped: list[list[float | int]] = []
     for x, y in ordered:
-        blocks.append([x, y, 1, y])
+        if grouped and float(grouped[-1][0]) == float(x):
+            grouped[-1][1] = int(grouped[-1][1]) + 1
+            grouped[-1][2] = int(grouped[-1][2]) + int(y)
+        else:
+            grouped.append([float(x), 1, int(y)])
+
+    blocks: list[list[float | int]] = []
+    for x, count, positives in grouped:
+        blocks.append([x, float(positives) / int(count), int(count), int(positives)])
         while len(blocks) >= 2:
             a, b = blocks[-2], blocks[-1]
             if float(a[3]) / int(a[2]) <= float(b[3]) / int(b[2]):
@@ -159,11 +173,6 @@ def run(
     if len(predictions) < MIN_SAMPLES + 1:
         raise ValueError("At least 11 OOS predictions are required for leakage-safe calibration")
 
-    # Build the causal eligibility stream once.  For a prediction at time T,
-    # an earlier OOS outcome is eligible exactly when realized_end < T.  Because
-    # every realized_end is strictly after its own event timestamp, this also
-    # guarantees timestamp < T.  Maintaining this stream avoids rebuilding a
-    # full `prior` list for every validation row.
     completion_order = sorted(
         range(len(predictions)),
         key=lambda index: (predictions[index]["realized_end"], predictions[index]["event_id"]),
@@ -183,7 +192,7 @@ def run(
     fit_id = 0
     fit_cutoff_timestamp: datetime | None = None
 
-    for index, row in enumerate(predictions):
+    for row in predictions:
         while completion_cursor < len(completion_order):
             completed_index = completion_order[completion_cursor]
             completed = predictions[completed_index]
@@ -192,8 +201,6 @@ def run(
             eligible_indices.append(completed_index)
             completion_cursor += 1
 
-        # The current row cannot be eligible because realized_end > timestamp,
-        # and the strict endpoint rule is enforced above.
         prior = [predictions[item] for item in eligible_indices]
         classes = {item["label"] for item in prior}
         if len(prior) < MIN_SAMPLES or classes != {0, 1}:
