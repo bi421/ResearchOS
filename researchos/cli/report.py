@@ -104,6 +104,12 @@ def _raw_timestamp_set(path: Path, name: str) -> tuple[int, set[datetime]]:
         for row in reader:
             rows += 1
             try:
+                if "observation_date" in fields:
+                    value_columns = [x for x in fields.values() if x != fields["observation_date"]]
+                    if len(value_columns) == 1:
+                        raw_value = (row.get(value_columns[0]) or "").strip()
+                        if not raw_value or raw_value == ".":
+                            continue
                 if name == "XAUUSD" and fields.get("date") and fields.get("time"):
                     ts = datetime.strptime(f"{row[fields['date']].strip()} {row[fields['time']].strip()}", "%Y.%m.%d %H:%M:%S").replace(tzinfo=timezone.utc)
                 elif "timestamp" in fields:
