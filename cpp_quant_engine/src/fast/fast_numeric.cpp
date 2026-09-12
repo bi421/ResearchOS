@@ -5,16 +5,10 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <string>
 
 namespace quant::fast {
 namespace {
-
-void require_same_size(const std::vector<double>& a, const std::vector<double>& b,
-                       const char* name_a, const char* name_b) {
-  if (a.size() != b.size()) {
-    throw std::invalid_argument(std::string(name_a) + " and " + name_b + " must have equal length");
-  }
-}
 
 double percentile_sorted(const std::vector<double>& sorted, double q) {
   if (sorted.empty()) return 0.0;
@@ -67,65 +61,80 @@ BacktestOutput backtest_next_open(const std::vector<double>& open,
   double cash = initial_capital;
   double position = 0.0;
   double entry_price = 0.0;
-  int entry_side = 0;
   std::size_t trades = 0;
   std::size_t wins = 0;
   double peak = initial_capital;
   double max_dd = 0.0;
 
-  // Signal at i is executed at the next bar's open. This is intentionally
-  // branch-light and contains no Python callback in the hot loop.
+  // Signal at i-1 is executed at i's open. No Python callback occurs in this loop.
   for (std::size_t i = 1; i < open.size(); ++i) {
     const int s = signal[i - 1];
-    const double qty = std::max(0.0, quantity[i - 1]);
-    if (s == 0 || qty == 0.0) continue;
+    const double requested_qty = std::max(0.0, quantity[i - 1]);
+    if (s == 0 || requested_qty == 0.0) continue;
 
     const double px = open[i];
     if (!(px > 0.0)) continue;
 
-    if (s > 0 && position <= 0.0) {
+    if (s > 0) {
       if (position < 0.0) {
-        const double close_qty = std::min(qty, -position);
+        const double close_qty = std::min(requested_qty, -position);
         const double exit_px = px + px * slippage_pct;
         const double pnl = (entry_price - exit_px) * close_qty;
         const double commission = close_qty * exit_px * commission_pct;
-        cash += -pnl - commission;
+        cash -= pnl + commission;
         ++trades;
         if (pnl - commission > 0.0) ++wins;
         position += close_qty;
-      }
-      const double residual = qty - std::min(qty, std::max(0.0, -position));
-      if (position == 0.0 && residual > 0.0) {
+        if (position == 0.0) entry_price = 0.0;
+        const double residual = requested_qty - close_qty;
+        if (residual > 0.0) {
+          const double entry_px = px + px * slippage_pct;
+          const double cost = residual * entry_px;
+          const double commission_in = cost * commission_pct;
+          if (cash >= cost + commission_in) {
+            cash -= cost + commission_in;
+            position = residual;
+            entry_price = entry_px;
+          }
+        }
+      } else {
         const double entry_px = px + px * slippage_pct;
-        const double cost = residual * entry_px;
+        const double cost = requested_qty * entry_px;
         const double commission = cost * commission_pct;
         if (cash >= cost + commission) {
           cash -= cost + commission;
-          position = residual;
+          position += requested_qty;
           entry_price = entry_px;
-          entry_side = 1;
         }
       }
-    } else if (s < 0 && position >= 0.0) {
+    } else {
       if (position > 0.0) {
-        const double close_qty = std::min(qty, position);
+        const double close_qty = std::min(requested_qty, position);
         const double exit_px = px - px * slippage_pct;
         const double pnl = (exit_px - entry_price) * close_qty;
         const double commission = close_qty * exit_px * commission_pct;
-        cash += pnl - commission;
+        cash += pnl + close_qty * entry_price - close_qty * entry_price - commission;
+        // Equivalent to adding realized PnL; explicit terms keep the cash-flow model auditable.
         ++trades;
         if (pnl - commission > 0.0) ++wins;
         position -= close_qty;
-      }
-      const double residual = qty - std::min(qty, std::max(0.0, position));
-      if (position == 0.0 && residual > 0.0 && allow_short) {
+        if (position == 0.0) entry_price = 0.0;
+        const double residual = requested_qty - close_qty;
+        if (residual > 0.0 && position == 0.0 && allow_short) {
+          const double entry_px = px - px * slippage_pct;
+          const double proceeds = residual * entry_px;
+          const double commission_in = proceeds * commission_pct;
+          cash += proceeds - commission_in;
+          position = -residual;
+          entry_price = entry_px;
+        }
+      } else if (allow_short) {
         const double entry_px = px - px * slippage_pct;
-        const double proceeds = residual * entry_px;
+        const double proceeds = requested_qty * entry_px;
         const double commission = proceeds * commission_pct;
         cash += proceeds - commission;
-        position = -residual;
+        position -= requested_qty;
         entry_price = entry_px;
-        entry_side = -1;
       }
     }
 
@@ -152,7 +161,6 @@ BacktestOutput backtest_next_open(const std::vector<double>& open,
       ++trades;
       if (pnl - commission > 0.0) ++wins;
     }
-    position = 0.0;
   }
 
   BacktestOutput out;
@@ -161,7 +169,6 @@ BacktestOutput backtest_next_open(const std::vector<double>& open,
   out.max_drawdown_pct = max_dd;
   out.trades = trades;
   out.wins = wins;
-  (void)entry_side;
   return out;
 }
 
@@ -200,8 +207,10 @@ RiskScanOutput risk_scan(const std::vector<double>& returns,
     double peak = -std::numeric_limits<double>::infinity();
     for (double x : equity) {
       peak = std::max(peak, x);
-      if (peak > 0.0) out.max_drawdown_pct =
-          std::max(out.max_drawdown_pct, (peak - x) / peak * 100.0);
+      if (peak > 0.0) {
+        out.max_drawdown_pct = std::max(out.max_drawdown_pct,
+                                        (peak - x) / peak * 100.0);
+      }
     }
   }
   return out;
