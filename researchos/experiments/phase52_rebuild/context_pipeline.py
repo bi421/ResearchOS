@@ -1,9 +1,4 @@
-"""Production orchestration for context-aware Phase 5.2 feature construction.
-
-The context dataset is feature state only: its observations are never emitted as
-research samples. Research observations remain the only rows eligible for labels,
-training, validation, and the minimum-sample gate.
-"""
+"""Production orchestration for context-aware Phase 5.2 feature construction."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -44,6 +39,8 @@ class ContextAwareFeatureBuild:
         """Fail closed on context/research boundary and sample-accounting invariants."""
         if not self.context_observations:
             raise ValueError("context observations cannot be empty")
+        if not self.research_observations:
+            raise ValueError("research observations cannot be empty")
         if self.context_observations[-1].day >= self.research_observations[0].day:
             raise ValueError("context must end strictly before research starts")
         if self.context_sample_count < contract.warmup:
@@ -80,12 +77,7 @@ def build_context_aware_feature_datasets(
     *,
     contract: Phase52FeatureContract | None = None,
 ) -> ContextAwareFeatureBuild:
-    """Build all Phase 5.2 research datasets using pre-research context state.
-
-    The context XAU source must use the same canonical MT5 schema as the
-    research XAU source. Context observations are loaded from an exact
-    four-way intersection and are consumed only to initialize feature state.
-    """
+    """Build all Phase 5.2 research datasets using pre-research context state."""
     contract = contract or Phase52FeatureContract()
     context = load_context_daily_observations(
         context_xau_path,
@@ -132,7 +124,4 @@ def build_context_aware_feature_datasets(
     return result
 
 
-__all__ = [
-    "ContextAwareFeatureBuild",
-    "build_context_aware_feature_datasets",
-]
+__all__ = ["ContextAwareFeatureBuild", "build_context_aware_feature_datasets"]
