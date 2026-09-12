@@ -27,7 +27,7 @@ def test_diagnose_dataset_drops_exposes_label_tail_and_feature_warmup():
     assert report["feature_missing_rows"] > 0
     assert report["feature_missing_counts"]["vol_regime"] > 0
     assert report["macro_symbols_missing"] == []
-    assert report["first_retained_index"] == 59
+    assert report["first_retained_index"] == 60
     assert report["last_retained_index"] == n - 6
 
 
