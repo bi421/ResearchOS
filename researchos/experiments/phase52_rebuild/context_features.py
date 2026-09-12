@@ -148,6 +148,7 @@ def build_context_feature_dataset(
         "context_is_feature_state_only": True,
         "context_rows_emitted": False,
         "no_interpolation_or_forward_fill": True,
+        "source_indices": list(range(len(rows))),
         "source_days": list(source_days),
         "prediction_timestamps": list(prediction_timestamps),
     }
