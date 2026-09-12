@@ -1,21 +1,21 @@
 """Chronological, outcome-grounded probability calibration for Phase 5.2.
 
-The calibrator is deliberately separate from model fitting.  It accepts an
+The calibrator is deliberately separate from model fitting. It accepts an
 earlier OOS calibration sample and a later evaluation sample, fits one scalar
 temperature on the earlier sample only, and evaluates raw versus calibrated
-probabilities on the later sample.  No random split or future-label access is
+probabilities on the later sample. No random split or future-label access is
 performed here.
 
 Temperature scaling is used because Phase 5.2 is multiclass (-1, 0, +1).
-For probabilities p_k, calibration applies softmax(log(p_k) / T).  T=1 is the
-raw probability surface.  The fit is deterministic and uses a bounded golden-
+For probabilities p_k, calibration applies softmax(log(p_k) / T). T=1 is the
+raw probability surface. The fit is deterministic and uses a bounded golden-
 section search over a fixed interval.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite, log
+from math import exp, isfinite, log
 from typing import Mapping, Sequence
 
 CLASSES = (-1, 0, 1)
@@ -76,7 +76,7 @@ def apply_temperature(probabilities: Sequence[Mapping[int, float]], temperature:
         probs = _normalise(row)
         logits = [log(p) * inverse for p in probs]
         peak = max(logits)
-        exp_values = [__import__("math").exp(v - peak) for v in logits]
+        exp_values = [exp(v - peak) for v in logits]
         total = sum(exp_values)
         calibrated.append({cls: exp_values[i] / total for i, cls in enumerate(CLASSES)})
     return calibrated
@@ -114,8 +114,6 @@ def fit_temperature(
     def objective(temp: float) -> float:
         return _log_loss(apply_temperature(calibration_probabilities, temp), calibration_labels)
 
-    # Fixed deterministic search interval; golden-section converges without
-    # introducing an optimizer dependency or stochastic state.
     left, right = 0.05, 20.0
     phi = (1.0 + 5.0 ** 0.5) / 2.0
     for _ in range(80):
