@@ -1,8 +1,9 @@
 """Evidence-aware ExperimentRunner integration.
 
-This adapter composes the existing ``BaseExperimentRunner`` with the runtime
-certification trust layer.  It deliberately does not change computation,
-backend routing, or the existing runner return contract.
+The adapter composes the existing ``BaseExperimentRunner`` with the runtime
+evidence trust layer.  Successful production runs cannot return as certified
+unless the actual dataset is emitted as the Dataset parent and the complete
+Dataset → Experiment → Run → Result chain verifies.
 """
 
 from __future__ import annotations
@@ -10,22 +11,14 @@ from __future__ import annotations
 from typing import Any
 
 from researchos.evidence.repository import EvidenceRepository
-from researchos.evidence.runtime_certification import (
-    RuntimeCertification,
-    certify_runtime,
-)
+from researchos.evidence.runtime_certification import RuntimeCertification, certify_runtime
 from researchos.experiments.experiment import Experiment
 from researchos.experiments.result import ExperimentResult, ExperimentRun
 from researchos.experiments.runner import BaseExperimentRunner
 
 
 class EvidenceAwareExperimentRunner(BaseExperimentRunner):
-    """Base runner plus runtime evidence certification for every run mode.
-
-    The normal runner return values remain unchanged.  Certifications are
-    retained for inspection and verification without changing existing
-    experiment APIs.
-    """
+    """Base runner plus fail-closed runtime evidence certification."""
 
     def __init__(
         self,
@@ -41,14 +34,17 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
     def _certify(
         self,
         experiment: Experiment,
+        dataset: Any,
         run: ExperimentRun,
         result: ExperimentResult,
     ) -> RuntimeCertification:
+        """Certify the actual runtime dataset before exposing the result."""
         certification = certify_runtime(
             experiment,
             run,
             result,
             self.evidence_repository,
+            dataset=dataset,
             backend_identity={
                 "backend": result.statistics.get("backend_id", ""),
                 "version": result.statistics.get("backend_version", ""),
@@ -63,9 +59,9 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
         experiment: Experiment,
         dataset: Any,
     ) -> tuple[ExperimentRun, ExperimentResult]:
-        """Execute normally, then certify Experiment → Run → Result."""
+        """Execute normally, then certify Dataset → Experiment → Run → Result."""
         run, result = super().run(experiment, dataset)
-        self._certify(experiment, run, result)
+        self._certify(experiment, dataset, run, result)
         return run, result
 
     def run_with_parameters(
@@ -82,7 +78,7 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
             parameter_overrides,
             run_number,
         )
-        self._certify(experiment, run, result)
+        self._certify(experiment, dataset, run, result)
         return run, result
 
     def run_walk_forward(
@@ -93,15 +89,10 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
         step_size: int = 63,
     ) -> list[tuple[ExperimentRun, ExperimentResult]]:
         """Execute walk-forward runs and certify every successful run."""
-        results = super().run_walk_forward(
-            experiment,
-            dataset,
-            window_size,
-            step_size,
-        )
+        results = super().run_walk_forward(experiment, dataset, window_size, step_size)
         for run, result in results:
             if run.status.value == "Completed":
-                self._certify(experiment, run, result)
+                self._certify(experiment, dataset, run, result)
         return results
 
     def run_monte_carlo(
@@ -112,15 +103,10 @@ class EvidenceAwareExperimentRunner(BaseExperimentRunner):
         seed: int | None = None,
     ) -> list[tuple[ExperimentRun, ExperimentResult]]:
         """Execute Monte Carlo runs and certify every successful run."""
-        results = super().run_monte_carlo(
-            experiment,
-            dataset,
-            num_simulations,
-            seed,
-        )
+        results = super().run_monte_carlo(experiment, dataset, num_simulations, seed)
         for run, result in results:
             if run.status.value == "Completed":
-                self._certify(experiment, run, result)
+                self._certify(experiment, dataset, run, result)
         return results
 
 
