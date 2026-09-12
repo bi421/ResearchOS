@@ -5,7 +5,6 @@
 #include <limits>
 #include <numeric>
 #include <stdexcept>
-#include <string>
 
 namespace quant::fast {
 namespace {
@@ -113,8 +112,7 @@ BacktestOutput backtest_next_open(const std::vector<double>& open,
         const double exit_px = px - px * slippage_pct;
         const double pnl = (exit_px - entry_price) * close_qty;
         const double commission = close_qty * exit_px * commission_pct;
-        cash += pnl + close_qty * entry_price - close_qty * entry_price - commission;
-        // Equivalent to adding realized PnL; explicit terms keep the cash-flow model auditable.
+        cash += close_qty * exit_px - commission;
         ++trades;
         if (pnl - commission > 0.0) ++wins;
         position -= close_qty;
