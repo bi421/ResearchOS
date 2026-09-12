@@ -146,7 +146,8 @@ def _raw_timestamp_set(path: Path, name: str) -> tuple[int, set[datetime]]:
                     raise KeyError("no supported timestamp column")
                 timestamps.add(ts)
             except Exception:
-                timestamps.add(ts) if "ts" in locals() else None
+                # Raw row count remains authoritative; invalid timestamp rows
+                # are excluded from the timestamp set rather than fabricated.
                 continue
     return rows, timestamps
 
