@@ -7,6 +7,7 @@ preserving the original source-row identity of every retained observation.
 from __future__ import annotations
 
 import math
+from collections import Counter
 from collections.abc import Sequence
 
 from researchos.quant_engine.machine_learning.dataset_contracts import (
@@ -27,7 +28,7 @@ def build_macro_augmented_dataset(
     volume: Sequence[float], macro_factor_series: dict[str, Sequence[float | None]],
     horizon: int, threshold: float,
 ) -> tuple[ResearchDataset, MacroFeatureSet]:
-    """Build the Phase 5.2 dataset and retain source indices in metadata."""
+    """Build the Phase 5.2 dataset and retain deterministic row-drop metadata."""
     close = list(close)
     n = len(close)
     if not (len(high) == n and len(low) == n and len(volume) == n):
@@ -44,12 +45,27 @@ def build_macro_augmented_dataset(
     features: list[tuple[float, ...]] = []
     aligned_labels: list[float] = []
     source_indices: list[int] = []
+    dropped_indices: list[int] = []
+    label_missing_indices: list[int] = []
+    feature_missing_indices: list[int] = []
+    feature_missing_counts: Counter[str] = Counter()
+
     for i in range(n):
         label = labels[i] if i < len(labels) else None
-        if label is None or (isinstance(label, float) and math.isnan(label)):
-            continue
+        label_bad = label is None or (isinstance(label, float) and math.isnan(label))
         row = tuple(price_feature_set.data[i]) + tuple(macro_feature_set.data[i])
-        if any(v is None or (isinstance(v, float) and math.isnan(v)) for v in row):
+        bad_features = [
+            name
+            for name, value in zip(combined_names, row)
+            if value is None or (isinstance(value, float) and math.isnan(value))
+        ]
+        if label_bad:
+            label_missing_indices.append(i)
+        if bad_features:
+            feature_missing_indices.append(i)
+            feature_missing_counts.update(bad_features)
+        if label_bad or bad_features:
+            dropped_indices.append(i)
             continue
         features.append(row)  # type: ignore[arg-type]
         aligned_labels.append(float(label))
@@ -71,6 +87,10 @@ def build_macro_augmented_dataset(
         "macro_symbols_present": list(macro_feature_set.symbols_present),
         "macro_symbols_missing": list(macro_feature_set.symbols_missing),
         "source_indices": source_indices,
+        "dropped_indices": dropped_indices,
+        "label_missing_indices": label_missing_indices,
+        "feature_missing_indices": feature_missing_indices,
+        "feature_missing_counts": dict(sorted(feature_missing_counts.items())),
     }
     dataset = ResearchDataset(
         feature_names=combined_names,

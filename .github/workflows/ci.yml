@@ -74,6 +74,10 @@ jobs:
         run: cmake --build cpp_quant_engine/build -j
       - name: Test C++ Quant Engine
         run: ctest --test-dir cpp_quant_engine/build -V
+      - name: Benchmark C++ fast path
+        env:
+          PYTHONPATH: cpp_quant_engine/python
+        run: python cpp_quant_engine/benchmarks/bench_fast_numeric.py --rows 1000000 --repeat 3
       - name: Test Python Quant Integration
         run: pytest researchos/tests/ -k quant -v
 

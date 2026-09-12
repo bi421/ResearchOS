@@ -4,6 +4,9 @@ from __future__ import annotations
 from researchos.experiments.phase52.dataset import build_macro_augmented_dataset
 
 
+EXPECTED_WARMUP = 60
+
+
 def _inputs():
     close = [100.0 + i for i in range(150)]
     high = [c + 1.0 for c in close]
@@ -35,10 +38,31 @@ def test_source_indices_reveal_dropped_warmup_and_tail_rows():
     assert retained[-1] < len(inputs[0]) - 1
 
 
+def test_source_indices_exact_contiguous_retention_contract():
+    inputs = _inputs()
+    horizon = 5
+
+    dataset, _ = build_macro_augmented_dataset(
+        *inputs,
+        horizon=horizon,
+        threshold=0.0,
+    )
+
+    retained = dataset.metadata["source_indices"]
+    expected = list(range(EXPECTED_WARMUP, len(inputs[0]) - horizon))
+
+    assert retained == expected
+    assert retained[0] == EXPECTED_WARMUP
+    assert retained[-1] == len(inputs[0]) - horizon - 1
+    assert len(retained) == len(inputs[0]) - EXPECTED_WARMUP - horizon
+
+
 def test_source_index_maps_dataset_position_to_original_close():
     inputs = _inputs()
     close = inputs[0]
     dataset, _ = build_macro_augmented_dataset(*inputs, horizon=5, threshold=0.0)
     retained = dataset.metadata["source_indices"]
+
     for dataset_pos, source_pos in enumerate(retained):
-        assert close[source_pos] == close[retained[dataset_pos]]
+        assert source_pos == EXPECTED_WARMUP + dataset_pos
+        assert close[source_pos] == close[EXPECTED_WARMUP + dataset_pos]

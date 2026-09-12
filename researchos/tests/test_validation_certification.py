@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from researchos.evidence import EvidenceRepository, ValidationCertification, certify_runtime, certify_validation
@@ -14,6 +16,20 @@ def _experiment() -> Experiment:
     )
     experiment.mark_ready()
     return experiment
+
+
+def _dataset() -> SimpleNamespace:
+    return SimpleNamespace(
+        feature_names=["x"],
+        features=[[0.1], [0.2]],
+        labels=[0.0, 1.0],
+        metadata={"data_classification": "real_market"},
+        sample_count=2,
+        feature_count=1,
+        label_name="outcome",
+        version="1.0.0",
+        source="real_market",
+    )
 
 
 def _validation() -> ValidationResult:
@@ -35,7 +51,7 @@ def test_validation_certification_extends_runtime_chain() -> None:
         experiment,
         [],
     )
-    runtime = certify_runtime(experiment, run, result, repository)
+    runtime = certify_runtime(experiment, run, result, repository, dataset=_dataset())
 
     certification = certify_validation(
         _validation(),
@@ -48,8 +64,8 @@ def test_validation_certification_extends_runtime_chain() -> None:
 
     assert isinstance(certification, ValidationCertification)
     assert certification.verify(repository)
-    assert repository.count_artifacts() == 4
-    assert repository.count_edges() == 3
+    assert repository.count_artifacts() == 5
+    assert repository.count_edges() == 4
     assert certification.validation.parent_hashes == (runtime.result_hash,)
 
 
