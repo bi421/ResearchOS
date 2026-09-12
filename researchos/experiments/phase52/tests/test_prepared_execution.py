@@ -73,3 +73,22 @@ def test_comparison_fails_closed_without_explicit_timestamps():
     inputs = _inputs()
     with pytest.raises(ValueError, match="timestamps"):
         run_phase52_comparison_optimized(*inputs[:4], inputs[6])
+
+
+def test_prepared_data_blocks_when_samples_are_insufficient():
+    inputs = _inputs(n=1250)
+    prepared = Phase52PreparedData.build(
+        *inputs[:4], inputs[4], inputs[5], inputs[6], horizon=5, threshold=0.0
+    )
+    result = prepared.blocked_if_insufficient(train_size=1000, validation_size=200)
+    assert result is not None
+    assert result.outcome == "BLOCKED"
+    assert result.validation.outcome == "BLOCKED"
+    assert result.validation.data_valid is False
+    assert result.validation.leakage_check is False
+    assert result.validation.out_of_sample is False
+    assert result.validation.cost_adjusted is False
+    assert result.validation.reproducible is True
+    assert result.validation.reasons == (
+        "REAL XAUUSD + MACRO DATA REQUIRED (insufficient aligned samples after merge)",
+    )
