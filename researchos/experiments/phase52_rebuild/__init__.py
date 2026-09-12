@@ -2,6 +2,7 @@
 
 from .context_dataset import load_context_daily_observations
 from .context_features import ContextFeatureAudit, build_context_feature_dataset
+from .context_pipeline import ContextAwareFeatureBuild, build_context_aware_feature_datasets
 from .daily_dataset import (
     DailyMacroObservation,
     DailyObservation,
@@ -44,4 +45,6 @@ __all__ = [
     "load_context_daily_observations",
     "ContextFeatureAudit",
     "build_context_feature_dataset",
+    "ContextAwareFeatureBuild",
+    "build_context_aware_feature_datasets",
 ]
