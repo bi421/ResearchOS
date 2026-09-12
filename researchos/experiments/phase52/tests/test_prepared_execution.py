@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from researchos.experiments.phase52 import Phase52Config
 from researchos.experiments.phase52.comparison import run_phase52_comparison_optimized
 from researchos.experiments.phase52.prepared import Phase52PreparedData
@@ -24,6 +26,22 @@ def test_prepared_data_validates_identity_contract():
     prepared.validate(("DXY", "US10Y", "VIX"))
     assert len(prepared.source_indices) == prepared.sample_count
     assert prepared.source_indices == tuple(sorted(set(prepared.source_indices)))
+    assert prepared.input_provenance["combined_input_hash"]
+
+
+def test_prepared_data_rejects_exact_timestamp_mismatch():
+    inputs = _inputs()
+    macro_timestamps = {symbol: list(values) for symbol, values in inputs[5].items()}
+    macro_timestamps["VIX"][17] += 1
+    with pytest.raises(ValueError, match="VIX"):
+        Phase52PreparedData.build(
+            *inputs[:4],
+            inputs[4],
+            macro_timestamps,
+            inputs[6],
+            horizon=5,
+            threshold=0.0,
+        )
 
 
 def test_comparison_returns_all_feature_sets_from_one_prepared_dataset():
@@ -43,15 +61,15 @@ def test_comparison_returns_all_feature_sets_from_one_prepared_dataset():
         "PRICE + VIX",
         "PRICE + ALL",
     }
-    assert all(result.metadata.get("prepared_dataset_contract") == "single_materialized_dataset_shared_across_feature_sets" for result in results.values())
+    assert all(
+        result.metadata.get("prepared_dataset_contract")
+        == "single_materialized_dataset_shared_across_feature_sets"
+        for result in results.values()
+    )
     assert len({result.num_folds for result in results.values()}) == 1
 
 
 def test_comparison_fails_closed_without_explicit_timestamps():
     inputs = _inputs()
-    try:
+    with pytest.raises(ValueError, match="timestamps"):
         run_phase52_comparison_optimized(*inputs[:4], inputs[6])
-    except ValueError as exc:
-        assert "timestamps" in str(exc).lower()
-    else:
-        raise AssertionError("comparison must require explicit timestamps")
