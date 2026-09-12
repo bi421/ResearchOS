@@ -20,6 +20,13 @@ if(BUILD_PYTHON_BINDINGS)
     target_link_libraries(cpp_quant_backend PRIVATE quant_engine)
     target_include_directories(cpp_quant_backend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/python)
     set_target_properties(cpp_quant_backend PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python/cpp_quant_engine" LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/python/cpp_quant_engine" LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/python/cpp_quant_engine")
+
+    # Dedicated batch backend: no Python callback per bar and no strategy logic
+    # in the hot loop. It shares the same quant_engine static library.
+    nanobind_add_module(cpp_quant_fast_backend bindings/fast_numeric_bindings.cpp LTO)
+    target_link_libraries(cpp_quant_fast_backend PRIVATE quant_engine)
+    target_include_directories(cpp_quant_fast_backend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    set_target_properties(cpp_quant_fast_backend PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/python/cpp_quant_engine" LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/python/cpp_quant_engine" LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/python/cpp_quant_engine")
 endif()
 if(BUILD_TESTS)
     enable_testing()
