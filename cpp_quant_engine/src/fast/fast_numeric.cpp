@@ -80,7 +80,7 @@ BacktestOutput backtest_next_open(const std::vector<double>& open,
         const double exit_px = px + px * slippage_pct;
         const double pnl = (entry_price - exit_px) * close_qty;
         const double commission = close_qty * exit_px * commission_pct;
-        cash -= pnl + commission;
+        cash -= close_qty * exit_px + commission;
         ++trades;
         if (pnl - commission > 0.0) ++wins;
         position += close_qty;
