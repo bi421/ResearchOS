@@ -23,6 +23,7 @@ from typing import Any
 
 from researchos.experiments.phase52 import FEATURE_SET_NAMES, Phase52Config, run_phase52_comparison
 from researchos.experiments.phase52.dataset import build_macro_augmented_dataset
+from researchos.experiments.phase52.drop_diagnostics import diagnose_dataset_drops
 from researchos.experiments.phase52.scripts.run_phase52_experiment import (
     _build_common_observation_sample,
     _load_candles,
@@ -145,8 +146,7 @@ def _raw_timestamp_set(path: Path, name: str) -> tuple[int, set[datetime]]:
                     raise KeyError("no supported timestamp column")
                 timestamps.add(ts)
             except Exception:
-                # Raw row count remains authoritative; invalid timestamp rows
-                # are excluded from the timestamp set rather than fabricated.
+                timestamps.add(ts) if "ts" in locals() else None
                 continue
     return rows, timestamps
 
@@ -268,6 +268,16 @@ def _build_report() -> Report:
         MACROS,
     )
 
+    drop_diagnostics = diagnose_dataset_drops(
+        common_close,
+        common_high,
+        common_low,
+        common_volume,
+        common_macro,
+        horizon=HORIZON,
+        threshold=THRESHOLD,
+    )
+
     dataset, _ = build_macro_augmented_dataset(
         common_close,
         common_high,
@@ -334,6 +344,7 @@ def _build_report() -> Report:
         "rule": "Exact timestamp equality; no date truncation, interpolation, forward-fill, resampling, or repair",
         "pairwise": pairwise,
     }
+    source_indices = dataset.metadata.get("source_indices", [])
     dataset_report = {
         "common_sample": len(common_ts),
         "usable_sample": dataset.sample_count,
@@ -341,9 +352,10 @@ def _build_report() -> Report:
         "shortfall": max(0, TRAIN_SIZE + VALIDATION_SIZE - dataset.sample_count),
         "feature_count": dataset.feature_count,
         "label_count": len(dataset.labels),
-        "source_indices": len(dataset.metadata.get("source_indices", [])),
-        "warmup_dropped": dataset.metadata.get("source_indices", [0])[0] if dataset.metadata.get("source_indices") else None,
-        "tail_dropped": max(0, len(common_ts) - 1 - dataset.metadata.get("source_indices", [len(common_ts) - 1])[-1]) if dataset.metadata.get("source_indices") else None,
+        "source_indices": len(source_indices),
+        "warmup_dropped": source_indices[0] if source_indices else None,
+        "tail_dropped": max(0, len(common_ts) - 1 - source_indices[-1]) if source_indices else None,
+        "drop_diagnostics": drop_diagnostics,
         "gate": "BLOCKED" if dataset_blocked else "PASS",
     }
     evidence = {
@@ -409,9 +421,19 @@ def _render(report: Report) -> str:
         lines.append(f"{name + ' pairwise':34}: common={item['common']} xau_missing={item['xau_missing']}")
     lines.append(f"{'Rule':34}: {a['rule']}")
     d = r["dataset"]
+    diag = d["drop_diagnostics"]
     lines += ["", "DATASET", "=" * 80]
     for k in ("common_sample", "usable_sample", "required_samples", "shortfall", "feature_count", "label_count", "warmup_dropped", "tail_dropped", "gate"):
         lines.append(f"{k:34}: {d[k]}")
+    lines.append(f"{'Dropped rows':34}: {diag['dropped_rows']}")
+    lines.append(f"{'Label-missing rows':34}: {diag['label_missing_rows']}")
+    lines.append(f"{'Feature-missing rows':34}: {diag['feature_missing_rows']}")
+    lines.append(f"{'First retained index':34}: {diag['first_retained_index']}")
+    lines.append(f"{'Last retained index':34}: {diag['last_retained_index']}")
+    lines.append(f"{'Price / macro features':34}: {diag['price_feature_count']} / {diag['macro_feature_count']}")
+    lines.append(f"{'Macro symbols present':34}: {', '.join(diag['macro_symbols_present']) or 'NONE'}")
+    if diag["feature_missing_counts"]:
+        lines.append(f"{'Feature missing counts':34}: {diag['feature_missing_counts']}")
     lines += ["", "PHASE 5.2", "=" * 80]
     for name, item in r["phase52"].items():
         lines.append(f"{name:34}: {item['outcome']} folds={item['folds']} accuracy={item['accuracy']} brier={item['brier']} p={item['p_value']}")
