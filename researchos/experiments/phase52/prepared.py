@@ -89,7 +89,7 @@ class Phase52PreparedData:
             close=close_t,
             high=high_t,
             low=low_t,
-            volume_t=volume_t,
+            volume=volume_t,
             timestamps=timestamp_t,
             macro_timestamps=macro_ts_t,
             macro_factor_series=macro_series_t,
