@@ -22,7 +22,7 @@ def test_dataset_metadata_records_label_and_feature_drops():
     )
     metadata = dataset.metadata
 
-    assert metadata["sample_count"] == 20
+    assert metadata["sample_count"] == 15
     assert metadata["dropped_indices"] == list(range(60)) + list(range(75, 80))
     assert metadata["label_missing_indices"] == list(range(75, 80))
     assert metadata["feature_missing_indices"] == list(range(60))
