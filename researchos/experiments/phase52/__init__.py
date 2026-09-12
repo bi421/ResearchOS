@@ -10,6 +10,7 @@ from .contracts import Phase52Result
 from .experiment import FEATURE_SET_NAMES, Phase52Config, run_phase52, run_phase52_comparison
 from .macro_features import MACRO_SYMBOLS, MacroFeatureBuilder, MacroFeatureSet
 from .multivariate import MultivariateEmpiricalProbabilityEstimator
+from .oos_calibration import CalibrationComparison, apply_temperature, calibrate_oos, fit_temperature
 
 __all__ = [
     "FEATURE_SET_NAMES",
@@ -21,4 +22,8 @@ __all__ = [
     "MacroFeatureBuilder",
     "MacroFeatureSet",
     "MultivariateEmpiricalProbabilityEstimator",
+    "CalibrationComparison",
+    "apply_temperature",
+    "calibrate_oos",
+    "fit_temperature",
 ]
