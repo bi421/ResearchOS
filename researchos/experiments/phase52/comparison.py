@@ -31,6 +31,7 @@ def run_phase52_comparison_optimized(
         macro_factor_series,
         horizon=cfg.horizon,
         threshold=cfg.threshold,
+        required_macro_symbols=cfg.required_macro_symbols,
     )
     return run_prepared_phase52_comparison(prepared, cfg)
 
