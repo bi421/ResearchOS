@@ -1,10 +1,10 @@
 """Runtime certification for the Experiment → Run → Result evidence chain.
 
-This module is the production trust boundary.  A result is not certified unless
+This module is the production trust boundary. A result is not certified unless
 its real dataset evidence artifact exists first, the Experiment → Run → Result
 lineage is append-only, and the complete chain verifies after emission.
 
-Synthetic, demo, mock, and fixture inputs are explicitly rejected.  Artifact
+Synthetic, demo, mock, and fixture inputs are explicitly rejected. Artifact
 hashes are deterministic and intentionally exclude ``created_at`` telemetry.
 """
 
@@ -34,31 +34,41 @@ def _is_synthetic_experiment(experiment: Any) -> bool:
     dataset_config = getattr(experiment, "dataset_config", None)
     if dataset_config is None:
         return False
-
     source = _classification(getattr(dataset_config, "source", ""))
     if source in _SYNTHETIC_SOURCES:
         return True
-
     parameters = getattr(dataset_config, "parameters", {})
     if isinstance(parameters, Mapping):
         classification = _classification(parameters.get("data_classification", ""))
-        if classification in _SYNTHETIC_SOURCES or classification == "synthetic":
+        if classification in _SYNTHETIC_SOURCES:
             return True
     return False
 
 
 def _is_synthetic_dataset(dataset: Any) -> bool:
-    """Reject synthetic classification from the actual runtime dataset too."""
+    """Reject synthetic classification from the actual runtime dataset."""
     metadata = getattr(dataset, "metadata", {})
     if isinstance(metadata, Mapping):
         classification = _classification(metadata.get("data_classification", ""))
-        if classification in _SYNTHETIC_SOURCES or classification == "synthetic":
+        if classification in _SYNTHETIC_SOURCES:
             return True
         source = _classification(metadata.get("source", ""))
         if source in _SYNTHETIC_SOURCES:
             return True
-
     source = _classification(getattr(dataset, "source", ""))
+    return source in _SYNTHETIC_SOURCES
+
+
+def _is_synthetic_envelope(envelope: EvidenceEnvelope) -> bool:
+    """Inspect a persisted Dataset envelope before allowing it as a parent."""
+    payload = envelope.payload if isinstance(envelope.payload, Mapping) else {}
+    metadata = payload.get("metadata", {})
+    if isinstance(metadata, Mapping):
+        if _classification(metadata.get("data_classification", "")) in _SYNTHETIC_SOURCES:
+            return True
+        if _classification(metadata.get("source", "")) in _SYNTHETIC_SOURCES:
+            return True
+    source = _classification(payload.get("source", ""))
     return source in _SYNTHETIC_SOURCES
 
 
@@ -147,9 +157,9 @@ def certify_runtime(
     """Certify a complete Dataset → Experiment → Run → Result chain.
 
     Production certification requires either the actual deterministic dataset
-    contract (preferred) or an already persisted Dataset evidence hash.  When
+    contract (preferred) or an already persisted Dataset evidence hash. When
     a dataset object is supplied, its canonical envelope is persisted before
-    the Experiment artifact.  No partial certification is returned: any
+    the Experiment artifact. No partial certification is returned: any
     emission or post-write verification failure raises immediately.
 
     ``created_at`` is observational telemetry only; it is never part of an
@@ -157,7 +167,6 @@ def certify_runtime(
     """
     if not isinstance(repository, EvidenceRepository):
         raise TypeError("repository must be an EvidenceRepository")
-
     if dataset is None and not dataset_hash:
         raise ValueError("runtime evidence certification requires a Dataset evidence parent")
     if dataset is not None:
@@ -173,11 +182,15 @@ def certify_runtime(
         dataset_parent_hash = dataset_envelope.artifact_hash
     else:
         dataset_parent_hash = dataset_hash
-        if repository.get_artifact(dataset_parent_hash) is None:
-            raise ValueError(f"dataset evidence artifact '{dataset_parent_hash}' does not exist")
         dataset_envelope = repository.get_artifact(dataset_parent_hash)
-        if dataset_envelope is None or dataset_envelope.artifact_type != "Dataset":
+        if dataset_envelope is None:
+            raise ValueError(f"dataset evidence artifact '{dataset_parent_hash}' does not exist")
+        if dataset_envelope.artifact_type != "Dataset":
             raise ValueError(f"dataset evidence artifact '{dataset_parent_hash}' is not a Dataset artifact")
+        if _is_synthetic_envelope(dataset_envelope):
+            raise ValueError(
+                "Synthetic, demo, mock, and fixture datasets cannot be certified as research evidence"
+            )
 
     experiment_envelope = build_experiment_envelope(
         experiment,
