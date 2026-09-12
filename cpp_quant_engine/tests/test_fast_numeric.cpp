@@ -35,7 +35,7 @@ TEST(FastNumeric, RiskScan) {
   const auto r = quant::fast::risk_scan({-0.10, -0.05, 0.02, 0.03, 0.04},
                                         {100, 95, 97, 99, 103});
   EXPECT_GT(r.stddev, 0.0);
-  EXPECT_GT(r.sharpe, 0.0);
+  EXPECT_LT(r.sharpe, 0.0);
   EXPECT_NEAR(r.max_drawdown_pct, 5.0, 1e-12);
   EXPECT_GT(r.var95, 0.0);
   EXPECT_GT(r.cvar95, 0.0);
